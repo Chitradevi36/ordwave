@@ -28,7 +28,7 @@ cd backend
 bundle install
 cp .env.example .env   # set DATABASE_URL, REDIS_URL, JWT_SECRET
 rails db:create db:migrate
-rails server -p 3000
+rails server -p 3001
 ```
 
 ### Web (Next.js)
@@ -37,7 +37,8 @@ rails server -p 3000
 cd web
 npm install
 cp .env.local.example .env.local   # set NEXT_PUBLIC_API_URL
-npm run dev   # http://localhost:3001
+npm run dev -- -p 4000
+# npm run dev   # http://localhost:3001
 ```
 
 ### Mobile (Expo)

@@ -1,0 +1,87 @@
+  [1m[36mActiveRecord::SchemaMigration Load (15.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (13.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.1ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[35m (233.0ms)[0m  [1m[35mDROP DATABASE IF EXISTS "backend_development"[0m
+  [1m[35m (121.7ms)[0m  [1m[35mDROP DATABASE IF EXISTS "backend_test"[0m
+  [1m[35m (1791.8ms)[0m  [1m[35mCREATE DATABASE "backend_development" ENCODING = 'unicode'[0m
+  [1m[35m (322.1ms)[0m  [1m[35mCREATE DATABASE "backend_test" ENCODING = 'unicode'[0m
+  [1m[35m (20.5ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" character varying NOT NULL PRIMARY KEY)[0m
+  [1m[35m (3.8ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" character varying NOT NULL PRIMARY KEY, "value" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (0.7ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.8ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[36mActiveRecord::InternalMetadata Create (2.5ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-03-03 21:05:06.276777', '2026-03-03 21:05:06.276781') RETURNING "key"[0m
+Migrating to CreateOrganizations (20260303203624)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (9.6ms)[0m  [1m[35mCREATE TABLE "organizations" ("id" bigserial primary key, "name" character varying, "slug" character varying, "plan" character varying, "active" boolean, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_organizations_on_slug" ON "organizations" ("slug")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.4ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260303203624') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateBranches (20260303203625)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (8.6ms)[0m  [1m[35mCREATE TABLE "branches" ("id" bigserial primary key, "name" character varying, "organization_id" bigint NOT NULL, "code" character varying, "active" boolean, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_d819cb9507"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+)[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_branches_on_organization_id" ON "branches" ("organization_id")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_branches_on_code" ON "branches" ("code")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260303203625') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateRoles (20260303203626)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (5.5ms)[0m  [1m[35mCREATE TABLE "roles" ("id" bigserial primary key, "name" character varying, "description" text, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260303203626') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateUsers (20260303203627)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (6.4ms)[0m  [1m[35mCREATE TABLE "users" ("id" bigserial primary key, "email" character varying, "encrypted_password" character varying, "first_name" character varying, "last_name" character varying, "phone" character varying, "active" boolean, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_users_on_email" ON "users" ("email")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260303203627') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateMemberships (20260303203629)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (5.0ms)[0m  [1m[35mCREATE TABLE "memberships" ("id" bigserial primary key, "user_id" bigint NOT NULL, "organization_id" bigint NOT NULL, "branch_id" bigint NOT NULL, "role_id" bigint NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_99326fb65d"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+, CONSTRAINT "fk_rails_64267aab58"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_2acf58e0b4"
+FOREIGN KEY ("branch_id")
+  REFERENCES "branches" ("id")
+, CONSTRAINT "fk_rails_ab987c7623"
+FOREIGN KEY ("role_id")
+  REFERENCES "roles" ("id")
+)[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_memberships_on_user_id" ON "memberships" ("user_id")[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_memberships_on_organization_id" ON "memberships" ("organization_id")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_memberships_on_branch_id" ON "memberships" ("branch_id")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_memberships_on_role_id" ON "memberships" ("role_id")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260303203629') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Started POST "/api/v1/auth/login" for ::1 at 2026-03-03 21:09:16 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (2.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Processing by Api::V1::SessionsController#create as JSON
+  Parameters: {"email"=>"rahul@srd.com", "password"=>"[FILTERED]", "session"=>{"email"=>"rahul@srd.com", "password"=>"[FILTERED]"}}
+  [1m[36mUser Load (3.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "rahul@srd.com"], ["LIMIT", 1]]
+  ↳ app/controllers/api/v1/sessions_controller.rb:5:in `create'
+Completed 401 Unauthorized in 375ms (Views: 0.6ms | ActiveRecord: 16.7ms | Allocations: 18919)
+
+
+Started POST "/api/v1/auth/signup" for ::1 at 2026-03-03 21:10:27 +0000
+  
+ActionController::RoutingError (No route matches [POST] "/api/v1/auth/signup"):
+  
+Started POST "/api/v1/auth/signup" for ::1 at 2026-03-03 21:10:35 +0000
+  
+ActionController::RoutingError (No route matches [POST] "/api/v1/auth/signup"):
+  
+Started POST "/api/v1/auth/signup" for ::1 at 2026-03-03 21:10:37 +0000
+  
+ActionController::RoutingError (No route matches [POST] "/api/v1/auth/signup"):
+  

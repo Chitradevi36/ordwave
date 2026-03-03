@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-# ruby "3.2.3" # spec requires 3.3.0; using 3.2.10 available in this environment
+# ruby "3.3.0" # spec requires 3.3.0; using 3.2.10 available in this environment
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.1.6"
@@ -53,6 +53,9 @@ gem 'jwt'
 
 # Pagination
 gem 'kaminari', '~> 1.2'
+
+# Pin connection_pool to 2.x to avoid Ruby 3.3.0 syntax incompatibility in 3.0.x
+gem 'connection_pool', '~> 2.4'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
