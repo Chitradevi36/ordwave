@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+vendor/bundle/
+
+# Build artifacts
+.next/
+out/
+dist/
+build/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Rails
+backend/log/
+backend/tmp/
+backend/storage/
+backend/public/system/
+backend/public/uploads/
+backend/config/master.key
+backend/config/credentials/*.key
+
+# Expo / React Native
+.expo/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
