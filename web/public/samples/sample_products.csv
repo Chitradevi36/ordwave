@@ -1,0 +1,4 @@
+sku,name,category_name,uom_symbol,hsn_code,min_order_qty,purchase_price,barcode,weight_kg,description,image_url,status
+PROD-001,Basmati Rice 5kg,Grains & Cereals,KG,10061090,10,350.00,8901234567890,5.0,Premium long-grain basmati rice,,active
+PROD-002,Sunflower Oil 1L,Edible Oils,PC,15121110,6,130.00,,,,,active
+PROD-003,Wheat Flour 10kg,Grains & Cereals,KG,11010000,5,280.00,8901234567891,10.0,Fine wheat flour,,active

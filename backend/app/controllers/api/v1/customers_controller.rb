@@ -1,3 +1,5 @@
+require 'csv'
+
 module Api
   module V1
     class CustomersController < BaseController
@@ -108,6 +110,23 @@ module Api
         render_success(serialize_customer(customer))
       end
 
+      # GET /api/v1/customers/sample_csv
+      def sample_csv
+        authorize Customer.new(organization: current_organization), :bulk_import?
+
+        csv_data = CSV.generate do |csv|
+          csv << %w[name code channel tier phone email gstin pan
+                    credit_limit credit_days route_code branch_code]
+          csv << ['Rajesh Stores', 'CUST-001', 'general_trade', 'gold',
+                  '9876543210', 'rajesh@example.com', '', '', '50000', '30', '', 'HQ']
+          csv << ['Metro Mart', 'CUST-002', 'modern_trade', 'platinum',
+                  '9876543211', '', '', '', '100000', '45', '', 'HQ']
+        end
+
+        response.headers['Content-Disposition'] = 'attachment; filename="sample_customers.csv"'
+        render plain: csv_data, content_type: 'text/csv; charset=utf-8'
+      end
+
       def bulk_import
         authorize Customer.new(organization: current_organization), :bulk_import?
 
@@ -128,6 +147,46 @@ module Api
             message:       "#{result.success_count} customers imported successfully"
           }
         )
+      end
+
+      # GET /api/v1/customers/export_csv
+      def export_csv
+        authorize Customer.new(organization: current_organization), :index?
+
+        customers = policy_scope(Customer)
+                      .includes(:route, :credit_account)
+                      .order(name: :asc)
+        customers = customers.where('customers.name ILIKE ? OR customers.code ILIKE ? OR customers.phone ILIKE ?',
+                                   "%#{params[:q]}%", "%#{params[:q]}%", "%#{params[:q]}%") if params[:q].present?
+        customers = customers.where(channel: params[:channel]) if params[:channel].present?
+        customers = customers.where(tier:    params[:tier])    if params[:tier].present?
+        customers = customers.where(status:  params[:status])  if params[:status].present?
+
+        csv_data = CSV.generate do |csv|
+          csv << %w[code name channel tier status phone email gstin pan
+                    credit_limit credit_days route_name route_code]
+          customers.find_each do |c|
+            csv << [
+              c.code,
+              c.name,
+              c.channel,
+              c.tier,
+              c.status,
+              c.phone,
+              c.email,
+              c.gstin,
+              c.pan,
+              c.credit_limit,
+              c.credit_days,
+              c.route&.name,
+              c.route&.code
+            ]
+          end
+        end
+
+        filename = "customers_#{current_organization.slug}_#{Date.current.iso8601}.csv"
+        response.headers['Content-Disposition'] = "attachment; filename=\"#{filename}\""
+        render plain: csv_data, content_type: 'text/csv; charset=utf-8'
       end
 
       private

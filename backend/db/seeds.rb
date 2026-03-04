@@ -1,6 +1,83 @@
 # Seeds for Rice OMS — idempotent, safe to re-run.
 # Usage: bin/rails db:seed
 
+puts '== Seeding Units of Measure...'
+
+UnitsOfMeasure::SEEDS.each do |attrs|
+  uom = UnitsOfMeasure.find_or_initialize_by(symbol: attrs[:symbol].upcase)
+  uom.assign_attributes(name: attrs[:name], active: true)
+  uom.save!
+  puts "  UOM: #{uom.symbol} (#{uom.name})"
+end
+
+puts '== Units of Measure seeded.'
+puts ''
+
+puts '== Seeding HSN/SAC codes (FMCG)...'
+
+hsn_definitions = [
+  # Rice & Cereals
+  { code: '10061090', description: 'Rice — other (including basmati)',         gst_rate: 5  },
+  { code: '10062000', description: 'Husked (brown) rice',                       gst_rate: 0  },
+  { code: '10063000', description: 'Semi-milled or wholly milled rice',         gst_rate: 5  },
+  { code: '10064000', description: 'Broken rice',                               gst_rate: 0  },
+  { code: '10019900', description: 'Wheat — other',                             gst_rate: 0  },
+  { code: '10011100', description: 'Durum wheat — seed',                        gst_rate: 0  },
+  # Flours
+  { code: '11010000', description: 'Wheat or meslin flour',                     gst_rate: 0  },
+  { code: '11022000', description: 'Maize (corn) flour',                        gst_rate: 0  },
+  { code: '11031300', description: 'Pellets / groats of maize',                 gst_rate: 5  },
+  # Pulses
+  { code: '07132000', description: 'Chickpeas (garbanzos), shelled',            gst_rate: 0  },
+  { code: '07133100', description: 'Beans — vigna mungo (urad dal)',             gst_rate: 0  },
+  { code: '07134000', description: 'Lentils',                                   gst_rate: 0  },
+  { code: '07135000', description: 'Broad beans and horse beans',               gst_rate: 0  },
+  # Edible Oils
+  { code: '15121110', description: 'Crude sunflower-seed or safflower oil',     gst_rate: 5  },
+  { code: '15121990', description: 'Refined sunflower oil — other',             gst_rate: 5  },
+  { code: '15131100', description: 'Crude coconut oil',                         gst_rate: 5  },
+  { code: '15131990', description: 'Refined coconut oil — other',               gst_rate: 5  },
+  { code: '15141100', description: 'Crude mustard oil',                         gst_rate: 5  },
+  { code: '15089000', description: 'Groundnut oil — other',                     gst_rate: 5  },
+  # Sugar & Jaggery
+  { code: '17011200', description: 'Cane sugar — raw',                          gst_rate: 5  },
+  { code: '17011400', description: 'Cane sugar — other refined',                gst_rate: 5  },
+  { code: '17029090', description: 'Other sugars — jaggery',                    gst_rate: 0  },
+  # Salt & Spices
+  { code: '25010010', description: 'Common salt',                               gst_rate: 0  },
+  { code: '09041100', description: 'Pepper — neither crushed nor ground',       gst_rate: 5  },
+  { code: '09042210', description: 'Chilli powder',                             gst_rate: 5  },
+  { code: '09030000', description: 'Turmeric (curcuma)',                        gst_rate: 5  },
+  # Dairy
+  { code: '04012000', description: 'Milk — fat content > 1% <= 6%',            gst_rate: 0  },
+  { code: '04069000', description: 'Cheese — other',                            gst_rate: 12 },
+  # Beverages
+  { code: '22021090', description: 'Waters — flavoured, aerated',               gst_rate: 18 },
+  { code: '09021000', description: 'Green tea (not fermented)',                  gst_rate: 5  },
+  # Biscuits & Snacks
+  { code: '19053100', description: 'Sweet biscuits',                            gst_rate: 18 },
+  { code: '19054000', description: 'Rusks, toasted bread and similar',          gst_rate: 18 },
+  # Soaps & Detergents
+  { code: '34011100', description: 'Soap for toilet use',                       gst_rate: 18 },
+  { code: '34029010', description: 'Detergents — household',                    gst_rate: 18 },
+]
+
+hsn_definitions.each do |attrs|
+  hsn = HsnSacCode.find_or_initialize_by(code: attrs[:code].strip.upcase, effective_to: nil)
+  hsn.assign_attributes(
+    description:    attrs[:description],
+    code_type:      'HSN',
+    gst_rate:       attrs[:gst_rate],
+    active:         true,
+    effective_from: Date.new(2017, 7, 1)   # GST rollout date
+  )
+  hsn.save!
+  puts "  HSN: #{hsn.code} — #{hsn.description} (#{hsn.gst_rate}%)"
+end
+
+puts '== HSN/SAC codes seeded.'
+puts ''
+
 puts '== Seeding roles...'
 
 role_definitions = [
@@ -70,6 +147,152 @@ if Rails.env.development?
     )
     puts "  Membership: #{admin.email} → #{org.name} / #{branch.name} (owner)"
   end
+
+  # ── Product Categories ────────────────────────────────────────────────────
+  puts ''
+  puts '  == Seeding product categories...'
+
+  category_defs = [
+    { name: 'Rice & Cereals',  code: 'RICE-CRL' },
+    { name: 'Pulses & Lentils', code: 'PULSES'  },
+    { name: 'Edible Oils',     code: 'OILS'     },
+    { name: 'Sugar & Jaggery', code: 'SUGAR'    },
+    { name: 'Spices & Salt',   code: 'SPICES'   },
+  ]
+
+  categories = {}
+  category_defs.each do |attrs|
+    cat = ProductCategory.find_or_initialize_by(code: attrs[:code], organization: org)
+    cat.assign_attributes(name: attrs[:name], active: true)
+    cat.save!
+    categories[attrs[:code]] = cat
+    puts "    Category: #{cat.name}"
+  end
+
+  # ── Sample Products ────────────────────────────────────────────────────────
+  puts ''
+  puts '  == Seeding sample products...'
+
+  uom_kg  = UnitsOfMeasure.find_by!(symbol: 'KG')
+  uom_ltr = UnitsOfMeasure.find_by!(symbol: 'LTR')
+
+  hsn_rice      = HsnSacCode.find_by!(code: '10061090')  # Basmati rice — 5%
+  hsn_pulse     = HsnSacCode.find_by!(code: '07134000')  # Lentils — 0%
+  hsn_oil       = HsnSacCode.find_by!(code: '15121990')  # Refined sunflower oil — 5%
+  hsn_sugar     = HsnSacCode.find_by!(code: '17011400')  # Cane sugar — 5%
+  hsn_salt      = HsnSacCode.find_by!(code: '25010010')  # Common salt — 0%
+
+  product_defs = [
+    { sku: 'RICE-BSMT-5KG',  name: 'Basmati Rice (5 kg)',       category: 'RICE-CRL',  uom: uom_kg,  hsn: hsn_rice,  purchase_price: 320, min_order_qty: 1 },
+    { sku: 'RICE-BSMT-25KG', name: 'Basmati Rice (25 kg)',      category: 'RICE-CRL',  uom: uom_kg,  hsn: hsn_rice,  purchase_price: 1500, min_order_qty: 1 },
+    { sku: 'RICE-SONA-5KG',  name: 'Sona Masoori Rice (5 kg)',  category: 'RICE-CRL',  uom: uom_kg,  hsn: hsn_rice,  purchase_price: 220, min_order_qty: 1 },
+    { sku: 'PULSE-TOOR-1KG', name: 'Toor Dal (1 kg)',           category: 'PULSES',    uom: uom_kg,  hsn: hsn_pulse, purchase_price: 140, min_order_qty: 1 },
+    { sku: 'PULSE-URAD-1KG', name: 'Urad Dal (1 kg)',           category: 'PULSES',    uom: uom_kg,  hsn: hsn_pulse, purchase_price: 155, min_order_qty: 1 },
+    { sku: 'OIL-SFR-1L',     name: 'Refined Sunflower Oil (1 L)', category: 'OILS',    uom: uom_ltr, hsn: hsn_oil,   purchase_price: 145, min_order_qty: 1 },
+    { sku: 'OIL-SFR-5L',     name: 'Refined Sunflower Oil (5 L)', category: 'OILS',    uom: uom_ltr, hsn: hsn_oil,   purchase_price: 690, min_order_qty: 1 },
+    { sku: 'SUGAR-REF-1KG',  name: 'Refined Sugar (1 kg)',      category: 'SUGAR',     uom: uom_kg,  hsn: hsn_sugar, purchase_price: 45,  min_order_qty: 1 },
+    { sku: 'SALT-CMN-1KG',   name: 'Common Salt (1 kg)',        category: 'SPICES',    uom: uom_kg,  hsn: hsn_salt,  purchase_price: 18,  min_order_qty: 1 },
+  ]
+
+  products = {}
+  product_defs.each do |attrs|
+    p = Product.find_or_initialize_by(sku: attrs[:sku], organization: org)
+    p.assign_attributes(
+      name:             attrs[:name],
+      product_category: categories[attrs[:category]],
+      units_of_measure: attrs[:uom],
+      hsn_sac_code:     attrs[:hsn],
+      purchase_price:   attrs[:purchase_price],
+      min_order_qty:    attrs[:min_order_qty],
+      status:           'active'
+    )
+    p.save!
+    products[attrs[:sku]] = p
+    puts "    Product: #{p.sku} — #{p.name} (GST #{p.gst_rate}%)"
+  end
+
+  # ── Price Lists ────────────────────────────────────────────────────────────
+  puts ''
+  puts '  == Seeding price lists...'
+
+  # 1. Standard org-wide list (applicable to all branches)
+  std_list = PriceList.find_or_initialize_by(
+    organization: org,
+    branch:       nil,
+    list_type:    'standard',
+    name:         'Standard Price List'
+  )
+  std_list.assign_attributes(status: 'active', deleted_at: nil)
+  std_list.save!
+  puts "    PriceList: #{std_list.name} (#{std_list.list_type})"
+
+  # Standard prices — ~25% margin over purchase price
+  std_prices = {
+    'RICE-BSMT-5KG'  => 420,
+    'RICE-BSMT-25KG' => 1950,
+    'RICE-SONA-5KG'  => 290,
+    'PULSE-TOOR-1KG' => 175,
+    'PULSE-URAD-1KG' => 195,
+    'OIL-SFR-1L'     => 185,
+    'OIL-SFR-5L'     => 875,
+    'SUGAR-REF-1KG'  => 56,
+    'SALT-CMN-1KG'   => 24,
+  }
+
+  std_prices.each do |sku, price|
+    item = PriceListItem.find_or_initialize_by(
+      price_list: std_list,
+      product:    products[sku],
+      min_qty:    nil
+    )
+    item.assign_attributes(unit_price: price, discount_pct: 0)
+    item.save!
+  end
+  puts "    → #{std_prices.size} items added to Standard Price List"
+
+  # Volume break for bulk rice purchase (qty >= 10 bags at 5% off)
+  bulk_rice_skus = %w[RICE-BSMT-5KG RICE-SONA-5KG]
+  bulk_rice_skus.each do |sku|
+    item = PriceListItem.find_or_initialize_by(
+      price_list: std_list,
+      product:    products[sku],
+      min_qty:    10
+    )
+    item.assign_attributes(unit_price: std_prices[sku], discount_pct: 5)
+    item.save!
+  end
+  puts "    → Volume break (qty ≥ 10) added for #{bulk_rice_skus.join(', ')}"
+
+  # 2. Seasonal Promo list (10% off oils & pulses, valid 30 days)
+  promo_list = PriceList.find_or_initialize_by(
+    organization: org,
+    branch:       branch,
+    list_type:    'promo',
+    name:         'Summer Promo — Oils & Pulses'
+  )
+  promo_list.assign_attributes(
+    status:     'active',
+    valid_from: Date.current,
+    valid_to:   Date.current + 30.days,
+    deleted_at: nil
+  )
+  promo_list.save!
+  puts "    PriceList: #{promo_list.name} (#{promo_list.valid_from} → #{promo_list.valid_to})"
+
+  promo_skus = %w[OIL-SFR-1L OIL-SFR-5L PULSE-TOOR-1KG PULSE-URAD-1KG]
+  promo_skus.each do |sku|
+    item = PriceListItem.find_or_initialize_by(
+      price_list: promo_list,
+      product:    products[sku],
+      min_qty:    nil
+    )
+    item.assign_attributes(unit_price: std_prices[sku], discount_pct: 10)
+    item.save!
+  end
+  puts "    → #{promo_skus.size} items added to Promo Price List (10% off)"
+
+  puts ''
+  puts '  == Price lists seeded.'
 
   puts ''
   puts '  ┌─ Dev login credentials ────────────────'

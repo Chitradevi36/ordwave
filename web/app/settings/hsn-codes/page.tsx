@@ -13,9 +13,12 @@ import {
   Plus,
   Search,
   Upload,
+  Download,
   Pencil,
   TrendingUp,
   Ban,
+  CheckCircle,
+  FileWarning,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -325,6 +328,174 @@ function RateChangeModal({ open, code, onClose, onSaved }: RateChangeModalProps)
 }
 
 // ---------------------------------------------------------------------------
+// Bulk Import Modal
+// ---------------------------------------------------------------------------
+function HsnBulkImportModal({
+  onClose, onImported,
+}: {
+  onClose:    () => void;
+  onImported: () => void;
+}) {
+  const [file,    setFile]    = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState<{
+    success_count: number;
+    failed_rows:   { row: number; errors: string[] }[];
+  } | null>(null);
+  const [error,   setError]   = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const downloadSample = async () => {
+    const hdrs = authHeaders() as Record<string, string>;
+    try {
+      const res = await fetch(`${getApiBase()}/hsn_sac_codes/sample_csv`, { headers: hdrs });
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = "sample_hsn_sac_codes.csv"; a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+    setLoading(true); setError(""); setResult(null);
+    try {
+      const { Authorization, "X-Organization-Id": orgId } = authHeaders() as Record<string, string>;
+      if (!Authorization) { setError("Session expired. Please log in again."); return; }
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${getApiBase()}/hsn_sac_codes/bulk_import`, {
+        method:  "POST",
+        headers: {
+          ...(Authorization ? { Authorization }                 : {}),
+          ...(orgId         ? { "X-Organization-Id": orgId } : {}),
+        },
+        body: fd,
+      });
+      const json = await res.json();
+      if (res.ok) setResult(json.data);
+      else        setError(json.errors?.join(", ") ?? "Import failed");
+    } catch {
+      setError("Network error — please try again");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDone = () => {
+    if (result && result.success_count > 0) onImported();
+    onClose();
+  };
+
+  return (
+    <Modal open onClose={onClose} title="Bulk Import HSN / SAC Codes" size="lg">
+      <div className="space-y-5">
+        <div className="rounded-md border border-border bg-background-subtle px-4 py-3 text-sm text-text-secondary">
+          <p className="font-medium text-text-primary mb-1">CSV format</p>
+          <p>Required: <code className="font-mono text-xs bg-white border border-border rounded px-1">code</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">gst_rate</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">effective_from</code></p>
+          <p className="mt-0.5">Optional: <code className="font-mono text-xs bg-white border border-border rounded px-1">code_type</code> (HSN/SAC), <code className="font-mono text-xs bg-white border border-border rounded px-1">description</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">chapter</code></p>
+          <p className="mt-0.5 text-xs">Duplicate (code + effective_from) rows are silently skipped. Max 2,000 rows per file.</p>
+        </div>
+
+        <button type="button" onClick={downloadSample} className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+          <Download className="h-4 w-4" /> Download sample CSV
+        </button>
+
+        {!result && (
+          <div>
+            <div
+              onClick={() => inputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-background-subtle hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer py-8"
+            >
+              <Upload className="h-7 w-7 text-text-secondary/60" />
+              {file ? (
+                <div className="text-center">
+                  <p className="text-sm font-medium text-text-primary">{file.name}</p>
+                  <p className="text-xs text-text-secondary">{(file.size / 1024).toFixed(1)} KB</p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-sm text-text-primary">Click to select a CSV file</p>
+                  <p className="text-xs text-text-secondary">.csv files only</p>
+                </div>
+              )}
+            </div>
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(""); }}
+            />
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-start gap-2 rounded-md bg-danger/8 border border-danger/20 px-3 py-2.5 text-sm text-danger">
+            <FileWarning className="h-4 w-4 shrink-0 mt-0.5" />{error}
+          </div>
+        )}
+
+        {result && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2 rounded-md bg-success/10 border border-success/20 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-success" />
+                <span className="font-medium text-success">{result.success_count} imported</span>
+              </div>
+              {result.failed_rows.length > 0 && (
+                <div className="flex items-center gap-2 rounded-md bg-danger/8 border border-danger/20 px-3 py-2 text-sm">
+                  <FileWarning className="h-4 w-4 text-danger" />
+                  <span className="font-medium text-danger">{result.failed_rows.length} failed</span>
+                </div>
+              )}
+            </div>
+            {result.failed_rows.length > 0 && (
+              <div className="rounded-md border border-border overflow-auto max-h-44">
+                <table className="w-full text-xs">
+                  <thead className="bg-background-subtle">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-text-secondary">Row</th>
+                      <th className="px-3 py-2 text-left font-semibold text-text-secondary">Error</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-white">
+                    {result.failed_rows.map((f) => (
+                      <tr key={f.row}>
+                        <td className="px-3 py-1.5 tabular-nums text-text-secondary">{f.row}</td>
+                        <td className="px-3 py-1.5 text-danger">{f.errors.join(", ")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 border-t border-border pt-3">
+          {result ? (
+            <Button onClick={handleDone}>Done</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
+              <Button onClick={handleUpload} disabled={!file || loading}>
+                {loading ? (
+                  <><span className="h-3.5 w-3.5 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent inline-block" />Importing…</>
+                ) : (
+                  <><Upload className="h-4 w-4 mr-2" />Import CSV</>
+                )}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 export default function HsnCodesPage() {
@@ -345,11 +516,10 @@ export default function HsnCodesPage() {
   const [editingCode,    setEditingCode]    = useState<HsnSacCode | null>(null);
   const [rateChangeCode, setRateChangeCode] = useState<HsnSacCode | null>(null);
   const [showRateChange, setShowRateChange] = useState(false);
+  const [showImport,     setShowImport]     = useState(false);
 
-  // Bulk import
-  const [importing,  setImporting]  = useState(false);
-  const [importMsg,  setImportMsg]  = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const importDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Export
+  const [exporting,  setExporting]  = useState(false);
 
   // ---------------------------------------------------------------------------
   // Fetch
@@ -394,59 +564,35 @@ export default function HsnCodesPage() {
   }
 
   // ---------------------------------------------------------------------------
-  // Bulk import
+  // Render
   // ---------------------------------------------------------------------------
-  function scheduleImportDismiss() {
-    if (importDismissRef.current) clearTimeout(importDismissRef.current);
-    importDismissRef.current = setTimeout(() => setImportMsg(null), 8000);
-  }
 
-  async function handleBulkImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImporting(true);
-    setImportMsg(null);
+  async function handleExportCsv() {
+    if (exporting) return;
+    setExporting(true);
     try {
       const { Authorization, "X-Organization-Id": orgId } = authHeaders() as Record<string, string>;
-      if (!Authorization) {
-        setImportMsg({ type: "error", text: "Session expired. Please log in again." });
-        return;
-      }
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch(`${getApiBase()}/hsn_sac_codes/bulk_import`, {
-        method: "POST",
+      const qs = new URLSearchParams();
+      if (query)                qs.set("q",         query);
+      if (typeFilter !== "all") qs.set("code_type", typeFilter);
+      if (rateFilter !== "all") qs.set("gst_rate",  rateFilter);
+      const res = await fetch(`${getApiBase()}/hsn_sac_codes/export_csv?${qs}`, {
         headers: {
           ...(Authorization ? { Authorization } : {}),
           ...(orgId ? { "X-Organization-Id": orgId } : {}),
         },
-        body: form,
       });
-      if (res.status === 401) {
-        setImportMsg({ type: "error", text: "Session expired. Please log in again." });
-        return;
-      }
-      const json = await res.json();
-      if (res.ok) {
-        const d = json.data;
-        const skippedNote = d.skipped_rows?.length  ? ` ${d.skipped_rows.length} skipped (duplicates).`  : "";
-        const failedNote  = d.failed_rows?.length   ? ` ${d.failed_rows.length} failed.`                  : "";
-        setImportMsg({ type: "success", text: `${d.success_count} codes imported.${skippedNote}${failedNote}` });
-        scheduleImportDismiss();
-        fetchCodes();
-      } else {
-        setImportMsg({ type: "error", text: json.errors?.join(", ") ?? "Import failed" });
-        scheduleImportDismiss();
-      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      const cd   = res.headers.get("Content-Disposition") ?? "";
+      const name = cd.match(/filename="?([^"]+)"?/)?.[1] ?? "hsn_sac_codes.csv";
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
     } finally {
-      setImporting(false);
-      e.target.value = "";
+      setExporting(false);
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
   return (
     <AppShell title="HSN / SAC Codes">
       {/* Breadcrumb */}
@@ -463,10 +609,16 @@ export default function HsnCodesPage() {
         description="Manage the GST rate master catalogue. Rate changes create an audit trail."
         actions={[
           {
-            label: importing ? "Importing…" : "Bulk Import CSV",
+            label: "Bulk Import CSV",
             icon: Upload,
             variant: "outline",
-            onClick: () => document.getElementById("bulk-import-input")?.click(),
+            onClick: () => setShowImport(true),
+          },
+          {
+            label:   exporting ? "Exporting…" : "Export CSV",
+            icon:    Download,
+            variant: "ghost",
+            onClick: handleExportCsv,
           },
           {
             label: "Add HSN Code",
@@ -476,43 +628,11 @@ export default function HsnCodesPage() {
         ]}
       />
 
-      {/* Hidden file input */}
-      <input
-        id="bulk-import-input"
-        type="file"
-        accept=".csv"
-        className="sr-only"
-        onChange={handleBulkImport}
-      />
-
-      {/* Import feedback + sample download */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <a href="/samples/sample_hsn_sac_codes.csv" download className="text-xs text-accent hover:underline">
-          Download sample CSV
-        </a>
-        {meta && (
-          <span className="text-xs text-text-secondary">
-            {meta.total_count} code{meta.total_count !== 1 ? "s" : ""} total
-          </span>
-        )}
-      </div>
-
-      {/* Import result banner */}
-      {importMsg && (
-        <div className={`mb-4 flex items-center justify-between rounded-md px-4 py-2.5 text-sm ${
-          importMsg.type === "success"
-            ? "bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-400"
-            : "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-        }`}>
-          <span>{importMsg.text}</span>
-          <button
-            onClick={() => setImportMsg(null)}
-            className="ml-4 text-current opacity-60 hover:opacity-100 transition-opacity"
-            aria-label="Dismiss"
-          >
-            ✕
-          </button>
-        </div>
+      {showImport && (
+        <HsnBulkImportModal
+          onClose={() => setShowImport(false)}
+          onImported={() => { setShowImport(false); fetchCodes(); }}
+        />
       )}
 
       {/* Filter bar */}

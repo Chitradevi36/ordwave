@@ -4,10 +4,13 @@ class Organization < ApplicationRecord
   PLANS = User::PLANS
 
   # Associations
-  has_many :branches,    dependent: :destroy
-  has_many :memberships, dependent: :destroy
-  has_many :users,       through: :memberships
-  has_many :invitations, dependent: :destroy
+  has_many :branches,           dependent: :destroy
+  has_many :memberships,        dependent: :destroy
+  has_many :users,              through: :memberships
+  has_many :invitations,        dependent: :destroy
+  has_many :product_categories, dependent: :destroy
+  has_many :products,           dependent: :destroy
+  has_many :price_lists,        dependent: :destroy
 
   # Validations
   validates :name,          presence: true, length: { maximum: 100 }

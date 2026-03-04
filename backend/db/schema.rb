@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_04_230101) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_04_240007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -237,6 +237,94 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_230101) do
     t.index ["otp_code"], name: "index_pending_registrations_on_otp_code"
   end
 
+  create_table "price_list_items", force: :cascade do |t|
+    t.bigint "price_list_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "unit_price", precision: 12, scale: 2, null: false
+    t.decimal "min_qty", precision: 10, scale: 3
+    t.decimal "discount_pct", precision: 5, scale: 2, default: "0.0"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["price_list_id", "product_id", "min_qty"], name: "idx_price_list_items_unique", unique: true
+    t.index ["price_list_id"], name: "index_price_list_items_on_price_list_id"
+    t.index ["product_id"], name: "index_price_list_items_on_product_id"
+  end
+
+  create_table "price_lists", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.string "name", null: false
+    t.string "list_type", default: "standard", null: false
+    t.date "valid_from"
+    t.date "valid_to"
+    t.string "status", default: "active", null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id", "list_type", "status"], name: "idx_price_lists_branch_type_status"
+    t.index ["branch_id"], name: "index_price_lists_on_branch_id"
+    t.index ["deleted_at"], name: "index_price_lists_on_deleted_at"
+    t.index ["list_type"], name: "index_price_lists_on_list_type"
+    t.index ["organization_id"], name: "index_price_lists_on_organization_id"
+    t.index ["status"], name: "index_price_lists_on_status"
+  end
+
+  create_table "product_categories", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "name", null: false
+    t.string "code"
+    t.text "description"
+    t.boolean "active", default: true, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_product_categories_on_deleted_at"
+    t.index ["organization_id", "name"], name: "idx_product_categories_org_name_unique", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["organization_id"], name: "index_product_categories_on_organization_id"
+  end
+
+  create_table "products", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "product_category_id", null: false
+    t.bigint "units_of_measure_id", null: false
+    t.string "sku", null: false
+    t.string "name", null: false
+    t.string "barcode"
+    t.text "description"
+    t.bigint "hsn_sac_code_id", null: false
+    t.decimal "gst_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "min_order_qty", precision: 10, scale: 3, default: "1.0", null: false
+    t.decimal "purchase_price", precision: 12, scale: 2
+    t.decimal "weight_kg", precision: 8, scale: 3
+    t.string "image_url"
+    t.string "status", default: "active", null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["barcode"], name: "index_products_on_barcode", where: "(barcode IS NOT NULL)"
+    t.index ["deleted_at"], name: "index_products_on_deleted_at"
+    t.index ["hsn_sac_code_id"], name: "index_products_on_hsn_sac_code_id"
+    t.index ["organization_id", "sku"], name: "idx_products_org_sku_unique", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["organization_id"], name: "index_products_on_organization_id"
+    t.index ["product_category_id"], name: "index_products_on_product_category_id"
+    t.index ["status"], name: "index_products_on_status"
+    t.index ["units_of_measure_id"], name: "index_products_on_units_of_measure_id"
+  end
+
+  create_table "retailer_price_list_assignments", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "price_list_id", null: false
+    t.date "starts_on"
+    t.date "ends_on"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_retailer_price_list_assignments_on_active"
+    t.index ["customer_id", "price_list_id"], name: "idx_retailer_pl_assignment_unique", unique: true
+    t.index ["customer_id"], name: "index_retailer_price_list_assignments_on_customer_id"
+    t.index ["price_list_id"], name: "index_retailer_price_list_assignments_on_price_list_id"
+  end
+
   create_table "roles", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -256,6 +344,31 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_230101) do
     t.index ["branch_id", "code"], name: "index_routes_on_branch_id_and_code", unique: true
     t.index ["branch_id"], name: "index_routes_on_branch_id"
     t.index ["organization_id"], name: "index_routes_on_organization_id"
+  end
+
+  create_table "tier_price_list_assignments", force: :cascade do |t|
+    t.bigint "branch_id", null: false
+    t.bigint "price_list_id", null: false
+    t.string "retailer_tier", null: false
+    t.date "starts_on"
+    t.date "ends_on"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id", "retailer_tier", "price_list_id"], name: "idx_tier_pl_assignment_unique", unique: true
+    t.index ["branch_id", "retailer_tier"], name: "idx_tier_pl_assignment_branch_tier"
+    t.index ["branch_id"], name: "index_tier_price_list_assignments_on_branch_id"
+    t.index ["price_list_id"], name: "index_tier_price_list_assignments_on_price_list_id"
+  end
+
+  create_table "units_of_measures", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "symbol", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_units_of_measures_on_name", unique: true
+    t.index ["symbol"], name: "index_units_of_measures_on_symbol", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -302,6 +415,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_230101) do
   add_foreign_key "memberships", "users"
   add_foreign_key "onboarding_progresses", "organizations"
   add_foreign_key "onboarding_progresses", "users"
+  add_foreign_key "price_list_items", "price_lists"
+  add_foreign_key "price_list_items", "products"
+  add_foreign_key "price_lists", "branches"
+  add_foreign_key "price_lists", "organizations"
+  add_foreign_key "product_categories", "organizations"
+  add_foreign_key "products", "hsn_sac_codes"
+  add_foreign_key "products", "organizations"
+  add_foreign_key "products", "product_categories"
+  add_foreign_key "products", "units_of_measures"
+  add_foreign_key "retailer_price_list_assignments", "customers"
+  add_foreign_key "retailer_price_list_assignments", "price_lists"
   add_foreign_key "routes", "branches"
   add_foreign_key "routes", "organizations"
+  add_foreign_key "tier_price_list_assignments", "branches"
+  add_foreign_key "tier_price_list_assignments", "price_lists"
 end

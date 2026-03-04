@@ -78,6 +78,8 @@ Rails.application.routes.draw do
         collection do
           get  :check_duplicate
           post :bulk_import
+          get  :sample_csv
+          get  :export_csv
         end
         member do
           post :block
@@ -99,9 +101,45 @@ Rails.application.routes.draw do
         collection do
           get  :lookup
           post :bulk_import
+          get  :sample_csv
+          get  :export_csv
         end
         member do
           post :rate_change
+        end
+      end
+
+      # Product Catalogue
+      resources :product_categories, only: %i[index show create update destroy]
+      resources :units_of_measure,   only: %i[index show create update destroy]
+
+      resources :products, only: %i[index show create update destroy] do
+        collection do
+          post :bulk_import
+          get  :sample_csv
+          get  :export_csv
+          get  :generate_sku
+        end
+        member do
+          post :discontinue
+          get  :price
+        end
+      end
+
+      # Price Lists
+      resources :price_lists, only: %i[index show create update destroy] do
+        member do
+          post   :assign
+          delete :unassign
+          get    :items
+        end
+        resources :items, only: %i[create update destroy],
+                          controller: 'price_list_items' do
+          collection do
+            post :bulk_import
+            get  :sample_csv
+            get  :export_csv
+          end
         end
       end
     end
