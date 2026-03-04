@@ -1,5 +1,6 @@
 "use client";
 
+import { useOnboardingGuard } from "@/lib/hooks/useOnboardingGuard";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +56,13 @@ const orderColumns: Column<Order>[] = [
 ];
 
 export default function DashboardPage() {
+  const isReady = useOnboardingGuard();
+
+  // Prevent any render while checking - return null to avoid flick
+  if (!isReady) {
+    return null;
+  }
+
   return (
     <AppShell title="Dashboard">
       <PageHeader

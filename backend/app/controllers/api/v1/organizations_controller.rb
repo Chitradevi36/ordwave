@@ -1,38 +1,83 @@
 module Api
   module V1
     class OrganizationsController < BaseController
+      # No org-header required — users act on orgs they belong to via params[:id]
+      skip_before_action :set_current_organization
+
       def index
-        organizations = Organization.all
-        render json: { data: organizations }
+        organizations = policy_scope(Organization).active
+        render_success(organizations.map { |o| serialize_org(o) },
+                       meta: { total_count: organizations.size })
       end
 
       def show
-        organization = Organization.find(params[:id])
-        render json: { data: organization }
+        organization = Organization.active.find(params[:id])
+        authorize organization
+        render_success(serialize_org(organization))
       end
 
       def create
-        organization = Organization.new(organization_params)
-        if organization.save
-          render json: { data: organization }, status: :created
+        authorize Organization.new
+        result = Organizations::CreateOrganizationService.new(
+          creator: current_user,
+          **org_params
+        ).call
+
+        if result.success?
+          render_created(serialize_org(result.organization))
         else
-          render json: { errors: organization.errors }, status: :unprocessable_entity
+          render_errors(result.errors)
         end
       end
 
       def update
-        organization = Organization.find(params[:id])
-        if organization.update(organization_params)
-          render json: { data: organization }
+        organization = Organization.active.find(params[:id])
+        authorize organization
+
+        if organization.update(update_params)
+          render_success(serialize_org(organization))
         else
-          render json: { errors: organization.errors }, status: :unprocessable_entity
+          render_errors(organization.errors.full_messages)
         end
       end
 
       private
 
-      def organization_params
-        params.require(:organization).permit(:name, :slug, :plan, :active)
+      def org_params
+        params.require(:organization)
+              .permit(:name, :gst_number, :address,
+                      :city, :state, :pincode, :contact_email, :contact_phone)
+              .to_h.symbolize_keys
+      end
+
+      def update_params
+        params.require(:organization)
+              .permit(:name, :gst_number, :address,
+                      :city, :state, :pincode, :contact_email, :contact_phone, :active)
+      end
+
+      def serialize_org(org)
+        {
+          id:            org.id,
+          name:          org.name,
+          slug:          org.slug,
+          active:        org.active,
+          gst_number:    org.gst_number,
+          city:          org.city,
+          state:         org.state,
+          contact_email: org.contact_email,
+          contact_phone: org.contact_phone,
+          created_at:    org.created_at
+        }
+      end
+
+      # Pundit needs current_user for authorization; no org context for this controller
+      def pundit_user
+        UserContext.new(user: current_user, organization: nil)
+      end
+
+      def current_user
+        @current_user ||= User.active.find_by(id: jwt_payload['user_id'])
       end
     end
   end
