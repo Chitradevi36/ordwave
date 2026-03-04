@@ -15,3 +15,5 @@ export { Tabs } from "./tabs";
 export type { TabItem, TabsProps } from "./tabs";
 export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";
+export { Breadcrumb } from "./breadcrumb";
+export type { BreadcrumbItem, BreadcrumbProps } from "./breadcrumb";

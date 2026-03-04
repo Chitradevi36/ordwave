@@ -3,6 +3,7 @@ class BranchPolicy < ApplicationPolicy
   def show?            = member?
   def create?          = manager_above?
   def update?          = manager_above?
+  def bulk_import?     = manager_above?
   def update_settings? = owner_or_admin?
 
   class Scope < ApplicationPolicy::Scope

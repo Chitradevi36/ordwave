@@ -1,0 +1,21 @@
+code,code_type,description,gst_rate,effective_from,chapter
+10061090,HSN,Rice - other than parboiled,5,2017-07-01,10
+17011200,HSN,Cane sugar - raw,5,2017-07-01,17
+22021000,HSN,Waters incl. mineral and aerated with added sugar,18,2017-07-01,22
+24021000,HSN,Cigars cheroots and cigarillos containing tobacco,28,2017-07-01,24
+30049099,HSN,Medicaments - other preparations,12,2017-07-01,30
+33051000,HSN,Shampoos for hair,18,2017-07-01,33
+39231000,HSN,Boxes and cases of plastics,18,2017-07-01,39
+48192000,HSN,Folding cartons boxes and cases of non-corrugated paper,18,2017-07-01,48
+62034200,HSN,Men's trousers and shorts of cotton,12,2017-07-01,62
+84713000,HSN,Portable automatic data processing machines,18,2017-07-01,84
+85171200,HSN,Telephones for cellular networks - smartphones,18,2017-07-01,85
+87032110,HSN,Motor cars petrol engine not exceeding 1000cc,28,2017-07-01,87
+94011000,HSN,Seats for aircraft,18,2017-07-01,94
+9963,SAC,Accommodation services in hotels,18,2017-07-01,
+9971,SAC,Financial and related services,18,2017-07-01,
+9972,SAC,Real estate services,18,2017-07-01,
+9973,SAC,Leasing or rental services without operator,18,2017-07-01,
+9983,SAC,Other professional technical and business services,18,2017-07-01,
+9985,SAC,Support services - cleaning and maintenance,18,2017-07-01,
+9992,SAC,Education services,0,2017-07-01,

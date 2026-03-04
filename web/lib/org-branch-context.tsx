@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ export function useOrgBranch() {
 // ─── Provider ────────────────────────────────────────────────────────────────
 
 export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [token, setToken]       = useState("");
   const [orgId, setOrgIdState]  = useState("");
   const [branchId, setBranchId] = useState("");
@@ -72,12 +74,22 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   // Track previous orgId to avoid re-fetching branches unnecessarily
   const prevOrgIdRef = useRef<string>("");
 
+  // ── Clears auth state and redirects to login (called on 401 responses) ──
+  const clearAuth = useCallback(() => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("organization_id");
+    setToken("");
+    setOrgIdState("");
+    router.replace("/login");
+  }, [router]);
+
   // ── Bootstrap from localStorage ──────────────────────────────────────────
   useEffect(() => {
     const t   = localStorage.getItem("auth_token")    ?? "";
     const org = localStorage.getItem("organization_id") ?? "";
-    setToken(t);
     // Guard against stale "undefined" / "null" strings written by older code
+    const validToken = t && t !== "null" && t !== "undefined" ? t : "";
+    setToken(validToken);
     setOrgIdState(/^\d+$/.test(org) ? org : "");
   }, []);
 
@@ -89,6 +101,7 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
       const res  = await fetch("http://localhost:3001/api/v1/organizations", {
         headers: { Authorization: `Bearer ${tok}` },
       });
+      if (res.status === 401) { clearAuth(); return; }
       const json = await res.json();
       if (res.ok) {
         const orgs: Org[] = Array.isArray(json.data) ? json.data : [];
@@ -108,7 +121,7 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setOrgsLoading(false);
     }
-  }, []);
+  }, [clearAuth]);
 
   useEffect(() => {
     if (token) fetchOrganizations(token);

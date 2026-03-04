@@ -9499,3 +9499,154 @@ Processing by Api::V1::BranchesController#index as */*
 Completed 200 OK in 16ms (Views: 0.3ms | ActiveRecord: 3.1ms | Allocations: 2602)
 
 
+  [1m[35m (1.4ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.4ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to CreateRoutes (20260304220001)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (22.1ms)[0m  [1m[35mCREATE TABLE "routes" ("id" bigserial primary key, "name" character varying NOT NULL, "code" character varying NOT NULL, "branch_id" bigint NOT NULL, "organization_id" bigint NOT NULL, "active" boolean DEFAULT TRUE NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_97855c2b6a"
+FOREIGN KEY ("branch_id")
+  REFERENCES "branches" ("id")
+, CONSTRAINT "fk_rails_bd97323ec0"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+)[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_routes_on_branch_id" ON "routes" ("branch_id")[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "index_routes_on_organization_id" ON "routes" ("organization_id")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_routes_on_branch_id_and_code" ON "routes" ("branch_id", "code")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304220001') RETURNING "version"[0m
+  [1m[36mTRANSACTION (6.1ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateCustomers (20260304220002)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (7.4ms)[0m  [1m[35mCREATE TABLE "customers" ("id" bigserial primary key, "name" character varying NOT NULL, "code" character varying NOT NULL, "channel" character varying, "tier" character varying, "credit_limit" decimal(12,2) DEFAULT 0.0, "gstin" character varying, "pan" character varying, "phone" character varying, "email" character varying, "status" character varying DEFAULT 'active' NOT NULL, "branch_id" bigint NOT NULL, "organization_id" bigint NOT NULL, "route_id" bigint, "deleted_at" timestamp(6), "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_373a09610e"
+FOREIGN KEY ("branch_id")
+  REFERENCES "branches" ("id")
+, CONSTRAINT "fk_rails_58234c715e"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_2d3371fea2"
+FOREIGN KEY ("route_id")
+  REFERENCES "routes" ("id")
+)[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_customers_on_branch_id" ON "customers" ("branch_id")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_customers_on_organization_id" ON "customers" ("organization_id")[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_customers_on_route_id" ON "customers" ("route_id")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_customers_on_channel" ON "customers" ("channel")[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_customers_on_tier" ON "customers" ("tier")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_customers_on_status" ON "customers" ("status")[0m
+  [1m[35m (2.7ms)[0m  [1m[35mCREATE INDEX "index_customers_on_deleted_at" ON "customers" ("deleted_at")[0m
+  [1m[35m (2.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "idx_customers_org_code" ON "customers" ("organization_id", "code")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304220002') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateCustomerAddresses (20260304220003)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (5.6ms)[0m  [1m[35mCREATE TABLE "customer_addresses" ("id" bigserial primary key, "customer_id" bigint NOT NULL, "label" character varying DEFAULT 'billing', "line1" character varying, "line2" character varying, "city" character varying, "state" character varying, "postal_code" character varying, "country" character varying DEFAULT 'India', "latitude" decimal(10,7), "longitude" decimal(10,7), "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_79041ef784"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+)[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_customer_addresses_on_customer_id" ON "customer_addresses" ("customer_id")[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "index_customer_addresses_on_label" ON "customer_addresses" ("label")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304220003') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateCustomerContacts (20260304220004)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (4.3ms)[0m  [1m[35mCREATE TABLE "customer_contacts" ("id" bigserial primary key, "customer_id" bigint NOT NULL, "name" character varying NOT NULL, "phone" character varying, "email" character varying, "designation" character varying, "is_primary" boolean DEFAULT FALSE NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_1a73f19f69"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+)[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_customer_contacts_on_customer_id" ON "customer_contacts" ("customer_id")[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "idx_customer_contacts_primary" ON "customer_contacts" ("customer_id", "is_primary")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304220004') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateCreditAccounts (20260304220005)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (5.1ms)[0m  [1m[35mCREATE TABLE "credit_accounts" ("id" bigserial primary key, "customer_id" bigint NOT NULL, "organization_id" bigint NOT NULL, "branch_id" bigint NOT NULL, "credit_limit" decimal(12,2) DEFAULT 0.0 NOT NULL, "current_balance" decimal(12,2) DEFAULT 0.0 NOT NULL, "available_credit" decimal(12,2) DEFAULT 0.0 NOT NULL, "overdue_amount" decimal(12,2) DEFAULT 0.0 NOT NULL, "overdue_days" integer DEFAULT 0 NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_99497437d9"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+, CONSTRAINT "fk_rails_46d7090198"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_9920405de5"
+FOREIGN KEY ("branch_id")
+  REFERENCES "branches" ("id")
+)[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_credit_accounts_on_customer_id" ON "credit_accounts" ("customer_id")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_credit_accounts_on_organization_id" ON "credit_accounts" ("organization_id")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_credit_accounts_on_branch_id" ON "credit_accounts" ("branch_id")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.4ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304220005') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[35m (1.4ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.1ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to AddEnhancedFieldsToCustomers (20260304220006)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (7.8ms)[0m  [1m[35mALTER TABLE "customers" ADD "customer_type" character varying DEFAULT 'retailer'[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "customers" ADD "visit_frequency" character varying[0m
+  [1m[35m (0.5ms)[0m  [1m[35mALTER TABLE "customers" ADD "credit_days" integer DEFAULT 30[0m
+  [1m[35m (0.3ms)[0m  [1m[35mALTER TABLE "customers" ADD "credit_block_rule" character varying DEFAULT 'none'[0m
+  [1m[35m (0.8ms)[0m  [1m[35mALTER TABLE "customers" ADD "opening_balance" decimal(12,2) DEFAULT 0.0[0m
+  [1m[35m (0.7ms)[0m  [1m[35mALTER TABLE "customers" ADD "tag_list" text[] DEFAULT '{}'[0m
+  [1m[35m (0.7ms)[0m  [1m[35mALTER TABLE "customers" ADD "sales_rep_id" bigint[0m
+  [1m[35m (2.3ms)[0m  [1m[35mCREATE INDEX "index_customers_on_sales_rep_id" ON "customers" ("sales_rep_id")[0m
+  [1m[35m (7.9ms)[0m  [1m[35mALTER TABLE "customers" ADD CONSTRAINT "fk_rails_1c945df68c"
+FOREIGN KEY ("sales_rep_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "index_customers_on_customer_type" ON "customers" ("customer_type")[0m
+  [1m[35m (6.2ms)[0m  [1m[35mCREATE INDEX "index_customers_on_sales_rep_id" ON "customers" ("sales_rep_id")[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[31mROLLBACK[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.6ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to AddEnhancedFieldsToCustomers (20260304220006)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (0.9ms)[0m  [1m[35mALTER TABLE "customers" ADD "customer_type" character varying DEFAULT 'retailer'[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "customers" ADD "visit_frequency" character varying[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "customers" ADD "credit_days" integer DEFAULT 30[0m
+  [1m[35m (0.1ms)[0m  [1m[35mALTER TABLE "customers" ADD "credit_block_rule" character varying DEFAULT 'none'[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "customers" ADD "opening_balance" decimal(12,2) DEFAULT 0.0[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "customers" ADD "tag_list" text[] DEFAULT '{}'[0m
+  [1m[35m (0.1ms)[0m  [1m[35mALTER TABLE "customers" ADD "sales_rep_id" bigint[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "index_customers_on_sales_rep_id" ON "customers" ("sales_rep_id")[0m
+  [1m[35m (7.5ms)[0m  [1m[35mALTER TABLE "customers" ADD CONSTRAINT "fk_rails_1c945df68c"
+FOREIGN KEY ("sales_rep_id")
+  REFERENCES "users" ("id")
+[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "index_customers_on_customer_type" ON "customers" ("customer_type")[0m
+  [1m[35m (2.5ms)[0m  [1m[35mCREATE INDEX "index_customers_on_tag_list" ON "customers" USING gin ("tag_list")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (1.9ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304220006') RETURNING "version"[0m
+  [1m[36mTRANSACTION (7.5ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[35m (0.7ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.8ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to AddUniquePhoneGstinIndexes (20260304230001)
+  [1m[35m (25.7ms)[0m  [1m[35mCREATE UNIQUE INDEX CONCURRENTLY "idx_customers_org_phone_unique" ON "customers" ("organization_id", "phone") WHERE phone IS NOT NULL AND deleted_at IS NULL[0m
+  [1m[35m (13.0ms)[0m  [1m[35mCREATE UNIQUE INDEX CONCURRENTLY "idx_customers_org_gstin_unique" ON "customers" ("organization_id", "gstin") WHERE gstin IS NOT NULL AND deleted_at IS NULL[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.8ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304230001') RETURNING "version"[0m
+  [1m[35m (0.4ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[35m (0.9ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.8ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to CreateHsnSacCodes (20260304230100)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (22.1ms)[0m  [1m[35mCREATE TABLE "hsn_sac_codes" ("id" bigserial primary key, "code" character varying NOT NULL, "code_type" character varying DEFAULT 'HSN' NOT NULL, "description" character varying, "chapter" character varying, "gst_rate" decimal(5,2) DEFAULT 0.0 NOT NULL, "cgst_rate" decimal(5,2) DEFAULT 0.0 NOT NULL, "sgst_rate" decimal(5,2) DEFAULT 0.0 NOT NULL, "igst_rate" decimal(5,2) DEFAULT 0.0 NOT NULL, "active" boolean DEFAULT TRUE NOT NULL, "effective_from" date NOT NULL, "effective_to" date, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "idx_hsn_sac_codes_on_code_effective_from" ON "hsn_sac_codes" ("code", "effective_from")[0m
+  [1m[35m (1.8ms)[0m  [1m[35mCREATE INDEX "idx_hsn_sac_codes_current_active" ON "hsn_sac_codes" ("code") WHERE active = true AND effective_to IS NULL[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_hsn_sac_codes_on_code_type" ON "hsn_sac_codes" ("code_type")[0m
+  [1m[35m (2.4ms)[0m  [1m[35mCREATE INDEX "index_hsn_sac_codes_on_gst_rate" ON "hsn_sac_codes" ("gst_rate")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (1.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304230100') RETURNING "version"[0m
+  [1m[36mTRANSACTION (8.0ms)[0m  [1m[35mCOMMIT[0m
+Migrating to AddStateCodeToBranches (20260304230101)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (1.9ms)[0m  [1m[35mALTER TABLE "branches" ADD "state_code" character varying(2)[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE INDEX "index_branches_on_state_code" ON "branches" ("state_code")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.4ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304230101') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.3ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
