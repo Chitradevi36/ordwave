@@ -41,10 +41,49 @@ module Api
         end
       end
 
+      # PATCH /api/v1/credit_accounts/:id/flags
+      def update_flags
+        credit_account = CreditAccount.where(organization: current_organization)
+                                      .find(params[:id])
+        authorize credit_account, :update_flags?
+
+        previous_flags = {
+          collection_first: credit_account.collection_first,
+          hold_required:    credit_account.hold_required,
+          watchlist:        credit_account.watchlist
+        }
+
+        if credit_account.update(flag_params)
+          changed = flag_params.to_h.select { |k, v| previous_flags[k.to_sym] != v }
+          unless changed.empty?
+            Credit::AuditLogger.log(
+              actor:        current_user,
+              organization: current_organization,
+              auditable:    credit_account,
+              action:       'flag_changed',
+              changes:      { from: previous_flags, to: flag_params.to_h },
+              reason:       params[:reason]
+            )
+          end
+          render_success({
+            id:               credit_account.id,
+            collection_first: credit_account.collection_first,
+            hold_required:    credit_account.hold_required,
+            watchlist:        credit_account.watchlist
+          })
+        else
+          render_errors(credit_account.errors.full_messages)
+        end
+      end
+
       private
 
       def credit_account_params
         params.require(:credit_account).permit(:credit_limit, :current_balance, :overdue_amount, :overdue_days)
+      end
+
+      def flag_params
+        params.require(:credit_account).permit(:collection_first, :hold_required, :watchlist)
       end
     end
   end

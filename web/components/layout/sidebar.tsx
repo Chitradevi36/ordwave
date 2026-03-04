@@ -14,18 +14,20 @@ import {
   Settings,
   Building2,
   CreditCard,
+  CheckSquare,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/customers", label: "Customers", icon: Building2 },
-  { href: "/routes", label: "Routes", icon: MapPin },
-  { href: "/drivers", label: "Drivers", icon: Truck },
-  { href: "/collections", label: "Collections", icon: CreditCard },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard",               label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/orders",                  label: "Orders",      icon: ShoppingCart },
+  { href: "/products",                label: "Products",    icon: Package },
+  { href: "/customers",               label: "Customers",   icon: Building2 },
+  { href: "/routes",                  label: "Routes",      icon: MapPin },
+  { href: "/drivers",                 label: "Drivers",     icon: Truck },
+  { href: "/collections",             label: "Collections", icon: CreditCard },
+  { href: "/approvals/credit-limits", label: "Approvals",   icon: CheckSquare },
+  { href: "/reports",                 label: "Reports",     icon: BarChart3 },
+  { href: "/settings",                label: "Settings",    icon: Settings },
 ];
 
 export function Sidebar() {

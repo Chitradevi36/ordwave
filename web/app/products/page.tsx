@@ -420,11 +420,6 @@ export default function ProductsPage() {
         description={totalCount > 0 ? `${totalCount} products` : undefined}
         actions={[
           {
-            label:   'Price Lists',
-            variant: 'outline' as const,
-            onClick: () => router.push('/products/price-lists'),
-          },
-          {
             label:   'Import CSV',
             variant: 'outline' as const,
             icon:    Upload,

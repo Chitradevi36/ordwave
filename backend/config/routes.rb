@@ -88,7 +88,27 @@ Rails.application.routes.draw do
         end
       end
       resources :routes,          only: %i[index show create update destroy]
-      resources :credit_accounts, only: %i[show update]
+      resources :credit_accounts, only: %i[show update] do
+        member do
+          patch :update_flags
+        end
+        resources :limit_change_requests, only: %i[create],
+                  controller: 'credit_limit_change_requests'
+      end
+
+      # Credit Engine
+      resource  :credit_policy,            only: %i[show update],
+                controller: 'credit_policies'
+      resources :prepayment_skus,          only: %i[index show create] do
+        member do
+          post :deactivate
+        end
+      end
+      resources :credit_limit_change_requests, only: %i[index show] do
+        member do
+          post :decision
+        end
+      end
 
       resources :invitations, only: %i[index create destroy] do
         collection do

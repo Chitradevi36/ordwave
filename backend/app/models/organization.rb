@@ -11,6 +11,9 @@ class Organization < ApplicationRecord
   has_many :product_categories, dependent: :destroy
   has_many :products,           dependent: :destroy
   has_many :price_lists,        dependent: :destroy
+  has_many :prepayment_skus,    dependent: :destroy
+  has_many :audit_logs,         dependent: :destroy
+  has_one  :credit_policy,      dependent: :destroy
 
   # Validations
   validates :name,          presence: true, length: { maximum: 100 }
