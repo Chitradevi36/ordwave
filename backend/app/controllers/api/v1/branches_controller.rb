@@ -39,10 +39,37 @@ module Api
         end
       end
 
+      def settings
+        branch = current_organization.branches.not_deleted.find(params[:id])
+        authorize branch, :show?
+        render_success(serialize_branch_with_settings(branch))
+      end
+
+      def update_settings
+        branch = current_organization.branches.not_deleted.find(params[:id])
+        authorize branch, :update_settings?
+
+        result = Settings::UpdateBranchService.new(branch: branch, params: settings_params).call
+
+        if result.success?
+          render_success(serialize_branch_with_settings(result.branch))
+        else
+          render_errors(result.errors)
+        end
+      end
+
       private
 
       def branch_params
         params.require(:branch).permit(:name, :code, :city, :state, :address, :pincode, :active)
+      end
+
+      def settings_params
+        params.permit(
+          :name, :code, :city, :state, :address, :pincode, :active,
+          settings: %i[credit_limit credit_terms_days opening_time closing_time
+                       min_order_value days_off payment_modes]
+        )
       end
 
       def serialize_branch(branch)
@@ -58,6 +85,10 @@ module Api
           organization_id: branch.organization_id,
           created_at:      branch.created_at
         }
+      end
+
+      def serialize_branch_with_settings(branch)
+        serialize_branch(branch).merge(settings: branch.settings)
       end
     end
   end

@@ -53,4 +53,15 @@ FactoryBot.define do
     association :user
     completed { false }
   end
+
+  factory :invitation do
+    association :organization
+    association :role
+    association :branch
+    sequence(:email) { |n| "invite#{n}@example.com" }
+    token_digest     { Invitation.digest(Invitation.generate_token) }
+    invited_by       { create(:user) }
+    status           { 'pending' }
+    expires_at       { 72.hours.from_now }
+  end
 end

@@ -25,7 +25,6 @@ const navItems = [
   { href: "/drivers", label: "Drivers", icon: Truck },
   { href: "/collections", label: "Collections", icon: CreditCard },
   { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/users", label: "Users", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

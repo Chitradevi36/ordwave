@@ -43,11 +43,37 @@ Rails.application.routes.draw do
       put 'profile', to: 'profiles#update'
 
       # Resources
-      resources :organizations, only: %i[index show create update]
-      resources :branches,      only: %i[index show create update]
-      resources :users,         only: %i[index show create update]
-      resources :memberships,   only: %i[index create destroy]
-      resources :roles,         only: %i[index]
+      resources :organizations, only: %i[index show create update] do
+        member do
+          get   :settings
+          patch :settings, action: :update_settings
+        end
+      end
+
+      resources :branches, only: %i[index show create update] do
+        member do
+          get   :settings
+          patch :settings, action: :update_settings
+        end
+      end
+
+      resources :users, only: %i[index show create update] do
+        member do
+          post :deactivate
+        end
+        collection do
+          post :invite
+        end
+      end
+
+      resources :memberships, only: %i[index create destroy]
+      resources :roles,       only: %i[index]
+
+      resources :invitations, only: %i[index create destroy] do
+        collection do
+          post :accept
+        end
+      end
     end
   end
 end

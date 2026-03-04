@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_04_210001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_04_210005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -26,9 +26,29 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_210001) do
     t.datetime "updated_at", null: false
     t.string "address"
     t.string "pincode"
+    t.jsonb "settings", default: {}, null: false
     t.index ["code"], name: "index_branches_on_code", unique: true
     t.index ["deleted_at"], name: "index_branches_on_deleted_at"
     t.index ["organization_id"], name: "index_branches_on_organization_id"
+    t.index ["settings"], name: "index_branches_on_settings", using: :gin
+  end
+
+  create_table "invitations", force: :cascade do |t|
+    t.string "email", null: false
+    t.string "token_digest", null: false
+    t.bigint "organization_id", null: false
+    t.bigint "role_id", null: false
+    t.bigint "branch_id"
+    t.bigint "invited_by_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "accepted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
+    t.index ["organization_id", "email"], name: "idx_invitations_org_email"
+    t.index ["organization_id"], name: "index_invitations_on_organization_id"
+    t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
   end
 
   create_table "jwt_denylist", force: :cascade do |t|
@@ -48,10 +68,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_210001) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "active", null: false
     t.index ["branch_id"], name: "index_memberships_on_branch_id"
     t.index ["deleted_at"], name: "index_memberships_on_deleted_at"
     t.index ["organization_id"], name: "index_memberships_on_organization_id"
     t.index ["role_id"], name: "index_memberships_on_role_id"
+    t.index ["status"], name: "index_memberships_on_status"
     t.index ["user_id", "organization_id", "branch_id"], name: "idx_memberships_unique", unique: true
     t.index ["user_id"], name: "index_memberships_on_user_id"
   end
@@ -83,6 +105,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_210001) do
     t.string "contact_phone"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "pan"
+    t.string "logo_url"
+    t.string "timezone", default: "Asia/Kolkata"
+    t.string "currency", default: "INR"
+    t.jsonb "settings", default: {}, null: false
+    t.index ["settings"], name: "index_organizations_on_settings", using: :gin
     t.index ["slug"], name: "index_organizations_on_slug", unique: true
   end
 
@@ -135,6 +163,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_210001) do
   end
 
   add_foreign_key "branches", "organizations"
+  add_foreign_key "invitations", "branches"
+  add_foreign_key "invitations", "organizations"
+  add_foreign_key "invitations", "roles"
+  add_foreign_key "invitations", "users", column: "invited_by_id"
   add_foreign_key "memberships", "branches"
   add_foreign_key "memberships", "organizations"
   add_foreign_key "memberships", "roles"

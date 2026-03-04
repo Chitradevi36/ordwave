@@ -41,6 +41,28 @@ module Api
         end
       end
 
+      def settings
+        organization = Organization.active.find(params[:id])
+        authorize organization, :show?
+        render_success(serialize_org_with_settings(organization))
+      end
+
+      def update_settings
+        organization = Organization.active.find(params[:id])
+        authorize organization, :update_settings?
+
+        result = Settings::UpdateOrganizationService.new(
+          organization: organization,
+          params:       settings_params
+        ).call
+
+        if result.success?
+          render_success(serialize_org_with_settings(result.organization))
+        else
+          render_errors(result.errors)
+        end
+      end
+
       private
 
       def org_params
@@ -54,6 +76,14 @@ module Api
         params.require(:organization)
               .permit(:name, :gst_number, :address,
                       :city, :state, :pincode, :contact_email, :contact_phone, :active)
+      end
+
+      def settings_params
+        params.permit(
+          :name, :gst_number, :pan, :address, :city, :state, :pincode,
+          :contact_email, :contact_phone, :logo_url, :timezone, :currency,
+          settings: {}
+        )
       end
 
       def serialize_org(org)
@@ -71,13 +101,21 @@ module Api
         }
       end
 
-      # Pundit needs current_user for authorization; no org context for this controller
-      def pundit_user
-        UserContext.new(user: current_user, organization: nil)
+      def serialize_org_with_settings(org)
+        serialize_org(org).merge(
+          address:  org.address,
+          pincode:  org.pincode,
+          pan:      org.pan,
+          logo_url: org.logo_url,
+          timezone: org.timezone,
+          currency: org.currency,
+          settings: org.settings
+        )
       end
 
-      def current_user
-        @current_user ||= User.active.find_by(id: jwt_payload['user_id'])
+      # Pundit needs a nil org context here since this controller doesn't use X-Organization-Id
+      def pundit_user
+        UserContext.new(user: current_user, organization: nil)
       end
     end
   end

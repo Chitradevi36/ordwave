@@ -24,7 +24,7 @@ module Api
       end
 
       def current_user
-        @current_user ||= User.active.find_by(id: jwt_payload['user_id'])
+        @current_user ||= User.active.find_by(id: jwt_payload['sub'])
       end
     end
   end

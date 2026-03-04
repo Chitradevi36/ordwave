@@ -7,6 +7,7 @@ class Organization < ApplicationRecord
   has_many :branches,    dependent: :destroy
   has_many :memberships, dependent: :destroy
   has_many :users,       through: :memberships
+  has_many :invitations, dependent: :destroy
 
   # Validations
   validates :name,          presence: true, length: { maximum: 100 }
@@ -19,6 +20,16 @@ class Organization < ApplicationRecord
 
   # Scopes
   scope :active, -> { where(active: true) }
+
+  # Settings helpers
+  def setting(key, default: nil)
+    settings.fetch(key.to_s, default)
+  end
+
+  def update_setting!(key, value)
+    settings_will_change!
+    update!(settings: settings.merge(key.to_s => value))
+  end
 
   # Callbacks
   before_validation :generate_slug, on: :create, if: -> { slug.blank? }
