@@ -15,6 +15,7 @@ export interface DataTableProps<T> {
   data: T[];
   className?: string;
   emptyMessage?: string;
+  emptyContent?: React.ReactNode;
   isLoading?: boolean;
   onRowClick?: (row: T) => void;
 }
@@ -24,6 +25,7 @@ export function DataTable<T extends { id?: string | number }>({
   data,
   className,
   emptyMessage = "No data available",
+  emptyContent,
   isLoading = false,
   onRowClick,
 }: DataTableProps<T>) {
@@ -60,7 +62,7 @@ export function DataTable<T extends { id?: string | number }>({
                 colSpan={columns.length}
                 className="py-12 text-center text-text-secondary"
               >
-                {emptyMessage}
+                {emptyContent ?? emptyMessage}
               </td>
             </tr>
           ) : (

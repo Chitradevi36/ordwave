@@ -1,3 +1,5 @@
+require 'csv'
+
 module Api
   module V1
     class HsnSacCodesController < BaseController
@@ -91,6 +93,21 @@ module Api
         render_errors(e.record.errors)
       end
 
+      # GET /api/v1/hsn_sac_codes/sample_csv
+      def sample_csv
+        authorize HsnSacCode, :bulk_import?
+
+        csv_data = CSV.generate do |csv|
+          csv << %w[code code_type description chapter gst_rate effective_from]
+          csv << ['10061090', 'HSN', 'Rice - Semi-milled or wholly milled rice', '10', '5', '2024-04-01']
+          csv << ['15121110', 'HSN', 'Sunflower-seed or safflower oil',          '15', '5', '2024-04-01']
+          csv << ['996311',   'SAC', 'Room or unit accommodation services',       '99', '18', '2024-04-01']
+        end
+
+        response.headers['Content-Disposition'] = 'attachment; filename="sample_hsn_sac_codes.csv"'
+        render plain: csv_data, content_type: 'text/csv; charset=utf-8'
+      end
+
       # POST /api/v1/hsn_sac_codes/bulk_import
       def bulk_import
         authorize HsnSacCode, :bulk_import?
@@ -124,6 +141,37 @@ module Api
           :code, :code_type, :description, :chapter,
           :gst_rate, :effective_from, :effective_to, :active
         )
+      end
+
+      # GET /api/v1/hsn_sac_codes/export_csv
+      def export_csv
+        authorize HsnSacCode.new, :index?
+
+        scope = apply_filters(HsnSacCode.all).order(code: :asc)
+
+        csv_data = CSV.generate do |csv|
+          csv << %w[code code_type description chapter gst_rate cgst_rate sgst_rate igst_rate
+                    active effective_from effective_to]
+          scope.find_each do |r|
+            csv << [
+              r.code,
+              r.code_type,
+              r.description,
+              r.chapter,
+              r.gst_rate,
+              r.cgst_rate,
+              r.sgst_rate,
+              r.igst_rate,
+              r.active,
+              r.effective_from,
+              r.effective_to
+            ]
+          end
+        end
+
+        response.headers['Content-Disposition'] =
+          "attachment; filename=\"hsn_sac_codes_#{Date.current.iso8601}.csv\""
+        render plain: csv_data, content_type: 'text/csv; charset=utf-8'
       end
 
       # ---------------------------------------------------------------------------

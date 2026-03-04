@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, X, Pencil, Ban, CheckCircle2, Upload } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
+import { Plus, Search, X, Pencil, Ban, CheckCircle2, Upload, Download, CheckCircle, FileWarning } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -99,7 +100,178 @@ function CreditBar({ ca }: { ca: CreditAccount | null }) {
     </div>
   );
 }
+// ─── Bulk Import Modal ────────────────────────────────────────────────────────
+function CustomersBulkImportModal({
+  token, orgId, onClose, onImported,
+}: {
+  token:      string | null;
+  orgId:      string | null;
+  onClose:    () => void;
+  onImported: () => void;
+}) {
+  const [file,    setFile]    = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState<{
+    success_count: number;
+    skipped_rows:  { row: number; code: string; reason: string }[];
+    failed_rows:   { row: number; code: string; errors: string[] }[];
+  } | null>(null);
+  const [error,   setError]   = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  const downloadSample = () => {
+    if (!token || !orgId) return;
+    fetch(`http://localhost:3001/api/v1/customers/sample_csv`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+    })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "sample_customers.csv"; a.click();
+        URL.revokeObjectURL(url);
+      });
+  };
+
+  const handleUpload = async () => {
+    if (!file || !token || !orgId) return;
+    setLoading(true); setError(""); setResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("http://localhost:3001/api/v1/customers/bulk_import", {
+        method:  "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+        body:    fd,
+      });
+      const json = await res.json();
+      if (res.ok) setResult(json.data);
+      else        setError(json.errors?.join(", ") ?? "Import failed");
+    } catch {
+      setError("Network error — please try again");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDone = () => {
+    if (result && result.success_count > 0) onImported();
+    onClose();
+  };
+
+  return (
+    <Modal open onClose={onClose} title="Bulk Import Customers" size="lg">
+      <div className="space-y-5">
+        <div className="rounded-md border border-border bg-background-subtle px-4 py-3 text-sm text-text-secondary">
+          <p className="font-medium text-text-primary mb-1">CSV format</p>
+          <p>Required: <code className="font-mono text-xs bg-white border border-border rounded px-1">name</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">code</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">branch_code</code></p>
+          <p className="mt-0.5">Optional: <code className="font-mono text-xs bg-white border border-border rounded px-1">channel</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">tier</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">phone</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">email</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">credit_limit</code>, <code className="font-mono text-xs bg-white border border-border rounded px-1">route_code</code></p>
+          <p className="mt-0.5 text-xs">Rows with an existing customer code will be <span className="font-medium">skipped</span>. Max 2,000 rows per file.</p>
+        </div>
+
+        <button type="button" onClick={downloadSample} className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+          <Download className="h-4 w-4" /> Download sample CSV
+        </button>
+
+        {!result && (
+          <div>
+            <div
+              onClick={() => inputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-background-subtle hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer py-8"
+            >
+              <Upload className="h-7 w-7 text-text-secondary/60" />
+              {file ? (
+                <div className="text-center">
+                  <p className="text-sm font-medium text-text-primary">{file.name}</p>
+                  <p className="text-xs text-text-secondary">{(file.size / 1024).toFixed(1)} KB</p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-sm text-text-primary">Click to select a CSV file</p>
+                  <p className="text-xs text-text-secondary">.csv files only</p>
+                </div>
+              )}
+            </div>
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(""); }}
+            />
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-start gap-2 rounded-md bg-danger/8 border border-danger/20 px-3 py-2.5 text-sm text-danger">
+            <FileWarning className="h-4 w-4 shrink-0 mt-0.5" />{error}
+          </div>
+        )}
+
+        {result && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2 rounded-md bg-success/10 border border-success/20 px-3 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-success" />
+                <span className="font-medium text-success">{result.success_count} imported</span>
+              </div>
+              {result.skipped_rows.length > 0 && (
+                <div className="flex items-center gap-2 rounded-md bg-warning/10 border border-warning/20 px-3 py-2 text-sm">
+                  <span className="font-medium text-warning">{result.skipped_rows.length} skipped (duplicate codes)</span>
+                </div>
+              )}
+              {result.failed_rows.length > 0 && (
+                <div className="flex items-center gap-2 rounded-md bg-danger/8 border border-danger/20 px-3 py-2 text-sm">
+                  <FileWarning className="h-4 w-4 text-danger" />
+                  <span className="font-medium text-danger">{result.failed_rows.length} failed</span>
+                </div>
+              )}
+            </div>
+            {result.failed_rows.length > 0 && (
+              <div className="rounded-md border border-border overflow-auto max-h-44">
+                <table className="w-full text-xs">
+                  <thead className="bg-background-subtle">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-text-secondary">Row</th>
+                      <th className="px-3 py-2 text-left font-semibold text-text-secondary">Code</th>
+                      <th className="px-3 py-2 text-left font-semibold text-text-secondary">Error</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-white">
+                    {result.failed_rows.map((f) => (
+                      <tr key={f.row}>
+                        <td className="px-3 py-1.5 tabular-nums text-text-secondary">{f.row}</td>
+                        <td className="px-3 py-1.5 font-mono">{f.code || "—"}</td>
+                        <td className="px-3 py-1.5 text-danger">{f.errors.join(", ")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 border-t border-border pt-3">
+          {result ? (
+            <Button onClick={handleDone}>Done</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
+              <Button onClick={handleUpload} disabled={!file || loading}>
+                {loading ? (
+                  <><span className="h-3.5 w-3.5 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent inline-block" />Importing…</>
+                ) : (
+                  <><Upload className="h-4 w-4 mr-2" />Import CSV</>
+                )}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+}
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function CustomersPage() {
   const router = useRouter();
@@ -116,8 +288,8 @@ export default function CustomersPage() {
   const [page,          setPage]          = useState(1);
   const [totalPages,    setTotalPages]    = useState(1);
   const [totalCount,    setTotalCount]    = useState(0);
-  const [importing,     setImporting]     = useState(false);
-  const [importMsg,     setImportMsg]     = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [exporting,     setExporting]     = useState(false);
+  const [showImport,    setShowImport]    = useState(false);
 
   const handleViewChange = (view: SavedView) => {
     setSavedView(view);
@@ -275,42 +447,32 @@ export default function CustomersPage() {
     setSearch(""); setChannel(""); setTier(""); setStatus(""); setPage(1);
   };
 
-  const handleBulkImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !token || !orgId) return;
-    setImporting(true);
-    setImportMsg(null);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch(`http://localhost:3001/api/v1/customers/bulk_import`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
-        body: form,
-      });
-      const json = await res.json();
-      if (res.status === 401) {
-        setImportMsg({ type: "error", text: "Session expired. Please log in again." });
-        return;
-      }
-      if (res.ok) {
-        const d = json.data;
-        const skippedNote = d.skipped_rows?.length ? ` ${d.skipped_rows.length} skipped (duplicates).` : "";
-        const failedNote  = d.failed_rows?.length  ? ` ${d.failed_rows.length} failed.` : "";
-        setImportMsg({ type: "success", text: `${d.success_count} customers imported.${skippedNote}${failedNote}` });
-        fetchCustomers();
-      } else {
-        setImportMsg({ type: "error", text: json.errors?.join(", ") ?? "Import failed" });
-      }
-    } catch {
-      setImportMsg({ type: "error", text: "Network error during import" });
-    } finally {
-      setImporting(false);
-      e.target.value = "";
-    }
-  }, [token, orgId, fetchCustomers]);
-
   const hasFilters = search || channel || tier || status;
+
+  const handleExportCsv = useCallback(async () => {
+    if (!token || !orgId || exporting) return;
+    setExporting(true);
+    try {
+      const qs = new URLSearchParams();
+      if (search)  qs.set("q",       search);
+      if (channel) qs.set("channel", channel);
+      if (tier)    qs.set("tier",    tier);
+      if (status)  qs.set("status",  status);
+      Object.entries(VIEW_PARAMS[savedView]).forEach(([k, v]) => qs.set(k, v));
+      const res = await fetch(`http://localhost:3001/api/v1/customers/export_csv?${qs}`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      const cd   = res.headers.get("Content-Disposition") ?? "";
+      const name = cd.match(/filename="?([^"]+)"?/)?.[1] ?? "customers_export.csv";
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }, [token, orgId, search, channel, tier, status, savedView, exporting]);
 
   return (
     <AppShell title="Customers">
@@ -319,41 +481,29 @@ export default function CustomersPage() {
         description={`${totalCount} total customers`}
         actions={[
           {
-            label: importing ? "Importing…" : "Import CSV",
-            onClick: () => document.getElementById("customer-import-input")?.click(),
+            label: "Import CSV",
+            onClick: () => setShowImport(true),
             icon: Upload,
             variant: "outline",
+          },
+          {
+            label:   exporting ? "Exporting…" : "Export CSV",
+            onClick: handleExportCsv,
+            icon:    Download,
+            variant: "ghost",
           },
           { label: "Add Customer", onClick: () => router.push("/customers/new"), icon: Plus },
         ]}
       />
 
-      {/* Hidden file input for bulk import */}
-      <input
-        id="customer-import-input"
-        type="file"
-        accept=".csv"
-        className="sr-only"
-        onChange={handleBulkImport}
-      />
-
-      {/* Import result / sample download */}
-      <div className="-mt-3 mb-4 flex items-center gap-3">
-        <a
-          href="/samples/sample_customers.csv"
-          download
-          className="text-xs text-accent hover:underline"
-        >
-          Download sample CSV
-        </a>
-        {importMsg && (
-          <span className={`text-xs font-medium ${
-            importMsg.type === "success" ? "text-success" : "text-danger"
-          }`}>
-            {importMsg.text}
-          </span>
-        )}
-      </div>
+      {showImport && (
+        <CustomersBulkImportModal
+          token={token}
+          orgId={orgId}
+          onClose={() => setShowImport(false)}
+          onImported={() => { setShowImport(false); fetchCustomers(); }}
+        />
+      )}
 
       {/* Saved view tabs */}
       <div className="flex mb-4 border-b border-border">
