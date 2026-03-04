@@ -6,9 +6,10 @@ class User < ApplicationRecord
          :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
 
   # Associations
-  has_many :memberships, dependent: :destroy
-  has_many :organizations, through: :memberships
-  has_many :branches,      through: :memberships
+  has_many :memberships,            dependent: :destroy
+  has_many :organizations,          through: :memberships
+  has_many :branches,               through: :memberships
+  has_many :sent_invitations,       class_name: 'Invitation', foreign_key: :invited_by_id, dependent: :destroy
 
   # Validations
   validates :email,      presence: true, uniqueness: { case_sensitive: false },

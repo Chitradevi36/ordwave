@@ -2,6 +2,7 @@ class Branch < ApplicationRecord
   # Associations
   belongs_to :organization
   has_many   :memberships, dependent: :destroy
+  has_many   :invitations, dependent: :nullify
 
   # Validations
   validates :name,         presence: true, length: { maximum: 100 }
@@ -21,5 +22,15 @@ class Branch < ApplicationRecord
 
   def deleted?
     deleted_at.present?
+  end
+
+  # Settings helpers
+  def setting(key, default: nil)
+    settings.fetch(key.to_s, default)
+  end
+
+  def update_setting!(key, value)
+    settings_will_change!
+    update!(settings: settings.merge(key.to_s => value))
   end
 end

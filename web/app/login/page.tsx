@@ -30,8 +30,9 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token
+        // Store token — organization_id is resolved by OrgBranchProvider after login
         localStorage.setItem('auth_token', data.data.token);
+        localStorage.removeItem('organization_id'); // clear stale value so context auto-selects
         localStorage.setItem('user', JSON.stringify(data.data.user));
         
         router.push('/dashboard');

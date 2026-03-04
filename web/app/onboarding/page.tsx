@@ -32,8 +32,10 @@ import {
   HelpCircle,
   Check,
   X,
-  ChevronDown
+  ChevronDown,
+  Loader2
 } from 'lucide-react';
+import { usePincodeLookup } from '@/lib/use-pincode-lookup';
 
 // Reusable Searchable Select Component
 interface SelectOption {
@@ -193,6 +195,14 @@ export default function OnboardingWizardPage() {
     productGST: '',
     teamEmails: [],
   });
+
+  const { city: pcCity, state: pcState, loading: pincodeLoading } = usePincodeLookup(formData.pincode);
+
+  // Auto-fill city & state from pincode lookup
+  useEffect(() => {
+    if (pcCity) setFormData((prev) => ({ ...prev, city: pcCity }));
+    if (pcState) setFormData((prev) => ({ ...prev, state: pcState }));
+  }, [pcCity, pcState]);
 
   const totalSteps = 11;
   const progress = (step / totalSteps) * 100;
@@ -568,6 +578,22 @@ export default function OnboardingWizardPage() {
             </div>
           </div>
 
+          <div className="relative">
+            <label className="block text-xs font-semibold text-text-primary mb-1">
+              Pincode *
+            </label>
+            <Input
+              value={formData.pincode}
+              onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '') })}
+              placeholder="400001"
+              maxLength={6}
+              className="text-sm"
+            />
+            {pincodeLoading && (
+              <Loader2 className="absolute right-3 top-7 h-4 w-4 animate-spin text-text-secondary" />
+            )}
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-text-primary mb-1">
               Address *
@@ -580,30 +606,16 @@ export default function OnboardingWizardPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-text-primary mb-1">
-                City *
-              </label>
-              <Input
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="Mumbai"
-                className="text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-text-primary mb-1">
-                Pincode *
-              </label>
-              <Input
-                value={formData.pincode}
-                onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                placeholder="400001"
-                maxLength={6}
-                className="text-sm"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-text-primary mb-1">
+              City *
+            </label>
+            <Input
+              value={formData.city}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              placeholder="Auto-filled from Pincode"
+              className="text-sm"
+            />
           </div>
 
           <div className="flex items-center gap-2">

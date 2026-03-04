@@ -1,8 +1,9 @@
 class BranchPolicy < ApplicationPolicy
-  def index?   = member?
-  def show?    = member?
-  def create?  = manager_above?
-  def update?  = manager_above?
+  def index?           = member?
+  def show?            = member?
+  def create?          = manager_above?
+  def update?          = manager_above?
+  def update_settings? = owner_or_admin?
 
   class Scope < ApplicationPolicy::Scope
     def resolve

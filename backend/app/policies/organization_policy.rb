@@ -1,9 +1,10 @@
 class OrganizationPolicy < ApplicationPolicy
   # index — list orgs this user is a member of (no org context required)
-  def index?  = true
-  def show?   = member_of_record?
-  def create? = @user.present?   # any authenticated user can create an org
-  def update? = member_of_record? && owner_or_admin_of_record?
+  def index?           = true
+  def show?            = member_of_record?
+  def create?          = @user.present?   # any authenticated user can create an org
+  def update?          = member_of_record? && owner_or_admin_of_record?
+  def update_settings? = member_of_record? && owner_or_admin_of_record?
 
   class Scope < ApplicationPolicy::Scope
     def resolve

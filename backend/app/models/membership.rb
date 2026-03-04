@@ -13,6 +13,10 @@ class Membership < ApplicationRecord
   # Scopes
   scope :active,      -> { where(active: true, deleted_at: nil) }
   scope :not_deleted, -> { where(deleted_at: nil) }
+  scope :for_org,     ->(org)    { where(organization: org) }
+  scope :for_branch,  ->(branch) { where(branch: branch) }
+  scope :for_role,    ->(role)   { where(role: role) }
+  scope :by_status,   ->(status) { where(status: status) }
 
   def soft_delete!
     update!(deleted_at: Time.current, active: false)

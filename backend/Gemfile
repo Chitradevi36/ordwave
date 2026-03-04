@@ -57,6 +57,8 @@ gem 'kaminari', '~> 1.2'
 # Pin connection_pool to 2.x to avoid Ruby 3.3.0 syntax incompatibility in 3.0.x
 gem 'connection_pool', '~> 2.4'
 
+gem 'pry'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
