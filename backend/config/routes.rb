@@ -39,8 +39,9 @@ Rails.application.routes.draw do
       post 'onboarding/complete_step', to: 'onboarding#complete_step'
 
       # Current user profile
-      get 'profile', to: 'profiles#show'
-      put 'profile', to: 'profiles#update'
+      get  'profile',                 to: 'profiles#show'
+      put  'profile',                 to: 'profiles#update'
+      post 'profile/change_password', to: 'profiles#change_password'
 
       # Resources
       resources :organizations, only: %i[index show create update] do
@@ -51,6 +52,9 @@ Rails.application.routes.draw do
       end
 
       resources :branches, only: %i[index show create update] do
+        collection do
+          post :bulk_import
+        end
         member do
           get   :settings
           patch :settings, action: :update_settings
@@ -69,9 +73,35 @@ Rails.application.routes.draw do
       resources :memberships, only: %i[index create destroy]
       resources :roles,       only: %i[index]
 
+      # Customers (Retailer CRM)
+      resources :customers, only: %i[index show create update destroy] do
+        collection do
+          get  :check_duplicate
+          post :bulk_import
+        end
+        member do
+          post :block
+          post :unblock
+          post :deactivate
+        end
+      end
+      resources :routes,          only: %i[index show create update destroy]
+      resources :credit_accounts, only: %i[show update]
+
       resources :invitations, only: %i[index create destroy] do
         collection do
           post :accept
+        end
+      end
+
+      # HSN/SAC Master & GST
+      resources :hsn_sac_codes, only: %i[index show create update destroy] do
+        collection do
+          get  :lookup
+          post :bulk_import
+        end
+        member do
+          post :rate_change
         end
       end
     end

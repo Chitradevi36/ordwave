@@ -6,9 +6,10 @@ module Api
       before_action :authenticate_user!
       before_action :set_current_organization
 
-      rescue_from Pundit::NotAuthorizedError,      with: :forbidden
-      rescue_from ActiveRecord::RecordNotFound,    with: :not_found
-      rescue_from ActiveRecord::RecordInvalid,     with: :unprocessable
+      rescue_from Pundit::NotAuthorizedError,              with: :forbidden
+      rescue_from Pundit::AuthorizationNotPerformedError, with: :forbidden
+      rescue_from ActiveRecord::RecordNotFound,            with: :not_found
+      rescue_from ActiveRecord::RecordInvalid,             with: :unprocessable
 
       after_action :verify_authorized,             except: :index
       after_action :verify_policy_scoped,          only:   :index

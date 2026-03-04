@@ -19,6 +19,29 @@ module Api
         end
       end
 
+      def change_password
+        authorize current_user, policy_class: UserPolicy
+
+        unless current_user.valid_password?(params[:current_password])
+          return render_errors(['Current password is incorrect'], status: :unprocessable_entity)
+        end
+
+        if params[:new_password] != params[:new_password_confirmation]
+          return render_errors(['New password confirmation does not match'], status: :unprocessable_entity)
+        end
+
+        if params[:new_password].blank? || params[:new_password].length < 8
+          return render_errors(['New password must be at least 8 characters'], status: :unprocessable_entity)
+        end
+
+        if current_user.update(password: params[:new_password],
+                               password_confirmation: params[:new_password_confirmation])
+          render_success({ message: 'Password updated successfully' })
+        else
+          render_errors(current_user.errors.full_messages)
+        end
+      end
+
       private
 
       def profile_params

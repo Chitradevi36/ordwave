@@ -1,0 +1,9 @@
+name,code,channel,tier,customer_type,status,phone,email,gstin,pan,credit_limit,credit_days,credit_block_rule,opening_balance,visit_frequency,branch_code,route_code,tags
+Rani General Store,CUST-0001,general_trade,gold,retailer,active,9876543210,rani@example.com,27AABCU9603R1ZX,AABCU9603R,50000,30,soft_block,0,weekly,BR-001,RT-001,"regular,priority"
+Metro Super Mart,CUST-0002,modern_trade,platinum,retailer,active,9876543211,metro@example.com,29AAPFU0510N1Z3,AAPFU0510N,200000,45,none,0,weekly,BR-003,RT-002,"premium,modern_trade"
+Hotel Grand Palace,CUST-0003,horeca,silver,horeca,active,9876543212,reservations@grand.com,,,25000,15,none,500,weekly,BR-001,,"horeca,hotel"
+MediCare Pharmacy,CUST-0004,pharmacy,bronze,institution,active,9876543213,purchase@medicare.com,,,10000,0,none,0,monthly,BR-002,,pharmacy
+Quick Wholesale,CUST-0005,wholesale,gold,wholesaler,active,9876543214,buy@quickwhole.com,07AAACP0286C1ZT,AAACP0286C,100000,30,soft_block,2000,biweekly,BR-002,RT-003,"wholesale,bulk"
+Gupta Electronics,CUST-0006,electronics,silver,retailer,active,9876543215,gupta@elec.com,27ABMCG0718F1Z6,ABMCG0718F,75000,30,none,0,weekly,BR-001,RT-001,electronics
+FreshMart Stores,CUST-0007,general_trade,bronze,retailer,active,9876543216,,,,15000,0,none,0,monthly,BR-004,,
+Om Distributors,CUST-0008,distributor,platinum,distributor,active,9876543217,om@dist.com,33AACCU9603E1ZA,AACCU9603E,500000,60,hard_block,10000,biweekly,BR-004,RT-004,"distributor,large_account"

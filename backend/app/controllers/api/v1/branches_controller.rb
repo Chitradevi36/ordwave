@@ -58,10 +58,32 @@ module Api
         end
       end
 
+      def bulk_import
+        authorize Branch.new(organization: current_organization), :bulk_import?
+
+        unless params[:file].present?
+          return render_errors(['file is required'], status: :bad_request)
+        end
+
+        result = Branches::BulkImportService.new(
+          file:         params[:file],
+          organization: current_organization
+        ).call
+
+        render_success(
+          {
+            success_count: result.success_count,
+            skipped_rows:  result.skipped_rows,
+            failed_rows:   result.failed_rows,
+            message:       "#{result.success_count} branches imported successfully"
+          }
+        )
+      end
+
       private
 
       def branch_params
-        params.require(:branch).permit(:name, :code, :city, :state, :address, :pincode, :active)
+        params.require(:branch).permit(:name, :code, :city, :state, :state_code, :address, :pincode, :active)
       end
 
       def settings_params
