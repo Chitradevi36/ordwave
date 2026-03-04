@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_04_240007) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_04_250005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "audit_logs", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "actor_id", null: false
+    t.string "auditable_type", null: false
+    t.bigint "auditable_id", null: false
+    t.string "action", null: false
+    t.jsonb "changes_data", default: {}, null: false
+    t.string "reason"
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_audit_logs_on_actor_id"
+    t.index ["auditable_type", "auditable_id"], name: "index_audit_logs_on_auditable"
+    t.index ["organization_id"], name: "index_audit_logs_on_organization_id"
+  end
 
   create_table "branches", force: :cascade do |t|
     t.string "name", null: false
@@ -46,9 +60,51 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_240007) do
     t.integer "overdue_days", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "collection_first", default: false, null: false
+    t.boolean "hold_required", default: false, null: false
+    t.boolean "watchlist", default: false, null: false
+    t.string "overdue_bucket_cached"
     t.index ["branch_id"], name: "index_credit_accounts_on_branch_id"
     t.index ["customer_id"], name: "index_credit_accounts_on_customer_id"
     t.index ["organization_id"], name: "index_credit_accounts_on_organization_id"
+  end
+
+  create_table "credit_limit_change_requests", force: :cascade do |t|
+    t.bigint "credit_account_id", null: false
+    t.bigint "requested_by_id", null: false
+    t.bigint "decided_by_id"
+    t.decimal "new_limit", precision: 12, scale: 2, null: false
+    t.decimal "counter_offer_limit", precision: 12, scale: 2
+    t.string "status", default: "pending", null: false
+    t.text "reason", null: false
+    t.text "supporting_notes"
+    t.text "decision_note"
+    t.datetime "decided_at"
+    t.datetime "sla_breached_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["credit_account_id", "status"], name: "idx_clcr_account_status"
+    t.index ["credit_account_id"], name: "index_credit_limit_change_requests_on_credit_account_id"
+    t.index ["decided_by_id"], name: "index_credit_limit_change_requests_on_decided_by_id"
+    t.index ["requested_by_id"], name: "index_credit_limit_change_requests_on_requested_by_id"
+    t.index ["status"], name: "index_credit_limit_change_requests_on_status"
+  end
+
+  create_table "credit_policies", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.integer "hard_block_overdue_days", default: 30, null: false
+    t.decimal "hard_block_margin_pct", precision: 6, scale: 2, default: "20.0", null: false
+    t.integer "soft_hold_overdue_days_min", default: 15, null: false
+    t.integer "soft_hold_overdue_days_max", default: 29, null: false
+    t.decimal "soft_hold_outstanding_pct", precision: 6, scale: 2, default: "100.0", null: false
+    t.string "collection_first_bucket", default: "serious", null: false
+    t.integer "approval_sla_hours_manager", default: 4, null: false
+    t.integer "approval_sla_hours_owner", default: 8, null: false
+    t.string "auto_invoice_trigger", default: "on_delivery", null: false
+    t.boolean "allow_partial_allocation", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id"], name: "index_credit_policies_on_organization_id", unique: true
   end
 
   create_table "customer_addresses", force: :cascade do |t|
@@ -237,6 +293,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_240007) do
     t.index ["otp_code"], name: "index_pending_registrations_on_otp_code"
   end
 
+  create_table "prepayment_skus", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.bigint "product_id", null: false
+    t.bigint "created_by_id", null: false
+    t.text "reason", null: false
+    t.date "effective_from", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_prepayment_skus_on_branch_id"
+    t.index ["created_by_id"], name: "index_prepayment_skus_on_created_by_id"
+    t.index ["organization_id", "product_id", "branch_id"], name: "idx_prepayment_skus_active_unique", unique: true, where: "(active = true)"
+    t.index ["organization_id"], name: "index_prepayment_skus_on_organization_id"
+    t.index ["product_id"], name: "index_prepayment_skus_on_product_id"
+  end
+
   create_table "price_list_items", force: :cascade do |t|
     t.bigint "price_list_id", null: false
     t.bigint "product_id", null: false
@@ -395,10 +468,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_240007) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "audit_logs", "organizations"
+  add_foreign_key "audit_logs", "users", column: "actor_id"
   add_foreign_key "branches", "organizations"
   add_foreign_key "credit_accounts", "branches"
   add_foreign_key "credit_accounts", "customers"
   add_foreign_key "credit_accounts", "organizations"
+  add_foreign_key "credit_limit_change_requests", "credit_accounts"
+  add_foreign_key "credit_limit_change_requests", "users", column: "decided_by_id"
+  add_foreign_key "credit_limit_change_requests", "users", column: "requested_by_id"
+  add_foreign_key "credit_policies", "organizations"
   add_foreign_key "customer_addresses", "customers"
   add_foreign_key "customer_contacts", "customers"
   add_foreign_key "customers", "branches"
@@ -415,6 +494,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_240007) do
   add_foreign_key "memberships", "users"
   add_foreign_key "onboarding_progresses", "organizations"
   add_foreign_key "onboarding_progresses", "users"
+  add_foreign_key "prepayment_skus", "branches"
+  add_foreign_key "prepayment_skus", "organizations"
+  add_foreign_key "prepayment_skus", "products"
+  add_foreign_key "prepayment_skus", "users", column: "created_by_id"
   add_foreign_key "price_list_items", "price_lists"
   add_foreign_key "price_list_items", "products"
   add_foreign_key "price_lists", "branches"

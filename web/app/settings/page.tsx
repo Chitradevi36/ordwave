@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, GitBranch, Users, ChevronRight, Plus, UserCircle, Receipt, Upload } from "lucide-react";
+import { Building2, GitBranch, Users, ChevronRight, Plus, UserCircle, Receipt, Upload, CreditCard } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { AddBranchModal } from "@/components/add-branch-modal";
 import { AddOrganizationModal } from "@/components/add-organization-modal";
@@ -166,6 +166,38 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm font-medium text-text-primary">HSN / SAC Codes</p>
                 <p className="text-xs text-text-secondary">Manage GST rate master &amp; HSN/SAC catalogue</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+          </CardContent>
+        </Card>
+
+        {/* Credit Engine */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <CreditCard className="h-4 w-4 text-accent" />
+              Credit Engine
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 p-0 pb-3">
+            <button
+              onClick={() => router.push("/settings/credit-policy")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Credit Policy</p>
+                <p className="text-xs text-text-secondary">Hard block, soft hold, SLA and invoice rules</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+            <button
+              onClick={() => router.push("/settings/prepayment-skus")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Prepayment SKUs</p>
+                <p className="text-xs text-text-secondary">Products that require advance payment</p>
               </div>
               <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
             </button>
