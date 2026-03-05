@@ -10,9 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_05_000007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "audit_logs", force: :cascade do |t|
     t.bigint "organization_id", null: false
@@ -174,6 +202,42 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
     t.index ["status"], name: "index_customers_on_status"
     t.index ["tag_list"], name: "index_customers_on_tag_list", using: :gin
     t.index ["tier"], name: "index_customers_on_tier"
+  end
+
+  create_table "delivery_proofs", force: :cascade do |t|
+    t.bigint "trip_stop_id", null: false
+    t.string "proof_type", default: "photo", null: false
+    t.string "otp_code_digest"
+    t.datetime "otp_verified_at"
+    t.string "override_reason"
+    t.bigint "overridden_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["proof_type"], name: "index_delivery_proofs_on_proof_type"
+    t.index ["trip_stop_id"], name: "index_delivery_proofs_on_trip_stop_id"
+  end
+
+  create_table "delivery_trips", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "vehicle_id"
+    t.bigint "driver_id"
+    t.string "trip_number", null: false
+    t.date "trip_date", null: false
+    t.string "status", default: "draft", null: false
+    t.text "notes"
+    t.string "cancellation_reason"
+    t.datetime "dispatched_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_delivery_trips_on_branch_id"
+    t.index ["driver_id"], name: "index_delivery_trips_on_driver_id"
+    t.index ["organization_id", "trip_number"], name: "index_delivery_trips_on_organization_id_and_trip_number", unique: true
+    t.index ["organization_id"], name: "index_delivery_trips_on_organization_id"
+    t.index ["status"], name: "index_delivery_trips_on_status"
+    t.index ["trip_date"], name: "index_delivery_trips_on_trip_date"
+    t.index ["vehicle_id"], name: "index_delivery_trips_on_vehicle_id"
   end
 
   create_table "hsn_sac_codes", force: :cascade do |t|
@@ -398,6 +462,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
     t.index ["price_list_id"], name: "index_retailer_price_list_assignments_on_price_list_id"
   end
 
+  create_table "return_records", force: :cascade do |t|
+    t.bigint "trip_stop_id", null: false
+    t.bigint "product_id", null: false
+    t.integer "qty_returned", default: 0, null: false
+    t.string "condition", default: "good", null: false
+    t.string "reason_code", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["condition"], name: "index_return_records_on_condition"
+    t.index ["product_id"], name: "index_return_records_on_product_id"
+    t.index ["reason_code"], name: "index_return_records_on_reason_code"
+    t.index ["trip_stop_id"], name: "index_return_records_on_trip_stop_id"
+  end
+
   create_table "roles", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -432,6 +511,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
     t.string "hsn_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "delivered_qty", default: 0, null: false
+    t.integer "returned_qty", default: 0, null: false
     t.index ["price_list_id"], name: "index_sales_order_lines_on_price_list_id"
     t.index ["product_id"], name: "index_sales_order_lines_on_product_id"
     t.index ["sales_order_id"], name: "index_sales_order_lines_on_sales_order_id"
@@ -459,6 +540,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "dispatched_at"
+    t.datetime "delivered_at"
+    t.text "delivery_failure_reason"
     t.index ["branch_id"], name: "index_sales_orders_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_orders_on_created_by_id"
     t.index ["customer_id"], name: "index_sales_orders_on_customer_id"
@@ -483,6 +567,28 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
     t.index ["branch_id", "retailer_tier"], name: "idx_tier_pl_assignment_branch_tier"
     t.index ["branch_id"], name: "index_tier_price_list_assignments_on_branch_id"
     t.index ["price_list_id"], name: "index_tier_price_list_assignments_on_price_list_id"
+  end
+
+  create_table "trip_stops", force: :cascade do |t|
+    t.bigint "delivery_trip_id", null: false
+    t.bigint "sales_order_id", null: false
+    t.integer "sequence", default: 0, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "delivered_at"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
+    t.string "device_id"
+    t.string "exception_code"
+    t.text "delivery_notes"
+    t.string "idempotency_key"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_trip_id", "sequence"], name: "index_trip_stops_on_delivery_trip_id_and_sequence"
+    t.index ["delivery_trip_id"], name: "index_trip_stops_on_delivery_trip_id"
+    t.index ["idempotency_key"], name: "index_trip_stops_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["sales_order_id"], name: "index_trip_stops_on_sales_order_id"
+    t.index ["status"], name: "index_trip_stops_on_status"
   end
 
   create_table "units_of_measures", force: :cascade do |t|
@@ -519,6 +625,29 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  create_table "vehicles", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "registration_number", null: false
+    t.string "vehicle_type", default: "truck", null: false
+    t.decimal "capacity_kg", precision: 10, scale: 2
+    t.integer "capacity_units"
+    t.bigint "default_driver_id"
+    t.date "insurance_expiry"
+    t.date "fitness_expiry"
+    t.date "permit_expiry"
+    t.string "status", default: "active", null: false
+    t.text "notes"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_vehicles_on_deleted_at"
+    t.index ["organization_id", "registration_number"], name: "index_vehicles_on_organization_id_and_registration_number", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["organization_id"], name: "index_vehicles_on_organization_id"
+    t.index ["status"], name: "index_vehicles_on_status"
+  end
+
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "audit_logs", "organizations"
   add_foreign_key "audit_logs", "users", column: "actor_id"
   add_foreign_key "branches", "organizations"
@@ -535,6 +664,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
   add_foreign_key "customers", "organizations"
   add_foreign_key "customers", "routes"
   add_foreign_key "customers", "users", column: "sales_rep_id"
+  add_foreign_key "delivery_proofs", "trip_stops"
+  add_foreign_key "delivery_proofs", "users", column: "overridden_by_id"
+  add_foreign_key "delivery_trips", "branches"
+  add_foreign_key "delivery_trips", "organizations"
+  add_foreign_key "delivery_trips", "users", column: "driver_id"
+  add_foreign_key "delivery_trips", "vehicles"
   add_foreign_key "invitations", "branches"
   add_foreign_key "invitations", "organizations"
   add_foreign_key "invitations", "roles"
@@ -560,6 +695,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
   add_foreign_key "products", "units_of_measures"
   add_foreign_key "retailer_price_list_assignments", "customers"
   add_foreign_key "retailer_price_list_assignments", "price_lists"
+  add_foreign_key "return_records", "products"
+  add_foreign_key "return_records", "trip_stops"
   add_foreign_key "routes", "branches"
   add_foreign_key "routes", "organizations"
   add_foreign_key "sales_order_lines", "products"
@@ -570,4 +707,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
   add_foreign_key "sales_orders", "users", column: "created_by_id"
   add_foreign_key "tier_price_list_assignments", "branches"
   add_foreign_key "tier_price_list_assignments", "price_lists"
+  add_foreign_key "trip_stops", "delivery_trips"
+  add_foreign_key "trip_stops", "sales_orders"
+  add_foreign_key "vehicles", "organizations"
+  add_foreign_key "vehicles", "users", column: "default_driver_id"
 end

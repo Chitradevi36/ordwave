@@ -49,5 +49,20 @@ class ApplicationPolicy
     private
 
     attr_reader :user_context, :user, :organization, :scope
+
+    def membership
+      @membership ||= @user&.membership_for(@organization)
+    end
+
+    def role_name
+      membership&.role&.name
+    end
+
+    def member?         = membership.present?
+    def owner?          = role_name == 'owner'
+    def admin?          = role_name == 'admin'
+    def manager?        = role_name == 'manager'
+    def owner_or_admin? = role_name.in?(%w[owner admin])
+    def manager_above?  = role_name.in?(%w[owner admin manager])
   end
 end

@@ -23,7 +23,7 @@ const navItems = [
   { href: "/products",                label: "Products",    icon: Package },
   { href: "/customers",               label: "Customers",   icon: Building2 },
   { href: "/routes",                  label: "Routes",      icon: MapPin },
-  { href: "/drivers",                 label: "Drivers",     icon: Truck },
+  { href: "/delivery",                 label: "Delivery",    icon: Truck },
   { href: "/collections",             label: "Collections", icon: CreditCard },
   { href: "/approvals/credit-limits", label: "Approvals",   icon: CheckSquare },
   { href: "/reports",                 label: "Reports",     icon: BarChart3 },

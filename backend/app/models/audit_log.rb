@@ -18,6 +18,19 @@ class AuditLog < ApplicationRecord
     order_rejected
     order_cancelled
     order_price_refreshed
+    order_dispatched
+    order_delivered
+    order_partial_delivery
+    trip_created
+    trip_planned
+    trip_dispatched
+    trip_completed
+    trip_cancelled
+    stop_completed
+    stop_exception_flagged
+    vehicle_created
+    vehicle_updated
+    vehicle_deleted
   ].freeze
 
   belongs_to :organization

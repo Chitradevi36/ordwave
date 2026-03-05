@@ -86,7 +86,8 @@ role_definitions = [
   { name: 'manager',         description: 'Branch manager — manage staff, inventory, orders for a branch' },
   { name: 'sales_rep',       description: 'Sales representative — create and manage orders' },
   { name: 'warehouse_staff', description: 'Warehouse staff — manage inventory and dispatch' },
-  { name: 'accountant',      description: 'Accountant — view financials, manage payments' }
+  { name: 'accountant',      description: 'Accountant — view financials, manage payments' },
+  { name: 'driver',          description: 'Delivery driver — complete trip stops via mobile app' }
 ]
 
 role_definitions.each do |attrs|
@@ -293,6 +294,56 @@ if Rails.env.development?
 
   puts ''
   puts '  == Price lists seeded.'
+
+  # ── Delivery: Vehicles & Drivers ─────────────────────────────────────────
+  puts ''
+  puts '  == Seeding delivery vehicles and drivers...'
+
+  driver_role = Role.find_by!(name: 'driver')
+
+  driver_defs = [
+    { email: 'driver1@riceoms.dev', first_name: 'Ravi',   last_name: 'Kumar' },
+    { email: 'driver2@riceoms.dev', first_name: 'Suresh', last_name: 'Yadav' },
+    { email: 'driver3@riceoms.dev', first_name: 'Mohan',  last_name: 'Das'   },
+  ]
+
+  drivers = driver_defs.map do |attrs|
+    u = User.find_or_initialize_by(email: attrs[:email])
+    u.assign_attributes(first_name: attrs[:first_name], last_name: attrs[:last_name], active: true)
+    u.password = 'Password@123' if u.new_record? || u.encrypted_password.blank?
+    u.save!
+    unless Membership.exists?(user: u, organization: org, branch: branch)
+      Membership.create!(user: u, organization: org, branch: branch, role: driver_role, active: true)
+    end
+    puts "    Driver: #{u.email} (#{u.first_name} #{u.last_name})"
+    u
+  end
+
+  vehicle_defs = [
+    { registration_number: 'TS09EA4321', vehicle_type: 'truck', capacity_kg: 3000, capacity_units: 1200,
+      status: 'active', insurance_expiry: 1.year.from_now.to_date, fitness_expiry: 1.year.from_now.to_date },
+    { registration_number: 'TS09EA8765', vehicle_type: 'tempo', capacity_kg: 1500, capacity_units: 600,
+      status: 'active', insurance_expiry: 8.months.from_now.to_date, fitness_expiry: 10.months.from_now.to_date },
+    { registration_number: 'TS09EA2201', vehicle_type: 'bike',  capacity_kg: nil,  capacity_units: nil,
+      status: 'active', insurance_expiry: 6.months.from_now.to_date, fitness_expiry: nil },
+  ]
+
+  vehicle_defs.each_with_index do |attrs, i|
+    v = Vehicle.find_or_initialize_by(registration_number: attrs[:registration_number], organization: org)
+    v.assign_attributes(
+      vehicle_type:      attrs[:vehicle_type],
+      capacity_kg:       attrs[:capacity_kg],
+      capacity_units:    attrs[:capacity_units],
+      status:            attrs[:status],
+      insurance_expiry:  attrs[:insurance_expiry],
+      fitness_expiry:    attrs[:fitness_expiry],
+      default_driver_id: drivers[i]&.id
+    )
+    v.save!
+    puts "    Vehicle: #{v.registration_number} (#{v.vehicle_type}) → driver: #{drivers[i]&.email}"
+  end
+
+  puts '  == Vehicles and drivers seeded.'
 
   puts ''
   puts '  ┌─ Dev login credentials ────────────────'

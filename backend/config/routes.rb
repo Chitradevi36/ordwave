@@ -178,6 +178,26 @@ Rails.application.routes.draw do
           post :refresh_price
         end
       end
+
+      # Delivery
+      resources :vehicles, only: %i[index show create update destroy]
+
+      resources :delivery_trips, only: %i[index show create update] do
+        collection do
+          post :auto_create
+        end
+        member do
+          post :dispatch_trip, path: 'dispatch'
+          post :cancel
+        end
+        resources :trip_stops, only: %i[index show] do
+          member do
+            post :complete
+          end
+        end
+      end
+
+      resources :delivery_exceptions, only: %i[index]
     end
   end
 end
