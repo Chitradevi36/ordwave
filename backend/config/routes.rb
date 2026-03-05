@@ -98,6 +98,32 @@ Rails.application.routes.draw do
                   controller: 'supplier_products'
       end
 
+      # Purchase Invoices
+      resources :purchase_invoices, only: %i[index show create update] do
+        member do
+          post :post_invoice, path: 'post'
+          post :cancel
+        end
+      end
+
+      # Stock Transfers
+      resources :stock_transfers, only: %i[index show create update] do
+        member do
+          post :dispatch_transfer, path: 'dispatch'
+          post :receive
+          post :cancel
+        end
+      end
+
+      # Inventory Ledger
+      resources :inventory_levels, only: %i[index show]   # legacy — kept for existing clients
+
+      namespace :inventory do
+        resources :balances,    only: %i[index show]
+        resources :movements,   only: %i[index]
+        resources :adjustments, only: %i[create]
+      end
+
       resources :routes,          only: %i[index show create update destroy]
       resources :credit_accounts, only: %i[show update] do
         member do
@@ -186,6 +212,25 @@ Rails.application.routes.draw do
           post :hold
           post :cancel
           post :refresh_price
+        end
+      end
+
+      # Returns Engine
+      resources :return_requests, only: %i[index show create update] do
+        member do
+          post :submit
+          post :start_qc
+          post :complete_qc
+          post :cancel
+        end
+      end
+
+      resources :credit_notes, only: %i[index show] do
+        member do
+          post :void_note, path: 'void'
+        end
+        collection do
+          post 'from_return/:return_request_id/issue', action: :issue, as: :issue_from_return
         end
       end
 

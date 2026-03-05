@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { DataTable, Column } from "@/components/ui/data-table";
-import { Pencil, Ban, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { Pencil, Ban, CheckCircle2, Plus, Trash2, ExternalLink } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useOrgBranch } from "@/lib/org-branch-context";
 
@@ -331,6 +331,121 @@ function ProductsTab({
   );
 }
 
+// ─── Invoices Tab ─────────────────────────────────────────────────────────────
+interface SupplierInvoice {
+  id: number;
+  invoice_number: string;
+  invoice_date:   string;
+  status:         string;
+  grand_total:    number;
+  due_date:       string | null;
+}
+
+const INV_STATUS_VARIANT: Record<string, "success" | "secondary" | "danger"> = {
+  draft: "secondary", posted: "success", cancelled: "danger",
+};
+
+function fmt(n: number) {
+  return `₹${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+function fdate(d: string) {
+  return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function InvoicesTab({
+  supplierId, token, orgId,
+}: {
+  supplierId: number;
+  token:      string | null;
+  orgId:      string | null;
+}) {
+  const router = useRouter();
+  const [invoices, setInvoices] = useState<SupplierInvoice[]>([]);
+  const [loading,  setLoading]  = useState(false);
+
+  useEffect(() => {
+    if (!token || !orgId) return;
+    setLoading(true);
+    fetch(`http://localhost:3001/api/v1/purchase_invoices?supplier_id=${supplierId}&per_page=50`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+    })
+      .then((r) => r.json())
+      .then((j) => setInvoices(j.data ?? []))
+      .finally(() => setLoading(false));
+  }, [token, orgId, supplierId]);
+
+  const columns: Column<SupplierInvoice>[] = [
+    {
+      key: "invoice_number",
+      header: "Invoice #",
+      render: (_: unknown, row: SupplierInvoice) => (
+        <span className="font-medium font-mono text-text-primary">{row.invoice_number}</span>
+      ),
+    },
+    {
+      key: "invoice_date",
+      header: "Date",
+      render: (v) => <span className="text-sm text-text-secondary">{fdate(v as string)}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (_: unknown, row: SupplierInvoice) => (
+        <Badge variant={INV_STATUS_VARIANT[row.status] ?? "secondary"}>
+          {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+        </Badge>
+      ),
+    },
+    {
+      key: "grand_total",
+      header: "Grand Total",
+      render: (v) => <span className="text-sm font-medium text-text-primary">{fmt(Number(v))}</span>,
+    },
+    {
+      key: "due_date",
+      header: "Due Date",
+      render: (v) => <span className="text-sm text-text-secondary">{v ? fdate(v as string) : "—"}</span>,
+    },
+    {
+      key: "view",
+      header: "",
+      render: (_: unknown, row: SupplierInvoice) => (
+        <button
+          onClick={(e) => { e.stopPropagation(); router.push(`/purchases/invoices/${row.id}`); }}
+          className="p-1 rounded hover:bg-muted text-text-secondary hover:text-accent transition-colors"
+          title="View invoice"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </button>
+      ),
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => router.push(`/purchases/invoices/new?supplier_id=${supplierId}`)}>
+          <Plus className="h-4 w-4 mr-1" /> New Invoice
+        </Button>
+      </div>
+      <DataTable
+        columns={columns}
+        data={invoices}
+        onRowClick={(row) => router.push(`/purchases/invoices/${row.id}`)}
+        emptyMessage="No purchase invoices for this supplier."
+      />
+    </div>
+  );
+}
+
 // ─── Activity Tab ─────────────────────────────────────────────────────────────
 function ActivityTab() {
   return (
@@ -468,6 +583,17 @@ export default function SupplierDetailPage() {
       value:   "activity",
       label:   "Activity",
       content: <ActivityTab />,
+    },
+    {
+      value:   "invoices",
+      label:   "Purchase Invoices",
+      content: (
+        <InvoicesTab
+          supplierId={supplier.id}
+          token={token}
+          orgId={orgId}
+        />
+      ),
     },
   ];
 
