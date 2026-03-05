@@ -24,6 +24,9 @@ class Customer < ApplicationRecord
   has_many :sales_orders, dependent: :restrict_with_error
   has_many :return_requests, dependent: :destroy
   has_many :credit_notes,   dependent: :nullify
+  has_many :sales_invoices, dependent: :restrict_with_error
+  has_many :payments,        dependent: :restrict_with_error
+  has_many :advance_payments, dependent: :destroy
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
   accepts_nested_attributes_for :contacts,  allow_destroy: true

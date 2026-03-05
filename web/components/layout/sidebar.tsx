@@ -13,7 +13,6 @@ import {
   BarChart3,
   Settings,
   Building2,
-  CreditCard,
   CheckSquare,
   Boxes,
   FileText,
@@ -21,6 +20,8 @@ import {
   ArrowLeftRight,
   RotateCcw,
   ReceiptText,
+  Receipt,
+  Wallet,
 } from "lucide-react";
 
 const navItems = [
@@ -34,9 +35,10 @@ const navItems = [
   { href: "/inventory/transfers",     label: "Transfers",        icon: ArrowLeftRight },
   { href: "/returns",                 label: "Returns",          icon: RotateCcw },
   { href: "/credit-notes",           label: "Credit Notes",     icon: ReceiptText },
+  { href: "/sales-invoices",          label: "Sales Invoices",   icon: Receipt },
+  { href: "/collections",             label: "Collections",     icon: Wallet },
   { href: "/routes",                  label: "Routes",           icon: MapPin },
   { href: "/delivery",                 label: "Delivery",    icon: Truck },
-  { href: "/collections",             label: "Collections", icon: CreditCard },
   { href: "/approvals/credit-limits", label: "Approvals",   icon: CheckSquare },
   { href: "/reports",                 label: "Reports",     icon: BarChart3 },
   { href: "/settings",                label: "Settings",    icon: Settings },

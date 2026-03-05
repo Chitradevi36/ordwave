@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_05_000030) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "advance_payments", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "customer_id", null: false
+    t.bigint "source_payment_id", null: false
+    t.decimal "original_amount", precision: 14, scale: 2, null: false
+    t.decimal "balance", precision: 14, scale: 2, null: false
+    t.string "status", default: "unapplied", null: false
+    t.datetime "refunded_at"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_advance_payments_on_branch_id"
+    t.index ["customer_id"], name: "index_advance_payments_on_customer_id"
+    t.index ["organization_id", "customer_id", "status"], name: "idx_advance_payments_org_cust_status"
+    t.index ["organization_id"], name: "index_advance_payments_on_organization_id"
+    t.index ["source_payment_id"], name: "index_advance_payments_on_source_payment_id"
+    t.index ["status"], name: "idx_advance_payments_status"
   end
 
   create_table "audit_logs", force: :cascade do |t|
@@ -422,6 +442,53 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
     t.index ["slug"], name: "index_organizations_on_slug", unique: true
   end
 
+  create_table "payment_allocations", force: :cascade do |t|
+    t.bigint "payment_id", null: false
+    t.bigint "sales_invoice_id", null: false
+    t.decimal "allocated_amount", precision: 14, scale: 2, null: false
+    t.string "status", default: "active", null: false
+    t.datetime "reversed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payment_id", "sales_invoice_id"], name: "idx_allocations_payment_invoice"
+    t.index ["payment_id"], name: "index_payment_allocations_on_payment_id"
+    t.index ["sales_invoice_id"], name: "idx_allocations_invoice"
+    t.index ["sales_invoice_id"], name: "index_payment_allocations_on_sales_invoice_id"
+    t.index ["status"], name: "idx_allocations_status"
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "customer_id", null: false
+    t.bigint "created_by_id", null: false
+    t.string "payment_number", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.string "payment_mode", default: "cash", null: false
+    t.string "reference_number"
+    t.date "received_date", null: false
+    t.string "status", default: "draft", null: false
+    t.text "notes"
+    t.decimal "allocated_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "unallocated_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.datetime "confirmed_at"
+    t.datetime "reversed_at"
+    t.text "reversal_reason"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_payments_on_branch_id"
+    t.index ["created_by_id"], name: "index_payments_on_created_by_id"
+    t.index ["customer_id", "status"], name: "idx_payments_customer_status"
+    t.index ["customer_id"], name: "index_payments_on_customer_id"
+    t.index ["metadata"], name: "idx_payments_metadata", using: :gin
+    t.index ["organization_id", "payment_number"], name: "idx_payments_org_number", unique: true
+    t.index ["organization_id", "status"], name: "idx_payments_org_status"
+    t.index ["organization_id"], name: "index_payments_on_organization_id"
+    t.index ["payment_mode"], name: "idx_payments_mode"
+    t.index ["received_date"], name: "idx_payments_received_date"
+  end
+
   create_table "pending_registrations", force: :cascade do |t|
     t.string "email", null: false
     t.string "otp_code"
@@ -692,6 +759,78 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
     t.index ["organization_id"], name: "index_routes_on_organization_id"
   end
 
+  create_table "sales_invoice_lines", force: :cascade do |t|
+    t.bigint "sales_invoice_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "qty", precision: 14, scale: 3, null: false
+    t.decimal "unit_price", precision: 14, scale: 2, null: false
+    t.decimal "discount_pct", precision: 5, scale: 2, default: "0.0"
+    t.decimal "taxable_value", precision: 14, scale: 2, default: "0.0", null: false
+    t.string "hsn_code"
+    t.decimal "gst_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "cgst_rate", precision: 5, scale: 2, default: "0.0"
+    t.decimal "sgst_rate", precision: 5, scale: 2, default: "0.0"
+    t.decimal "igst_rate", precision: 5, scale: 2, default: "0.0"
+    t.decimal "cgst_amount", precision: 14, scale: 2, default: "0.0"
+    t.decimal "sgst_amount", precision: 14, scale: 2, default: "0.0"
+    t.decimal "igst_amount", precision: 14, scale: 2, default: "0.0"
+    t.decimal "tax_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "line_total", precision: 14, scale: 2, default: "0.0", null: false
+    t.bigint "source_sales_order_line_id"
+    t.bigint "source_trip_stop_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "idx_sil_product_id"
+    t.index ["product_id"], name: "index_sales_invoice_lines_on_product_id"
+    t.index ["sales_invoice_id"], name: "idx_sil_invoice_id"
+    t.index ["sales_invoice_id"], name: "index_sales_invoice_lines_on_sales_invoice_id"
+    t.index ["source_sales_order_line_id"], name: "idx_sil_order_line_id"
+    t.index ["source_trip_stop_id"], name: "idx_sil_stop_id"
+  end
+
+  create_table "sales_invoices", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "customer_id", null: false
+    t.bigint "sales_order_id"
+    t.bigint "created_by_id", null: false
+    t.string "invoice_number", null: false
+    t.date "invoice_date", null: false
+    t.date "due_date"
+    t.string "status", default: "draft", null: false
+    t.decimal "subtotal", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "tax_total", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "grand_total", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "round_off", precision: 8, scale: 2, default: "0.0"
+    t.string "currency", default: "INR", null: false
+    t.text "notes"
+    t.datetime "issued_at"
+    t.datetime "voided_at"
+    t.text "void_reason"
+    t.string "pdf_key"
+    t.datetime "pdf_generated_at"
+    t.datetime "deleted_at"
+    t.string "generation_source", default: "manual_direct"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "outstanding_amount", precision: 14, scale: 2, default: "0.0", null: false, comment: "Unpaid balance; decremented by payment allocations"
+    t.decimal "paid_amount", precision: 14, scale: 2, default: "0.0", null: false, comment: "Sum of confirmed payment allocations"
+    t.index ["branch_id"], name: "index_sales_invoices_on_branch_id"
+    t.index ["created_by_id"], name: "index_sales_invoices_on_created_by_id"
+    t.index ["customer_id", "status"], name: "idx_sales_invoices_customer_status"
+    t.index ["customer_id"], name: "index_sales_invoices_on_customer_id"
+    t.index ["deleted_at"], name: "index_sales_invoices_on_deleted_at"
+    t.index ["invoice_date"], name: "index_sales_invoices_on_invoice_date"
+    t.index ["metadata"], name: "index_sales_invoices_on_metadata", using: :gin
+    t.index ["organization_id", "invoice_number"], name: "idx_sales_invoices_org_number", unique: true
+    t.index ["organization_id", "status"], name: "idx_sales_invoices_org_status"
+    t.index ["organization_id"], name: "index_sales_invoices_on_organization_id"
+    t.index ["outstanding_amount"], name: "idx_sales_invoices_outstanding"
+    t.index ["sales_order_id"], name: "index_sales_invoices_on_sales_order_id"
+  end
+
   create_table "sales_order_lines", force: :cascade do |t|
     t.bigint "sales_order_id", null: false
     t.bigint "product_id", null: false
@@ -707,6 +846,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
     t.datetime "updated_at", null: false
     t.integer "delivered_qty", default: 0, null: false
     t.integer "returned_qty", default: 0, null: false
+    t.decimal "invoiced_qty", precision: 14, scale: 3, default: "0.0", null: false
+    t.index ["invoiced_qty"], name: "idx_sol_invoiced_qty"
     t.index ["price_list_id"], name: "index_sales_order_lines_on_price_list_id"
     t.index ["product_id"], name: "index_sales_order_lines_on_product_id"
     t.index ["sales_order_id"], name: "index_sales_order_lines_on_sales_order_id"
@@ -955,6 +1096,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "advance_payments", "branches"
+  add_foreign_key "advance_payments", "customers"
+  add_foreign_key "advance_payments", "organizations"
+  add_foreign_key "advance_payments", "payments", column: "source_payment_id"
   add_foreign_key "audit_logs", "organizations"
   add_foreign_key "audit_logs", "users", column: "actor_id"
   add_foreign_key "branches", "organizations"
@@ -1003,6 +1148,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
   add_foreign_key "memberships", "users"
   add_foreign_key "onboarding_progresses", "organizations"
   add_foreign_key "onboarding_progresses", "users"
+  add_foreign_key "payment_allocations", "payments"
+  add_foreign_key "payment_allocations", "sales_invoices"
+  add_foreign_key "payments", "branches"
+  add_foreign_key "payments", "customers"
+  add_foreign_key "payments", "organizations"
+  add_foreign_key "payments", "users", column: "created_by_id"
   add_foreign_key "prepayment_skus", "branches"
   add_foreign_key "prepayment_skus", "organizations"
   add_foreign_key "prepayment_skus", "products"
@@ -1038,6 +1189,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000024) do
   add_foreign_key "return_requests", "users", column: "created_by_id"
   add_foreign_key "routes", "branches"
   add_foreign_key "routes", "organizations"
+  add_foreign_key "sales_invoice_lines", "products"
+  add_foreign_key "sales_invoice_lines", "sales_invoices"
+  add_foreign_key "sales_invoices", "branches"
+  add_foreign_key "sales_invoices", "customers"
+  add_foreign_key "sales_invoices", "organizations"
+  add_foreign_key "sales_invoices", "sales_orders"
+  add_foreign_key "sales_invoices", "users", column: "created_by_id"
   add_foreign_key "sales_order_lines", "products"
   add_foreign_key "sales_order_lines", "sales_orders"
   add_foreign_key "sales_orders", "branches"
