@@ -1,41 +1,53 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
+import React from "react";
 
 export interface PageAction {
   label: string;
   onClick: () => void;
   variant?: "default" | "outline" | "ghost";
-  icon?: LucideIcon;
+  /** Pass either a Lucide component reference (`Plus`) or a JSX element (`<Plus className="h-4 w-4" />`). */
+  icon?: LucideIcon | React.ReactNode;
 }
 
 export interface PageHeaderProps {
   title: string;
+  /** Body text shown beneath the title. */
   description?: string;
+  /** Alias for description — accepted for convenience. */
+  subtitle?: string;
   actions?: PageAction[];
   className?: string;
 }
 
-export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
+export function PageHeader({ title, description, subtitle, actions, className }: PageHeaderProps) {
+  const subText = description ?? subtitle;
   return (
     <div className={cn("mb-6 flex items-start justify-between", className)}>
       <div>
         <h1 className="text-2xl font-bold text-text-primary">{title}</h1>
-        {description && (
-          <p className="mt-1 text-sm text-text-secondary">{description}</p>
+        {subText && (
+          <p className="mt-1 text-sm text-text-secondary">{subText}</p>
         )}
       </div>
       {actions && actions.length > 0 && (
         <div className="flex items-center gap-2">
           {actions.map((action) => {
-            const Icon = action.icon;
+            const icon = action.icon;
+            // Support both a Lucide component ref and a pre-rendered ReactNode
+            const iconNode = icon
+              ? React.isValidElement(icon)
+                ? icon
+                : React.createElement(icon as LucideIcon, { className: "mr-2 h-4 w-4" })
+              : null;
             return (
               <Button
                 key={action.label}
                 variant={action.variant ?? "default"}
                 onClick={action.onClick}
               >
-                {Icon && <Icon className="mr-2 h-4 w-4" />}
+                {iconNode}
                 {action.label}
               </Button>
             );

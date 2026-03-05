@@ -1,14 +1,17 @@
 class SalesOrder < ApplicationRecord
-  STATUSES = %w[draft submitted on_hold approved rejected cancelled].freeze
+  STATUSES = %w[draft submitted on_hold approved rejected cancelled dispatched delivered partial_delivery].freeze
 
   # Valid state transitions
   TRANSITIONS = {
-    'draft'     => %w[submitted cancelled],
-    'submitted' => %w[on_hold approved rejected cancelled],
-    'on_hold'   => %w[approved rejected cancelled],
-    'approved'  => %w[cancelled],
-    'rejected'  => [],
-    'cancelled' => []
+    'draft'            => %w[submitted cancelled],
+    'submitted'        => %w[on_hold approved rejected cancelled],
+    'on_hold'          => %w[approved rejected cancelled],
+    'approved'         => %w[dispatched cancelled],
+    'dispatched'       => %w[delivered partial_delivery cancelled],
+    'delivered'        => [],
+    'partial_delivery' => [],
+    'rejected'         => [],
+    'cancelled'        => []
   }.freeze
 
   CREDIT_DECISIONS = %w[ok hold blocked].freeze
@@ -21,6 +24,8 @@ class SalesOrder < ApplicationRecord
 
   has_many :lines, class_name: 'SalesOrderLine', dependent: :destroy, inverse_of: :sales_order
   has_many :audit_logs, as: :auditable, dependent: :nullify
+  has_one  :trip_stop, dependent: :nullify
+  has_one  :delivery_trip, through: :trip_stop
 
   accepts_nested_attributes_for :lines, allow_destroy: true
 
@@ -82,9 +87,12 @@ class SalesOrder < ApplicationRecord
     end
 
     timestamp_col = {
-      'submitted' => :submitted_at,
-      'approved'  => :approved_at,
-      'cancelled' => :cancelled_at
+      'submitted'        => :submitted_at,
+      'approved'         => :approved_at,
+      'dispatched'       => :dispatched_at,
+      'delivered'        => :delivered_at,
+      'partial_delivery' => :delivered_at,
+      'cancelled'        => :cancelled_at
     }[new_status.to_s]
 
     attrs = { status: new_status }
