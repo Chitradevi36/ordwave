@@ -30,6 +30,8 @@ class SalesOrder < ApplicationRecord
   has_one  :delivery_trip, through: :trip_stop
   has_many :return_requests, ->(o) { where(source_type: 'order', source_id: o.id) }, class_name: 'ReturnRequest', primary_key: :id, foreign_key: :source_id
   has_many :sales_invoices, dependent: :restrict_with_error
+  has_many :freebies,         class_name: 'SalesOrderFreebie', dependent: :destroy
+  has_many :scheme_applications, dependent: :destroy
 
   accepts_nested_attributes_for :lines, allow_destroy: true
 

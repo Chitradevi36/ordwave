@@ -46,7 +46,10 @@ module Orders
         # 1. Freeze prices on lines
         freeze_line_prices!
 
-        # 2. Recalculate totals with frozen prices
+        # 1b. Apply and freeze scheme discounts
+        Orders::FreezeSchemesOnSubmitService.call(order: @order)
+
+        # 2. Recalculate totals with all frozen prices + scheme discounts
         @order.recalculate_totals!
 
         # 3. Run credit engine

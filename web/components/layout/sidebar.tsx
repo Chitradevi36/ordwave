@@ -23,6 +23,7 @@ import {
   Receipt,
   Wallet,
   CalendarCheck,
+  Tag,
 } from "lucide-react";
 
 const navItems = [
@@ -41,6 +42,7 @@ const navItems = [
   { href: "/routes",                  label: "Routes",           icon: MapPin },
   { href: "/beats",                    label: "Beats",             icon: CalendarCheck },
   { href: "/delivery",                 label: "Delivery",    icon: Truck },
+  { href: "/pricing/schemes",          label: "Schemes",     icon: Tag },
   { href: "/approvals/credit-limits", label: "Approvals",   icon: CheckSquare },
   { href: "/reports",                 label: "Reports",     icon: BarChart3 },
   { href: "/settings",                label: "Settings",    icon: Settings },

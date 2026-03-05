@@ -37,6 +37,7 @@ module Orders
         end
 
         build_lines! if @params[:lines].present?
+        apply_draft_schemes! if @params[:lines].present?
 
         @order.recalculate_totals!
 
@@ -107,6 +108,37 @@ module Orders
         qty:      qty.to_f,
         on_date:  Date.current
       )
+    end
+
+    def apply_draft_schemes!
+      cart_lines = @order.lines.includes(:product).map do |line|
+        {
+          product_id:        line.product_id,
+          product:           line.product,
+          qty:               line.qty.to_f,
+          base_unit_price:   line.unit_price.to_f,
+          base_discount_pct: line.discount_pct.to_f,
+          category_id:       line.product.product_category_id
+        }
+      end
+
+      result = Pricing::ApplySchemesService.call(
+        retailer:   @customer,
+        branch_id:  @branch.id,
+        cart_lines: cart_lines,
+        context:    { date: Date.current }
+      )
+
+      @order.lines.each_with_index do |line, idx|
+        pl = result.priced_lines[idx]
+        next unless pl
+        line.update_columns(
+          scheme_discount_pct: pl[:scheme_discount_pct],
+          scheme_tags:         pl[:scheme_tags].as_json
+        )
+      end
+    rescue StandardError => e
+      Rails.logger.warn("[DraftUpsertService] Scheme application skipped: #{e.message}")
     end
   end
 end

@@ -29,6 +29,8 @@ interface OrderLine {
   gst_rate: number;
   line_total: number;
   price_source: string;
+  scheme_discount_pct?: number;
+  scheme_tags?: { scheme_id: number; scheme_code: string; scheme_name: string; reward_type: string }[];
   hsn_code: string | null;
 }
 
@@ -203,7 +205,14 @@ function LinesTab({ lines }: { lines: OrderLine[] }) {
               <td className="py-2 pr-3">{l.product_name}</td>
               <td className="py-2 pr-3 text-right">{l.qty}</td>
               <td className="py-2 pr-3 text-right">{fmtINR(l.unit_price)}</td>
-              <td className="py-2 pr-3 text-right">{l.discount_pct}%</td>
+              <td className="py-2 pr-3 text-right">
+                {l.discount_pct}%
+                {(l.scheme_discount_pct ?? 0) > 0 && (
+                  <span className="ml-1 text-xs text-green-600 font-medium" title="Scheme discount">
+                    +{l.scheme_discount_pct}%
+                  </span>
+                )}
+              </td>
               <td className="py-2 pr-3 text-right">{l.gst_rate}%</td>
               <td className="py-2 pr-3 text-right font-medium">{fmtINR(l.line_total)}</td>
               <td className={`py-2 text-xs font-medium ${PRICE_SOURCE_COLOR[l.price_source] ?? ""}`}>
