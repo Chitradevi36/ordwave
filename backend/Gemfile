@@ -44,6 +44,10 @@ gem 'pundit', '~> 2.3'
 
 # Background jobs
 gem 'sidekiq', '~> 7.2'
+# PDF generation
+gem 'prawn', '~> 2.5'
+gem 'prawn-table', '~> 0.2'
+
 
 # API
 gem 'jsonapi-serializer', '~> 2.2'

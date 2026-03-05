@@ -134,6 +134,11 @@ module Delivery
         )
 
         { ok: true, stop: @stop.reload, errors: [] }
+      end.tap do |result|
+        # Auto-invoice trigger: enqueue asynchronously after transaction commits
+        if result[:ok] && auto_invoice_enabled?
+          Invoice::GenerateFromDeliveryJob.perform_later(@stop.id)
+        end
       end
     rescue ActiveRecord::RecordInvalid => e
       { ok: false, stop: @stop, errors: [e.message] }
@@ -155,6 +160,12 @@ module Delivery
         errs << 'Override reason is required'
       end
       errs
+    end
+
+    def auto_invoice_enabled?
+      org      = @stop.delivery_trip.organization
+      trigger  = org.settings['auto_invoice_trigger'].to_s
+      trigger == 'on_delivery' && @outcome.in?(%w[delivered partial_delivery])
     end
 
     def check_and_complete_trip!

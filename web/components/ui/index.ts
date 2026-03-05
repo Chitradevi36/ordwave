@@ -19,3 +19,5 @@ export { Breadcrumb } from "./breadcrumb";
 export type { BreadcrumbItem, BreadcrumbProps } from "./breadcrumb";
 export { CreditDecisionModal } from "./credit-decision-modal";
 export type { CreditDecisionModalProps, CreditResult, CreditMetrics, CreditActionsRequired } from "./credit-decision-modal";
+export { Textarea } from "./textarea";
+export type { TextareaProps } from "./textarea";

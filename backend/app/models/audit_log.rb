@@ -57,6 +57,18 @@ class AuditLog < ApplicationRecord
     return_cancelled
     credit_note_issued
     credit_note_voided
+    invoice_created
+    invoice_issued
+    invoice_voided
+    invoice_pdf_generated
+    payment_created
+    payment_confirmed
+    payment_reversed
+    payment_allocation_created
+    payment_allocation_reversed
+    advance_payment_created
+    advance_payment_applied
+    advance_payment_refunded
   ].freeze
 
   belongs_to :organization

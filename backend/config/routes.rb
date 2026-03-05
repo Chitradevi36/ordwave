@@ -234,6 +234,35 @@ Rails.application.routes.draw do
         end
       end
 
+      # Sales Invoices
+      resources :sales_invoices, only: %i[index show create] do
+        member do
+          post :issue
+          post :void_invoice, path: 'void'
+          get  :pdf
+        end
+        collection do
+          post 'generate_from_order/:sales_order_id', action: :generate_from_order,       as: :generate_invoice_from_order
+          post 'generate_from_delivery_stop/:stop_id', action: :generate_from_delivery_stop, as: :generate_invoice_from_stop
+        end
+      end
+
+
+      # Payments / Collections
+      resources :payments, only: %i[index show create] do
+        member do
+          post :confirm
+          post :reverse
+        end
+      end
+
+      resources :advance_payments, only: %i[index show] do
+        member do
+          post :apply
+          post :refund
+        end
+      end
+
       # Delivery
       resources :vehicles, only: %i[index show create update destroy]
 
