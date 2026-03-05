@@ -36335,3 +36335,159 @@ Processing by Api::V1::AnalyticsController#sales as */*
 Completed 200 OK in 31ms (Views: 0.2ms | ActiveRecord: 6.3ms | Allocations: 6581)
 
 
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (2.0ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (14.3ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to AddCriticalDbConstraints (20260306000001)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (55.5ms)[0m  [1m[35mALTER TABLE inventory_levels
+  ADD CONSTRAINT chk_inventory_levels_qty_on_hand_non_negative
+    CHECK (qty_on_hand >= 0),
+  ADD CONSTRAINT chk_inventory_levels_qty_reserved_non_negative
+    CHECK (qty_reserved >= 0);
+[0m
+  [1m[35m (3.6ms)[0m  [1m[35mALTER TABLE credit_accounts
+  ADD CONSTRAINT chk_credit_accounts_credit_limit_non_negative
+    CHECK (credit_limit >= 0);
+[0m
+  [1m[35m (2.6ms)[0m  [1m[35mALTER TABLE payments
+  ADD CONSTRAINT chk_payments_amount_positive
+    CHECK (amount > 0);
+[0m
+  [1m[35m (2.2ms)[0m  [1m[35mALTER TABLE sales_orders
+  ADD CONSTRAINT chk_sales_orders_total_non_negative
+    CHECK (total_amount >= 0);
+[0m
+  [1m[35m (37.3ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_sales_orders_branch_created_at" ON "sales_orders" ("branch_id", "created_at")[0m
+  [1m[35m (7.6ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_inventory_levels_branch_product" ON "inventory_levels" ("branch_id", "product_id")[0m
+  [1m[35m (9.1ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_payments_customer_payment_date" ON "payments" ("customer_id", "payment_date")[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[31mROLLBACK[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to AddCriticalDbConstraints (20260306000001)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (5.6ms)[0m  [1m[35mALTER TABLE inventory_levels
+  ADD CONSTRAINT chk_inventory_levels_qty_on_hand_non_negative
+    CHECK (qty_on_hand >= 0),
+  ADD CONSTRAINT chk_inventory_levels_qty_reserved_non_negative
+    CHECK (qty_reserved >= 0);
+[0m
+  [1m[35m (1.0ms)[0m  [1m[35mALTER TABLE credit_accounts
+  ADD CONSTRAINT chk_credit_accounts_credit_limit_non_negative
+    CHECK (credit_limit >= 0);
+[0m
+  [1m[35m (0.8ms)[0m  [1m[35mALTER TABLE payments
+  ADD CONSTRAINT chk_payments_amount_positive
+    CHECK (amount > 0);
+[0m
+  [1m[35m (0.7ms)[0m  [1m[35mALTER TABLE sales_orders
+  ADD CONSTRAINT chk_sales_orders_total_non_negative
+    CHECK (total_amount >= 0);
+[0m
+  [1m[35m (4.1ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_sales_orders_branch_created_at" ON "sales_orders" ("branch_id", "created_at")[0m
+  [1m[35m (4.3ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_inventory_levels_branch_product" ON "inventory_levels" ("branch_id", "product_id")[0m
+  [1m[35m (3.8ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_payments_customer_payment_date" ON "payments" ("customer_id", "received_date")[0m
+  [1m[35m (3.4ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS idx_sales_orders_active_status
+  ON sales_orders (organization_id, created_at DESC)
+ WHERE status IN ('draft','submitted','on_hold','approved','dispatched');
+[0m
+  [1m[35m (3.1ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS idx_credit_accounts_overdue
+  ON credit_accounts (organization_id, customer_id)
+ WHERE current_balance > 0;
+[0m
+  [1m[35m (8.8ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_audit_logs_auditable_created_at" ON "audit_logs" ("auditable_type", "auditable_id", "created_at")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX IF NOT EXISTS "idx_audit_logs_org_created_at" ON "audit_logs" ("organization_id", "created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (2.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260306000001') RETURNING "version"[0m
+  [1m[36mTRANSACTION (6.8ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateWebhookEndpoints (20260306000002)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (69.1ms)[0m  [1m[35mCREATE TABLE "webhook_endpoints" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "url" character varying NOT NULL, "secret" character varying NOT NULL, "description" character varying, "events" jsonb DEFAULT '[]' NOT NULL, "active" boolean DEFAULT TRUE NOT NULL, "failure_count" integer DEFAULT 0 NOT NULL, "last_success_at" timestamp(6), "last_failure_at" timestamp(6), "last_failure_reason" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_21808fa528"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+)[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_webhook_endpoints_on_organization_id" ON "webhook_endpoints" ("organization_id")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "idx_webhook_endpoints_org_active" ON "webhook_endpoints" ("organization_id", "active")[0m
+  [1m[35m (5.2ms)[0m  [1m[35mCREATE TABLE "webhook_deliveries" ("id" bigserial primary key, "webhook_endpoint_id" bigint NOT NULL, "organization_id" bigint NOT NULL, "event" character varying NOT NULL, "status" character varying DEFAULT 'pending' NOT NULL, "payload" jsonb DEFAULT '{}' NOT NULL, "response_code" integer, "response_body" text, "attempt_count" integer DEFAULT 0 NOT NULL, "delivered_at" timestamp(6), "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_392378d371"
+FOREIGN KEY ("webhook_endpoint_id")
+  REFERENCES "webhook_endpoints" ("id")
+, CONSTRAINT "fk_rails_ea5a0897ac"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+)[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_webhook_deliveries_on_webhook_endpoint_id" ON "webhook_deliveries" ("webhook_endpoint_id")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_webhook_deliveries_on_organization_id" ON "webhook_deliveries" ("organization_id")[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "idx_webhook_deliveries_endpoint_event" ON "webhook_deliveries" ("webhook_endpoint_id", "event", "created_at")[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE INDEX "idx_webhook_deliveries_org_status" ON "webhook_deliveries" ("organization_id", "status", "created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260306000002') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.9ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateDeviceTokens (20260306000003)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (6.3ms)[0m  [1m[35mCREATE TABLE "device_tokens" ("id" bigserial primary key, "user_id" bigint NOT NULL, "organization_id" bigint NOT NULL, "token" character varying NOT NULL, "platform" character varying NOT NULL, "device_name" character varying, "active" boolean DEFAULT TRUE NOT NULL, "last_used_at" timestamp(6), "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_e99e290457"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+, CONSTRAINT "fk_rails_36ab8aca1c"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+)[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_device_tokens_on_user_id" ON "device_tokens" ("user_id")[0m
+  [1m[35m (3.3ms)[0m  [1m[35mCREATE INDEX "index_device_tokens_on_organization_id" ON "device_tokens" ("organization_id")[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE UNIQUE INDEX "idx_device_tokens_user_token" ON "device_tokens" ("user_id", "token")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "idx_device_tokens_org_active" ON "device_tokens" ("organization_id", "active")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260306000003') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateExports (20260306000004)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (4.8ms)[0m  [1m[35mCREATE TABLE "exports" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "requested_by_id" bigint NOT NULL, "export_type" character varying NOT NULL, "status" character varying DEFAULT 'pending' NOT NULL, "format" character varying DEFAULT 'csv' NOT NULL, "filters" jsonb DEFAULT '{}' NOT NULL, "error_message" text, "row_count" integer, "completed_at" timestamp(6), "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_80e54ec728"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_4be464598d"
+FOREIGN KEY ("requested_by_id")
+  REFERENCES "users" ("id")
+)[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_exports_on_organization_id" ON "exports" ("organization_id")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_exports_on_requested_by_id" ON "exports" ("requested_by_id")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "idx_exports_org_status_created" ON "exports" ("organization_id", "status", "created_at")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "idx_exports_user_created" ON "exports" ("requested_by_id", "created_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260306000004') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+Migrating to AddIrnFieldsToSalesInvoices (20260306000005)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (1.7ms)[0m  [1m[35mALTER TABLE "sales_invoices" ADD "irn" character varying[0m
+  [1m[35m (7.5ms)[0m  [1m[35mCOMMENT ON COLUMN "sales_invoices"."irn" IS 'Invoice Reference Number from GST IRP'[0m
+  [1m[35m (0.4ms)[0m  [1m[35mALTER TABLE "sales_invoices" ADD "irn_generated_at" timestamp(6)[0m
+  [1m[35m (0.3ms)[0m  [1m[35mALTER TABLE "sales_invoices" ADD "ack_number" character varying[0m
+  [1m[35m (0.3ms)[0m  [1m[35mCOMMENT ON COLUMN "sales_invoices"."ack_number" IS 'IRP acknowledgement number'[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "sales_invoices" ADD "ack_datetime" character varying[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "sales_invoices" ADD "einvoice_qr_code" text[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCOMMENT ON COLUMN "sales_invoices"."einvoice_qr_code" IS 'Signed QR code from IRP'[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "sales_invoices" ADD "einvoice_status" character varying DEFAULT 'not_required'[0m
+  [1m[35m (0.1ms)[0m  [1m[35mALTER TABLE "sales_invoices" ADD "einvoice_error" text[0m
+  [1m[35m (2.4ms)[0m  [1m[35mCREATE UNIQUE INDEX "idx_sales_invoices_irn_unique" ON "sales_invoices" ("irn") WHERE irn IS NOT NULL[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260306000005') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.6ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.6ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker

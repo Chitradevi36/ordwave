@@ -23,7 +23,8 @@ class SalesOrder < ApplicationRecord
   belongs_to :created_by, class_name: 'User'
 
   has_many :lines, class_name: 'SalesOrderLine', dependent: :destroy, inverse_of: :sales_order
-  has_many :audit_logs,            as: :auditable,  dependent: :nullify
+  include Auditable
+
   has_many :inventory_reservations, dependent: :destroy
   has_many :stock_movements,        as: :reference,  dependent: :nullify
   has_one  :trip_stop, dependent: :nullify

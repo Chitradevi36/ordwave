@@ -1,4 +1,4 @@
-﻿Rails.application.routes.draw do
+Rails.application.routes.draw do
   require 'sidekiq/web'
   mount Sidekiq::Web => '/sidekiq'
 
@@ -116,7 +116,7 @@
       end
 
       # Inventory Ledger
-      resources :inventory_levels, only: %i[index show]   # legacy — kept for existing clients
+      resources :inventory_levels, only: %i[index show]   # legacy � kept for existing clients
 
       namespace :inventory do
         resources :balances,    only: %i[index show]
@@ -322,8 +322,26 @@
         get :beat_performance,  action: :beat_performance
         get :inventory_health,  action: :inventory_health
       end
+
+      # -- Webhooks -----------------------------------------------------------
+      resources :webhook_endpoints, only: %i[index show create update destroy] do
+        member { post :test }
+      end
+
+      # -- Exports ------------------------------------------------------------
+      resources :exports, only: %i[index create show]
+
+      # -- Device Tokens (Push Notifications) ---------------------------------
+      resources :device_tokens, only: %i[create destroy]
+
+    end
+
+    namespace :v2 do
+      # API v2 -- opt-in via Accept-Version: v2 header (enforced in Api::V2::BaseController).
+      # Add v2-specific resource overrides here. See docs/ARCHITECTURE_OVERVIEW.md.
     end
   end
+
+  # -- Health check (unauthenticated) --------------------------------------
+  get "/health", to: "api/v1/health#show"
 end
-
-

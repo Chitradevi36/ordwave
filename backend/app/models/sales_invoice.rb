@@ -10,7 +10,8 @@ class SalesInvoice < ApplicationRecord
   belongs_to :created_by,  class_name: 'User'
 
   has_many :lines,               class_name: 'SalesInvoiceLine', dependent: :destroy, inverse_of: :sales_invoice
-  has_many :audit_logs,          as: :auditable,                 dependent: :nullify
+  include Auditable
+
   has_many :products,            through: :lines
   has_many :payment_allocations, dependent: :destroy
   has_many :payments,            through: :payment_allocations
