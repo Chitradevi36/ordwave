@@ -12,3 +12,5 @@ export { Banner } from './Banner';
 export type { BannerProps, BannerVariant } from './Banner';
 export { AppBar } from './AppBar';
 export type { AppBarProps } from './AppBar';
+export { CreditResultBanner } from './CreditResultBanner';
+export type { CreditResultBannerProps, CreditResultData, CreditMetrics } from './CreditResultBanner';

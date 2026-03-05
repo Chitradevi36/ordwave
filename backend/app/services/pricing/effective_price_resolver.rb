@@ -105,6 +105,11 @@ module Pricing
                       .date_valid(@on_date)
                       .first
 
+      list = PriceList.active_lists
+                      .where(list_type: 'standard')
+                      .date_valid(@on_date)
+                      .first unless list
+
       return nil unless list
 
       build_result(list, 'standard')

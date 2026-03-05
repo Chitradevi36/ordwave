@@ -9,6 +9,15 @@ class AuditLog < ApplicationRecord
     credit_policy_updated
     prepayment_sku_added
     prepayment_sku_deactivated
+    order_created
+    order_updated
+    order_submitted
+    order_credit_checked
+    order_on_hold
+    order_approved
+    order_rejected
+    order_cancelled
+    order_price_refreshed
   ].freeze
 
   belongs_to :organization

@@ -85,6 +85,7 @@ Rails.application.routes.draw do
           post :block
           post :unblock
           post :deactivate
+          get  :credit_usage
         end
       end
       resources :routes,          only: %i[index show create update destroy]
@@ -160,6 +161,21 @@ Rails.application.routes.draw do
             get  :sample_csv
             get  :export_csv
           end
+        end
+      end
+
+      # Sales Orders
+      resources :sales_orders, only: %i[index show create update] do
+        collection do
+          post :from_mobile
+          get  :recent_for_customer
+        end
+        member do
+          post :submit
+          post :approve
+          post :hold
+          post :cancel
+          post :refresh_price
         end
       end
     end
