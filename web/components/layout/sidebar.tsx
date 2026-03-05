@@ -11,6 +11,7 @@ import {
   Truck,
   MapPin,
   BarChart3,
+  TrendingUp,
   Settings,
   Building2,
   CheckSquare,
@@ -44,7 +45,7 @@ const navItems = [
   { href: "/delivery",                 label: "Delivery",    icon: Truck },
   { href: "/pricing/schemes",          label: "Schemes",     icon: Tag },
   { href: "/approvals/credit-limits", label: "Approvals",   icon: CheckSquare },
-  { href: "/reports",                 label: "Reports",     icon: BarChart3 },
+  { href: "/insights",                label: "Insights",       icon: TrendingUp },
   { href: "/settings",                label: "Settings",    icon: Settings },
 ];
 
@@ -97,3 +98,6 @@ export function Sidebar() {
     </aside>
   );
 }
+
+
+
