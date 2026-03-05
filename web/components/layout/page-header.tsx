@@ -6,15 +6,16 @@ import React from "react";
 export interface PageAction {
   label: string;
   onClick: () => void;
-  variant?: "default" | "outline" | "ghost";
+  variant?: "default" | "outline" | "ghost" | "danger";
+  disabled?: boolean;
   /** Pass either a Lucide component reference (`Plus`) or a JSX element (`<Plus className="h-4 w-4" />`). */
   icon?: LucideIcon | React.ReactNode;
 }
 
 export interface PageHeaderProps {
   title: string;
-  /** Body text shown beneath the title. */
-  description?: string;
+  /** Body text or ReactNode shown beneath the title. */
+  description?: React.ReactNode;
   /** Alias for description — accepted for convenience. */
   subtitle?: string;
   actions?: PageAction[];
@@ -46,6 +47,7 @@ export function PageHeader({ title, description, subtitle, actions, className }:
                 key={action.label}
                 variant={action.variant ?? "default"}
                 onClick={action.onClick}
+                disabled={action.disabled}
               >
                 {iconNode}
                 {action.label}

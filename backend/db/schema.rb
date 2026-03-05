@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_05_000007) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_05_000010) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -554,6 +554,48 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000007) do
     t.index ["status"], name: "index_sales_orders_on_status"
   end
 
+  create_table "supplier_products", force: :cascade do |t|
+    t.bigint "supplier_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "purchase_price", precision: 15, scale: 2
+    t.string "supplier_sku"
+    t.integer "lead_time_days"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_supplier_products_on_product_id"
+    t.index ["supplier_id", "product_id"], name: "index_supplier_products_on_supplier_and_product", unique: true
+    t.index ["supplier_id"], name: "index_supplier_products_on_supplier_id"
+  end
+
+  create_table "suppliers", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "name", limit: 200, null: false
+    t.string "code", null: false
+    t.string "status", default: "active", null: false
+    t.string "phone", null: false
+    t.string "email"
+    t.string "contact_person"
+    t.string "gstin", limit: 15
+    t.string "pan", limit: 10
+    t.string "address"
+    t.string "city"
+    t.string "state"
+    t.string "pincode"
+    t.string "bank_name"
+    t.string "bank_account"
+    t.string "bank_ifsc"
+    t.integer "payment_terms_days", default: 30, null: false
+    t.decimal "credit_limit", precision: 15, scale: 2
+    t.text "notes"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gstin"], name: "index_suppliers_on_gstin"
+    t.index ["organization_id", "code"], name: "index_suppliers_on_org_code_unique", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["organization_id", "name"], name: "index_suppliers_on_organization_id_and_name"
+    t.index ["organization_id"], name: "index_suppliers_on_organization_id"
+  end
+
   create_table "tier_price_list_assignments", force: :cascade do |t|
     t.bigint "branch_id", null: false
     t.bigint "price_list_id", null: false
@@ -705,6 +747,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000007) do
   add_foreign_key "sales_orders", "customers"
   add_foreign_key "sales_orders", "organizations"
   add_foreign_key "sales_orders", "users", column: "created_by_id"
+  add_foreign_key "supplier_products", "products"
+  add_foreign_key "supplier_products", "suppliers"
+  add_foreign_key "suppliers", "organizations"
   add_foreign_key "tier_price_list_assignments", "branches"
   add_foreign_key "tier_price_list_assignments", "price_lists"
   add_foreign_key "trip_stops", "delivery_trips"

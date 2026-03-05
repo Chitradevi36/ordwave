@@ -345,6 +345,102 @@ if Rails.env.development?
 
   puts '  == Vehicles and drivers seeded.'
 
+  # ── Suppliers ─────────────────────────────────────────────────────────────
+  puts ''
+  puts '  == Seeding suppliers...'
+
+  supplier_defs = [
+    {
+      name:               'Sharma Distributors',
+      code:               'SUPP-001',
+      status:             'active',
+      phone:              '9876540001',
+      email:              'contact@sharmadist.in',
+      contact_person:     'Ramesh Sharma',
+      gstin:              '27AABCS1429B1ZB',
+      pan:                'AABCS1429B',
+      address:            '12 Warehouse Lane, APMC',
+      city:               'Mumbai',
+      state:              'Maharashtra',
+      pincode:            '400002',
+      bank_name:          'State Bank of India',
+      bank_account:       '30987654321',
+      bank_ifsc:          'SBIN0001234',
+      payment_terms_days: 30,
+      credit_limit:       500_000,
+      notes:              'Primary rice and cereal supplier. Preferred vendor.',
+    },
+    {
+      name:               'Patel Agro Exports',
+      code:               'SUPP-002',
+      status:             'active',
+      phone:              '9876540002',
+      email:              'patel.agro@example.com',
+      contact_person:     'Suresh Patel',
+      gstin:              '24AACCP1234A1ZK',
+      pan:                'AACCP1234A',
+      address:            'Plot 45, GIDC',
+      city:               'Ahmedabad',
+      state:              'Gujarat',
+      pincode:            '382425',
+      bank_name:          'HDFC Bank',
+      bank_account:       '50100123456789',
+      bank_ifsc:          'HDFC0001122',
+      payment_terms_days: 15,
+      credit_limit:       250_000,
+      notes:              'Pulses and edible oils.',
+    },
+    {
+      name:               'Mysore Oil Mills',
+      code:               'SUPP-003',
+      status:             'active',
+      phone:              '9876540003',
+      email:              nil,
+      contact_person:     'Anand Krishnan',
+      gstin:              nil,
+      pan:                nil,
+      address:            '88 Industrial Area',
+      city:               'Mysore',
+      state:              'Karnataka',
+      pincode:            '570016',
+      bank_name:          nil,
+      bank_account:       nil,
+      bank_ifsc:          nil,
+      payment_terms_days: 0,
+      credit_limit:       nil,
+      notes:              'Cash-on-delivery terms only.',
+    },
+    {
+      name:               'Delhi Spice Traders',
+      code:               'SUPP-004',
+      status:             'inactive',
+      phone:              '9876540004',
+      email:              'delhispice@example.com',
+      contact_person:     nil,
+      gstin:              '07AADFD1234B1ZC',
+      pan:                'AADFD1234B',
+      address:            '3 Khari Baoli',
+      city:               'New Delhi',
+      state:              'Delhi',
+      pincode:            '110006',
+      bank_name:          'Punjab National Bank',
+      bank_account:       '1234567890',
+      bank_ifsc:          'PUNB0001100',
+      payment_terms_days: 45,
+      credit_limit:       100_000,
+      notes:              'On hold — pending GST reconciliation.',
+    },
+  ]
+
+  supplier_defs.each do |attrs|
+    s = Supplier.find_or_initialize_by(code: attrs[:code], organization: org)
+    s.assign_attributes(attrs)
+    s.save!
+    puts "    Supplier: #{s.code} — #{s.name} (#{s.status})"
+  end
+
+  puts '  == Suppliers seeded.'
+
   puts ''
   puts '  ┌─ Dev login credentials ────────────────'
   puts "  │  POST /api/v1/auth/login"

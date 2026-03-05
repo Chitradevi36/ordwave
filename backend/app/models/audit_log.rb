@@ -31,6 +31,14 @@ class AuditLog < ApplicationRecord
     vehicle_created
     vehicle_updated
     vehicle_deleted
+    supplier_created
+    supplier_updated
+    supplier_deleted
+    supplier_blacklisted
+    supplier_gstin_changed
+    supplier_product_added
+    supplier_product_updated
+    supplier_product_removed
   ].freeze
 
   belongs_to :organization

@@ -88,6 +88,16 @@ Rails.application.routes.draw do
           get  :credit_usage
         end
       end
+      # Supplier Master
+      resources :suppliers, only: %i[index show create update destroy] do
+        member do
+          post :blacklist
+          post :activate
+        end
+        resources :supplier_products, only: %i[index create update destroy],
+                  controller: 'supplier_products'
+      end
+
       resources :routes,          only: %i[index show create update destroy]
       resources :credit_accounts, only: %i[show update] do
         member do

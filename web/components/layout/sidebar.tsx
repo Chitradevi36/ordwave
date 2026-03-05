@@ -15,6 +15,7 @@ import {
   Building2,
   CreditCard,
   CheckSquare,
+  Boxes,
 } from "lucide-react";
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/orders",                  label: "Orders",      icon: ShoppingCart },
   { href: "/products",                label: "Products",    icon: Package },
   { href: "/customers",               label: "Customers",   icon: Building2 },
+  { href: "/suppliers",               label: "Suppliers",   icon: Boxes },
   { href: "/routes",                  label: "Routes",      icon: MapPin },
   { href: "/delivery",                 label: "Delivery",    icon: Truck },
   { href: "/collections",             label: "Collections", icon: CreditCard },
