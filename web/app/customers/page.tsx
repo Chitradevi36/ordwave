@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Plus, Search, X, Pencil, Ban, CheckCircle2, Upload, Download, CheckCircle, FileWarning } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { CreditUsageBar } from "@/components/ui/credit-usage-bar";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Route {
@@ -26,6 +27,12 @@ interface CreditAccount {
   overdue_days: number;
 }
 
+interface CreditUsageSummary {
+  order_exposure:    number;
+  hold_exposure:     number;
+  credit_used_total: number;
+}
+
 interface Customer {
   id: number;
   name: string;
@@ -38,6 +45,7 @@ interface Customer {
   credit_limit: number;
   route: Route | null;
   credit_account: CreditAccount | null;
+  credit_usage_summary: CreditUsageSummary | null;
 }
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -82,24 +90,6 @@ const VIEW_PARAMS: Record<SavedView, Record<string, string>> = {
   near_limit: { credit_status: "near_limit" },
 };
 
-// ─── Credit bar ───────────────────────────────────────────────────────────────
-function CreditBar({ ca }: { ca: CreditAccount | null }) {
-  if (!ca || ca.credit_limit === 0) return <span className="text-sm text-text-secondary">—</span>;
-  const utilPct = Math.min(100, Math.round((ca.current_balance / ca.credit_limit) * 100));
-  const barColor = utilPct >= 90 ? "bg-danger" : utilPct >= 70 ? "bg-warning" : "bg-success";
-  return (
-    <div className="min-w-[110px]">
-      <p className="text-xs text-text-secondary leading-tight">
-        ₹{ca.current_balance.toLocaleString("en-IN")}{" "}
-        <span className="text-text-secondary/50">/</span>{" "}
-        ₹{ca.credit_limit.toLocaleString("en-IN")}
-      </p>
-      <div className="mt-1 h-1.5 w-full rounded-full bg-border overflow-hidden">
-        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${utilPct}%` }} />
-      </div>
-    </div>
-  );
-}
 // ─── Bulk Import Modal ────────────────────────────────────────────────────────
 function CustomersBulkImportModal({
   token, orgId, onClose, onImported,
@@ -350,8 +340,15 @@ export default function CustomersPage() {
     },
     {
       key: "credit_bar",
-      header: "Credit (Used / Limit)",
-      render: (_: unknown, row: Customer) => <CreditBar ca={row.credit_account} />,
+      header: "Credit Used / Limit",
+      render: (_: unknown, row: Customer) => (
+        <CreditUsageBar
+          ca={row.credit_account}
+          usage={row.credit_usage_summary}
+          compact
+          widthClass="min-w-[140px]"
+        />
+      ),
     },
     {
       key: "overdue_col",
@@ -420,7 +417,7 @@ export default function CustomersPage() {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const qs = new URLSearchParams({ page: String(page), per_page: "20" });
+      const qs = new URLSearchParams({ page: String(page), per_page: "20", include_credit_usage: "true" });
       if (search)  qs.set("q", search);
       if (channel) qs.set("channel", channel);
       if (tier)    qs.set("tier", tier);

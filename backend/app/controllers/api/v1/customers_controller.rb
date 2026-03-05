@@ -6,12 +6,27 @@ module Api
       before_action :require_organization!
 
       def index
-        scope = policy_scope(Customer)
-        scope = apply_filters(scope)
+        scope     = policy_scope(Customer)
+        scope     = apply_filters(scope)
         customers = paginate(scope.includes(:route, :credit_account))
 
+        # Batch-compute order exposure when requested — avoids N+1 on list pages.
+        credit_usage_map = {}
+        if params[:include_credit_usage] == 'true'
+          branch_ids = customers.map(&:branch_id).uniq
+          branches   = Branch.where(id: branch_ids).index_by(&:id)
+          customers.group_by(&:branch_id).each do |bid, group|
+            next unless (branch = branches[bid])
+            batch = Credit::RetailerCreditUsageService.batch(
+              branch:       branch,
+              retailer_ids: group.map(&:id)
+            )
+            credit_usage_map.merge!(batch)
+          end
+        end
+
         render_success(
-          customers.map { |c| serialize_customer(c) },
+          customers.map { |c| serialize_customer(c, credit_usage: credit_usage_map[c.id]) },
           meta: pagination_meta(customers)
         )
       end
@@ -68,6 +83,23 @@ module Api
 
         customer.soft_delete!
         render_success({ message: 'Customer deleted' })
+      end
+
+      # GET /api/v1/customers/:id/credit_usage?branch_id=
+      # Returns full credit consumption breakdown (invoice outstanding + order exposure).
+      def credit_usage
+        customer = find_customer
+        authorize customer, :credit_usage?
+
+        branch_id = params[:branch_id].presence || customer.branch_id
+        branch    = current_organization.branches.find(branch_id)
+
+        usage = Credit::RetailerCreditUsageService.call(
+          retailer: customer,
+          branch:   branch
+        )
+
+        render_success(usage)
       end
 
       def check_duplicate
@@ -234,7 +266,7 @@ module Api
         )
       end
 
-      def serialize_customer(customer, detailed: false)
+      def serialize_customer(customer, detailed: false, credit_usage: nil)
         data = {
           id:                customer.id,
           name:              customer.name,
@@ -256,8 +288,18 @@ module Api
           branch_id:         customer.branch_id,
           route:             customer.route ? { id: customer.route.id, name: customer.route.name, code: customer.route.code } : nil,
           sales_rep:         customer.sales_rep ? { id: customer.sales_rep.id, name: customer.sales_rep.name } : nil,
-          credit_account:    customer.credit_account ? serialize_credit_account(customer.credit_account) : nil
+          credit_account:    customer.credit_account ? serialize_credit_account(customer.credit_account) : nil,
         }
+
+        # Include order-exposure enrichment when batch data is supplied.
+        if credit_usage
+          ca_balance = customer.credit_account&.current_balance.to_f
+          data[:credit_usage_summary] = {
+            order_exposure:    credit_usage[:order_exposure],
+            hold_exposure:     credit_usage[:hold_exposure],
+            credit_used_total: (ca_balance + credit_usage[:order_exposure]).round(2),
+          }
+        end
 
         if detailed
           data[:addresses] = customer.addresses.map { |a| serialize_address(a) }

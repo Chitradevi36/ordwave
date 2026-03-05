@@ -1,0 +1,367 @@
+module Api
+  module V1
+    class SalesOrdersController < BaseController
+      before_action :require_organization!
+      before_action :set_order, only: %i[show update submit approve hold cancel refresh_price]
+
+      # recent_for_customer uses policy_scope (not authorize) — skip the
+      # verify_authorized after_action that BaseController enforces on all
+      # non-index actions, otherwise we get a DoubleRenderError.
+      skip_after_action :verify_authorized, only: :recent_for_customer
+
+      # GET /api/v1/sales_orders
+      def index
+        base_scope = policy_scope(SalesOrder)
+
+        # Status counts across the entire accessible scope (unfiltered, for tab badges)
+        counts = base_scope.group(:status).count
+
+        # Today's summary metrics
+        today_start = Time.current.beginning_of_day
+        today_scope = base_scope.where("sales_orders.created_at >= ?", today_start)
+        metrics = {
+          today_orders:      today_scope.count,
+          pending_approvals: base_scope.where(status: %w[submitted on_hold]).count,
+          on_hold:           base_scope.where(status: "on_hold").count,
+          today_value:       today_scope.sum(:total_amount).to_f.round(0)
+        }
+
+        scope  = base_scope.includes(:customer, :branch, :created_by, :lines)
+        scope  = apply_filters(scope)
+        orders = paginate(scope.recent)
+
+        render_success(
+          orders.map { |o| serialize_order(o) },
+          meta: pagination_meta(orders).merge(counts: counts, metrics: metrics)
+        )
+      end
+
+      # GET /api/v1/sales_orders/:id
+      def show
+        authorize @order
+        render_success(serialize_order(@order, detailed: true))
+      end
+
+      # POST /api/v1/sales_orders
+      def create
+        authorize SalesOrder.new(organization: current_organization), :create?
+
+        customer = Customer.not_deleted.where(organization: current_organization).find(order_params[:customer_id])
+        branch   = current_organization.branches.find(order_params[:branch_id])
+
+        result = Orders::DraftUpsertService.call(
+          actor:        current_user,
+          organization: current_organization,
+          branch:       branch,
+          customer:     customer,
+          params:       order_params,
+          order:        nil
+        )
+
+        if result[:ok]
+          render_created(serialize_order(result[:order], detailed: true))
+        else
+          render_errors(result[:errors])
+        end
+      end
+
+      # PATCH /api/v1/sales_orders/:id
+      def update
+        authorize @order
+
+        # Submitted / on_hold orders: only delivery_date + notes are editable (managers only)
+        if @order.limited_editable?
+          result = Orders::LimitedUpdateService.call(
+            actor:  current_user,
+            order:  @order,
+            params: order_params
+          )
+          if result[:ok]
+            render_success(serialize_order(result[:order], detailed: true))
+          else
+            render_errors(result[:errors])
+          end
+          return
+        end
+
+        result = Orders::DraftUpsertService.call(
+          actor:        current_user,
+          organization: current_organization,
+          branch:       @order.branch,
+          customer:     @order.customer,
+          params:       order_params,
+          order:        @order
+        )
+
+        if result[:ok]
+          render_success(serialize_order(result[:order], detailed: true))
+        else
+          render_errors(result[:errors])
+        end
+      end
+
+      # POST /api/v1/sales_orders/:id/submit
+      def submit
+        authorize @order, :submit?
+
+        result = Orders::SubmitOrderService.call(
+          actor:           current_user,
+          order:           @order,
+          idempotency_key: params[:idempotency_key]
+        )
+
+        if result[:ok]
+          render json: {
+            data:   serialize_order(result[:order], detailed: true),
+            credit: serialize_credit(result[:credit])
+          }, status: :ok
+        elsif result[:credit]&.dig(:decision) == 'blocked'
+          render json: {
+            errors: result[:errors],
+            code:   'credit_blocked',
+            credit: serialize_credit(result[:credit])
+          }, status: :unprocessable_entity
+        else
+          render_errors(result[:errors])
+        end
+      end
+
+      # POST /api/v1/sales_orders/:id/approve
+      def approve
+        authorize @order, :approve?
+
+        result = Orders::ApproveOrderService.call(
+          actor:    current_user,
+          order:    @order,
+          decision: params[:decision],
+          reason:   params[:reason]
+        )
+
+        if result[:ok]
+          render_success(serialize_order(result[:order], detailed: true))
+        else
+          render_errors(result[:errors])
+        end
+      end
+
+      # POST /api/v1/sales_orders/:id/hold
+      def hold
+        authorize @order, :hold?
+
+        result = Orders::HoldOrderService.call(
+          actor:  current_user,
+          order:  @order,
+          reason: params[:reason]
+        )
+
+        if result[:ok]
+          render_success(serialize_order(result[:order], detailed: true))
+        else
+          render_errors(result[:errors])
+        end
+      end
+
+      # POST /api/v1/sales_orders/:id/cancel
+      def cancel
+        authorize @order, :cancel?
+
+        result = Orders::CancelOrderService.call(
+          actor:  current_user,
+          order:  @order,
+          reason: params[:reason]
+        )
+
+        if result[:ok]
+          render_success(serialize_order(result[:order], detailed: true))
+        else
+          render_errors(result[:errors])
+        end
+      end
+
+      # POST /api/v1/sales_orders/:id/refresh_price
+      def refresh_price
+        authorize @order, :refresh_price?
+
+        result = Orders::PriceRefreshService.call(
+          actor:  current_user,
+          order:  @order
+        )
+
+        if result[:ok]
+          render_success(serialize_order(result[:order], detailed: true))
+        else
+          render_errors(result[:errors])
+        end
+      end
+
+      # GET /api/v1/sales_orders/recent_for_customer?customer_id=X
+      def recent_for_customer
+        return render_errors(["customer_id is required"]) if params[:customer_id].blank?
+
+        orders = policy_scope(SalesOrder)
+          .includes(lines: :product)
+          .where(customer_id: params[:customer_id])
+          .where.not(status: %w[draft cancelled])
+          .recent
+          .limit(5)
+
+        render_success(orders.map { |o| serialize_order(o, detailed: true) })
+      end
+
+      # POST /api/v1/sales_orders/from_mobile
+      # Create + submit in one atomic call (mobile field reps)
+      def from_mobile
+        authorize SalesOrder.new(organization: current_organization), :from_mobile?
+
+        # Idempotency guard at outer level
+        idempotency_key = params[:idempotency_key]
+        if idempotency_key.present?
+          existing = SalesOrder
+                       .not_deleted
+                       .where(organization_id: current_organization.id, idempotency_key: idempotency_key)
+                       .where.not(status: 'draft')
+                       .first
+          return render_success(serialize_order(existing, detailed: true)) if existing
+        end
+
+        customer = Customer.not_deleted.where(organization: current_organization).find(order_params[:customer_id])
+        branch   = current_organization.branches.find(order_params[:branch_id])
+
+        ActiveRecord::Base.transaction do
+          draft_result = Orders::DraftUpsertService.call(
+            actor:        current_user,
+            organization: current_organization,
+            branch:       branch,
+            customer:     customer,
+            params:       order_params,
+            order:        nil
+          )
+
+          unless draft_result[:ok]
+            render_errors(draft_result[:errors])
+            raise ActiveRecord::Rollback
+          end
+
+          submit_result = Orders::SubmitOrderService.call(
+            actor:           current_user,
+            order:           draft_result[:order],
+            idempotency_key: idempotency_key
+          )
+
+          if submit_result[:ok]
+            render_created(serialize_order(submit_result[:order], detailed: true))
+          else
+            render_errors(submit_result[:errors])
+            raise ActiveRecord::Rollback
+          end
+        end
+      end
+
+      private
+
+      def set_order
+        @order = policy_scope(SalesOrder).find(params[:id])
+      end
+
+      def order_params
+        params.require(:order).permit(
+          :customer_id,
+          :branch_id,
+          :delivery_date,
+          :notes,
+          lines: %i[product_id qty unit_price discount_pct]
+        )
+      end
+
+      def apply_filters(scope)
+        scope = scope.by_status(params[:status])            if params[:status].present?
+        scope = scope.by_branch(params[:branch_id])         if params[:branch_id].present?
+        scope = scope.by_customer(params[:customer_id])     if params[:customer_id].present?
+        scope = scope.by_created_by(params[:created_by_id]) if params[:created_by_id].present?
+        scope = scope.search_q(params[:q])                  if params[:q].present?
+        scope = scope.by_date_range(params[:date_from], params[:date_to]) if params[:date_from].present? || params[:date_to].present?
+        scope = scope.where("sales_orders.total_amount >= ?", params[:min_value].to_f) if params[:min_value].present?
+        scope = scope.where("sales_orders.total_amount <= ?", params[:max_value].to_f) if params[:max_value].present?
+        scope
+      end
+
+      def serialize_order(order, detailed: false)
+        data = {
+          id:              order.id,
+          order_number:    order.order_number,
+          status:          order.status,
+          credit_decision: order.credit_decision,
+          credit_reasons:  order.credit_reasons,
+          credit_snapshot: order.credit_snapshot || {},
+          delivery_date:   order.delivery_date,
+          notes:           order.notes,
+          total_amount:    order.total_amount,
+          discount_amount: order.discount_amount,
+          submitted_at:    order.submitted_at,
+          approved_at:     order.approved_at,
+          cancelled_at:    order.cancelled_at,
+          cancellation_reason: order.cancellation_reason,
+          created_at:      order.created_at,
+          updated_at:      order.updated_at,
+          customer: {
+            id:   order.customer_id,
+            name: order.customer&.name,
+            code: order.customer&.code
+          },
+          branch: {
+            id:   order.branch_id,
+            name: order.branch&.name
+          },
+          created_by: {
+            id:   order.created_by_id,
+            name: order.created_by&.full_name
+          }
+        }
+
+        if detailed
+          data[:lines] = order.lines.map { |l| serialize_line(l) }
+          data[:timeline] = order.audit_logs.recent.map { |log| serialize_audit_log(log) }
+        end
+
+        data
+      end
+
+      def serialize_credit(credit)
+        return nil if credit.nil?
+        {
+          decision:         credit[:decision],
+          reasons:          Array(credit[:reasons]),
+          metrics:          credit[:metrics] || {},
+          actions_required: credit[:actions_required] || {}
+        }
+      end
+
+      def serialize_line(line)
+        {
+          id:            line.id,
+          product_id:    line.product_id,
+          product_name:  line.product&.name,
+          product_sku:   line.product&.sku,
+          qty:           line.qty,
+          unit_price:    line.unit_price,
+          discount_pct:  line.discount_pct,
+          gst_rate:      line.gst_rate,
+          line_total:    line.line_total,
+          price_source:  line.price_source,
+          hsn_code:      line.hsn_code
+        }
+      end
+
+      def serialize_audit_log(log)
+        {
+          id:         log.id,
+          action:     log.action,
+          changes:    log.changes_data,
+          reason:     log.reason,
+          actor_name: log.actor&.full_name,
+          created_at: log.created_at
+        }
+      end
+    end
+  end
+end

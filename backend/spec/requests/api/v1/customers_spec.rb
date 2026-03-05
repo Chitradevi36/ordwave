@@ -258,6 +258,166 @@ RSpec.describe 'Api::V1::Customers', type: :request do
     end
   end
 
+  # ─── GET /api/v1/customers/:id/credit_usage ──────────────────────────────
+  describe 'GET /api/v1/customers/:id/credit_usage' do
+    let!(:credit_account) do
+      create(:credit_account,
+             customer:        customer,
+             organization:    org,
+             branch:          branch,
+             credit_limit:    50_000.00,
+             current_balance: 8_000.00)
+    end
+
+    context 'without any sales orders' do
+      it 'returns 200 with zero order_exposure' do
+        get "/api/v1/customers/#{customer.id}/credit_usage", headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        data = json_body['data']
+        expect(data['credit_limit']).to       eq(50_000.00)
+        expect(data['invoice_outstanding']).to eq(8_000.00)
+        expect(data['order_exposure']).to      eq(0.0)
+        expect(data['credit_used_total']).to   eq(8_000.00)
+        expect(data['available_credit']).to    eq(42_000.00)
+      end
+
+      it 'includes breakdown, hold_exposure, and contributing_orders keys' do
+        get "/api/v1/customers/#{customer.id}/credit_usage", headers: auth_headers
+
+        data = json_body['data']
+        expect(data).to include('hold_exposure', 'breakdown', 'contributing_orders')
+        expect(data['contributing_orders']).to be_an(Array)
+      end
+    end
+
+    context 'with submitted and approved orders' do
+      before do
+        create(:sales_order, organization: org, branch: branch, customer: customer,
+               status: 'submitted', total_amount: 5_000.00)
+        create(:sales_order, organization: org, branch: branch, customer: customer,
+               status: 'approved',  total_amount: 3_000.00)
+      end
+
+      it 'includes submitted + approved amounts in order_exposure' do
+        get "/api/v1/customers/#{customer.id}/credit_usage", headers: auth_headers
+
+        data = json_body['data']
+        expect(data['order_exposure']).to    eq(8_000.00)
+        expect(data['credit_used_total']).to eq(16_000.00)   # invoice(8k) + orders(8k)
+        expect(data['available_credit']).to  eq(34_000.00)
+      end
+
+      it 'returns contributing_orders with expected shape' do
+        get "/api/v1/customers/#{customer.id}/credit_usage", headers: auth_headers
+
+        orders = json_body['data']['contributing_orders']
+        expect(orders.length).to eq(2)
+        o = orders.first
+        expect(o).to include('id', 'order_number', 'status', 'total_amount', 'created_at')
+      end
+
+    context 'with on_hold orders' do
+      before do
+        create(:sales_order, organization: org, branch: branch, customer: customer,
+               status: 'on_hold', total_amount: 4_000.00)
+      end
+
+      it 'shows on_hold amount in hold_exposure, not order_exposure' do
+        get "/api/v1/customers/#{customer.id}/credit_usage", headers: auth_headers
+
+        data = json_body['data']
+        expect(data['hold_exposure']).to   eq(4_000.00)
+        expect(data['order_exposure']).to  eq(0.0)
+      end
+    end
+
+    context 'with draft and cancelled orders' do
+      before do
+        create(:sales_order, organization: org, branch: branch, customer: customer,
+               status: 'draft',     total_amount: 9_999.00)
+        create(:sales_order, organization: org, branch: branch, customer: customer,
+               status: 'cancelled', total_amount: 9_999.00)
+        create(:sales_order, organization: org, branch: branch, customer: customer,
+               status: 'rejected',  total_amount: 9_999.00)
+      end
+
+      it 'excludes draft/cancelled/rejected from order_exposure' do
+        get "/api/v1/customers/#{customer.id}/credit_usage", headers: auth_headers
+
+        expect(json_body['data']['order_exposure']).to eq(0.0)
+      end
+    end
+
+    context 'with branch_id param scoping' do
+      let(:other_branch) { create(:branch, organization: org) }
+
+      before do
+        create(:sales_order, organization: org, branch: branch,       customer: customer,
+               status: 'submitted', total_amount: 5_000.00)
+        create(:sales_order, organization: org, branch: other_branch, customer: customer,
+               status: 'submitted', total_amount: 9_000.00)
+      end
+
+      it 'returns exposure only for the requested branch' do
+        get "/api/v1/customers/#{customer.id}/credit_usage",
+            params: { branch_id: branch.id }, headers: auth_headers
+
+        expect(json_body['data']['order_exposure']).to eq(5_000.00)
+      end
+    end
+
+    context 'authentication and authorization' do
+      it 'returns 401 without auth token' do
+        get "/api/v1/customers/#{customer.id}/credit_usage",
+            headers: { 'X-Organization-Id' => org.id.to_s }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'returns 404 for a customer in another organisation' do
+        other_org    = create(:organization)
+        other_branch = create(:branch, organization: other_org)
+        other_cust   = create(:customer, organization: other_org, branch: other_branch)
+
+        get "/api/v1/customers/#{other_cust.id}/credit_usage", headers: auth_headers
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  # ─── GET /api/v1/customers?include_credit_usage=true ──────────────────────
+  describe 'GET /api/v1/customers?include_credit_usage=true' do
+    let!(:credit_account) do
+      create(:credit_account, customer: customer, organization: org, branch: branch,
+             credit_limit: 50_000.00, current_balance: 5_000.00)
+    end
+
+    before do
+      create(:sales_order, organization: org, branch: branch, customer: customer,
+             status: 'submitted', total_amount: 2_000.00)
+    end
+
+    it 'embeds credit_usage_summary in each customer' do
+      get '/api/v1/customers', params: { include_credit_usage: 'true' }, headers: auth_headers
+
+      data    = json_body['data']
+      entry   = data.find { |c| c['id'] == customer.id }
+      summary = entry['credit_usage_summary']
+
+      expect(summary).not_to be_nil
+      expect(summary['order_exposure']).to   eq(2_000.00)
+      expect(summary['credit_used_total']).to eq(7_000.00)
+    end
+
+    it 'returns the normal list without credit_usage_summary when flag is absent' do
+      get '/api/v1/customers', headers: auth_headers
+
+      entry = json_body['data'].find { |c| c['id'] == customer.id }
+      expect(entry).not_to have_key('credit_usage_summary')
+    end
+  end
+
   # ─── status filter ──────────────────────────────────────────────────────────
   describe 'GET /api/v1/customers?status=blocked' do
     let!(:blocked_customer) do

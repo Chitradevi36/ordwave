@@ -1,13 +1,15 @@
 class CustomerPolicy < ApplicationPolicy
-  def index?       = member?
-  def show?        = member?
-  def create?      = manager_above?
-  def update?      = manager_above?
-  def destroy?     = manager_above?
-  def block?       = manager_above?
-  def unblock?     = manager_above?
-  def deactivate?  = manager_above?
-  def bulk_import? = manager_above?
+  def index?        = member?
+  def show?         = member?
+  def create?       = manager_above?
+  def update?       = manager_above?
+  def destroy?      = manager_above?
+  def block?        = manager_above?
+  def unblock?      = manager_above?
+  def deactivate?   = manager_above?
+  def bulk_import?  = manager_above?
+  # Credit usage is visible to any org member with branch access.
+  def credit_usage? = member?
 
   class Scope < ApplicationPolicy::Scope
     def resolve

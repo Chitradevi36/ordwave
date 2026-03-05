@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_04_250005) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_04_260002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -419,6 +419,57 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_250005) do
     t.index ["organization_id"], name: "index_routes_on_organization_id"
   end
 
+  create_table "sales_order_lines", force: :cascade do |t|
+    t.bigint "sales_order_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "qty", precision: 14, scale: 3, null: false
+    t.decimal "unit_price", precision: 14, scale: 2, null: false
+    t.decimal "discount_pct", precision: 5, scale: 2, default: "0.0"
+    t.decimal "gst_rate", precision: 5, scale: 2, default: "0.0"
+    t.decimal "line_total", precision: 14, scale: 2, default: "0.0", null: false
+    t.string "price_source"
+    t.bigint "price_list_id"
+    t.string "hsn_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["price_list_id"], name: "index_sales_order_lines_on_price_list_id"
+    t.index ["product_id"], name: "index_sales_order_lines_on_product_id"
+    t.index ["sales_order_id"], name: "index_sales_order_lines_on_sales_order_id"
+  end
+
+  create_table "sales_orders", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "customer_id", null: false
+    t.bigint "created_by_id", null: false
+    t.string "order_number", null: false
+    t.string "status", default: "draft", null: false
+    t.date "delivery_date"
+    t.text "notes"
+    t.string "idempotency_key"
+    t.string "credit_decision"
+    t.jsonb "credit_snapshot", default: {}
+    t.jsonb "credit_reasons", default: []
+    t.decimal "total_amount", precision: 14, scale: 2, default: "0.0"
+    t.decimal "discount_amount", precision: 14, scale: 2, default: "0.0"
+    t.datetime "submitted_at"
+    t.datetime "approved_at"
+    t.datetime "cancelled_at"
+    t.text "cancellation_reason"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_sales_orders_on_branch_id"
+    t.index ["created_by_id"], name: "index_sales_orders_on_created_by_id"
+    t.index ["customer_id"], name: "index_sales_orders_on_customer_id"
+    t.index ["deleted_at"], name: "index_sales_orders_on_deleted_at"
+    t.index ["idempotency_key"], name: "index_sales_orders_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["order_number"], name: "index_sales_orders_on_order_number"
+    t.index ["organization_id", "order_number"], name: "index_sales_orders_on_organization_id_and_order_number", unique: true
+    t.index ["organization_id"], name: "index_sales_orders_on_organization_id"
+    t.index ["status"], name: "index_sales_orders_on_status"
+  end
+
   create_table "tier_price_list_assignments", force: :cascade do |t|
     t.bigint "branch_id", null: false
     t.bigint "price_list_id", null: false
@@ -511,6 +562,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_04_250005) do
   add_foreign_key "retailer_price_list_assignments", "price_lists"
   add_foreign_key "routes", "branches"
   add_foreign_key "routes", "organizations"
+  add_foreign_key "sales_order_lines", "products"
+  add_foreign_key "sales_order_lines", "sales_orders"
+  add_foreign_key "sales_orders", "branches"
+  add_foreign_key "sales_orders", "customers"
+  add_foreign_key "sales_orders", "organizations"
+  add_foreign_key "sales_orders", "users", column: "created_by_id"
   add_foreign_key "tier_price_list_assignments", "branches"
   add_foreign_key "tier_price_list_assignments", "price_lists"
 end

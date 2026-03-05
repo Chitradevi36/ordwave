@@ -104,7 +104,7 @@ module Credit
     end
 
     def outstanding
-      @outstanding ||= @account.outstanding_amount.to_f
+      @outstanding ||= @account.current_balance.to_f
     end
 
     def outstanding_pct

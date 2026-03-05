@@ -26087,3 +26087,49 @@ Processing by Api::V1::PrepaymentSkusController#index as */*
 Completed 200 OK in 7ms (Views: 0.1ms | ActiveRecord: 1.1ms | Allocations: 2587)
 
 
+  [1m[35m (1.5ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (3.3ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to CreateSalesOrders (20260304260001)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (36.4ms)[0m  [1m[35mCREATE TABLE "sales_orders" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "branch_id" bigint NOT NULL, "customer_id" bigint NOT NULL, "created_by_id" bigint NOT NULL, "order_number" character varying NOT NULL, "status" character varying DEFAULT 'draft' NOT NULL, "delivery_date" date, "notes" text, "idempotency_key" character varying, "credit_decision" character varying, "credit_snapshot" jsonb DEFAULT '{}', "credit_reasons" jsonb DEFAULT '[]', "total_amount" decimal(14,2) DEFAULT 0.0, "discount_amount" decimal(14,2) DEFAULT 0.0, "submitted_at" timestamp(6), "approved_at" timestamp(6), "cancelled_at" timestamp(6), "cancellation_reason" text, "deleted_at" timestamp(6), "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_c81824fea1"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_ea6900ed0f"
+FOREIGN KEY ("branch_id")
+  REFERENCES "branches" ("id")
+, CONSTRAINT "fk_rails_1a7fd809a8"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+, CONSTRAINT "fk_rails_fc2167fd19"
+FOREIGN KEY ("created_by_id")
+  REFERENCES "users" ("id")
+)[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE INDEX "index_sales_orders_on_organization_id" ON "sales_orders" ("organization_id")[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_sales_orders_on_branch_id" ON "sales_orders" ("branch_id")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_sales_orders_on_customer_id" ON "sales_orders" ("customer_id")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_sales_orders_on_created_by_id" ON "sales_orders" ("created_by_id")[0m
+  [1m[35m (2.2ms)[0m  [1m[35mCREATE INDEX "index_sales_orders_on_order_number" ON "sales_orders" ("order_number")[0m
+  [1m[35m (2.3ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_sales_orders_on_organization_id_and_order_number" ON "sales_orders" ("organization_id", "order_number")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_sales_orders_on_idempotency_key" ON "sales_orders" ("idempotency_key") WHERE idempotency_key IS NOT NULL[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_sales_orders_on_status" ON "sales_orders" ("status")[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE INDEX "index_sales_orders_on_deleted_at" ON "sales_orders" ("deleted_at")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (1.4ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304260001') RETURNING "version"[0m
+  [1m[36mTRANSACTION (8.6ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateSalesOrderLines (20260304260002)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (6.8ms)[0m  [1m[35mCREATE TABLE "sales_order_lines" ("id" bigserial primary key, "sales_order_id" bigint NOT NULL, "product_id" bigint NOT NULL, "qty" decimal(14,3) NOT NULL, "unit_price" decimal(14,2) NOT NULL, "discount_pct" decimal(5,2) DEFAULT 0.0, "gst_rate" decimal(5,2) DEFAULT 0.0, "line_total" decimal(14,2) DEFAULT 0.0 NOT NULL, "price_source" character varying, "price_list_id" bigint, "hsn_code" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_e3a8c2303b"
+FOREIGN KEY ("sales_order_id")
+  REFERENCES "sales_orders" ("id")
+, CONSTRAINT "fk_rails_9551dd1dd1"
+FOREIGN KEY ("product_id")
+  REFERENCES "products" ("id")
+)[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_sales_order_lines_on_sales_order_id" ON "sales_order_lines" ("sales_order_id")[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_sales_order_lines_on_product_id" ON "sales_order_lines" ("product_id")[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_sales_order_lines_on_price_list_id" ON "sales_order_lines" ("price_list_id")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260304260002') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.4ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mPriceList Load (1.4ms)[0m  [1m[34mSELECT "price_lists".* FROM "price_lists" WHERE "price_lists"."deleted_at" IS NULL AND "price_lists"."status" = $1 /* loading for pp */ LIMIT $2[0m  [["status", "active"], ["LIMIT", 11]]

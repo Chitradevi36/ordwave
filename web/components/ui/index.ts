@@ -17,3 +17,5 @@ export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";
 export { Breadcrumb } from "./breadcrumb";
 export type { BreadcrumbItem, BreadcrumbProps } from "./breadcrumb";
+export { CreditDecisionModal } from "./credit-decision-modal";
+export type { CreditDecisionModalProps, CreditResult, CreditMetrics, CreditActionsRequired } from "./credit-decision-modal";

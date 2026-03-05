@@ -1,0 +1,182 @@
+module Orders
+  # Submits a draft order: freezes line prices, runs credit engine, transitions status.
+  #
+  # Decision mapping:
+  #   credit ok      → status: submitted
+  #   credit hold    → status: on_hold
+  #   credit blocked → status stays draft; credit snapshot persisted; returns ok: false
+  #
+  # Result always includes a :credit key with the full engine output.
+  # Idempotency: if idempotency_key is provided and an already-submitted order with
+  # that key exists for the org, returns that order without re-processing.
+  #
+  # Usage:
+  #   result = Orders::SubmitOrderService.call(
+  #     actor:           current_user,
+  #     order:           sales_order,
+  #     idempotency_key: params[:idempotency_key]   # optional
+  #   )
+  #
+  class SubmitOrderService
+    def self.call(**kwargs)
+      new(**kwargs).call
+    end
+
+    def initialize(actor:, order:, idempotency_key: nil)
+      @actor           = actor
+      @order           = order
+      @idempotency_key = idempotency_key
+    end
+
+    def call
+      # Idempotency guard
+      if @idempotency_key.present?
+        existing = SalesOrder
+                     .not_deleted
+                     .where(organization_id: @order.organization_id, idempotency_key: @idempotency_key)
+                     .where.not(status: 'draft')
+                     .first
+        return { ok: true, order: existing, errors: [], idempotent: true, credit: nil } if existing
+      end
+
+      return { ok: false, order: @order, errors: ['Order is not in draft status'], credit: nil } unless @order.draft?
+      return { ok: false, order: @order, errors: ['Order has no lines'],           credit: nil } if @order.lines.empty?
+
+      ActiveRecord::Base.transaction do
+        # 1. Freeze prices on lines
+        freeze_line_prices!
+
+        # 2. Recalculate totals with frozen prices
+        @order.recalculate_totals!
+
+        # 3. Run credit engine
+        credit_result = run_credit_check
+
+        # 4. Always persist credit snapshot + idempotency_key (even on blocked)
+        @order.update!(
+          credit_decision:  credit_result[:decision],
+          credit_snapshot:  credit_result[:metrics].to_h,
+          credit_reasons:   credit_result[:reasons],
+          idempotency_key:  @idempotency_key
+        )
+
+        # 5. Audit: credit checked (always)
+        log_credit_checked(credit_result)
+
+        # 6. BLOCKED → keep order as draft; caller renders 422
+        if credit_result[:decision] == Credit::CreditEngine::DECISION_BLOCKED
+          return { ok: false, order: @order.reload, errors: ['Order blocked by credit policy'],
+                   credit: credit_result }
+        end
+
+        # 7. Transition state: ok → submitted, hold → on_hold
+        new_status = map_credit_decision(credit_result[:decision])
+        @order.transition_to!(new_status)
+
+        # 8. Audit: state transition
+        log_submission(credit_result)
+
+        { ok: true, order: @order.reload, errors: [], credit: credit_result }
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      { ok: false, order: @order, errors: [e.message], credit: nil }
+    end
+
+    private
+
+    def freeze_line_prices!
+      @order.lines.each do |line|
+        next if line.price_source == 'manual'
+
+        result = Pricing::EffectivePriceResolver.call(
+          product:  line.product,
+          branch:   @order.branch,
+          retailer: @order.customer,
+          qty:      line.qty.to_f,
+          on_date:  Date.current
+        )
+
+        line.update!(
+          unit_price:    result.unit_price,
+          discount_pct:  result.discount_pct.to_f,
+          price_source:  result.source,
+          price_list_id: result.price_list_id
+        )
+      end
+    end
+
+    def run_credit_check
+      credit_account = @order.customer.credit_account
+      unless credit_account
+        return { decision: 'ok', reasons: [], metrics: {}, actions_required: {} }
+      end
+
+      result = Credit::CreditEngine.evaluate_order(
+        credit_account: credit_account,
+        product_ids:    @order.lines.map(&:product_id),
+        order_total:    @order.total_amount.to_f,
+        on_date:        Date.current
+      )
+
+      # Enrich metrics with order-exposure breakdown so the UI can explain the
+      # decision with full context (invoice outstanding + pipeline exposure).
+      usage = Credit::RetailerCreditUsageService.call(
+        retailer: @order.customer,
+        branch:   @order.branch
+      )
+      result[:metrics] = result[:metrics].merge(
+        order_exposure:      usage[:order_exposure],
+        invoice_outstanding: usage[:invoice_outstanding],
+        available_credit:    usage[:available_credit],
+        credit_used_total:   usage[:credit_used_total],
+        hold_exposure:       usage[:hold_exposure]
+      )
+
+      result
+    end
+
+    def map_credit_decision(decision)
+      case decision
+      when 'ok'   then 'submitted'
+      when 'hold' then 'on_hold'
+      else             'submitted'
+      end
+    end
+
+    # Audit: credit check result (always written, including blocked)
+    def log_credit_checked(credit_result)
+      Credit::AuditLogger.log(
+        actor:        @actor,
+        organization: @order.organization,
+        auditable:    @order,
+        action:       'order_credit_checked',
+        changes:      { decision: credit_result[:decision], reasons: credit_result[:reasons],
+                        metrics:  credit_result[:metrics] },
+        reason:       nil
+      )
+    end
+
+    # Audit: order transition events (ok / hold only — not called for blocked)
+    def log_submission(credit_result)
+      Credit::AuditLogger.log(
+        actor:        @actor,
+        organization: @order.organization,
+        auditable:    @order,
+        action:       'order_submitted',
+        changes:      { status: @order.status, total_amount: @order.total_amount },
+        reason:       nil
+      )
+
+      return unless @order.on_hold?
+
+      Credit::AuditLogger.log(
+        actor:        @actor,
+        organization: @order.organization,
+        auditable:    @order,
+        action:       'order_on_hold',
+        changes:      { reasons: credit_result[:reasons] },
+        reason:       nil
+      )
+    end
+  end
+end
