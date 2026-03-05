@@ -287,7 +287,7 @@ module Api
           tag_list:          customer.tag_list || [],
           branch_id:         customer.branch_id,
           route:             customer.route ? { id: customer.route.id, name: customer.route.name, code: customer.route.code } : nil,
-          sales_rep:         customer.sales_rep ? { id: customer.sales_rep.id, name: customer.sales_rep.name } : nil,
+          sales_rep:         customer.sales_rep ? { id: customer.sales_rep.id, name: customer.sales_rep.full_name } : nil,
           credit_account:    customer.credit_account ? serialize_credit_account(customer.credit_account) : nil,
         }
 

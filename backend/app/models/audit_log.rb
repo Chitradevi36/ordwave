@@ -69,6 +69,16 @@ class AuditLog < ApplicationRecord
     advance_payment_created
     advance_payment_applied
     advance_payment_refunded
+    beat_created
+    beat_updated
+    beat_deactivated
+    beat_schedule_created
+    beat_schedule_updated
+    beat_schedule_deactivated
+    beat_retailers_updated
+    visit_checked_in
+    visit_checked_out
+    visit_skipped
   ].freeze
 
   belongs_to :organization
@@ -78,6 +88,19 @@ class AuditLog < ApplicationRecord
   belongs_to :auditable, polymorphic: true, optional: true
 
   validates :action, inclusion: { in: ACTIONS }
+
+  # The DB column is `changes_data` to avoid clashing with AR's built-in `changes` reader.
+  # Override assign_attributes so callers can still pass `changes:` and have it silently
+  # mapped to `changes_data:` — avoiding the need to update every AuditLog.create! call.
+  def assign_attributes(new_attributes = {})
+    if new_attributes.is_a?(Hash)
+      new_attributes = new_attributes.stringify_keys
+      if new_attributes.key?("changes") && !new_attributes.key?("changes_data")
+        new_attributes["changes_data"] = new_attributes.delete("changes")
+      end
+    end
+    super(new_attributes)
+  end
 
   scope :for_auditable, ->(obj)    { where(auditable: obj) }
   scope :recent,        ->         { order(created_at: :desc) }
