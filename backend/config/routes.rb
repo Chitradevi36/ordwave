@@ -1,4 +1,4 @@
-Rails.application.routes.draw do
+﻿Rails.application.routes.draw do
   require 'sidekiq/web'
   mount Sidekiq::Web => '/sidekiq'
 
@@ -311,7 +311,19 @@ Rails.application.routes.draw do
 
       # -- Order Pricing (price preview with schemes) -------------------------
       post 'order_pricing/preview', to: 'order_pricing#preview'
+
+      # -- Analytics / Insights -----------------------------------------------
+      scope :analytics, controller: :analytics do
+        get :overview,          action: :overview
+        get :sales,             action: :sales
+        get :collections,       action: :collections
+        get 'collections/export', action: :collections_csv
+        get :credit_risk,       action: :credit_risk
+        get :beat_performance,  action: :beat_performance
+        get :inventory_health,  action: :inventory_health
+      end
     end
   end
 end
+
 
