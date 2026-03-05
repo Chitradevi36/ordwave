@@ -293,4 +293,20 @@ FactoryBot.define do
     condition    { 'good' }
     reason_code  { 'refused' }
   end
+
+  factory :supplier do
+    association :organization
+    sequence(:name) { |n| "Supplier #{n}" }
+    sequence(:code) { |n| "SUPP-#{n.to_s.rjust(3, '0')}" }
+    status             { 'active' }
+    phone              { '9876543210' }
+    payment_terms_days { 30 }
+  end
+
+  factory :supplier_product do
+    association :supplier
+    association :product
+    purchase_price { 100.00 }
+    lead_time_days { 3 }
+  end
 end
