@@ -1407,6 +1407,106 @@ if Rails.env.development?
   puts "     Advance payments: #{AdvancePayment.where(organization: org).count}"
 
 
+
+  # ── Beat Planning Seeds ─────────────────────────────────────────────────────
+  puts ''
+  puts '  -- Beat Planning (SFA) seeding...'
+
+  route1 = Route.where(organization: org).first
+  sales_rep = User.joins(:memberships).where(memberships: { organization: org, role: 'member' }).first || admin
+
+  unless Beat.where(organization: org).exists?
+    beat1 = Beat.create!(
+      organization: org,
+      branch:       branch,
+      route:        route1,
+      created_by:   admin,
+      name:         "North Zone Monday Beat",
+      code:         "NZ-MON",
+      active:       true,
+      notes:        "Covers northern market — high-density residential zone."
+    )
+
+    beat2 = Beat.create!(
+      organization: org,
+      branch:       branch,
+      route:        route1,
+      created_by:   admin,
+      name:         "South Zone Wednesday Beat",
+      code:         "SZ-WED",
+      active:       true,
+      notes:        "Commercial district — grocery + pharmacy mix."
+    )
+
+    # Schedules: Monday (weekday=0) and Wednesday (weekday=2)
+    sched1 = BeatSchedule.create!(
+      organization: org,
+      branch:       branch,
+      beat:         beat1,
+      sales_rep:    sales_rep,
+      weekday:      0,
+      active:       true
+    )
+
+    sched2 = BeatSchedule.create!(
+      organization: org,
+      branch:       branch,
+      beat:         beat2,
+      sales_rep:    sales_rep,
+      weekday:      2,
+      active:       true
+    )
+
+    # Add first 3 customers as beat retailers
+    org_customers = Customer.active.where(organization: org).limit(3).to_a
+    org_customers.each_with_index do |cust, idx|
+      BeatRetailer.create!(
+        beat_schedule:   sched1,
+        customer:        cust,
+        sequence_number: idx + 1,
+        visit_override:  'default'
+      )
+    end
+
+    # Add sample visit logs
+    if org_customers.any?
+      VisitLog.create!(
+        organization:     org,
+        branch:           branch,
+        sales_rep:        sales_rep,
+        customer:         org_customers.first,
+        route:            route1,
+        beat_schedule:    sched1,
+        visit_date:       Date.current - 1,
+        checkin_at:       Time.current - 1.day - 2.hours,
+        checkout_at:      Time.current - 1.day - 1.hour,
+        visit_status:     'completed',
+        gps_lat:          28.6139,
+        gps_lng:          77.2090
+      )
+
+      VisitLog.create!(
+        organization:     org,
+        branch:           branch,
+        sales_rep:        sales_rep,
+        customer:         org_customers.second || org_customers.first,
+        route:            route1,
+        beat_schedule:    sched1,
+        visit_date:       Date.current - 1,
+        visit_status:     'skipped',
+        skip_reason_code: 'shop_closed'
+      )
+    end
+
+    puts "    Beats:          #{Beat.where(organization: org).count}"
+    puts "    Beat Schedules: #{BeatSchedule.where(organization: org).count}"
+    puts "    Beat Retailers: #{BeatRetailer.where(beat_schedule: BeatSchedule.where(organization: org)).count}"
+    puts "    Visit Logs:     #{VisitLog.where(organization: org).count}"
+    puts '  == Beat planning seeded.'
+  else
+    puts '  -- Beats already seeded, skipping.'
+  end
+
   puts ''
   puts '  ┌─ Dev login credentials ────────────────'
   puts "  │  POST /api/v1/auth/login"

@@ -27,6 +27,8 @@ class Customer < ApplicationRecord
   has_many :sales_invoices, dependent: :restrict_with_error
   has_many :payments,        dependent: :restrict_with_error
   has_many :advance_payments, dependent: :destroy
+  has_many :beat_retailers,  dependent: :destroy
+  has_many :visit_logs,      dependent: :destroy
 
   accepts_nested_attributes_for :addresses, allow_destroy: true
   accepts_nested_attributes_for :contacts,  allow_destroy: true
@@ -67,7 +69,17 @@ class Customer < ApplicationRecord
         '(credit_accounts.current_balance::numeric / NULLIF(credit_accounts.credit_limit, 0)) >= 0.8'
       )
   }
-  scope :no_route, -> { where(route_id: nil) }
+  scope :no_route,   -> { where(route_id: nil) }
+
+  # Visit tracking scopes
+  scope :due_for_visit, ->(as_of = Date.current) {
+    where("next_due_on IS NULL OR next_due_on <= ?", as_of)
+      .where.not(visit_frequency: nil)
+  }
+  scope :never_visited, -> { where(last_visited_at: nil).where.not(visit_frequency: nil) }
+  scope :visit_overdue, ->(as_of = Date.current) {
+    where("next_due_on < ?", as_of).where.not(visit_frequency: nil)
+  }
 
   # Duplicate detection
   scope :dup_by_name,  ->(val, org_id) { not_deleted.where(organization_id: org_id).where('LOWER(name) = LOWER(?)', val) }
@@ -96,4 +108,36 @@ class Customer < ApplicationRecord
 
   def active?   = status == 'active'
   def blocked?  = status == 'blocked'
+
+  # ── Visit frequency helpers ───────────────────────────────────────────────
+  VISIT_FREQ_DAYS = {
+    'daily'     => 1,
+    'weekly'    => 7,
+    'biweekly'  => 14,
+    'monthly'   => 30,
+    'quarterly' => 90
+  }.freeze
+
+  def due_for_visit?(as_of = Date.current)
+    return false if visit_frequency.blank?
+    return true  if last_visited_at.nil?
+    return true  if next_due_on.present? && next_due_on <= as_of
+
+    days = VISIT_FREQ_DAYS[visit_frequency]
+    days ? last_visited_at.to_date + days <= as_of : false
+  end
+
+  def compute_next_due_on(from_date = Date.current)
+    days = VISIT_FREQ_DAYS[visit_frequency]
+    return nil unless days
+
+    from_date + days
+  end
+
+  def record_visit!(visited_at = Time.current)
+    update!(
+      last_visited_at: visited_at,
+      next_due_on:     compute_next_due_on(visited_at.to_date)
+    )
+  end
 end

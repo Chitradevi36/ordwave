@@ -1,4 +1,4 @@
-Rails.application.routes.draw do
+﻿Rails.application.routes.draw do
   require 'sidekiq/web'
   mount Sidekiq::Web => '/sidekiq'
 
@@ -116,7 +116,7 @@ Rails.application.routes.draw do
       end
 
       # Inventory Ledger
-      resources :inventory_levels, only: %i[index show]   # legacy — kept for existing clients
+      resources :inventory_levels, only: %i[index show]   # legacy â€” kept for existing clients
 
       namespace :inventory do
         resources :balances,    only: %i[index show]
@@ -125,6 +125,27 @@ Rails.application.routes.draw do
       end
 
       resources :routes,          only: %i[index show create update destroy]
+
+      # -- Beat Planning and Retailer Visits (SFA) --------------------------
+      resources :beats, only: %i[index show create update] do
+        resources :schedules, only: %i[index show create update],
+                              controller: 'beat_schedules' do
+          member do
+            get  :retailers
+            post :bulk_upsert
+          end
+        end
+      end
+
+      scope :visits do
+        get  'today',    to: 'visits#today'
+        get  '',         to: 'visits#index',    as: :visits
+        post 'checkin',  to: 'visits#checkin'
+        post 'skip_new', to: 'visits#skip_new'
+        post ':id/checkout', to: 'visits#checkout', as: :visit_checkout
+        post ':id/skip',     to: 'visits#skip',     as: :visit_skip
+      end
+
       resources :credit_accounts, only: %i[show update] do
         member do
           patch :update_flags
@@ -285,3 +306,4 @@ Rails.application.routes.draw do
     end
   end
 end
+

@@ -22,6 +22,7 @@ import {
   ReceiptText,
   Receipt,
   Wallet,
+  CalendarCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/sales-invoices",          label: "Sales Invoices",   icon: Receipt },
   { href: "/collections",             label: "Collections",     icon: Wallet },
   { href: "/routes",                  label: "Routes",           icon: MapPin },
+  { href: "/beats",                    label: "Beats",             icon: CalendarCheck },
   { href: "/delivery",                 label: "Delivery",    icon: Truck },
   { href: "/approvals/credit-limits", label: "Approvals",   icon: CheckSquare },
   { href: "/reports",                 label: "Reports",     icon: BarChart3 },

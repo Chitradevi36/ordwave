@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_05_000030) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_05_000035) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -74,6 +74,56 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000030) do
     t.index ["actor_id"], name: "index_audit_logs_on_actor_id"
     t.index ["auditable_type", "auditable_id"], name: "index_audit_logs_on_auditable"
     t.index ["organization_id"], name: "index_audit_logs_on_organization_id"
+  end
+
+  create_table "beat_retailers", force: :cascade do |t|
+    t.bigint "beat_schedule_id", null: false
+    t.bigint "customer_id", null: false
+    t.integer "sequence_number", default: 0, null: false
+    t.string "visit_override", default: "default", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["beat_schedule_id", "customer_id"], name: "index_beat_retailers_schedule_customer", unique: true
+    t.index ["beat_schedule_id"], name: "index_beat_retailers_on_beat_schedule_id"
+  end
+
+  create_table "beat_schedules", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "beat_id", null: false
+    t.bigint "sales_rep_id", null: false
+    t.integer "weekday", null: false
+    t.time "start_time"
+    t.time "end_time"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["beat_id", "weekday"], name: "index_beat_schedules_beat_weekday"
+    t.index ["beat_id"], name: "index_beat_schedules_on_beat_id"
+    t.index ["branch_id", "sales_rep_id", "weekday"], name: "index_beat_schedules_rep_weekday"
+    t.index ["branch_id"], name: "index_beat_schedules_on_branch_id"
+    t.index ["organization_id"], name: "index_beat_schedules_on_organization_id"
+    t.index ["sales_rep_id"], name: "index_beat_schedules_on_sales_rep_id"
+  end
+
+  create_table "beats", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "route_id"
+    t.bigint "created_by_id", null: false
+    t.string "name", null: false
+    t.string "code", null: false
+    t.boolean "active", default: true, null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id", "code"], name: "index_beats_on_branch_id_and_code", unique: true
+    t.index ["branch_id"], name: "index_beats_on_branch_id"
+    t.index ["created_by_id"], name: "index_beats_on_created_by_id"
+    t.index ["organization_id", "active"], name: "index_beats_on_org_active"
+    t.index ["organization_id"], name: "index_beats_on_organization_id"
+    t.index ["route_id"], name: "index_beats_on_route_id"
   end
 
   create_table "branches", force: :cascade do |t|
@@ -257,10 +307,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000030) do
     t.decimal "opening_balance", precision: 12, scale: 2, default: "0.0"
     t.text "tag_list", default: [], array: true
     t.bigint "sales_rep_id"
+    t.datetime "last_visited_at"
+    t.date "next_due_on"
     t.index ["branch_id"], name: "index_customers_on_branch_id"
     t.index ["channel"], name: "index_customers_on_channel"
     t.index ["customer_type"], name: "index_customers_on_customer_type"
     t.index ["deleted_at"], name: "index_customers_on_deleted_at"
+    t.index ["last_visited_at"], name: "index_customers_on_last_visited_at"
+    t.index ["next_due_on"], name: "index_customers_on_next_due_on"
     t.index ["organization_id", "code"], name: "idx_customers_org_code", unique: true
     t.index ["organization_id", "gstin"], name: "idx_customers_org_gstin_unique", unique: true, where: "((gstin IS NOT NULL) AND (deleted_at IS NULL))"
     t.index ["organization_id", "phone"], name: "idx_customers_org_phone_unique", unique: true, where: "((phone IS NOT NULL) AND (deleted_at IS NULL))"
@@ -1094,6 +1148,36 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000030) do
     t.index ["status"], name: "index_vehicles_on_status"
   end
 
+  create_table "visit_logs", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "sales_rep_id", null: false
+    t.bigint "customer_id", null: false
+    t.bigint "route_id"
+    t.bigint "beat_schedule_id"
+    t.date "visit_date", null: false
+    t.datetime "checkin_at"
+    t.datetime "checkout_at"
+    t.decimal "gps_lat", precision: 10, scale: 6
+    t.decimal "gps_lng", precision: 10, scale: 6
+    t.text "notes"
+    t.string "visit_status", default: "planned", null: false
+    t.string "skip_reason_code"
+    t.string "device_id"
+    t.string "idempotency_key"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["beat_schedule_id"], name: "index_visit_logs_on_beat_schedule_id"
+    t.index ["branch_id"], name: "index_visit_logs_on_branch_id"
+    t.index ["customer_id", "visit_date"], name: "index_visit_logs_customer_date"
+    t.index ["idempotency_key"], name: "index_visit_logs_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["organization_id"], name: "index_visit_logs_on_organization_id"
+    t.index ["route_id"], name: "index_visit_logs_on_route_id"
+    t.index ["sales_rep_id", "visit_date"], name: "index_visit_logs_rep_date"
+    t.index ["visit_date"], name: "index_visit_logs_on_visit_date"
+    t.index ["visit_status"], name: "index_visit_logs_on_status"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "advance_payments", "branches"
@@ -1102,6 +1186,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000030) do
   add_foreign_key "advance_payments", "payments", column: "source_payment_id"
   add_foreign_key "audit_logs", "organizations"
   add_foreign_key "audit_logs", "users", column: "actor_id"
+  add_foreign_key "beat_retailers", "beat_schedules"
+  add_foreign_key "beat_retailers", "customers"
+  add_foreign_key "beat_schedules", "beats"
+  add_foreign_key "beat_schedules", "branches"
+  add_foreign_key "beat_schedules", "organizations"
+  add_foreign_key "beat_schedules", "users", column: "sales_rep_id"
+  add_foreign_key "beats", "branches"
+  add_foreign_key "beats", "organizations"
+  add_foreign_key "beats", "routes"
+  add_foreign_key "beats", "users", column: "created_by_id"
   add_foreign_key "branches", "organizations"
   add_foreign_key "credit_accounts", "branches"
   add_foreign_key "credit_accounts", "customers"
@@ -1222,4 +1316,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000030) do
   add_foreign_key "trip_stops", "sales_orders"
   add_foreign_key "vehicles", "organizations"
   add_foreign_key "vehicles", "users", column: "default_driver_id"
+  add_foreign_key "visit_logs", "beat_schedules"
+  add_foreign_key "visit_logs", "branches"
+  add_foreign_key "visit_logs", "customers"
+  add_foreign_key "visit_logs", "organizations"
+  add_foreign_key "visit_logs", "routes"
+  add_foreign_key "visit_logs", "users", column: "sales_rep_id"
 end
