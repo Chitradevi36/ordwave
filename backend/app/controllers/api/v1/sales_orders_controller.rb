@@ -321,6 +321,8 @@ module Api
         if detailed
           data[:lines] = order.lines.map { |l| serialize_line(l) }
           data[:timeline] = order.audit_logs.recent.map { |log| serialize_audit_log(log) }
+          data[:freebies]        = order.freebies.includes(:product).map { |f| { id: f.id, product_id: f.product_id, product_name: f.product&.name, qty_free: f.qty_free, scheme_id: f.scheme_id, notes: f.notes } }
+          data[:scheme_snapshot] = order.scheme_snapshot
         end
 
         data
@@ -349,6 +351,8 @@ module Api
           line_total:    line.line_total,
           price_source:  line.price_source,
           hsn_code:      line.hsn_code
+          scheme_discount_pct: line.scheme_discount_pct,
+          scheme_tags:         line.scheme_tags
         }
       end
 

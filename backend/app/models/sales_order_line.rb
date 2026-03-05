@@ -15,10 +15,17 @@ class SalesOrderLine < ApplicationRecord
   # ── Callbacks ─────────────────────────────────────────────────────────────
   before_save :compute_line_total
 
+  # ── Scheme helpers ────────────────────────────────────────────────────────
+  # Returns the combined discount (price list + scheme) as a single pct for UI
+  def effective_discount_pct
+    [discount_pct.to_f + scheme_discount_pct.to_f, 100.0].min
+  end
+
   # ── Instance methods ──────────────────────────────────────────────────────
   def compute_line_total
     base = qty.to_f * unit_price.to_f
-    discounted = base * (1 - discount_pct.to_f / 100.0)
+    total_discount = [discount_pct.to_f + scheme_discount_pct.to_f, 100.0].min
+    discounted = base * (1 - total_discount / 100.0)
     self.line_total = discounted.round(2)
   end
 end

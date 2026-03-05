@@ -1,4 +1,4 @@
-﻿Rails.application.routes.draw do
+Rails.application.routes.draw do
   require 'sidekiq/web'
   mount Sidekiq::Web => '/sidekiq'
 
@@ -116,7 +116,7 @@
       end
 
       # Inventory Ledger
-      resources :inventory_levels, only: %i[index show]   # legacy â€” kept for existing clients
+      resources :inventory_levels, only: %i[index show]   # legacy — kept for existing clients
 
       namespace :inventory do
         resources :balances,    only: %i[index show]
@@ -303,6 +303,14 @@
       end
 
       resources :delivery_exceptions, only: %i[index]
+
+      # -- Trade Promotions / Scheme Engine ------------------------------------
+      resources :schemes, only: %i[index show create update destroy] do
+        collection { get :stats }
+      end
+
+      # -- Order Pricing (price preview with schemes) -------------------------
+      post 'order_pricing/preview', to: 'order_pricing#preview'
     end
   end
 end

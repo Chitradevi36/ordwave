@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_05_000035) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -885,6 +885,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000035) do
     t.index ["sales_order_id"], name: "index_sales_invoices_on_sales_order_id"
   end
 
+  create_table "sales_order_freebies", force: :cascade do |t|
+    t.bigint "sales_order_id", null: false
+    t.bigint "scheme_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "qty_free", precision: 14, scale: 3, null: false
+    t.string "uom"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_sales_order_freebies_on_product_id"
+    t.index ["sales_order_id"], name: "index_sales_order_freebies_on_sales_order_id"
+    t.index ["scheme_id"], name: "index_sales_order_freebies_on_scheme_id"
+  end
+
   create_table "sales_order_lines", force: :cascade do |t|
     t.bigint "sales_order_id", null: false
     t.bigint "product_id", null: false
@@ -901,6 +915,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000035) do
     t.integer "delivered_qty", default: 0, null: false
     t.integer "returned_qty", default: 0, null: false
     t.decimal "invoiced_qty", precision: 14, scale: 3, default: "0.0", null: false
+    t.decimal "scheme_discount_pct", precision: 5, scale: 2, default: "0.0"
+    t.jsonb "scheme_tags", default: []
     t.index ["invoiced_qty"], name: "idx_sol_invoiced_qty"
     t.index ["price_list_id"], name: "index_sales_order_lines_on_price_list_id"
     t.index ["product_id"], name: "index_sales_order_lines_on_product_id"
@@ -932,6 +948,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000035) do
     t.datetime "dispatched_at"
     t.datetime "delivered_at"
     t.text "delivery_failure_reason"
+    t.jsonb "scheme_snapshot", default: {}
     t.index ["branch_id"], name: "index_sales_orders_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_orders_on_created_by_id"
     t.index ["customer_id"], name: "index_sales_orders_on_customer_id"
@@ -941,6 +958,76 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000035) do
     t.index ["organization_id", "order_number"], name: "index_sales_orders_on_organization_id_and_order_number", unique: true
     t.index ["organization_id"], name: "index_sales_orders_on_organization_id"
     t.index ["status"], name: "index_sales_orders_on_status"
+  end
+
+  create_table "scheme_applications", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "sales_order_id"
+    t.bigint "scheme_id"
+    t.bigint "applied_by_id"
+    t.string "source", default: "preview", null: false
+    t.jsonb "breakdown", default: {}, null: false
+    t.datetime "applied_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applied_by_id"], name: "index_scheme_applications_on_applied_by_id"
+    t.index ["organization_id"], name: "index_scheme_applications_on_organization_id"
+    t.index ["sales_order_id", "source"], name: "index_scheme_applications_on_sales_order_id_and_source"
+    t.index ["sales_order_id"], name: "index_scheme_applications_on_sales_order_id"
+    t.index ["scheme_id"], name: "index_scheme_applications_on_scheme_id"
+  end
+
+  create_table "scheme_conditions", force: :cascade do |t|
+    t.bigint "scheme_id", null: false
+    t.string "condition_type", null: false
+    t.string "operator", default: ">=", null: false
+    t.jsonb "value", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["condition_type"], name: "index_scheme_conditions_on_condition_type"
+    t.index ["scheme_id"], name: "index_scheme_conditions_on_scheme_id"
+  end
+
+  create_table "scheme_rewards", force: :cascade do |t|
+    t.bigint "scheme_id", null: false
+    t.string "reward_type", null: false
+    t.string "target_scope", default: "order", null: false
+    t.bigint "target_product_id"
+    t.decimal "reward_value", precision: 14, scale: 4, null: false
+    t.decimal "max_reward_value", precision: 14, scale: 2
+    t.integer "free_per_x"
+    t.integer "free_qty_per_trigger"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scheme_id"], name: "index_scheme_rewards_on_scheme_id"
+    t.index ["target_product_id"], name: "index_scheme_rewards_on_target_product_id"
+  end
+
+  create_table "schemes", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.bigint "created_by_id", null: false
+    t.string "name", null: false
+    t.string "code", null: false
+    t.string "scheme_type", null: false
+    t.string "status", default: "active", null: false
+    t.integer "priority", default: 0, null: false
+    t.boolean "exclusive", default: false, null: false
+    t.date "start_date"
+    t.date "end_date"
+    t.integer "applicable_days", default: [], array: true
+    t.string "applies_to", default: "all", null: false
+    t.text "notes"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_schemes_on_branch_id"
+    t.index ["created_by_id"], name: "index_schemes_on_created_by_id"
+    t.index ["organization_id", "code"], name: "index_schemes_on_organization_id_and_code", unique: true
+    t.index ["organization_id"], name: "index_schemes_on_organization_id"
+    t.index ["scheme_type"], name: "index_schemes_on_scheme_type"
+    t.index ["start_date", "end_date"], name: "index_schemes_on_start_date_and_end_date"
+    t.index ["status"], name: "index_schemes_on_status"
   end
 
   create_table "stock_movements", force: :cascade do |t|
@@ -1290,12 +1377,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_000035) do
   add_foreign_key "sales_invoices", "organizations"
   add_foreign_key "sales_invoices", "sales_orders"
   add_foreign_key "sales_invoices", "users", column: "created_by_id"
+  add_foreign_key "sales_order_freebies", "products"
+  add_foreign_key "sales_order_freebies", "sales_orders"
+  add_foreign_key "sales_order_freebies", "schemes"
   add_foreign_key "sales_order_lines", "products"
   add_foreign_key "sales_order_lines", "sales_orders"
   add_foreign_key "sales_orders", "branches"
   add_foreign_key "sales_orders", "customers"
   add_foreign_key "sales_orders", "organizations"
   add_foreign_key "sales_orders", "users", column: "created_by_id"
+  add_foreign_key "scheme_applications", "organizations"
+  add_foreign_key "scheme_applications", "sales_orders"
+  add_foreign_key "scheme_applications", "schemes"
+  add_foreign_key "scheme_applications", "users", column: "applied_by_id"
+  add_foreign_key "scheme_conditions", "schemes"
+  add_foreign_key "scheme_rewards", "products", column: "target_product_id"
+  add_foreign_key "scheme_rewards", "schemes"
+  add_foreign_key "schemes", "branches"
+  add_foreign_key "schemes", "organizations"
+  add_foreign_key "schemes", "users", column: "created_by_id"
   add_foreign_key "stock_movements", "branches"
   add_foreign_key "stock_movements", "organizations"
   add_foreign_key "stock_movements", "products"
