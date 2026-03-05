@@ -9,9 +9,10 @@ class Supplier < ApplicationRecord
   # ── Associations ──────────────────────────────────────────────────────────
   belongs_to :organization
 
-  has_many :supplier_products, dependent: :destroy
-  has_many :products, through: :supplier_products
-  has_many :audit_logs, as: :auditable, dependent: :nullify
+  has_many :supplier_products,   dependent: :destroy
+  has_many :products,             through: :supplier_products
+  has_many :purchase_invoices,    dependent: :restrict_with_error
+  has_many :audit_logs,           as: :auditable, dependent: :nullify
 
   # ── Validations ───────────────────────────────────────────────────────────
   validates :name,   presence: true, length: { maximum: 200 }

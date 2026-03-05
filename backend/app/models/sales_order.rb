@@ -23,9 +23,12 @@ class SalesOrder < ApplicationRecord
   belongs_to :created_by, class_name: 'User'
 
   has_many :lines, class_name: 'SalesOrderLine', dependent: :destroy, inverse_of: :sales_order
-  has_many :audit_logs, as: :auditable, dependent: :nullify
+  has_many :audit_logs,            as: :auditable,  dependent: :nullify
+  has_many :inventory_reservations, dependent: :destroy
+  has_many :stock_movements,        as: :reference,  dependent: :nullify
   has_one  :trip_stop, dependent: :nullify
   has_one  :delivery_trip, through: :trip_stop
+  has_many :return_requests, ->(o) { where(source_type: 'order', source_id: o.id) }, class_name: 'ReturnRequest', primary_key: :id, foreign_key: :source_id
 
   accepts_nested_attributes_for :lines, allow_destroy: true
 

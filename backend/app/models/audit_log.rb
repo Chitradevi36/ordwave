@@ -39,6 +39,24 @@ class AuditLog < ApplicationRecord
     supplier_product_added
     supplier_product_updated
     supplier_product_removed
+    purchase_invoice_created
+    purchase_invoice_updated
+    purchase_invoice_posted
+    purchase_invoice_cancelled
+    transfer_created
+    transfer_updated
+    transfer_dispatched
+    transfer_received
+    transfer_partially_received
+    transfer_cancelled
+    return_created
+    return_updated
+    return_submitted
+    return_qc_started
+    return_qc_completed
+    return_cancelled
+    credit_note_issued
+    credit_note_voided
   ].freeze
 
   belongs_to :organization
@@ -50,8 +68,8 @@ class AuditLog < ApplicationRecord
   validates :action, inclusion: { in: ACTIONS }
 
   scope :for_auditable, ->(obj)    { where(auditable: obj) }
-  scope :recent,         ->         { order(created_at: :desc) }
-  scope :for_action,     ->(action) { where(action: action) }
+  scope :recent,        ->         { order(created_at: :desc) }
+  scope :for_action,    ->(action) { where(action: action) }
 
   # Ensure created_at is always set even without updated_at
   self.ignored_columns = [] # keep all columns

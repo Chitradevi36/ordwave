@@ -309,4 +309,127 @@ FactoryBot.define do
     purchase_price { 100.00 }
     lead_time_days { 3 }
   end
+
+  factory :purchase_invoice do
+    association :organization
+    association :branch
+    association :supplier
+    association :created_by, factory: :user
+    sequence(:invoice_number) { |n| "INV-#{n.to_s.rjust(4, '0')}" }
+    invoice_date { Date.current }
+    due_date     { Date.current + 30 }
+    status       { 'draft' }
+    currency     { 'INR' }
+    total_amount { 0 }
+    tax_amount   { 0 }
+    grand_total  { 0 }
+
+    trait :posted do
+      status    { 'posted' }
+      posted_at { Time.current }
+    end
+
+    trait :cancelled do
+      status       { 'cancelled' }
+      cancelled_at { Time.current }
+    end
+  end
+
+  factory :purchase_invoice_line do
+    association :purchase_invoice
+    association :product
+    qty          { 5 }
+    unit_price   { 100.00 }
+    discount_pct { 0 }
+    tax_rate     { 18 }
+    tax_amount   { 90.00 }
+    line_total   { 590.00 }
+  end
+
+  # ─── Inventory ──────────────────────────────────────────────────────────────
+
+  factory :inventory_level do
+    association :organization
+    association :branch
+    association :product
+    qty_on_hand   { 0 }
+    qty_reserved  { 0 }
+    min_qty_threshold { nil }
+  end
+
+  factory :stock_movement do
+    association :organization
+    association :branch
+    association :product
+    association :created_by, factory: :user
+    movement_type { 'purchase_posted' }
+    direction     { 'in' }
+    qty           { 10 }
+    unit_cost     { 50.00 }
+    occurred_at   { Time.current }
+    metadata      { {} }
+  end
+
+  factory :inventory_reservation do
+    association :organization
+    association :branch
+    association :product
+    association :sales_order
+    qty_reserved { 5 }
+    status       { 'active' }
+  end
+  #  Returns Engine 
+
+  factory :return_request do
+    association :organization
+    association :branch
+    association :customer
+    association :created_by, factory: :user
+    source_type   { 'manual' }
+    return_date   { Date.current }
+    status        { 'draft' }
+    return_number { nil }
+  end
+
+  factory :return_line do
+    association :return_request
+    association :product
+    qty_reported        { 5 }
+    condition_reported  { 'unknown' }
+    reason_code         { 'other' }
+    unit_price_snapshot { nil }
+    gst_rate_snapshot   { nil }
+    hsn_code_snapshot   { nil }
+  end
+
+  factory :return_qc_item do
+    association :return_line
+    association :qc_by, factory: :user
+    qty_resalable   { 3 }
+    qty_damaged     { 1 }
+    qty_expired     { 0 }
+    condition_final { 'mixed' }
+    qc_at           { Time.current }
+  end
+
+  factory :credit_note do
+    association :organization
+    association :branch
+    association :customer
+    association :return_request
+    association :created_by, factory: :user
+    credit_note_number { nil }
+    status   { 'draft' }
+    subtotal  { 0 }
+    tax_total { 0 }
+    total     { 0 }
+  end
+
+  factory :credit_note_line do
+    association :credit_note
+    association :product
+    qty        { 3 }
+    unit_price { 100.0 }
+    gst_rate   { 18.0 }
+  end
 end
