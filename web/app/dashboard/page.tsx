@@ -1,22 +1,55 @@
-"use client";
+﻿"use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, ShoppingCart, Users, Package, TrendingUp, AlertCircle, CreditCard, AlertTriangle } from "lucide-react";
+import {
+  Plus, ShoppingCart, TrendingUp, Wallet, AlertTriangle,
+  CreditCard, Package, Users, Tag, AlertCircle,
+  CheckCircle2, Clock, Ban, ChevronRight,
+} from "lucide-react";
 import { useOnboardingGuard } from "@/lib/hooks/useOnboardingGuard";
 import { AppShell } from "@/components/layout/app-shell";
-import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard, KpiCardSkeleton } from "@/components/dashboard/KpiCard";
 import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
-import { OrderStatusChart } from "@/components/dashboard/OrderStatusChart";
-import { useDashboardSummary, useSalesTrend, useOrderStatusBreakdown } from "@/lib/api/hooks/useDashboard";
+import { useDashboardData, DashboardAlert } from "@/lib/api/hooks/useDashboard";
 import { useOrders } from "@/lib/api/hooks/useOrders";
 
-//  Status badge helper 
+// â”€â”€ Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function fmt(val: string | number | null | undefined, compact = false): string {
+  if (val == null) return "—";
+  const n = typeof val === "string" ? parseFloat(val) : (val as number);
+  if (isNaN(n)) return String(val);
+  if (compact) {
+    if (n >= 10_00_000) return "₹" + (n / 10_00_000).toFixed(1) + "Cr";
+    if (n >= 1_00_000)  return "₹" + (n / 1_00_000).toFixed(1) + "L";
+    if (n >= 1_000)     return "₹" + (n / 1_000).toFixed(1) + "K";
+  }
+  return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+}
+
+function fmtDate(iso: string) {
+  try { return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }); }
+  catch { return iso; }
+}
+
+function greeting(name: string) {
+  const h = new Date().getHours();
+  const salutation = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  return `${salutation}, ${name} 👋`;
+}
+
+function today() {
+  return new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+
+// â”€â”€ Status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const STATUS_VARIANTS: Record<string, "warning" | "secondary" | "default" | "success" | "danger"> = {
-  pending: "warning",
+  submitted: "warning",
   draft: "secondary",
+  on_hold: "danger",
   approved: "default",
   confirmed: "default",
   dispatched: "default",
@@ -24,149 +57,308 @@ const STATUS_VARIANTS: Record<string, "warning" | "secondary" | "default" | "suc
   cancelled: "danger",
 };
 
-function formatAmount(val: string | number | null | undefined): string {
-  if (val == null) return "";
-  const n = typeof val === "string" ? parseFloat(val) : val;
-  if (isNaN(n)) return String(val);
-  return `?${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+// â”€â”€ Alert ribbon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const ALERT_ICONS: Record<string, React.ElementType> = {
+  on_hold:   Clock,
+  pending:   AlertCircle,
+  overdue:   CreditCard,
+  low_stock: Package,
+  blocked:   Ban,
+};
+
+const ALERT_BG: Record<string, string> = {
+  high:   "bg-red-50 border-red-200 text-red-700",
+  medium: "bg-amber-50 border-amber-200 text-amber-700",
+  low:    "bg-blue-50 border-blue-200 text-blue-700",
+};
+
+function AlertRibbon({ alerts }: { alerts: DashboardAlert[] }) {
+  if (!alerts.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2 mb-5">
+      {alerts.map((a) => {
+        const Icon = ALERT_ICONS[a.type] ?? AlertTriangle;
+        return (
+          <Link
+            key={a.type}
+            href={a.href}
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-opacity hover:opacity-80 ${ALERT_BG[a.severity]}`}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="font-bold">{a.count}</span>&nbsp;{a.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
 
-function formatRevenue(val: number | null | undefined): string {
-  if (val == null) return "";
-  if (val >= 100_000) return `?${(val / 100_000).toFixed(1)}L`;
-  if (val >= 1_000)   return `?${(val / 1_000).toFixed(1)}K`;
-  return `?${val}`;
+// â”€â”€ Order pipeline mini-donut (SVG progress rings) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function PipelineRing({ label, count, color, icon: Icon }: { label: string; count: number; color: string; icon: React.ElementType }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className={`flex h-10 w-10 items-center justify-center rounded-full ${color}`}>
+        <Icon className="h-5 w-5" />
+      </span>
+      <p className="text-xl font-bold text-text-primary">{count}</p>
+      <p className="text-xs text-text-secondary text-center">{label}</p>
+    </div>
+  );
 }
 
-function formatDate(iso: string) {
-  try { return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }); }
-  catch { return iso; }
+// â”€â”€ Top-N table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function TopTable<T extends { id: number; name: string }>({
+  title, rows, renderSub, renderRight, href,
+}: {
+  title: string;
+  rows: T[];
+  renderSub: (r: T) => string;
+  renderRight: (r: T) => string;
+  href: string;
+}) {
+  return (
+    <Card className="flex flex-col">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+        <Link href={href} className="flex items-center text-xs text-accent hover:underline">
+          View all <ChevronRight className="h-3 w-3" />
+        </Link>
+      </CardHeader>
+      <CardContent className="p-0 flex-1">
+        {rows.length === 0 ? (
+          <p className="px-5 py-6 text-sm text-text-secondary text-center">No data yet</p>
+        ) : (
+          <ol className="divide-y divide-border">
+            {rows.map((r, i) => (
+              <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-background-subtle transition-colors">
+                <span className="w-5 text-center text-xs font-bold text-text-secondary">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-primary truncate">{r.name}</p>
+                  <p className="text-xs text-text-secondary">{renderSub(r)}</p>
+                </div>
+                <p className="text-sm font-semibold text-text-primary whitespace-nowrap">{renderRight(r)}</p>
+              </li>
+            ))}
+          </ol>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
-//  Dashboard 
+// â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function DashboardPage() {
   const isReady = useOnboardingGuard();
   const router  = useRouter();
 
-  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useDashboardSummary();
-  const { data: salesTrend, isLoading: salesLoading,  isError: salesError  } = useSalesTrend();
-  const { data: orderBreakdown, isLoading: breakdownLoading, isError: breakdownError } = useOrderStatusBreakdown();
-  const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 5 });
+  const { data, isLoading, isError } = useDashboardData();
+  const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 3, sort_by: "created_at", sort_dir: "desc" });
 
   if (!isReady) return null;
 
   const orders = ordersData?.data ?? [];
 
+  // Derived sparkline: last 14 days of orders_value for revenue KPI
+  const spark14 = (data?.timeseries ?? []).slice(-14).map(d => d.orders_value);
+
   return (
     <AppShell title="Dashboard">
-      <PageHeader
-        title="Dashboard"
-        description="Welcome back. Here is what is happening today."
-        actions={[{ label: "New Order", onClick: () => router.push("/orders/new"), icon: Plus }]}
-      />
 
-      {/*  KPI cards  */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <KpiCard
-          label="Total Orders"
-          value={summaryLoading ? "" : (summary?.total_orders?.toLocaleString("en-IN") ?? "")}
-          icon={ShoppingCart}
-          color="green"
-          loading={summaryLoading}
-          error={summaryError}
-        />
-        <KpiCard
-          label="Active Customers"
-          value={summaryLoading ? "" : (summary?.active_customers?.toLocaleString("en-IN") ?? "")}
-          icon={Users}
-          color="blue"
-          loading={summaryLoading}
-          error={summaryError}
-        />
-        <KpiCard
-          label="Products"
-          value={summaryLoading ? "" : (summary?.total_products?.toLocaleString("en-IN") ?? "")}
-          icon={Package}
-          color="amber"
-          loading={summaryLoading}
-          error={summaryError}
-        />
+      {/* â”€â”€ Greeting header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-5">
+        <div>
+          {isLoading ? (
+            <div className="h-7 w-56 rounded bg-gray-100 animate-pulse mb-1" />
+          ) : (
+            <h1 className="text-xl font-bold text-text-primary">
+              {data ? greeting(data.greeting_name) : "Welcome back"}
+            </h1>
+          )}
+          <p className="text-sm text-text-secondary">{today()}</p>
+        </div>
+        <div className="flex gap-2 mt-3 sm:mt-0">
+          <button
+            onClick={() => router.push("/orders/new")}
+            className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+          >
+            <Plus className="h-4 w-4" /> New Order
+          </button>
+          <button
+            onClick={() => router.push("/sales")}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-text-primary hover:bg-background-subtle transition-colors"
+          >
+            Sales
+          </button>
+        </div>
+      </div>
+
+      {/* â”€â”€ Alert ribbon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {!isLoading && data?.alerts && <AlertRibbon alerts={data.alerts} />}
+
+      {/* â”€â”€ Primary KPI row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 mb-5">
         <KpiCard
           label="Revenue (MTD)"
-          value={summaryLoading ? "" : formatRevenue(summary?.revenue_mtd)}
+          value={isLoading ? "" : fmt(data?.revenue.mtd, true)}
+          change={data?.revenue.delta_pct ?? undefined}
           icon={TrendingUp}
           color="green"
-          loading={summaryLoading}
-          error={summaryError}
-        />
-      </div>
-
-      {/*  Secondary KPI row  */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
-        <KpiCard
-          label="Pending Orders"
-          value={summaryLoading ? "" : (summary?.pending_orders?.toLocaleString("en-IN") ?? "")}
-          icon={AlertCircle}
-          color="amber"
-          loading={summaryLoading}
-          error={summaryError}
+          sparklineData={spark14.length ? spark14 : undefined}
+          loading={isLoading}
+          error={isError}
         />
         <KpiCard
-          label="Overdue Amount"
-          value={summaryLoading ? "" : formatRevenue(summary?.overdue_amount)}
+          label="Orders Today"
+          value={isLoading ? "" : (data?.orders.today ?? 0).toLocaleString("en-IN")}
+          icon={ShoppingCart}
+          color="blue"
+          loading={isLoading}
+          error={isError}
+        />
+        <KpiCard
+          label="Collections (MTD)"
+          value={isLoading ? "" : fmt(data?.collections.mtd, true)}
+          icon={Wallet}
+          color="green"
+          loading={isLoading}
+          error={isError}
+        />
+        <KpiCard
+          label="Outstanding"
+          value={isLoading ? "" : fmt(data?.collections.outstanding, true)}
           icon={CreditCard}
-          color="red"
-          loading={summaryLoading}
-          error={summaryError}
+          color={data && data.collections.overdue > 0 ? "red" : "amber"}
+          loading={isLoading}
+          error={isError}
         />
         <KpiCard
-          label="Low Stock SKUs"
-          value={summaryLoading ? "" : (summary?.low_stock_skus?.toLocaleString("en-IN") ?? "")}
-          icon={AlertTriangle}
-          color="red"
-          loading={summaryLoading}
-          error={summaryError}
+          label="Active Schemes"
+          value={isLoading ? "" : (data?.active_schemes ?? 0).toString()}
+          icon={Tag}
+          color="amber"
+          loading={isLoading}
+          error={isError}
         />
       </div>
 
-      {/*  Charts row  */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 mb-6">
-        {/* Sales trend  takes 2/3 width */}
+      {/* â”€â”€ Chart row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 mb-5">
+
+        {/* 30-day dual trend â€” takes 2/3 */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Sales Trend (Last 30 Days)</CardTitle>
+            <CardTitle className="text-sm font-semibold">Orders vs Collections — Last 30 Days</CardTitle>
           </CardHeader>
           <CardContent>
-            <SalesTrendChart data={salesTrend} loading={salesLoading} error={salesError} />
+            <SalesTrendChart
+              data={data?.timeseries}
+              loading={isLoading}
+              error={isError}
+            />
           </CardContent>
         </Card>
 
-        {/* Order status donut  takes 1/3 width */}
+        {/* Order pipeline rings â€” takes 1/3 */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Order Status</CardTitle>
+            <CardTitle className="text-sm font-semibold">Order Pipeline</CardTitle>
           </CardHeader>
           <CardContent>
-            <OrderStatusChart data={orderBreakdown} loading={breakdownLoading} error={breakdownError} />
+            {isLoading ? (
+              <div className="grid grid-cols-3 gap-4 py-4">
+                {[1,2,3].map(i => <div key={i} className="flex flex-col items-center gap-2 animate-pulse"><div className="h-10 w-10 rounded-full bg-gray-100" /><div className="h-4 w-8 rounded bg-gray-100" /><div className="h-3 w-14 rounded bg-gray-100" /></div>)}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-4 py-4">
+                  <PipelineRing label="Pending" count={data?.orders.pending ?? 0} color="bg-amber-100 text-amber-600" icon={Clock} />
+                  <PipelineRing label="Approved" count={data?.orders.approved ?? 0} color="bg-blue-100 text-blue-600" icon={CheckCircle2} />
+                  <PipelineRing label="On Hold" count={data?.orders.on_hold ?? 0} color="bg-red-100 text-red-600" icon={Ban} />
+                </div>
+                <div className="border-t border-border pt-3 grid grid-cols-2 gap-2 text-center">
+                  <div>
+                    <p className="text-lg font-bold text-text-primary">{(data?.orders.mtd ?? 0).toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-text-secondary">Orders MTD</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-text-primary">{Number(data?.collections.collection_rate ?? 0).toFixed(1)}%</p>
+                    <p className="text-xs text-text-secondary">Collection Rate</p>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/*  Recent Orders table  */}
+      {/* â”€â”€ Top Lists row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 mb-5">
+
+        <TopTable
+          title="Top Customers (MTD)"
+          rows={data?.top_customers ?? []}
+          renderSub={r => `${r.invoice_count} invoice${r.invoice_count !== 1 ? "s" : ""}`}
+          renderRight={r => fmt(r.revenue_mtd, true)}
+          href="/customers"
+        />
+
+        <TopTable
+          title="Top Products (MTD)"
+          rows={data?.top_products ?? []}
+          renderSub={r => `${(r as unknown as { sku: string }).sku ?? ""} - ${(r as unknown as { qty_mtd: number }).qty_mtd?.toLocaleString("en-IN") ?? 0} units`}
+          renderRight={r => fmt((r as unknown as { revenue_mtd: number }).revenue_mtd, true)}
+          href="/products"
+        />
+
+        {/* Inventory + Credit snapshot */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Risk Snapshot</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1,2,3,4,5,6].map(i => <div key={i} className="h-4 w-full rounded bg-gray-100 animate-pulse" />)}
+              </div>
+            ) : (
+              <>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">Inventory</p>
+                  <div className="space-y-1.5">
+                    <RiskRow label="Low Stock" value={data?.inventory.low_stock ?? 0} suffix="SKUs" href="/inventory/stock" warn={data ? data.inventory.low_stock > 0 : false} />
+                    <RiskRow label="Zero Stock" value={data?.inventory.zero_stock ?? 0} suffix="SKUs" href="/inventory/stock" warn={data ? data.inventory.zero_stock > 0 : false} />
+                    <RiskRow label="Dead Stock" value={data?.inventory.dead_stock ?? 0} suffix="SKUs" href="/inventory/stock" warn={false} />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">Credit</p>
+                  <div className="space-y-1.5">
+                    <RiskRow label="Risky Accounts" value={data?.credit.risky_accounts ?? 0} href="/approvals/credit-limits" warn={data ? data.credit.risky_accounts > 0 : false} />
+                    <RiskRow label="Blocked" value={data?.credit.blocked_accounts ?? 0} href="/approvals/credit-limits" warn={data ? data.credit.blocked_accounts > 0 : false} />
+                    <RiskRow label="Total Overdue" value={fmt(data?.credit.total_overdue, true)} href="/finance" warn={data ? (data.credit.total_overdue ?? 0) > 0 : false} />
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* â”€â”€ Recent Orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base">Recent Orders</CardTitle>
+          <CardTitle className="text-sm font-semibold">Recent Orders</CardTitle>
           <button
             onClick={() => router.push("/orders")}
-            className="text-sm text-accent hover:underline font-medium"
+            className="text-xs text-accent hover:underline font-medium flex items-center gap-0.5"
           >
-            View all
+            View all <ChevronRight className="h-3 w-3" />
           </button>
         </CardHeader>
         <CardContent className="p-0">
           {ordersLoading ? (
             <div className="divide-y divide-border">
-              {[1, 2, 3, 4, 5].map(i => (
+              {[1,2,3,4,5].map(i => (
                 <div key={i} className="flex items-center gap-3 px-5 py-3 animate-pulse">
                   <div className="h-4 w-24 rounded bg-gray-100" />
                   <div className="flex-1 h-4 w-32 rounded bg-gray-100" />
@@ -185,7 +377,7 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-background-subtle">
-                    <th className="px-5 py-2.5 text-left text-xs font-medium text-text-secondary">Order ID</th>
+                    <th className="px-5 py-2.5 text-left text-xs font-medium text-text-secondary">Order #</th>
                     <th className="px-5 py-2.5 text-left text-xs font-medium text-text-secondary">Customer</th>
                     <th className="px-5 py-2.5 text-right text-xs font-medium text-text-secondary">Amount</th>
                     <th className="px-5 py-2.5 text-left text-xs font-medium text-text-secondary">Status</th>
@@ -200,14 +392,14 @@ export default function DashboardPage() {
                       className="hover:bg-background-subtle transition-colors cursor-pointer"
                     >
                       <td className="px-5 py-3 font-mono text-xs text-text-secondary">{order.order_number}</td>
-                      <td className="px-5 py-3 font-medium text-text-primary">{order.customer?.name ?? ""}</td>
-                      <td className="px-5 py-3 text-right font-medium text-text-primary">{formatAmount(order.total_amount)}</td>
+                      <td className="px-5 py-3 font-medium text-text-primary">{order.customer?.name ?? "—"}</td>
+                      <td className="px-5 py-3 text-right font-medium text-text-primary">{fmt(order.total_amount)}</td>
                       <td className="px-5 py-3">
                         <Badge variant={STATUS_VARIANTS[order.status] ?? "secondary"}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          {order.status.replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase())}
                         </Badge>
                       </td>
-                      <td className="px-5 py-3 text-text-secondary">{formatDate(order.created_at)}</td>
+                      <td className="px-5 py-3 text-text-secondary">{fmtDate(order.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -216,6 +408,31 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
     </AppShell>
+  );
+}
+
+// â”€â”€ Risk row helper (inline to keep file single-concern) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function RiskRow({
+  label, value, suffix = "", href, warn,
+}: {
+  label: string;
+  value: number | string;
+  suffix?: string;
+  href: string;
+  warn: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between rounded px-2 py-1 hover:bg-background-subtle transition-colors text-sm group"
+    >
+      <span className="text-text-secondary group-hover:text-text-primary transition-colors">{label}</span>
+      <span className={`font-semibold tabular-nums ${warn ? "text-danger" : "text-text-primary"}`}>
+        {typeof value === "number" ? value.toLocaleString("en-IN") : value}
+        {suffix && <span className="ml-1 text-xs font-normal text-text-secondary">{suffix}</span>}
+      </span>
+    </Link>
   );
 }

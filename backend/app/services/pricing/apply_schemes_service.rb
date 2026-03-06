@@ -86,7 +86,7 @@ module Pricing
           exclusive_taken = true if scheme.exclusive
         else
           @not_applied << { scheme_id: scheme.id, code: scheme.code, name: scheme.name,
-                            reason: result[:reason] }
+                            reason: result[:reason], hint: result[:hint] }
         end
       end
 
@@ -104,8 +104,9 @@ module Pricing
 
       # 2. Conditions
       scheme.conditions.each do |cond|
-        reason = evaluate_condition(cond)
-        return { applied: false, reason: reason } if reason
+        result = evaluate_condition(cond, scheme)
+        reason, hint = Array(result)
+        return { applied: false, reason: reason, hint: hint } if reason
       end
 
       # 3. Scheme-type specific check
@@ -151,33 +152,53 @@ module Pricing
       end
     end
 
-    def evaluate_condition(cond)
+    def evaluate_condition(cond, scheme = nil)
       case cond.condition_type
       when 'min_order_value'
         threshold = cond.value['amount'].to_f
-        return "Order value #{subtotal.round(2)} < minimum #{threshold}" if subtotal < threshold
+        if subtotal < threshold
+          return "Order value #{subtotal.round(2)} < minimum #{threshold}",
+                 { type: 'order_value', current: subtotal.round(2), target: threshold,
+                   gap: (threshold - subtotal).round(2) }
+        end
       when 'min_total_qty'
         threshold = cond.value['qty'].to_f
-        total_qty = @cart_lines.sum(&:qty).to_f
-        return "Total qty #{total_qty} < minimum #{threshold}" if total_qty < threshold
+        # Respect product_inclusion on the scheme — only count qualifying products
+        qualifying_ids = if scheme
+          incl = scheme.conditions.find { |c| c.condition_type == 'product_inclusion' }
+          incl ? Array(incl.value['product_ids']).map(&:to_i) : nil
+        end
+        qualifying_lines = qualifying_ids ? @cart_lines.select { |l| qualifying_ids.include?(l.product_id) } : @cart_lines
+        total_qty = qualifying_lines.sum(&:qty).to_f
+        if total_qty < threshold
+          in_cart_qualifying = qualifying_lines.map(&:product_id)
+          if qualifying_ids && in_cart_qualifying.empty?
+            # None of the qualifying products are in the cart at all
+            return "No qualifying products in cart",
+                   { type: 'add_products', product_ids: qualifying_ids }
+          end
+          return "Total qty #{total_qty} < minimum #{threshold}",
+                 { type: 'total_qty', current_qty: total_qty, target_qty: threshold,
+                   gap: (threshold - total_qty).ceil,
+                   product_ids: in_cart_qualifying.any? ? in_cart_qualifying : @cart_lines.map(&:product_id) }
+        end
       when 'product_inclusion'
         ids = Array(cond.value['product_ids']).map(&:to_i)
         matching = @cart_lines.any? { |l| ids.include?(l.product_id) }
-        return "No qualifying products in cart" unless matching
+        return "No qualifying products in cart", { type: 'add_products', product_ids: ids } unless matching
       when 'product_exclusion'
         ids = Array(cond.value['product_ids']).map(&:to_i)
-        # exclusion doesn't block the scheme — it filters which lines it applies to
         nil
       when 'category_inclusion'
         ids = Array(cond.value['category_ids']).map(&:to_i)
         matching = @cart_lines.any? { |l| ids.include?(l.category_id) }
-        return "No qualifying categories in cart" unless matching
+        return "No qualifying categories in cart", { type: 'add_category', category_ids: ids } unless matching
       when 'retailer_inclusion'
         ids = Array(cond.value['customer_ids']).map(&:to_i)
-        return "Retailer not in inclusion list" unless ids.include?(@retailer.id)
+        return "Retailer not in inclusion list", nil unless ids.include?(@retailer.id)
       when 'retailer_exclusion'
         ids = Array(cond.value['customer_ids']).map(&:to_i)
-        return "Retailer excluded from this scheme" if ids.include?(@retailer.id)
+        return "Retailer excluded from this scheme", nil if ids.include?(@retailer.id)
       end
       nil
     end
@@ -198,7 +219,20 @@ module Pricing
       total_qty      = matching_lines.sum(&:qty).to_f
 
       sets         = (total_qty / trigger_qty).floor
-      return { applied: false, reason: "Qty #{total_qty} < trigger #{trigger_qty}" } if sets.zero?
+      if sets.zero?
+        in_cart_ids = matching_lines.map(&:product_id)
+        hint = if in_cart_ids.any?
+                 { type: 'increase_qty',
+                   product_ids: in_cart_ids,
+                   qualifying_product_ids: qualifying_ids,
+                   current_qty: total_qty,
+                   target_qty:  trigger_qty.to_f,
+                   gap:         (trigger_qty - total_qty).ceil }
+               else
+                 { type: 'add_products', product_ids: qualifying_ids }
+               end
+        return { applied: false, reason: "Qty #{total_qty} < trigger #{trigger_qty}", hint: hint }
+      end
 
       qty_free     = sets * free_per_set
       free_product = reward.target_product_id || matching_lines.first&.product_id
@@ -219,7 +253,12 @@ module Pricing
       min_cond = scheme.conditions.find { |c| c.condition_type == 'min_order_value' }
       if min_cond
         threshold = min_cond.value['amount'].to_f
-        return { applied: false, reason: "Order value #{subtotal.round(2)} < slab #{threshold}" } if subtotal < threshold
+        if subtotal < threshold
+          return { applied: false,
+                   reason: "Order value #{subtotal.round(2)} < slab #{threshold}",
+                   hint:   { type: 'order_value', current: subtotal.round(2), target: threshold,
+                              gap: (threshold - subtotal).round(2) } }
+        end
       end
 
       {
@@ -381,9 +420,19 @@ module Pricing
 
       order_scheme_discount = @order_discounts.sum { |od| od[:amount] }.round(2)
 
+      # Enrich freebies with product info so the frontend avoids extra API calls
+      cart_product_map = @cart_lines.each_with_object({}) { |l, h| h[l.product_id] = l.product }
+      missing_ids      = @freebies.map { |f| f[:product_id] }.uniq - cart_product_map.keys
+      Product.where(id: missing_ids).each { |p| cart_product_map[p.id] = p } if missing_ids.any?
+      enriched_freebies = @freebies.map do |f|
+        p = cart_product_map[f[:product_id]]
+        f.merge(product_name: p&.name, product_sku: p&.sku,
+                gst_rate: p&.gst_rate, hsn_code: p&.hsn_code)
+      end
+
       ApplyResult.new(
         priced_lines:    priced_lines,
-        freebies:        @freebies,
+        freebies:        enriched_freebies,
         order_discounts: @order_discounts,
         totals: {
           subtotal:               subtotal.round(2),

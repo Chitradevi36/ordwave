@@ -15,11 +15,12 @@ module Api
     class OrderPricingController < BaseController
       before_action :require_organization!
 
+      skip_after_action :verify_authorized
       skip_after_action :verify_policy_scoped
 
       # POST /api/v1/order_pricing/preview
       def preview
-        authorize current_user, policy_class: UserPolicy
+        authorize current_user, :index?, policy_class: UserPolicy
 
         customer = current_organization.customers.find(params[:customer_id])
         branch   = current_organization.branches.find(params[:branch_id] || current_organization.branches.first&.id)
@@ -27,7 +28,7 @@ module Api
         result = SalesOrders::PricePreviewService.call(
           retailer: customer,
           branch:   branch,
-          lines:    Array(params[:lines]),
+          lines:    Array(params[:lines]).map { |l| l.permit(:product_id, :qty).to_h },
           context:  {
             route_id: params.dig(:context, :route_id),
             beat_id:  params.dig(:context, :beat_id),

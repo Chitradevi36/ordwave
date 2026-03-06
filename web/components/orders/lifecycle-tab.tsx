@@ -104,8 +104,8 @@ function relativeTime(d: string | null | undefined): string {
 }
 
 function fmtINR(n: number | string | undefined | null) {
-  if (n == null) return "â€”";
-  return `â‚¹${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (n == null) return "—";
+  return `₹${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function dateBucket(d: string | null | undefined): string {

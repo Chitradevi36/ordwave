@@ -2,64 +2,97 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../client";
 
 // ── Types ────────────────────────────────────────────────────────────────────
-export interface DashboardSummary {
-  total_orders: number;
-  active_customers: number;
-  total_products: number;
-  revenue_mtd: number;
-  pending_orders: number;
-  overdue_amount: number;
-  low_stock_skus: number;
-}
 
-export interface SalesTrendPoint {
+export interface DashboardTimeseriesPoint {
   date: string;
-  revenue: number;
+  orders_value: number;
+  collections: number;
 }
 
-export interface OrderStatusBreakdown {
-  status: string;
+export interface DashboardCustomer {
+  id: number;
+  name: string;
+  code: string;
+  invoice_count: number;
+  revenue_mtd: number;
+}
+
+export interface DashboardProduct {
+  id: number;
+  name: string;
+  sku: string;
+  qty_mtd: number;
+  revenue_mtd: number;
+}
+
+export interface DashboardAlert {
+  type: string;
+  severity: "high" | "medium" | "low";
   count: number;
+  label: string;
+  href: string;
 }
 
-// ── Dashboard KPI summary ────────────────────────────────────────────────────
-export function useDashboardSummary() {
-  return useQuery<DashboardSummary>({
-    queryKey: ["analytics", "dashboard_summary"],
+export interface DashboardData {
+  as_of: string;
+  greeting_name: string;
+  org_name: string;
+  revenue: {
+    mtd: number;
+    prev_mtd: number;
+    delta_pct: number | null;
+    today_invoiced: number;
+  };
+  orders: {
+    today: number;
+    yesterday: number;
+    mtd: number;
+    on_hold: number;
+    pending: number;
+    approved: number;
+  };
+  collections: {
+    today: number;
+    mtd: number;
+    outstanding: number;
+    overdue: number;
+    collection_rate: number;
+  };
+  inventory: {
+    low_stock: number;
+    dead_stock: number;
+    zero_stock: number;
+  };
+  credit: {
+    risky_accounts: number;
+    blocked_accounts: number;
+    total_overdue: number;
+  };
+  active_schemes: number;
+  alerts: DashboardAlert[];
+  timeseries: DashboardTimeseriesPoint[];
+  top_customers: DashboardCustomer[];
+  top_products: DashboardProduct[];
+}
+
+// ── Primary hook: single fetch for the entire dashboard ──────────────────────
+export function useDashboardData() {
+  return useQuery<DashboardData>({
+    queryKey: ["dashboard"],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: DashboardSummary }>(
-        "/api/v1/analytics/overview"
+      const { data } = await apiClient.get<{ data: DashboardData }>(
+        "/api/v1/dashboard"
       );
       return data.data;
     },
-    staleTime: 30_000,
+    staleTime: 3 * 60 * 1_000, // 3 min — matches backend cache TTL
   });
 }
 
-// ── Sales trend (last 30 days) ────────────────────────────────────────────────
-export function useSalesTrend() {
-  return useQuery<SalesTrendPoint[]>({
-    queryKey: ["analytics", "sales_trend"],
-    queryFn: async () => {
-      const { data } = await apiClient.get("/api/v1/analytics/sales");
-      // Handle both { data: [...] } and plain array responses
-      const payload = data?.data ?? data;
-      return Array.isArray(payload) ? (payload as SalesTrendPoint[]) : [];
-    },
-    staleTime: 60_000,
-  });
-}
-
-// ── Order status breakdown ────────────────────────────────────────────────────
-export function useOrderStatusBreakdown() {
-  return useQuery<OrderStatusBreakdown[]>({
-    queryKey: ["analytics", "order_status_breakdown"],
-    queryFn: async () => {
-      const { data } = await apiClient.get("/api/v1/analytics/overview");
-      const payload = data?.data ?? data;
-      const breakdown = payload?.order_status_breakdown ?? payload;
-      return Array.isArray(breakdown) ? (breakdown as OrderStatusBreakdown[]) : [];
-    },
-    staleTime: 60_000,
-  });
-}
+// ── Legacy re-exports (kept so old imports don't break until removed) ─────────
+/** @deprecated Use useDashboardData() */
+export const useDashboardSummary = useDashboardData;
+/** @deprecated Use useDashboardData() */
+export const useSalesTrend = useDashboardData;
+/** @deprecated Use useDashboardData() */
+export const useOrderStatusBreakdown = useDashboardData;

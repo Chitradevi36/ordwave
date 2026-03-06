@@ -21,6 +21,7 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   "/orders/new":                  { label: "New Order",          parent: "/orders" },
   "/approvals":                   { label: "Approvals",          parent: "/sales" },
   "/approvals/credit-limits":     { label: "Credit Limits",      parent: "/approvals" },
+  "/schemes":                     { label: "Schemes",            parent: "/sales" },
 
   // ── Customers workspace (sub-pages)
   "/routes":                      { label: "Routes",             parent: "/customers" },

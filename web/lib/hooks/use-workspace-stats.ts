@@ -256,7 +256,7 @@ export function useCatalogStats() {
         setData({
           active_products:  active?.meta?.total_count     ?? 0,
           price_lists:      priceLists?.meta?.total_count ?? 0,
-          active_schemes:   schemes?.data?.active_count   ?? 0,
+          active_schemes:   schemes?.data?.active ?? schemes?.data?.active_count ?? 0,
           inactive_products:inactive?.meta?.total_count   ?? 0,
         });
       })

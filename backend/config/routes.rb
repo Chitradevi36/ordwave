@@ -310,11 +310,17 @@ Rails.application.routes.draw do
 
       # -- Trade Promotions / Scheme Engine ------------------------------------
       resources :schemes, only: %i[index show create update destroy] do
-        collection { get :stats }
+        collection do
+          get :stats
+          get :by_product   # ?product_id=X
+        end
       end
 
       # -- Order Pricing (price preview with schemes) -------------------------
       post 'order_pricing/preview', to: 'order_pricing#preview'
+
+      # -- Owner Dashboard -------------------------------------------------------
+      get 'dashboard', to: 'dashboard#show'
 
       # -- Analytics / Insights -----------------------------------------------
       scope :analytics, controller: :analytics do
