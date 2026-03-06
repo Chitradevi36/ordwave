@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -10,8 +10,8 @@ import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Pencil, Ban, CheckCircle2, Plus, Trash2, ExternalLink } from "lucide-react";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SupplierProduct {
@@ -82,7 +82,7 @@ function AddProductModal({
 
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch("http://localhost:3001/api/v1/products?per_page=200", {
+    fetch(`${API_URL}/api/v1/products?per_page=200`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -92,7 +92,7 @@ function AddProductModal({
   const handleSave = async () => {
     if (!token || !orgId || !productId) return;
     setSaving(true); setErrors([]);
-    const res = await fetch(`http://localhost:3001/api/v1/suppliers/${supplierId}/supplier_products`, {
+    const res = await fetch(`${API_URL}/api/v1/suppliers/${supplierId}/supplier_products`, {
       method:  "POST",
       headers: {
         "Content-Type":      "application/json",
@@ -245,7 +245,7 @@ function ProductsTab({
     if (!token || !orgId) return;
     if (!confirm("Remove this product from supplier?")) return;
     setRemoving(spId);
-    await fetch(`http://localhost:3001/api/v1/suppliers/${supplier.id}/supplier_products/${spId}`, {
+    await fetch(`${API_URL}/api/v1/suppliers/${supplier.id}/supplier_products/${spId}`, {
       method:  "DELETE",
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
@@ -366,7 +366,7 @@ function InvoicesTab({
   useEffect(() => {
     if (!token || !orgId) return;
     setLoading(true);
-    fetch(`http://localhost:3001/api/v1/purchase_invoices?supplier_id=${supplierId}&per_page=50`, {
+    fetch(`${API_URL}/api/v1/purchase_invoices?supplier_id=${supplierId}&per_page=50`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -469,7 +469,7 @@ export default function SupplierDetailPage() {
   const fetchSupplier = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
-    const res  = await fetch(`http://localhost:3001/api/v1/suppliers/${params.id}`, {
+    const res  = await fetch(`${API_URL}/api/v1/suppliers/${params.id}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
     if (!res.ok) { setNotFound(true); setLoading(false); return; }
@@ -483,7 +483,7 @@ export default function SupplierDetailPage() {
   const handleStatusAction = async (action: "blacklist" | "activate") => {
     if (!token || !orgId || !supplier) return;
     setActionLoading(true);
-    const res = await fetch(`http://localhost:3001/api/v1/suppliers/${supplier.id}/${action}`, {
+    const res = await fetch(`${API_URL}/api/v1/suppliers/${supplier.id}/${action}`, {
       method:  "POST",
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
@@ -496,7 +496,7 @@ export default function SupplierDetailPage() {
     const reason = prompt("Reason for deleting this supplier (optional):");
     if (reason === null) return; // user cancelled
     setActionLoading(true);
-    const res = await fetch(`http://localhost:3001/api/v1/suppliers/${supplier.id}`, {
+    const res = await fetch(`${API_URL}/api/v1/suppliers/${supplier.id}`, {
       method:  "DELETE",
       headers: {
         "Content-Type":      "application/json",
@@ -598,11 +598,10 @@ export default function SupplierDetailPage() {
   ];
 
   return (
-    <AppShell title={supplier.name}>
-      <Breadcrumb items={[
+    <AppShell breadcrumbs={[
         { label: "Suppliers", href: "/suppliers" },
         { label: supplier.name },
-      ]} />
+      ]}>
       <PageHeader
         title={supplier.name}
         description={

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -183,11 +182,6 @@ export default function ReturnDetailPage() {
     { key: "timeline",    label: "Timeline" },
   ];
 
-  const breadcrumbs: BreadcrumbItem[] = [
-    { label: "Returns",       href: "/returns" },
-    { label: rr.return_number },
-  ];
-
   // Build primary actions based on status
   const primaryActions = [];
   if (rr.status === "draft") {
@@ -236,10 +230,12 @@ export default function ReturnDetailPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell breadcrumbs={[
+        { label: "Operations", href: "/operations" },
+        { label: "Returns", href: "/returns" },
+        { label: rr.return_number },
+      ]}>
       <div className="space-y-4">
-        <Breadcrumb items={breadcrumbs} />
-
         <PageHeader
           title={rr.return_number}
           subtitle={`${rr.customer?.name} • ${rr.branch?.name} • ${new Date(rr.return_date).toLocaleDateString()}`}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef, KeyboardEvent } from "react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -13,6 +13,7 @@ import {
   Zap, Clock, Shield, Infinity as InfinityIcon, AlertTriangle, X,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // 
 // Types
@@ -102,7 +103,7 @@ const TYPE_CHIP: Record<string, string> = {
 
 const APPLIES_TO_CHIP: Record<string, string> = {
   all:                "bg-background-subtle text-text-secondary border border-border",
-  retailer_segment:   "bg-indigo-50 text-indigo-700 border border-indigo-200",
+  retailer_segment:   "bg-accent/10 text-accent border border-accent",
   specific_retailers: "bg-pink-50 text-pink-700 border border-pink-200",
   route:              "bg-sky-50 text-sky-700 border border-sky-200",
   beat:               "bg-orange-50 text-orange-700 border border-orange-200",
@@ -217,7 +218,7 @@ function ProductCombobox({
     setSearching(true);
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`,
+        `${API_URL}/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
       );
       const json = await res.json();
@@ -415,8 +416,8 @@ function SchemeFormModal({ token, orgId, scheme, isDuplicate = false, onClose, o
       },
     };
     const url = isEdit
-      ? `http://localhost:3001/api/v1/schemes/${scheme!.id}`
-      : "http://localhost:3001/api/v1/schemes";
+        ? `${API_URL}/api/v1/schemes/${scheme!.id}`
+      : `${API_URL}/api/v1/schemes`;
     try {
       const res  = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",
@@ -629,7 +630,7 @@ export default function SchemesPage() {
     if (!token || !orgId) return;
     setStatsLoading(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/schemes/stats", {
+      const res  = await fetch(`${API_URL}/api/v1/schemes/stats`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -647,7 +648,7 @@ export default function SchemesPage() {
         ...(typeFilter ? { scheme_type: typeFilter }  : {}),
         ...(statusTab  ? { status:      statusTab }   : {}),
       });
-      const res  = await fetch(`http://localhost:3001/api/v1/schemes?${qs}`, {
+      const res  = await fetch(`${API_URL}/api/v1/schemes?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -662,7 +663,7 @@ export default function SchemesPage() {
   const openEdit = async (scheme: Scheme) => {
     if (!token || !orgId) return;
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/schemes/${scheme.id}`, {
+      const res  = await fetch(`${API_URL}/api/v1/schemes/${scheme.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -674,7 +675,7 @@ export default function SchemesPage() {
   const openDuplicate = async (scheme: Scheme) => {
     if (!token || !orgId) return;
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/schemes/${scheme.id}`, {
+      const res  = await fetch(`${API_URL}/api/v1/schemes/${scheme.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -688,7 +689,7 @@ export default function SchemesPage() {
     setToggling(scheme.id);
     const newStatus = scheme.status === "active" ? "inactive" : "active";
     try {
-      await fetch(`http://localhost:3001/api/v1/schemes/${scheme.id}`, {
+      await fetch(`${API_URL}/api/v1/schemes/${scheme.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         body: JSON.stringify({ scheme: { status: newStatus } }),

@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronUp, Wand2, Search, X, CheckCircle, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface ProductCategory { id: number; name: string; }
@@ -74,7 +75,7 @@ function HsnLookup({
     setSearching(true);
     try {
       const res  = await fetch(
-        `http://localhost:3001/api/v1/hsn_sac_codes?q=${encodeURIComponent(q)}&per_page=10`,
+        `${API_URL}/api/v1/hsn_sac_codes?q=${encodeURIComponent(q)}&per_page=10`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } },
       );
       const json = await res.json();
@@ -188,7 +189,7 @@ function CategorySelect({
     if (!newName.trim() || !token || !orgId) return;
     setSaving(true); setError("");
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/product_categories", {
+      const res  = await fetch(`${API_URL}/api/v1/product_categories`, {
         method:  "POST",
         headers: {
           "Content-Type":      "application/json",
@@ -260,7 +261,7 @@ function UomSelect({
     if (!newName.trim() || !newSymbol.trim() || !token || !orgId) return;
     setSaving(true); setError("");
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/units_of_measure", {
+      const res  = await fetch(`${API_URL}/api/v1/units_of_measure`, {
         method:  "POST",
         headers: {
           "Content-Type":      "application/json",

@@ -40,7 +40,17 @@ module Orders
           reason:       @reason
         )
 
-        { ok: true, order: @order.reload, errors: [] }
+        # Auto-assign to a delivery trip on approval
+        trip_result = nil
+        if @decision == 'approved'
+          trip_result = Delivery::AddOrderToTripService.call(actor: @actor, order: @order.reload)
+          # Log but don't fail the approval if trip creation fails
+          unless trip_result[:ok]
+            Rails.logger.warn("[ApproveOrderService] Auto-trip failed for order #{@order.id}: #{trip_result[:errors].join(', ')}")
+          end
+        end
+
+        { ok: true, order: @order.reload, errors: [], trip_result: trip_result }
       end
     rescue ActiveRecord::RecordInvalid => e
       { ok: false, order: @order, errors: [e.message] }

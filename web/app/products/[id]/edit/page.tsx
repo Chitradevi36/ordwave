@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { ProductForm, ProductCategory, UnitsOfMeasure, type ProductFormData } from "../../_components/ProductForm";
+import { API_URL } from "@/lib/api/client";
 
 interface ProductDetail {
   id:            number;
@@ -41,9 +41,9 @@ export default function EditProductPage() {
     const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
     setFetching(true);
     Promise.all([
-      fetch(`http://localhost:3001/api/v1/products/${params.id}`,           { headers }).then((r) => r.json()),
-      fetch(`http://localhost:3001/api/v1/product_categories?per_page=100`, { headers }).then((r) => r.json()),
-      fetch(`http://localhost:3001/api/v1/units_of_measure?per_page=100`,   { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/products/${params.id}`,           { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/product_categories?per_page=100`, { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/units_of_measure?per_page=100`,   { headers }).then((r) => r.json()),
     ]).then(([prod, cats, uomList]) => {
       if (prod.data)    setProduct(prod.data);
       if (cats.data)    setCategories(cats.data);
@@ -56,7 +56,7 @@ export default function EditProductPage() {
     setLoading(true);
     setErrors([]);
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/products/${params.id}`, {
+      const res  = await fetch(`${API_URL}/api/v1/products/${params.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type":     "application/json",
@@ -111,11 +111,12 @@ export default function EditProductPage() {
   };
 
   return (
-    <AppShell title="Products">
-      <Breadcrumb items={[
+    <AppShell breadcrumbs={[
+        { label: "Catalog", href: "/catalog" },
         { label: "Products", href: "/products" },
         { label: product.name },
-      ]} />
+        { label: "Edit" },
+      ]}>
       <PageHeader title={`Edit: ${product.name}`} description={`SKU: ${product.sku}`} />
 
       <div className="max-w-2xl">

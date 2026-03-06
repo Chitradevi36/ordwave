@@ -19,13 +19,14 @@ module Delivery
     end
 
     def initialize(actor:, organization:, branch:, trip_date:, order_ids:,
-                   vehicle: nil, driver: nil, notes: nil)
+                   vehicle: nil, driver: nil, route: nil, notes: nil)
       @actor        = actor
       @organization = organization
       @branch       = branch
       @trip_date    = trip_date
       @vehicle      = vehicle
       @driver       = driver
+      @route        = route
       @order_ids    = Array(order_ids)
       @notes        = notes
     end
@@ -38,6 +39,7 @@ module Delivery
         trip = DeliveryTrip.create!(
           organization: @organization,
           branch:       @branch,
+          route:        @route,
           vehicle:      @vehicle,
           driver:       @driver,
           trip_date:    @trip_date,

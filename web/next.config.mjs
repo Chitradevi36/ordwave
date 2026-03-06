@@ -1,5 +1,11 @@
 ﻿/** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV !== 'production';
+
 const nextConfig = {
+  experimental: {
+    ...(isDev ? { cpus: 1, workerThreads: false } : {}),
+  },
+
   async rewrites() {
     // Strip any trailing /api or /api/v1 from the env var so the destination
     // never doubles the prefix when "/api/:path*" is appended below.

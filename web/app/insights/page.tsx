@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 import {
   TrendingUp,
   Wallet,
@@ -11,8 +12,6 @@ import {
   Package,
   RefreshCw,
 } from "lucide-react";
-
-const API = "http://localhost:3001";
 
 function fmt(n: number | undefined | null, prefix = "") {
   if (n == null) return "—";
@@ -64,7 +63,7 @@ export default function InsightsOverviewPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/api/v1/analytics/overview`, {
+      const res = await fetch(`${API_URL}/api/v1/analytics/overview`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       if (!res.ok) throw new Error("Failed to load overview");

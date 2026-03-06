@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Modal } from "@/components/ui/modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { CheckCircle2, XCircle, ArrowLeftRight } from "lucide-react";
+import { API_URL } from "@/lib/api/client";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -74,7 +74,7 @@ export default function CreditLimitApprovalsPage() {
     setLoading(true);
     try {
       const q   = filter !== "all" ? `?status=${filter}` : "";
-      const res = await fetch(`http://localhost:3001/api/v1/credit_limit_change_requests${q}`, {
+      const res = await fetch(`${API_URL}/api/v1/credit_limit_change_requests${q}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -103,7 +103,7 @@ export default function CreditLimitApprovalsPage() {
         body.counter_offer_limit = Number(decisionForm.counter_offer_limit);
       }
       const res = await fetch(
-        `http://localhost:3001/api/v1/credit_limit_change_requests/${selected.id}/decision`,
+        `${API_URL}/api/v1/credit_limit_change_requests/${selected.id}/decision`,
         {
           method:  "POST",
           headers: {
@@ -193,10 +193,6 @@ export default function CreditLimitApprovalsPage() {
 
   return (
     <AppShell title="Credit Limit Approvals">
-      {/* <Breadcrumb items={[
-        { label: "Approvals" },
-        { label: "Credit Limits" },
-      ]} /> */}
       <PageHeader
         title="Credit Limit Approvals"
         description="Review and decide on credit limit change requests."

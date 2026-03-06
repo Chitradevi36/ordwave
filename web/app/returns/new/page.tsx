@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
+
 import { Button } from "@/components/ui/button";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { Plus, Trash2 } from "lucide-react";
@@ -165,19 +165,16 @@ export default function NewReturnPage() {
     }
   };
 
-  const breadcrumbs: BreadcrumbItem[] = [
-    { label: "Returns", href: "/returns" },
-    { label: "New Return" },
-  ];
-
   return (
-    <AppShell>
+    <AppShell breadcrumbs={[
+      { label: "Returns", href: "/returns" },
+      { label: "New Return" },
+    ]}>
       <div className="max-w-4xl space-y-6">
-        <Breadcrumb items={breadcrumbs} />
 
         <PageHeader
           title="New Return"
-          subtitle="Create a return request from a customer"
+          description="Create a return request from a customer"
         />
 
         {error && (

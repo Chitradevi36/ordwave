@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { PurchaseInvoiceForm, PurchaseInvoiceFormData, LineItem } from "@/app/purchases/invoices/_components/purchase-invoice-form";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 export default function EditPurchaseInvoicePage() {
   const params = useParams<{ id: string }>();
@@ -18,7 +18,7 @@ export default function EditPurchaseInvoicePage() {
 
   const load = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
-    const res  = await fetch(`http://localhost:3001/api/v1/purchase_invoices/${params.id}`, {
+    const res  = await fetch(`${API_URL}/api/v1/purchase_invoices/${params.id}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
     if (!res.ok) { setNotFound(true); setLoading(false); return; }
@@ -73,12 +73,11 @@ export default function EditPurchaseInvoicePage() {
   }
 
   return (
-    <AppShell title={`Edit Invoice ${invoiceNumber}`}>
-      <Breadcrumb items={[
-        { label: "Purchases",            href: "/purchases/invoices" },
-        { label: invoiceNumber,          href: `/purchases/invoices/${params.id}` },
+    <AppShell breadcrumbs={[
+        { label: "Purchases", href: "/purchases/invoices" },
+        { label: invoiceNumber, href: `/purchases/invoices/${params.id}` },
         { label: "Edit" },
-      ]} />
+      ]}>
       <PageHeader
         title={`Edit Invoice ${invoiceNumber}`}
         description="Edit this draft purchase invoice"

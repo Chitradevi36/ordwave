@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Card, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
+import { API_URL } from "@/lib/api/client";
 import {
   Plus, Search, Truck, CheckCircle,
   Clock, XCircle, Wand2,
@@ -54,8 +54,6 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "warning" | "succ
   cancelled:  "outline",
 };
 
-const API = "http://localhost:3001/api/v1";
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 export default function DeliveryTripsPage() {
   const router = useRouter();
@@ -93,7 +91,7 @@ export default function DeliveryTripsPage() {
       if (toDate)    qp.set("to_date",   toDate);
       if (search.trim()) qp.set("q",      search.trim());
 
-      const res  = await fetch(`${API}/delivery_trips?${qp}`, {
+      const res  = await fetch(`${API_URL}/api/v1/delivery_trips?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -110,7 +108,7 @@ export default function DeliveryTripsPage() {
     if (!cancelling || !cancelReason.trim()) return;
     setCancelLoading(true);
     try {
-      const res = await fetch(`${API}/delivery_trips/${cancelling.id}/cancel`, {
+      const res = await fetch(`${API_URL}/api/v1/delivery_trips/${cancelling.id}/cancel`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token!}`,
@@ -132,7 +130,7 @@ export default function DeliveryTripsPage() {
     setAutoResult(null);
     setShowAutoCreate(true);
     if (!branches.length) {
-      fetch(`${API}/branches?per_page=100`, {
+      fetch(`${API_URL}/api/v1/branches?per_page=100`, {
         headers: { Authorization: `Bearer ${token!}`, "X-Organization-Id": orgId! },
       }).then((r) => r.json()).then((d) => setBranches(d.data ?? []));
     }
@@ -144,7 +142,7 @@ export default function DeliveryTripsPage() {
     try {
       const body: Record<string, string> = { trip_date: autoDate };
       if (autoBranchId) body.branch_id = autoBranchId;
-      const res = await fetch(`${API}/delivery_trips/auto_create`, {
+      const res = await fetch(`${API_URL}/api/v1/delivery_trips/auto_create`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token!}`,
@@ -168,7 +166,7 @@ export default function DeliveryTripsPage() {
 
   // ── Dispatch trip ────────────────────────────────────────────────────────
   async function handleDispatch(trip: TripSummary) {
-    const res = await fetch(`${API}/delivery_trips/${trip.id}/dispatch`, {
+    const res = await fetch(`${API_URL}/api/v1/delivery_trips/${trip.id}/dispatch`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token!}`, "X-Organization-Id": orgId! },
     });
@@ -178,7 +176,7 @@ export default function DeliveryTripsPage() {
   // ── Summary stat ─────────────────────────────────────────────────────────
   const counts = meta?.counts ?? {};
   const statCards = [
-    { label: "Draft",      value: counts["draft"]      ?? 0, icon: Clock,        color: "text-slate-500" },
+    { label: "Draft",      value: counts["draft"]      ?? 0, icon: Clock,        color: "text-text-secondary" },
     { label: "Dispatched", value: counts["dispatched"] ?? 0, icon: Truck,        color: "text-amber-500" },
     { label: "Completed",  value: counts["completed"]  ?? 0, icon: CheckCircle,  color: "text-green-600" },
     { label: "Cancelled",  value: counts["cancelled"]  ?? 0, icon: XCircle,      color: "text-red-500"   },
@@ -192,7 +190,7 @@ export default function DeliveryTripsPage() {
       render: (_cell, t) => (
         <button
           onClick={() => router.push(`/delivery/${t.id}`)}
-          className="font-mono text-sm font-semibold text-indigo-600 hover:underline"
+          className="font-mono text-sm font-semibold text-accent hover:underline"
         >
           {t.trip_number}
         </button>
@@ -224,7 +222,7 @@ export default function DeliveryTripsPage() {
         t.vehicle ? (
           <span className="text-sm">{t.vehicle.registration_number}</span>
         ) : (
-          <span className="text-xs text-slate-400">—</span>
+          <span className="text-xs text-text-secondary">—</span>
         ),
     },
     {
@@ -234,7 +232,7 @@ export default function DeliveryTripsPage() {
         t.driver ? (
           <span className="text-sm">{t.driver.name}</span>
         ) : (
-          <span className="text-xs text-slate-400">—</span>
+          <span className="text-xs text-text-secondary">—</span>
         ),
     },
     {
@@ -290,46 +288,46 @@ export default function DeliveryTripsPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
         {statCards.map((s) => (
-          <Card key={s.label} className="border border-slate-200 shadow-none">
-            <CardContent className="flex items-center gap-3 py-4 px-4">
-              <s.icon className={`h-5 w-5 shrink-0 ${s.color}`} />
-              <div>
-                <p className="text-xs text-slate-500">{s.label}</p>
-                <p className="text-xl font-bold tabular-nums">{s.value}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={s.label} className="bg-background rounded-xl border border-border p-4 flex items-center gap-3 hover:shadow-sm transition-shadow">
+            <s.icon className={`h-5 w-5 shrink-0 ${s.color}`} />
+            <div>
+              <p className="text-xs text-text-secondary">{s.label}</p>
+              <p className="text-xl font-bold text-text-primary tabular-nums">{s.value}</p>
+            </div>
+          </div>
         ))}
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <Input
-          placeholder="Search trip…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-48"
-          prefix={<Search className="h-4 w-4 text-slate-400" />}
-        />
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+          <Input
+            placeholder="Search trip…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 w-48"
+          />
+        </div>
         <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-36" />
         <Input type="date" value={toDate}   onChange={(e) => setToDate(e.target.value)}   className="w-36" />
       </div>
 
       {/* Status tabs */}
-      <div className="flex gap-1 mb-4 border-b border-slate-200">
+      <div className="flex gap-1 mb-4 border-b border-border">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => { setActiveTab(tab.key); setPage(1); }}
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "border-accent text-accent"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             {tab.label}
             {counts[tab.key] !== undefined && tab.key !== "" && (
-              <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-xs tabular-nums">
+              <span className="ml-1.5 rounded-full bg-background-subtle px-1.5 py-0.5 text-xs tabular-nums">
                 {counts[tab.key]}
               </span>
             )}
@@ -339,10 +337,10 @@ export default function DeliveryTripsPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Loading…</div>
+        <div className="text-center py-12 text-text-secondary">Loading…</div>
       ) : trips.length === 0 ? (
         <EmptyState
-          icon={<Truck className="h-10 w-10 text-slate-400" />}
+          icon={<Truck className="h-10 w-10 text-text-secondary" />}
           title="No trips found"
           description="Create a new delivery trip to get started."
           action={
@@ -361,7 +359,7 @@ export default function DeliveryTripsPage() {
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
             Previous
           </Button>
-          <span className="text-sm text-slate-500 px-2 py-1.5">
+          <span className="text-sm text-text-secondary px-2 py-1.5">
             {page} / {meta.total_pages}
           </span>
           <Button variant="outline" size="sm" disabled={page >= meta.total_pages} onClick={() => setPage(page + 1)}>
@@ -377,13 +375,13 @@ export default function DeliveryTripsPage() {
         title="Cancel Trip"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-text-secondary">
             Cancel trip <span className="font-semibold">{cancelling?.trip_number}</span>? All dispatched orders will be reverted to Approved.
           </p>
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">Reason *</label>
+            <label className="text-sm font-medium text-text-primary block mb-1">Reason *</label>
             <textarea
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               rows={3}
               placeholder="e.g. Vehicle breakdown"
               value={cancelReason}
@@ -410,25 +408,25 @@ export default function DeliveryTripsPage() {
         title="Auto-Create Delivery Trips"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-text-secondary">
             Groups all approved orders by branch for the selected date and creates one trip per branch,
             auto-assigning the first available vehicle and driver.
           </p>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">Trip Date *</label>
+            <label className="text-sm font-medium text-text-primary block mb-1">Trip Date *</label>
             <input
               type="date"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               value={autoDate}
               onChange={(e) => setAutoDate(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">Branch (optional)</label>
+            <label className="text-sm font-medium text-text-primary block mb-1">Branch (optional)</label>
             <select
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               value={autoBranchId}
               onChange={(e) => setAutoBranchId(e.target.value)}
             >

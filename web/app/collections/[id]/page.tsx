@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui";
@@ -176,7 +175,7 @@ export default function PaymentDetailPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <div className="flex items-center justify-center h-64 text-text-secondary">
           Loading payment...
         </div>
       </AppShell>
@@ -186,7 +185,7 @@ export default function PaymentDetailPage() {
   if (!payment) {
     return (
       <AppShell>
-        <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <div className="flex items-center justify-center h-64 text-text-secondary">
           Payment not found.
         </div>
       </AppShell>
@@ -200,20 +199,23 @@ export default function PaymentDetailPage() {
   ] as const;
 
   return (
-    <AppShell>
+    <AppShell breadcrumbs={[
+      { label: "Finance",     href: "/finance" },
+      { label: "Collections", href: "/collections" },
+      { label: payment.payment_number },
+    ]}>
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="px-6 py-4 border-b bg-background">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Breadcrumb items={[{ label: "Collections", href: "/collections" }, { label: payment.payment_number }]} />
               <div className="flex items-center gap-3 mt-1">
                 <h1 className="text-2xl font-bold font-mono">{payment.payment_number}</h1>
                 <Badge variant={STATUS_VARIANT[payment.status] ?? "secondary"}>
                   {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                 </Badge>
               </div>
-              <p className="text-muted-foreground mt-0.5">
+              <p className="text-text-secondary mt-0.5">
                 {payment.customer.name} · {fmtCurrency(payment.amount)} · {PAYMENT_MODE_LABELS[payment.payment_mode] ?? payment.payment_mode}
               </p>
             </div>
@@ -257,7 +259,7 @@ export default function PaymentDetailPage() {
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.key
                     ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    : "border-transparent text-text-secondary hover:text-text-primary"
                 }`}
               >
                 {tab.label}
@@ -287,13 +289,13 @@ export default function PaymentDetailPage() {
                     ["Recorded By",  payment.created_by ?? "—"],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between">
-                      <dt className="text-muted-foreground">{label}</dt>
+                      <dt className="text-text-secondary">{label}</dt>
                       <dd className="font-medium text-right">{value}</dd>
                     </div>
                   ))}
                   {payment.notes && (
                     <div className="pt-2 border-t">
-                      <dt className="text-muted-foreground mb-1">Notes</dt>
+                      <dt className="text-text-secondary mb-1">Notes</dt>
                       <dd className="text-sm">{payment.notes}</dd>
                     </div>
                   )}
@@ -310,7 +312,7 @@ export default function PaymentDetailPage() {
                     ["Unallocated",      fmtCurrency(payment.unallocated_amount)],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between">
-                      <dt className="text-muted-foreground">{label}</dt>
+                      <dt className="text-text-secondary">{label}</dt>
                       <dd className="font-semibold">{value}</dd>
                     </div>
                   ))}
@@ -334,7 +336,7 @@ export default function PaymentDetailPage() {
                 <thead className="bg-muted/50">
                   <tr>
                     {["Invoice #", "Invoice Date", "Invoice Total", "Allocated", "Outstanding (After)", "Status"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">
+                      <th key={h} className="px-4 py-3 text-left font-medium text-text-secondary">
                         {h}
                       </th>
                     ))}
@@ -343,7 +345,7 @@ export default function PaymentDetailPage() {
                 <tbody>
                   {payment.allocations.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      <td colSpan={6} className="px-4 py-8 text-center text-text-secondary">
                         No allocations yet. Confirm the payment to allocate automatically.
                       </td>
                     </tr>
@@ -360,7 +362,7 @@ export default function PaymentDetailPage() {
                             </button>
                           ) : "—"}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                        <td className="px-4 py-3 text-text-secondary">
                           {alloc.invoice ? fmtDate(alloc.invoice.invoice_date) : "—"}
                         </td>
                         <td className="px-4 py-3">
@@ -389,19 +391,19 @@ export default function PaymentDetailPage() {
           {activeTab === "activity" && (
             <div className="rounded-lg border divide-y">
               {payment.audit_trail.length === 0 ? (
-                <p className="px-4 py-8 text-center text-muted-foreground text-sm">No activity yet.</p>
+                <p className="px-4 py-8 text-center text-text-secondary text-sm">No activity yet.</p>
               ) : (
                 payment.audit_trail.map((entry, i) => (
                   <div key={i} className="px-4 py-3">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{entry.action.replace(/_/g, " ")}</span>
-                      <span className="text-xs text-muted-foreground">{fmtDateTime(entry.at)}</span>
+                      <span className="text-xs text-text-secondary">{fmtDateTime(entry.at)}</span>
                     </div>
                     {entry.actor && (
-                      <p className="text-xs text-muted-foreground mt-0.5">by {entry.actor}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">by {entry.actor}</p>
                     )}
                     {entry.reason && (
-                      <p className="text-xs italic text-muted-foreground mt-0.5">"{entry.reason}"</p>
+                      <p className="text-xs italic text-text-secondary mt-0.5">"{entry.reason}"</p>
                     )}
                   </div>
                 ))
@@ -416,7 +418,7 @@ export default function PaymentDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
             <h2 className="text-lg font-semibold mb-1">Reverse Payment</h2>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-text-secondary mb-4">
               This will reverse all allocations and restore invoice outstanding balances.
             </p>
             <Textarea

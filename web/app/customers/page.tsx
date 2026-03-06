@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/modal";
 import { Plus, Search, X, Pencil, Ban, CheckCircle2, Upload, Download, CheckCircle, FileWarning } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreditUsageBar } from "@/components/ui/credit-usage-bar";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Route {
@@ -111,7 +112,7 @@ function CustomersBulkImportModal({
 
   const downloadSample = () => {
     if (!token || !orgId) return;
-    fetch(`http://localhost:3001/api/v1/customers/sample_csv`, {
+    fetch(`${API_URL}/api/v1/customers/sample_csv`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.blob())
@@ -129,7 +130,7 @@ function CustomersBulkImportModal({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("http://localhost:3001/api/v1/customers/bulk_import", {
+      const res = await fetch(`${API_URL}/api/v1/customers/bulk_import`, {
         method:  "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         body:    fd,
@@ -291,7 +292,7 @@ export default function CustomersPage() {
     if (!token || !orgId) return;
     setActionLoading(id);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/customers/${id}/${action}`, {
+      const res = await fetch(`${API_URL}/api/v1/customers/${id}/${action}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
@@ -313,7 +314,7 @@ export default function CustomersPage() {
       render: (_: unknown, row: Customer) => (
         <div>
           <p className="font-medium text-text-primary">{row.name}</p>
-          <p className="text-xs text-text-secondary">{row.code}</p>
+          {/* <p className="text-xs text-text-secondary">{row.code}</p> */}
         </div>
       ),
     },
@@ -424,7 +425,7 @@ export default function CustomersPage() {
       if (status)  qs.set("status", status);
       Object.entries(VIEW_PARAMS[savedView]).forEach(([k, v]) => qs.set(k, v));
 
-      const res  = await fetch(`http://localhost:3001/api/v1/customers?${qs}`, {
+      const res  = await fetch(`${API_URL}/api/v1/customers?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -456,7 +457,7 @@ export default function CustomersPage() {
       if (tier)    qs.set("tier",    tier);
       if (status)  qs.set("status",  status);
       Object.entries(VIEW_PARAMS[savedView]).forEach(([k, v]) => qs.set(k, v));
-      const res = await fetch(`http://localhost:3001/api/v1/customers/export_csv?${qs}`, {
+      const res = await fetch(`${API_URL}/api/v1/customers/export_csv?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const blob = await res.blob();

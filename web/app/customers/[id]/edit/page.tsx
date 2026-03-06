@@ -1,11 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CustomerForm, type CustomerFormData, type AddressRow, type ContactRow, type SalesRep } from "../../_components/CustomerForm";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { API_URL } from "@/lib/api/client";
+
 
 interface Route { id: number; name: string; code: string; }
 
@@ -27,9 +28,9 @@ export default function EditCustomerPage() {
       const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
 
       const [custRes, routesRes, usersRes] = await Promise.all([
-        fetch(`http://localhost:3001/api/v1/customers/${customerId}`, { headers }),
-        fetch(`http://localhost:3001/api/v1/routes?per_page=100`,     { headers }),
-        fetch(`http://localhost:3001/api/v1/users?per_page=100`,      { headers }),
+        fetch(`${API_URL}/api/v1/customers/${customerId}`, { headers }),
+        fetch(`${API_URL}/api/v1/routes?per_page=100`,     { headers }),
+        fetch(`${API_URL}/api/v1/users?per_page=100`,      { headers }),
       ]);
 
       if (custRes.ok) {
@@ -97,7 +98,7 @@ export default function EditCustomerPage() {
       if (!token || !orgId) return { exists: false };
       try {
         const res  = await fetch(
-          `http://localhost:3001/api/v1/customers/check_duplicate?field=${field}&value=${encodeURIComponent(value)}&exclude_id=${customerId}`,
+          `${API_URL}/api/v1/customers/check_duplicate?field=${field}&value=${encodeURIComponent(value)}&exclude_id=${customerId}`,
           { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } },
         );
         const json = await res.json();
@@ -124,7 +125,7 @@ export default function EditCustomerPage() {
         contacts_attributes:  contacts.map(({ _key, ...c }) => c),
       };
 
-      const res  = await fetch(`http://localhost:3001/api/v1/customers/${customerId}`, {
+      const res  = await fetch(`${API_URL}/api/v1/customers/${customerId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -157,11 +158,6 @@ export default function EditCustomerPage() {
 
   return (
     <AppShell title="Customers">
-      <Breadcrumb items={[
-        { label: "Customers", href: "/customers" },
-        { label: initial.name ?? "Customer", href: `/customers/${customerId}` },
-        { label: "Edit" },
-      ]} />
       <PageHeader title="Edit Customer" description="Update customer details." />
       <div className="mt-6">
         <CustomerForm

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { API_URL } from "@/lib/api/client";
+
 import {
   Truck, User, Package, CheckCircle,
   XCircle, Clock, ChevronRight, ClipboardCheck,
@@ -23,8 +24,6 @@ const EXCEPTION_CODES = [
   { value: "vehicle_breakdown",      label: "Vehicle Breakdown" },
   { value: "other",                  label: "Other" },
 ];
-
-const API = "http://localhost:3001/api/v1";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface TripDetail {
@@ -71,11 +70,11 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "warning" | "succ
 };
 
 const STOP_ICON: Record<string, React.ReactNode> = {
-  pending:          <Clock className="h-4 w-4 text-slate-400" />,
+  pending:          <Clock className="h-4 w-4 text-text-secondary" />,
   delivered:        <CheckCircle className="h-4 w-4 text-green-500" />,
   partial_delivery: <Package className="h-4 w-4 text-amber-500" />,
   failed:           <XCircle className="h-4 w-4 text-red-500" />,
-  skipped:          <ChevronRight className="h-4 w-4 text-slate-400" />,
+  skipped:          <ChevronRight className="h-4 w-4 text-text-secondary" />,
 };
 
 export default function TripDetailPage() {
@@ -122,7 +121,7 @@ export default function TripDetailPage() {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/delivery_trips/${id}`, { headers: authHeaders });
+      const res  = await fetch(`${API_URL}/api/v1/delivery_trips/${id}`, { headers: authHeaders });
       const json = await res.json();
       if (res.ok) setTrip(json.data);
     } finally {
@@ -135,7 +134,7 @@ export default function TripDetailPage() {
 
   async function handleDispatch() {
     setActionError("");
-    const res  = await fetch(`${API}/delivery_trips/${id}/dispatch`, {
+    const res  = await fetch(`${API_URL}/api/v1/delivery_trips/${id}/dispatch`, {
       method: "POST", headers: authHeaders,
     });
     const json = await res.json();
@@ -148,7 +147,7 @@ export default function TripDetailPage() {
     setCancelLoading(true);
     setActionError("");
     try {
-      const res  = await fetch(`${API}/delivery_trips/${id}/cancel`, {
+      const res  = await fetch(`${API_URL}/api/v1/delivery_trips/${id}/cancel`, {
         method:  "POST",
         headers: authHeaders,
         body:    JSON.stringify({ delivery_trip: { cancellation_reason: cancelReason } }),
@@ -168,12 +167,12 @@ export default function TripDetailPage() {
     setShowAssign(true);
     // Lazy-load vehicles + drivers
     if (!vehicles.length) {
-      fetch(`${API}/vehicles?status=active&per_page=100`, { headers: authHeaders })
+      fetch(`${API_URL}/api/v1/vehicles?status=active&per_page=100`, { headers: authHeaders })
         .then((r) => r.json())
         .then((d) => setVehicles(d.data ?? []));
     }
     if (!drivers.length) {
-      fetch(`${API}/users?role=driver&per_page=100`, { headers: authHeaders })
+      fetch(`${API_URL}/api/v1/users?role=driver&per_page=100`, { headers: authHeaders })
         .then((r) => r.json())
         .then((d) => setDrivers(d.data ?? []));
     }
@@ -190,7 +189,7 @@ export default function TripDetailPage() {
       if (assignDriverId !== (trip?.driver?.id?.toString() ?? "")) {
         body.driver_id = assignDriverId || "";
       }
-      const res = await fetch(`${API}/delivery_trips/${id}`, {
+      const res = await fetch(`${API_URL}/api/v1/delivery_trips/${id}`, {
         method: "PATCH",
         headers: authHeaders,
         body: JSON.stringify({ delivery_trip: body }),
@@ -245,7 +244,7 @@ export default function TripDetailPage() {
       if (stopProofType === "otp")      body.otp_code        = stopOtpCode;
 
       const res  = await fetch(
-        `${API}/delivery_trips/${id}/trip_stops/${completingStop.id}/complete`,
+        `${API_URL}/api/v1/delivery_trips/${id}/trip_stops/${completingStop.id}/complete`,
         { method: "POST", headers: authHeaders, body: JSON.stringify(body) }
       );
       const json = await res.json();
@@ -262,13 +261,13 @@ export default function TripDetailPage() {
 
   if (loading) return (
     <AppShell>
-      <div className="text-center py-20 text-slate-400">Loading trip…</div>
+      <div className="text-center py-20 text-text-secondary">Loading trip…</div>
     </AppShell>
   );
 
   if (!trip) return (
     <AppShell>
-      <div className="text-center py-20 text-slate-400">Trip not found.</div>
+      <div className="text-center py-20 text-text-secondary">Trip not found.</div>
     </AppShell>
   );
 
@@ -277,14 +276,11 @@ export default function TripDetailPage() {
   ).length;
 
   return (
-    <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Delivery", href: "/delivery" },
-          { label: trip.trip_number },
-        ]}
-      />
-
+    <AppShell breadcrumbs={[
+      { label: "Operations",     href: "/operations" },
+      { label: "Delivery Trips", href: "/delivery" },
+      { label: trip.trip_number },
+    ]}>
       <PageHeader
         title={trip.trip_number}
         subtitle={`Trip date: ${new Date(trip.trip_date).toLocaleDateString("en-IN")}`}
@@ -316,38 +312,38 @@ export default function TripDetailPage() {
 
       {/* Trip meta */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="border border-slate-200 shadow-none">
+        <Card className="border border-border shadow-none">
           <CardContent className="py-3 px-4">
-            <p className="text-xs text-slate-500 mb-0.5">Status</p>
+            <p className="text-xs text-text-secondary mb-0.5">Status</p>
             <Badge variant={STATUS_VARIANT[trip.status] ?? "secondary"}>
               {trip.status.replace("_", " ")}
             </Badge>
           </CardContent>
         </Card>
-        <Card className="border border-slate-200 shadow-none">
+        <Card className="border border-border shadow-none">
           <CardContent className="py-3 px-4">
-            <p className="text-xs text-slate-500 mb-0.5">Branch</p>
+            <p className="text-xs text-text-secondary mb-0.5">Branch</p>
             <p className="text-sm font-medium">{trip.branch.name}</p>
           </CardContent>
         </Card>
-        <Card className="border border-slate-200 shadow-none">
+        <Card className="border border-border shadow-none">
           <CardContent className="py-3 px-4 flex items-center gap-2">
-            <Truck className="h-4 w-4 text-slate-400" />
+            <Truck className="h-4 w-4 text-text-secondary" />
             <div>
-              <p className="text-xs text-slate-500 mb-0.5">Vehicle</p>
+              <p className="text-xs text-text-secondary mb-0.5">Vehicle</p>
               <p className="text-sm font-medium">
-                {trip.vehicle?.registration_number ?? <span className="text-slate-400">—</span>}
+                {trip.vehicle?.registration_number ?? <span className="text-text-secondary">—</span>}
               </p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-slate-200 shadow-none">
+        <Card className="border border-border shadow-none">
           <CardContent className="py-3 px-4 flex items-center gap-2">
-            <User className="h-4 w-4 text-slate-400" />
+            <User className="h-4 w-4 text-text-secondary" />
             <div>
-              <p className="text-xs text-slate-500 mb-0.5">Driver</p>
+              <p className="text-xs text-text-secondary mb-0.5">Driver</p>
               <p className="text-sm font-medium">
-                {trip.driver?.name ?? <span className="text-slate-400">—</span>}
+                {trip.driver?.name ?? <span className="text-text-secondary">—</span>}
               </p>
             </div>
           </CardContent>
@@ -356,13 +352,13 @@ export default function TripDetailPage() {
 
       {/* Progress bar */}
       <div className="mb-6">
-        <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+        <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
           <span>{completedCount} of {trip.stops.length} stops done</span>
           <span>{trip.stops.length > 0 ? Math.round((completedCount / trip.stops.length) * 100) : 0}%</span>
         </div>
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-2 bg-background-subtle rounded-full overflow-hidden">
           <div
-            className="h-full bg-indigo-500 rounded-full transition-all"
+            className="h-full bg-accent/100 rounded-full transition-all"
             style={{ width: trip.stops.length > 0 ? `${(completedCount / trip.stops.length) * 100}%` : "0%" }}
           />
         </div>
@@ -370,15 +366,15 @@ export default function TripDetailPage() {
 
       {/* Stops */}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-slate-700">Delivery Stops</h3>
+        <h3 className="text-sm font-semibold text-text-primary">Delivery Stops</h3>
         {trip.stops.length === 0 ? (
-          <p className="text-sm text-slate-400">No stops on this trip.</p>
+          <p className="text-sm text-text-secondary">No stops on this trip.</p>
         ) : (
           trip.stops.map((stop) => (
-            <Card key={stop.id} className="border border-slate-200 shadow-none">
+            <Card key={stop.id} className="border border-border shadow-none">
               <CardContent className="py-3 px-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-background-subtle flex items-center justify-center text-xs font-bold text-text-secondary">
                     {stop.sequence}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -395,7 +391,7 @@ export default function TripDetailPage() {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex gap-4 mt-0.5 text-xs text-slate-500">
+                    <div className="flex gap-4 mt-0.5 text-xs text-text-secondary">
                       <span className="font-mono">{stop.sales_order.order_number}</span>
                       <span>
                         ₹{Number(stop.sales_order.total_amount).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
@@ -405,7 +401,7 @@ export default function TripDetailPage() {
                       )}
                     </div>
                     {stop.delivery_notes && (
-                      <p className="text-xs text-slate-500 mt-1 italic">{stop.delivery_notes}</p>
+                      <p className="text-xs text-text-secondary mt-1 italic">{stop.delivery_notes}</p>
                     )}
                   </div>
                   <div className="shrink-0 flex items-center gap-1">
@@ -430,7 +426,7 @@ export default function TripDetailPage() {
       </div>
 
       {trip.notes && (
-        <div className="mt-6 rounded-md bg-slate-50 border border-slate-200 p-3 text-sm text-slate-600">
+        <div className="mt-6 rounded-md bg-background-subtle border border-border p-3 text-sm text-text-secondary">
           <span className="font-medium">Notes: </span>{trip.notes}
         </div>
       )}
@@ -439,9 +435,9 @@ export default function TripDetailPage() {
       <Modal open={showAssign} onClose={() => setShowAssign(false)} title="Assign Vehicle &amp; Driver">
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">Vehicle</label>
+            <label className="text-sm font-medium text-text-primary block mb-1">Vehicle</label>
             <select
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               value={assignVehicleId}
               onChange={(e) => setAssignVehicleId(e.target.value)}
             >
@@ -454,9 +450,9 @@ export default function TripDetailPage() {
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">Driver</label>
+            <label className="text-sm font-medium text-text-primary block mb-1">Driver</label>
             <select
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               value={assignDriverId}
               onChange={(e) => setAssignDriverId(e.target.value)}
             >
@@ -486,14 +482,14 @@ export default function TripDetailPage() {
       >
         {completingStop && (
           <div className="space-y-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-text-secondary">
               <span className="font-medium">{completingStop.sales_order.customer.name}</span>
               {" · "}<span className="font-mono text-xs">{completingStop.sales_order.order_number}</span>
             </p>
 
             {/* Outcome */}
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Outcome *</label>
+              <label className="text-sm font-medium text-text-primary block mb-1">Outcome *</label>
               <div className="flex gap-2 flex-wrap">
                 {(["delivered", "partial_delivery", "failed"] as const).map((o) => (
                   <button
@@ -507,7 +503,7 @@ export default function TripDetailPage() {
                           : o === "partial_delivery"
                           ? "bg-amber-500 text-white border-amber-500"
                           : "bg-green-600 text-white border-green-600"
-                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                        : "bg-white text-text-primary border-border hover:bg-background-subtle"
                     }`}
                   >
                     {o === "partial_delivery" ? "Partial" : o.charAt(0).toUpperCase() + o.slice(1)}
@@ -519,9 +515,9 @@ export default function TripDetailPage() {
             {/* Exception code — required when failed */}
             {stopOutcome === "failed" && (
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Exception Code *</label>
+                <label className="text-sm font-medium text-text-primary block mb-1">Exception Code *</label>
                 <select
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   value={stopExCode}
                   onChange={(e) => setStopExCode(e.target.value)}
                 >
@@ -535,7 +531,7 @@ export default function TripDetailPage() {
 
             {/* Proof type */}
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Proof Type *</label>
+              <label className="text-sm font-medium text-text-primary block mb-1">Proof Type *</label>
               <div className="flex gap-2">
                 {(["override", "otp"] as const).map((pt) => (
                   <button
@@ -544,8 +540,8 @@ export default function TripDetailPage() {
                     onClick={() => { setStopProofType(pt); setStopOverrideReason(""); setStopOtpCode(""); }}
                     className={`px-3 py-1.5 rounded-md text-sm border transition-colors ${
                       stopProofType === pt
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                        ? "bg-accent text-white border-accent"
+                        : "bg-white text-text-primary border-border hover:bg-background-subtle"
                     }`}
                   >
                     {pt === "override" ? "Manager Override" : "OTP"}
@@ -557,10 +553,10 @@ export default function TripDetailPage() {
             {/* Override reason */}
             {stopProofType === "override" && (
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">Override Reason *</label>
+                <label className="text-sm font-medium text-text-primary block mb-1">Override Reason *</label>
                 <input
                   type="text"
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="e.g. Confirmed by phone call"
                   value={stopOverrideReason}
                   onChange={(e) => setStopOverrideReason(e.target.value)}
@@ -571,11 +567,11 @@ export default function TripDetailPage() {
             {/* OTP code */}
             {stopProofType === "otp" && (
               <div>
-                <label className="text-sm font-medium text-slate-700 block mb-1">OTP Code *</label>
+                <label className="text-sm font-medium text-text-primary block mb-1">OTP Code *</label>
                 <input
                   type="text"
                   maxLength={6}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="123456"
                   value={stopOtpCode}
                   onChange={(e) => setStopOtpCode(e.target.value.replace(/\D/g, ""))}
@@ -585,9 +581,9 @@ export default function TripDetailPage() {
 
             {/* Delivery notes */}
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1">Delivery Notes</label>
+              <label className="text-sm font-medium text-text-primary block mb-1">Delivery Notes</label>
               <textarea
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 rows={2}
                 placeholder="Optional notes…"
                 value={stopNotes}
@@ -610,13 +606,13 @@ export default function TripDetailPage() {
       {/* Cancel modal */}
       <Modal open={showCancel} onClose={() => setShowCancel(false)} title="Cancel Trip">
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-text-secondary">
             Cancel <span className="font-semibold">{trip.trip_number}</span>? Dispatched orders will revert to Approved.
           </p>
           <div>
-            <label className="text-sm font-medium text-slate-700 block mb-1">Reason *</label>
+            <label className="text-sm font-medium text-text-primary block mb-1">Reason *</label>
             <textarea
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
               rows={3}
               placeholder="e.g. Vehicle breakdown"
               value={cancelReason}

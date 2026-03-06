@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   createContext,
@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -98,7 +99,7 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
     if (!tok) return;
     setOrgsLoading(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/organizations", {
+      const res  = await fetch(`${API_URL}/api/v1/organizations`, {
         headers: { Authorization: `Bearer ${tok}` },
       });
       if (res.status === 401) { clearAuth(); return; }
@@ -132,7 +133,7 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
     if (!tok || !org) return;
     setBranchesLoading(true);
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/branches?per_page=100`, {
+      const res  = await fetch(`${API_URL}/api/v1/branches?per_page=100`, {
         headers: {
           Authorization:       `Bearer ${tok}`,
           "X-Organization-Id": org,

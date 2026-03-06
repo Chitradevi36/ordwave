@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
+import { API_URL } from "@/lib/api/client";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -15,13 +16,13 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(``);
     setSuccess(false);
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/v1/passwords/forgot', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/v1/passwords/forgot`, {
+        method: `POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });

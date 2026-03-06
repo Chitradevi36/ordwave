@@ -4,9 +4,10 @@
 
 # Queue order: higher weight = more frequently polled
 :queues:
-  - [critical, 3]   # invoice PDFs, webhook delivery, push notifications
-  - [default,  2]   # most background jobs
-  - [low,      1]   # exports, report generation, beat scheduling
+  - [critical,  3]   # invoice PDFs, webhook delivery, push notifications
+  - [invoicing, 3]   # auto-invoice generation from delivery stops
+  - [default,   2]   # most background jobs
+  - [low,       1]   # exports, report generation, beat scheduling
 
 # Dead job retention
 :dead_max_jobs: 10_000

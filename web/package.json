@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:lowmem": "NEXT_DISABLE_SWC_WORKER=1 NODE_OPTIONS=--max-old-space-size=1536 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

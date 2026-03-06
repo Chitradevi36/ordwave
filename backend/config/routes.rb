@@ -1,5 +1,8 @@
 Rails.application.routes.draw do
   require 'sidekiq/web'
+  # API mode has no session middleware â€” add it directly to Sidekiq::Web
+  Sidekiq::Web.use ActionDispatch::Cookies
+  Sidekiq::Web.use ActionDispatch::Session::CookieStore, key: '_orderlane_sidekiq'
   mount Sidekiq::Web => '/sidekiq'
 
   # Devise routes (web sessions)
@@ -116,7 +119,7 @@ Rails.application.routes.draw do
       end
 
       # Inventory Ledger
-      resources :inventory_levels, only: %i[index show]   # legacy — kept for existing clients
+      resources :inventory_levels, only: %i[index show]   # legacy ï¿½ kept for existing clients
 
       namespace :inventory do
         resources :balances,    only: %i[index show]
@@ -233,6 +236,7 @@ Rails.application.routes.draw do
           post :hold
           post :cancel
           post :refresh_price
+          get  :lifecycle
         end
       end
 

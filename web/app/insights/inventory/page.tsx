@@ -1,14 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { AppShell, PageHeader } from "@/components/layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { RefreshCw, Package, AlertTriangle, TrendingUp, ChevronRight } from "lucide-react";
-
-const API = "http://localhost:3001";
+import { API_URL } from "@/lib/api/client";
+import { RefreshCw, Package, AlertTriangle, TrendingUp } from "lucide-react";
 
 function fmt(n: number | undefined | null, prefix = "") {
   if (n == null) return "—";
@@ -102,7 +100,7 @@ export default function InsightsInventoryPage() {
     try {
       const qp = new URLSearchParams();
       if (branchId) qp.set("branch_id", branchId);
-      const res = await fetch(`${API}/api/v1/analytics/inventory_health?${qp}`, {
+      const res = await fetch(`${API_URL}/api/v1/analytics/inventory_health?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       if (!res.ok) throw new Error("Failed to load inventory data");
@@ -127,12 +125,10 @@ export default function InsightsInventoryPage() {
   ];
 
   return (
-    <AppShell title="Inventory Health">
-      <nav className="flex items-center gap-1.5 mb-4 text-sm">
-        <Link href="/insights" className="text-text-secondary hover:text-text-primary transition-colors">Insights</Link>
-        <ChevronRight className="h-3.5 w-3.5 text-text-secondary" />
-        <span className="font-medium text-text-primary">Inventory</span>
-      </nav>
+    <AppShell title="Inventory Health" breadcrumbs={[
+      { label: "Insights", href: "/insights" },
+      { label: "Inventory" },
+    ]}>
       <PageHeader
         title="Inventory Health"
         description="Low stock alerts, dead stock, and fast-moving products."

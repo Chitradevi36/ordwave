@@ -2,65 +2,50 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Users,
-  Package,
-  Wallet,
-  Layers,
-  BarChart2,
-  Settings,
+  BookOpen,
   Truck,
+  Layers,
+  DollarSign,
+  BarChart2,
   type LucideIcon,
 } from "lucide-react";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Role type ─────────────────────────────────────────────────────────────────
 export type UserRole =
   | "owner"
   | "admin"
   | "manager"
   | "sales_rep"
+  | "driver"
   | "accounts"
+  | "warehouse"
   | string;
 
-export interface PrimaryNavItem {
+// ── Workspace nav item ────────────────────────────────────────────────────────
+export interface WorkspaceNavItem {
   key: string;
   label: string;
-  /** Where clicking the nav item navigates to */
   href: string;
   icon: LucideIcon;
-  /**
-   * All path prefixes that should highlight this nav item as active.
-   * E.g. Orders highlights for /orders, /approvals, /schemes
-   */
-  matchPaths: string[];
-  /**
-   * If defined, item is only shown to these roles.
-   * If undefined (or empty), item is visible to everyone.
-   */
+  matchers: string[];
   rolesAllowed?: UserRole[];
 }
 
-// ── Primary nav (max 8 items, no scroll on 768px+) ───────────────────────────
-//
-// Secondary nav lives inside each module page as header tabs:
-//
-//  Orders         → tabs: Sales Orders | Approvals | Schemes
-//  Inventory      → tabs: Stock | Purchases | Suppliers | Transfers | Returns
-//  Collections    → tabs: Payments | Sales Invoices | Credit Notes | Advances
-//  Field Ops      → tabs: Delivery | Routes | Beats       (under Settings or Delivery page)
-//
-export const PRIMARY_NAV: PrimaryNavItem[] = [
+// ── Primary workspace nav ────────────────────────────────────────────────────
+export const WORKSPACE_NAV: WorkspaceNavItem[] = [
   {
     key: "dashboard",
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    matchPaths: ["/dashboard"],
+    matchers: ["/dashboard"],
   },
   {
-    key: "orders",
-    label: "Orders",
-    href: "/orders",
+    key: "sales",
+    label: "Sales",
+    href: "/sales",
     icon: ShoppingCart,
-    matchPaths: ["/orders", "/approvals", "/schemes"],
+    matchers: ["/sales", "/orders", "/approvals", "/schemes", "/pricing/schemes"],
     rolesAllowed: ["owner", "admin", "manager", "sales_rep"],
   },
   {
@@ -68,74 +53,99 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
     label: "Customers",
     href: "/customers",
     icon: Users,
-    matchPaths: ["/customers"],
-    rolesAllowed: ["owner", "admin", "manager", "sales_rep"],
+    matchers: ["/customers", "/routes", "/beats", "/visits"],
+    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "driver"],
   },
   {
-    key: "products",
-    label: "Products",
-    href: "/products",
-    icon: Package,
-    matchPaths: ["/products"],
-    rolesAllowed: ["owner", "admin", "manager", "sales_rep"],
+    key: "catalog",
+    label: "Catalog",
+    href: "/catalog",
+    icon: BookOpen,
+    matchers: ["/catalog", "/products", "/pricing", "/promotions"],
+    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "warehouse"],
   },
   {
-    key: "collections",
-    label: "Collections",
-    href: "/collections",
-    icon: Wallet,
-    matchPaths: ["/collections", "/sales-invoices", "/credit-notes", "/payments", "/invoices"],
-    rolesAllowed: ["owner", "admin", "manager", "accounts"],
+    key: "operations",
+    label: "Operations",
+    href: "/operations",
+    icon: Truck,
+    matchers: ["/operations", "/delivery", "/returns", "/inventory/transfers"],
+    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "driver", "warehouse"],
   },
   {
     key: "inventory",
     label: "Inventory",
-    href: "/inventory/stock",
+    href: "/inventory",
     icon: Layers,
-    matchPaths: ["/inventory", "/suppliers", "/purchases", "/returns"],
-    rolesAllowed: ["owner", "admin", "manager", "sales_rep"],
+    matchers: ["/inventory", "/suppliers", "/purchases"],
+    rolesAllowed: ["owner", "admin", "manager", "warehouse"],
   },
   {
-    key: "delivery",
-    label: "Delivery",
-    href: "/delivery",
-    icon: Truck,
-    matchPaths: ["/delivery", "/beats", "/routes"],
-    rolesAllowed: ["owner", "admin", "manager"],
+    key: "finance",
+    label: "Finance",
+    href: "/finance",
+    icon: DollarSign,
+    matchers: ["/finance", "/collections", "/sales-invoices", "/credit-notes", "/advance-payments", "/payments"],
+    rolesAllowed: ["owner", "admin", "manager", "accounts"],
   },
   {
-    key: "reports",
-    label: "Reports",
+    key: "insights",
+    label: "Insights",
     href: "/insights",
     icon: BarChart2,
-    matchPaths: ["/insights", "/reports"],
-  },
-  {
-    key: "settings",
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-    matchPaths: ["/settings"],
+    matchers: ["/insights", "/reports"],
+    rolesAllowed: ["owner", "admin", "manager", "accounts"],
   },
 ];
 
-// ── Route matching helper ─────────────────────────────────────────────────────
-export function isActiveRoute(
-  pathname: string,
-  item: PrimaryNavItem
-): boolean {
-  return item.matchPaths.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
+// ── Helpers ───────────────────────────────────────────────────────────────────
+export function isActiveWorkspace(pathname: string, item: WorkspaceNavItem): boolean {
+  return item.matchers.some((m) => pathname === m || pathname.startsWith(m + "/"));
+}
+
+export function canAccessWorkspace(role: UserRole | undefined, key: string): boolean {
+  const item = WORKSPACE_NAV.find((w) => w.key === key);
+  if (!item) return false;
+  if (!item.rolesAllowed || item.rolesAllowed.length === 0) return true;
+  if (!role) return true;
+  return item.rolesAllowed.includes(role);
+}
+
+export function filterWorkspacesForRole(role: UserRole | undefined): WorkspaceNavItem[] {
+  if (!role || role === "owner" || role === "admin") return WORKSPACE_NAV;
+  return WORKSPACE_NAV.filter(
+    (item) => !item.rolesAllowed || item.rolesAllowed.length === 0 || item.rolesAllowed.includes(role)
   );
 }
 
-// ── Role-based filter ─────────────────────────────────────────────────────────
-export function filterNavForRole(role: UserRole | undefined): PrimaryNavItem[] {
-  if (!role || role === "owner" || role === "admin") return PRIMARY_NAV;
-  return PRIMARY_NAV.filter(
-    (item) =>
-      !item.rolesAllowed ||
-      item.rolesAllowed.length === 0 ||
-      item.rolesAllowed.includes(role)
-  );
+// ── Create actions ────────────────────────────────────────────────────────────
+export interface CreateAction {
+  label: string;
+  href: string;
+  rolesAllowed?: UserRole[];
 }
+
+export const CREATE_ACTIONS: CreateAction[] = [
+  { label: "New Order",               href: "/orders/new",               rolesAllowed: ["owner","admin","manager","sales_rep"] },
+  { label: "New Customer",            href: "/customers/new",            rolesAllowed: ["owner","admin","manager","sales_rep"] },
+  { label: "Record Collection",       href: "/collections/new",          rolesAllowed: ["owner","admin","manager","sales_rep","accounts"] },
+  { label: "Create Credit Note",      href: "/credit-notes/new",         rolesAllowed: ["owner","admin","manager","accounts"] },
+  { label: "Allocate Payment",        href: "/collections/allocate",     rolesAllowed: ["owner","admin","accounts"] },
+  { label: "Purchase Invoice",        href: "/purchases/invoices/new",   rolesAllowed: ["owner","admin","manager","warehouse"] },
+  { label: "Receive Purchase",        href: "/purchases/receive",        rolesAllowed: ["owner","admin","manager","warehouse"] },
+  { label: "Stock Transfer",          href: "/inventory/transfers/new",  rolesAllowed: ["owner","admin","manager","warehouse"] },
+  { label: "Stock Adjustment",        href: "/inventory/adjustments/new",rolesAllowed: ["owner","admin","manager","warehouse"] },
+  { label: "New Return",              href: "/returns/new",              rolesAllowed: ["owner","admin","manager","sales_rep","driver"] },
+  { label: "Start Trip",              href: "/delivery/new",             rolesAllowed: ["owner","admin","manager","driver"] },
+];
+
+export function filterCreateActionsForRole(role: UserRole | undefined): CreateAction[] {
+  if (!role || role === "owner" || role === "admin") return CREATE_ACTIONS;
+  return CREATE_ACTIONS.filter((a) => !a.rolesAllowed || a.rolesAllowed.includes(role));
+}
+
+// Legacy aliases (keeps existing imports working)
+export type { WorkspaceNavItem as PrimaryNavItem };
+export const PRIMARY_NAV = WORKSPACE_NAV;
+export const isActiveRoute = isActiveWorkspace;
+export const filterNavForRole = filterWorkspacesForRole;

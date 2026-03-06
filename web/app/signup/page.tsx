@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Mail, Lock, User, Check } from 'lucide-react';
+import { API_URL } from "@/lib/api/client";
 
 type Step = 'email' | 'otp' | 'password' | 'profile';
 
@@ -60,12 +61,12 @@ export default function SignupPage() {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(``);
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/v1/signup/initiate', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/v1/signup/initiate`, {
+        method: `POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
@@ -89,12 +90,12 @@ export default function SignupPage() {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(``);
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/v1/signup/verify_otp', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/v1/signup/verify_otp`, {
+        method: `POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp_code: otpCode }),
       });
@@ -123,15 +124,15 @@ export default function SignupPage() {
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(`Password must be at least 8 characters`);
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/v1/signup/set_password', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/v1/signup/set_password`, {
+        method: `POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
@@ -156,13 +157,13 @@ export default function SignupPage() {
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(``);
     setLoading(true);
 
     try {
       // Complete the signup with plan selection
-      const response = await fetch('http://localhost:3001/api/v1/signup/choose_plan', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/v1/signup/choose_plan`, {
+        method: `POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,

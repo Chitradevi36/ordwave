@@ -17,11 +17,6 @@ Sidekiq.configure_server do |config|
     end
   end
 
-  # ── Server-side middleware: propagate Current.user / Current.organization ──
-  config.server_middleware do |chain|
-    chain.add SidekiqCurrentAttributesMiddleware
-  end
-
   # ── Lifecycle hooks for observability ──────────────────────────────────────
   config.on(:startup) do
     Rails.logger.info("[Sidekiq] Worker started — PID #{Process.pid}")

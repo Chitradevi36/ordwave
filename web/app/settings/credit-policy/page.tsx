@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { RotateCcw, Save } from "lucide-react";
+import { API_URL } from "@/lib/api/client";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -73,7 +74,7 @@ export default function CreditPolicyPage() {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/credit_policy", {
+      const res  = await fetch(`${API_URL}/api/v1/credit_policy`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -98,7 +99,7 @@ export default function CreditPolicyPage() {
     if (!token || !orgId) return;
     setSaving(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/credit_policy", {
+      const res  = await fetch(`${API_URL}/api/v1/credit_policy`, {
         method:  "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -125,10 +126,6 @@ export default function CreditPolicyPage() {
 
   return (
     <AppShell title="Credit Policy">
-      <Breadcrumb items={[
-        { label: "Settings", href: "/settings" },
-        { label: "Credit Policy" },
-      ]} />
       <PageHeader
         title="Credit Policy"
         description="Configure automated hold and block rules for credit sales."

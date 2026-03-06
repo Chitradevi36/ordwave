@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { API_URL } from "@/lib/api/client";
+import { useOrgBranch } from "@/lib/org-branch-context";
 import {
   ChevronLeft,
   ChevronRight,
@@ -53,16 +55,10 @@ const GST_RATES = [0, 5, 12, 18, 28] as const;
 // Helpers
 // ---------------------------------------------------------------------------
 function getApiBase() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+  return process.env.NEXT_PUBLIC_API_URL ?? `${API_URL}/api/v1`;
 }
 
-function authHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-  const orgId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("organization_id")
-      : null;
+function authHeaders(token?: string | null, orgId?: string | null): Record<string, string> {
   return {
     "Content-Type": "application/json",
     ...(token  ? { Authorization: `Bearer ${token}` }  : {}),
@@ -72,13 +68,13 @@ function authHeaders(): Record<string, string> {
 
 function gstBadgeVariant(rate: number): string {
   const map: Record<number, string> = {
-    0:  "bg-muted text-muted-foreground border border-border",
+    0:  "bg-muted text-text-secondary border border-border",
     5:  "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
     12: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
     18: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
     28: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
   };
-  return map[rate] ?? "bg-muted text-muted-foreground";
+  return map[rate] ?? "bg-muted text-text-secondary";
 }
 
 function formatDate(dateStr: string | null): string {
@@ -119,6 +115,7 @@ interface CodeFormModalProps {
 }
 
 function CodeFormModal({ open, editing, onClose, onSaved }: CodeFormModalProps) {
+  const { token, orgId } = useOrgBranch();
   const [code,          setCode]          = useState("");
   const [codeType,      setCodeType]      = useState<"HSN" | "SAC">("HSN");
   const [description,   setDescription]   = useState("");
@@ -154,7 +151,7 @@ function CodeFormModal({ open, editing, onClose, onSaved }: CodeFormModalProps) 
         : `${getApiBase()}/hsn_sac_codes`;
       const res = await fetch(url, {
         method: editing ? "PATCH" : "POST",
-        headers: authHeaders(),
+        headers: authHeaders(token, orgId),
         body: JSON.stringify({
           hsn_sac_code: { code, code_type: codeType, description, chapter, gst_rate: gstRate, effective_from: effectiveFrom },
         }),
@@ -244,6 +241,7 @@ interface RateChangeModalProps {
 }
 
 function RateChangeModal({ open, code, onClose, onSaved }: RateChangeModalProps) {
+  const { token, orgId } = useOrgBranch();
   const [newRate,        setNewRate]        = useState<number>(5);
   const [effectiveFrom,  setEffectiveFrom]  = useState("");
   const [saving,         setSaving]         = useState(false);
@@ -265,7 +263,7 @@ function RateChangeModal({ open, code, onClose, onSaved }: RateChangeModalProps)
     try {
       const res = await fetch(`${getApiBase()}/hsn_sac_codes/${code.id}/rate_change`, {
         method: "POST",
-        headers: authHeaders(),
+        headers: authHeaders(token, orgId),
         body: JSON.stringify({ gst_rate: newRate, effective_from: effectiveFrom }),
       });
       const json = await res.json();
@@ -336,6 +334,7 @@ function HsnBulkImportModal({
   onClose:    () => void;
   onImported: () => void;
 }) {
+  const { token, orgId } = useOrgBranch();
   const [file,    setFile]    = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result,  setResult]  = useState<{
@@ -346,7 +345,7 @@ function HsnBulkImportModal({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const downloadSample = async () => {
-    const hdrs = authHeaders() as Record<string, string>;
+    const hdrs = authHeaders(token, orgId) as Record<string, string>;
     try {
       const res = await fetch(`${getApiBase()}/hsn_sac_codes/sample_csv`, { headers: hdrs });
       const blob = await res.blob();
@@ -361,7 +360,7 @@ function HsnBulkImportModal({
     if (!file) return;
     setLoading(true); setError(""); setResult(null);
     try {
-      const { Authorization, "X-Organization-Id": orgId } = authHeaders() as Record<string, string>;
+      const { Authorization, "X-Organization-Id": orgIdHeader } = authHeaders(token, orgId) as Record<string, string>;
       if (!Authorization) { setError("Session expired. Please log in again."); return; }
       const fd = new FormData();
       fd.append("file", file);
@@ -369,7 +368,7 @@ function HsnBulkImportModal({
         method:  "POST",
         headers: {
           ...(Authorization ? { Authorization }                 : {}),
-          ...(orgId         ? { "X-Organization-Id": orgId } : {}),
+          ...(orgIdHeader   ? { "X-Organization-Id": orgIdHeader } : {}),
         },
         body: fd,
       });
@@ -500,6 +499,7 @@ function HsnBulkImportModal({
 // ---------------------------------------------------------------------------
 export default function HsnCodesPage() {
   const router = useRouter();
+  const { token, orgId } = useOrgBranch();
 
   const [codes,      setCodes]      = useState<HsnSacCode[]>([]);
   const [meta,       setMeta]       = useState<PaginationMeta | null>(null);
@@ -533,7 +533,7 @@ export default function HsnCodesPage() {
       if (rateFilter !== "all") params.set("gst_rate",  rateFilter);
 
       const res = await fetch(`${getApiBase()}/hsn_sac_codes?${params.toString()}`, {
-        headers: authHeaders(),
+        headers: authHeaders(token, orgId),
       });
       if (res.status === 401) { router.replace("/login"); return; }
       const json = await res.json();
@@ -544,7 +544,7 @@ export default function HsnCodesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, query, typeFilter, rateFilter, router]);
+  }, [page, query, typeFilter, rateFilter, router, token, orgId]);
 
   useEffect(() => { fetchCodes(); }, [fetchCodes]);
 
@@ -558,7 +558,7 @@ export default function HsnCodesPage() {
     if (!confirm(`Deactivate HSN code ${code.code}?`)) return;
     const res = await fetch(`${getApiBase()}/hsn_sac_codes/${code.id}`, {
       method: "DELETE",
-      headers: authHeaders(),
+      headers: authHeaders(token, orgId),
     });
     if (res.ok) fetchCodes();
   }
@@ -571,7 +571,7 @@ export default function HsnCodesPage() {
     if (exporting) return;
     setExporting(true);
     try {
-      const { Authorization, "X-Organization-Id": orgId } = authHeaders() as Record<string, string>;
+      const { Authorization, "X-Organization-Id": orgIdHeader } = authHeaders(token, orgId) as Record<string, string>;
       const qs = new URLSearchParams();
       if (query)                qs.set("q",         query);
       if (typeFilter !== "all") qs.set("code_type", typeFilter);
@@ -579,7 +579,7 @@ export default function HsnCodesPage() {
       const res = await fetch(`${getApiBase()}/hsn_sac_codes/export_csv?${qs}`, {
         headers: {
           ...(Authorization ? { Authorization } : {}),
-          ...(orgId ? { "X-Organization-Id": orgId } : {}),
+          ...(orgIdHeader ? { "X-Organization-Id": orgIdHeader } : {}),
         },
       });
       const blob = await res.blob();

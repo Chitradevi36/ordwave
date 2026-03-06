@@ -1,7 +1,7 @@
 "use client";
 
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { PurchaseInvoiceForm } from "@/app/purchases/invoices/_components/purchase-invoice-form";
 import { useOrgBranch } from "@/lib/org-branch-context";
 
@@ -9,11 +9,10 @@ export default function NewPurchaseInvoicePage() {
   const { token, orgId } = useOrgBranch();
 
   return (
-    <AppShell title="New Purchase Invoice">
-      <Breadcrumb items={[
-        { label: "Purchases", href: "/purchases/invoices" },
-        { label: "New Invoice" },
-      ]} />
+    <AppShell title="New Purchase Invoice" breadcrumbs={[
+      { label: "Purchases", href: "/purchases/invoices" },
+      { label: "New Invoice" },
+    ]}>
       <PageHeader
         title="New Purchase Invoice"
         description="Record a new supplier invoice"

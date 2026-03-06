@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 
-const API_URL =
+export const API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:3001";
 
 export const apiClient = axios.create({

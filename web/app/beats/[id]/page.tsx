@@ -259,7 +259,10 @@ export default function BeatDetailPage() {
   ];
 
   return (
-    <AppShell>
+    <AppShell breadcrumbs={[
+      { label: "Beats", href: "/beats" },
+      { label: beat.name || beat.code || "Beat" },
+    ]}>
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${

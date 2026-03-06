@@ -2,7 +2,7 @@ module Api
   module V1
     class SalesOrdersController < BaseController
       before_action :require_organization!
-      before_action :set_order, only: %i[show update submit approve hold cancel refresh_price]
+      before_action :set_order, only: %i[show update submit approve hold cancel refresh_price lifecycle]
 
       # recent_for_customer uses policy_scope (not authorize) — skip the
       # verify_authorized after_action that BaseController enforces on all
@@ -28,7 +28,7 @@ module Api
 
         scope  = base_scope.includes(:customer, :branch, :created_by, :lines)
         scope  = apply_filters(scope)
-        orders = paginate(scope.recent)
+        orders = paginate(apply_sort(scope))
 
         render_success(
           orders.map { |o| serialize_order(o) },
@@ -40,6 +40,120 @@ module Api
       def show
         authorize @order
         render_success(serialize_order(@order, detailed: true))
+      end
+
+      # GET /api/v1/sales_orders/:id/lifecycle
+      # Returns a merged chronological timeline of every event across
+      # order → delivery → invoice → payment for one order.
+      def lifecycle
+        authorize @order, :show?
+
+        events = []
+
+        # ── 1. Order audit logs ────────────────────────────────────────────
+        @order.audit_logs.order(:created_at).each do |log|
+          events << {
+            stage:  'order',
+            event:  log.action,
+            label:  lifecycle_order_label(log.action),
+            at:     log.created_at,
+            actor:  log.actor&.full_name,
+            reason: log.reason,
+            meta:   log.changes_data || {}
+          }
+        end
+
+        # ── 2. Delivery trip / stop ────────────────────────────────────────
+        stop = @order.trip_stop
+        if stop.present?
+          trip = stop.delivery_trip
+
+          if trip.dispatched_at.present?
+            events << {
+              stage: 'delivery',
+              event: 'trip_dispatched',
+              label: 'Dispatched for Delivery',
+              at:    trip.dispatched_at,
+              actor: trip.driver&.full_name,
+              meta:  {
+                trip_number: trip.trip_number,
+                vehicle:     trip.vehicle&.registration_number,
+                driver:      trip.driver&.full_name
+              }
+            }
+          end
+
+          if stop.completed?
+            events << {
+              stage: 'delivery',
+              event: "stop_#{stop.status}",
+              label: lifecycle_stop_label(stop.status),
+              at:    stop.delivered_at,
+              meta:  {
+                outcome:        stop.status,
+                delivery_notes: stop.delivery_notes,
+                exception_code: stop.exception_code
+              }.compact
+            }
+          end
+        end
+
+        # ── 3. Invoices ────────────────────────────────────────────────────
+        @order.sales_invoices.not_deleted.order(:created_at).each do |inv|
+          events << {
+            stage: 'invoice',
+            event: 'invoice_created',
+            label: 'Invoice Generated',
+            at:    inv.created_at,
+            meta:  {
+              invoice_id:        inv.id,
+              invoice_number:    inv.invoice_number,
+              grand_total:       inv.grand_total,
+              status:            inv.status,
+              generation_source: inv.generation_source
+            }
+          }
+          if inv.issued_at.present?
+            events << {
+              stage: 'invoice',
+              event: 'invoice_issued',
+              label: 'Invoice Issued',
+              at:    inv.issued_at,
+              meta:  { invoice_id: inv.id, invoice_number: inv.invoice_number }
+            }
+          end
+        end
+
+        # ── 4. Payments (via invoice allocations) ─────────────────────────
+        invoice_ids = @order.sales_invoices.not_deleted.pluck(:id)
+        if invoice_ids.any?
+          PaymentAllocation
+            .includes(:payment, :sales_invoice)
+            .where(sales_invoice_id: invoice_ids)
+            .each do |alloc|
+              pmt = alloc.payment
+              next unless pmt&.confirmed?
+
+              events << {
+                stage: 'payment',
+                event: 'payment_collected',
+                label: 'Payment Collected',
+                at:    pmt.updated_at,
+                meta:  {
+                  payment_id:     pmt.id,
+                  payment_number: pmt.payment_number,
+                  amount:         alloc.amount_applied,
+                  mode:           pmt.payment_mode,
+                  invoice_number: alloc.sales_invoice&.invoice_number
+                }
+              }
+            end
+        end
+
+        # ── Sort chronologically, nil timestamps last ─────────────────────
+        events.sort_by! { |e| e[:at] || Time.at(9_999_999_999) }
+
+        render_success({ steps: events, order_number: @order.order_number })
       end
 
       # POST /api/v1/sales_orders
@@ -138,7 +252,17 @@ module Api
         )
 
         if result[:ok]
-          render_success(serialize_order(result[:order], detailed: true))
+          data = serialize_order(result[:order], detailed: true)
+          if (tr = result[:trip_result])
+            data[:auto_trip] = {
+              action:      tr[:action],
+              trip_number: tr[:trip]&.trip_number,
+              trip_id:     tr[:trip]&.id,
+              ok:          tr[:ok],
+              errors:      tr[:errors]
+            }
+          end
+          render_success(data)
         else
           render_errors(result[:errors])
         end
@@ -203,7 +327,7 @@ module Api
           .where(customer_id: params[:customer_id])
           .where.not(status: %w[draft cancelled])
           .recent
-          .limit(5)
+          .limit(2)
 
         render_success(orders.map { |o| serialize_order(o, detailed: true) })
       end
@@ -282,7 +406,18 @@ module Api
         scope = scope.by_date_range(params[:date_from], params[:date_to]) if params[:date_from].present? || params[:date_to].present?
         scope = scope.where("sales_orders.total_amount >= ?", params[:min_value].to_f) if params[:min_value].present?
         scope = scope.where("sales_orders.total_amount <= ?", params[:max_value].to_f) if params[:max_value].present?
+        if params[:delivery_overdue] == "1"
+          scope = scope.where("sales_orders.delivery_date < ?", Date.current)
+                       .where(status: %w[submitted on_hold approved dispatched])
+        end
         scope
+      end
+
+      def apply_sort(scope)
+        allowed = %w[created_at total_amount order_number delivery_date submitted_at]
+        col = allowed.include?(params[:sort_by]) ? params[:sort_by] : 'created_at'
+        dir = params[:sort_dir]&.downcase == 'asc' ? :asc : :desc
+        scope.reorder(col => dir)
       end
 
       def serialize_order(order, detailed: false)
@@ -350,7 +485,7 @@ module Api
           gst_rate:      line.gst_rate,
           line_total:    line.line_total,
           price_source:  line.price_source,
-          hsn_code:      line.hsn_code
+          hsn_code:      line.hsn_code,
           scheme_discount_pct: line.scheme_discount_pct,
           scheme_tags:         line.scheme_tags
         }
@@ -365,6 +500,34 @@ module Api
           actor_name: log.actor&.full_name,
           created_at: log.created_at
         }
+      end
+
+      LIFECYCLE_ORDER_LABELS = {
+        'order_created'          => 'Order Created',
+        'order_updated'          => 'Order Updated',
+        'order_submitted'        => 'Order Submitted',
+        'order_credit_checked'   => 'Credit Checked',
+        'order_on_hold'          => 'Placed On Hold',
+        'order_approved'         => 'Order Approved',
+        'order_rejected'         => 'Order Rejected',
+        'order_cancelled'        => 'Order Cancelled',
+        'order_dispatched'       => 'Dispatched',
+        'order_delivered'        => 'Delivered',
+        'order_partial_delivery' => 'Partially Delivered',
+        'order_price_refreshed'  => 'Prices Refreshed'
+      }.freeze
+
+      def lifecycle_order_label(action)
+        LIFECYCLE_ORDER_LABELS.fetch(action, action.humanize)
+      end
+
+      def lifecycle_stop_label(status)
+        {
+          'delivered'        => 'Delivered',
+          'partial_delivery' => 'Partially Delivered',
+          'failed'           => 'Delivery Failed',
+          'skipped'          => 'Stop Skipped'
+        }.fetch(status, status.humanize)
       end
     end
   end

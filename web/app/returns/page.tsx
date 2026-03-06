@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
+
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -134,12 +134,8 @@ export default function ReturnsPage() {
     },
   ];
 
-  const breadcrumbs: BreadcrumbItem[] = [{ label: "Returns", href: "/returns" }];
-
   return (
     <AppShell>
-      <Breadcrumb items={breadcrumbs} />
-
       <PageHeader
         title="Returns"
         description="Manage customer returns, QC, and credit notes"
@@ -158,7 +154,7 @@ export default function ReturnsPage() {
               onClick={() => { setActiveTab(t.key); setPage(1); }}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === t.key
-                  ? "border-b-2 border-primary text-primary"
+                  ? "border-b-2 border-accent text-accent"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >

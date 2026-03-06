@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
+import { API_URL } from "@/lib/api/client";
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface CustomerOption { id: number; name: string; code: string; branch_id: number }
@@ -180,7 +181,7 @@ export default function NewOrderPage() {
   // â”€â”€ Load branches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch("http://localhost:3001/api/v1/branches?per_page=100", {
+    fetch(`${API_URL}/api/v1/branches?per_page=100`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then(r => r.json())
@@ -190,7 +191,7 @@ export default function NewOrderPage() {
   // â”€â”€ Customer search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const searchCustomers = useCallback((q: string) => {
     if (!token || !orgId || q.length < 2) { setCustomerResults([]); return; }
-    fetch(`http://localhost:3001/api/v1/customers?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
+    fetch(`${API_URL}/api/v1/customers?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then(r => r.json())
@@ -222,7 +223,7 @@ export default function NewOrderPage() {
     }
     if (token && orgId) {
       // Fetch available credit for this customer
-      fetch(`http://localhost:3001/api/v1/customers/${c.id}/credit_usage`, {
+      fetch(`${API_URL}/api/v1/customers/${c.id}/credit_usage`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       })
         .then(r => r.json())
@@ -230,7 +231,7 @@ export default function NewOrderPage() {
         .catch(() => {});
 
       setRecentLoading(true);
-      fetch(`http://localhost:3001/api/v1/sales_orders/recent_for_customer?customer_id=${c.id}`, {
+      fetch(`${API_URL}/api/v1/sales_orders/recent_for_customer?customer_id=${c.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       })
         .then(r => r.json())
@@ -250,7 +251,7 @@ export default function NewOrderPage() {
       setLines(prev => prev.map(l => l._key === lineKey ? { ...l, productResults: [] } : l));
       return;
     }
-    fetch(`http://localhost:3001/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
+    fetch(`${API_URL}/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then(r => r.json())
@@ -277,7 +278,7 @@ export default function NewOrderPage() {
     try {
       const qp = new URLSearchParams({ branch_id: bid, qty: qty || "1" });
       if (cust) qp.set("retailer_id", String(cust.id));
-      const res  = await fetch(`http://localhost:3001/api/v1/products/${productId}/price?${qp}`, {
+      const res  = await fetch(`${API_URL}/api/v1/products/${productId}/price?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -390,7 +391,7 @@ export default function NewOrderPage() {
     const validLines = lines.filter(l => l.product && parseFloat(l.qty) > 0);
     if (!validLines.length) return;
     try {
-      await fetch(`http://localhost:3001/api/v1/sales_orders/${savedOrderId}`, {
+      await fetch(`${API_URL}/api/v1/sales_orders/${savedOrderId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -447,8 +448,8 @@ export default function NewOrderPage() {
       // Create or update draft
       const isUpdate = !!savedOrderId;
       const url    = isUpdate
-        ? `http://localhost:3001/api/v1/sales_orders/${savedOrderId}`
-        : "http://localhost:3001/api/v1/sales_orders";
+        ? `${API_URL}/api/v1/sales_orders/${savedOrderId}`
+        : `${API_URL}/api/v1/sales_orders`;
       const method = isUpdate ? "PATCH" : "POST";
 
       const res  = await fetch(url, {
@@ -473,7 +474,7 @@ export default function NewOrderPage() {
       setIsDirty(false);
 
       if (andSubmit) {
-        const subRes  = await fetch(`http://localhost:3001/api/v1/sales_orders/${orderId}/submit`, {
+        const subRes  = await fetch(`${API_URL}/api/v1/sales_orders/${orderId}/submit`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -520,7 +521,7 @@ export default function NewOrderPage() {
         </div>
       )}
 
-      <Breadcrumb items={[{ label: "Orders", href: "/orders" }, { label: "New Order" }]} />
+
       <PageHeader title="New Sales Order" description="Create a draft order" />
 
       {/* Two-panel grid */}
@@ -835,7 +836,7 @@ export default function NewOrderPage() {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="text-sm font-medium mb-1 block">Notes</label>
                 <textarea
                   rows={3}
@@ -844,7 +845,7 @@ export default function NewOrderPage() {
                   onChange={e => { setNotes(e.target.value); markDirty(); }}
                   className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
-              </div>
+              </div> */}
             </CardContent>
           </Card>
 

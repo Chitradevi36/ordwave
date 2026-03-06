@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export interface LineItem {
@@ -98,10 +99,10 @@ export function PurchaseInvoiceForm({ initial, invoiceId, token, orgId }: Purcha
     if (!token || !orgId) return;
     const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
     Promise.all([
-      fetch("http://localhost:3001/api/v1/suppliers?per_page=200&status=active", { headers }).then((r) => r.json()),
-      fetch("http://localhost:3001/api/v1/branches?per_page=200", { headers }).then((r) => r.json()),
-      fetch("http://localhost:3001/api/v1/products?per_page=500", { headers }).then((r) => r.json()),
-      fetch("http://localhost:3001/api/v1/hsn_sac_codes?per_page=500", { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/suppliers?per_page=200&status=active`, { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/branches?per_page=200`, { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/products?per_page=500`, { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/hsn_sac_codes?per_page=500`, { headers }).then((r) => r.json()),
     ]).then(([sup, br, prod, hsn]) => {
       setSuppliers(sup.data ?? []);
       setBranches(br.data  ?? []);
@@ -190,8 +191,8 @@ export function PurchaseInvoiceForm({ initial, invoiceId, token, orgId }: Purcha
     };
 
     const url    = isEdit
-      ? `http://localhost:3001/api/v1/purchase_invoices/${invoiceId}`
-      : "http://localhost:3001/api/v1/purchase_invoices";
+      ? `${API_URL}/api/v1/purchase_invoices/${invoiceId}`
+      : `${API_URL}/api/v1/purchase_invoices`;
     const method = isEdit ? "PATCH" : "POST";
 
     const res  = await fetch(url, {

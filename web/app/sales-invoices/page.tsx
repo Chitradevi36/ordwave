@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
+
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,7 +131,7 @@ export default function SalesInvoicesPage() {
       render: (_, row) => (
         <div>
           <div className="font-medium text-sm">{row.customer.name}</div>
-          <div className="text-xs text-muted-foreground">{row.customer.code}</div>
+          <div className="text-xs text-text-secondary">{row.customer.code}</div>
         </div>
       ),
     },
@@ -142,7 +142,7 @@ export default function SalesInvoicesPage() {
         <div>
           <div className="text-sm">{fmtDate(row.invoice_date)}</div>
           {row.due_date && (
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-text-secondary">
               Due {fmtDate(row.due_date)}
             </div>
           )}
@@ -164,7 +164,7 @@ export default function SalesInvoicesPage() {
       render: (_, row) => (
         <div className="text-right">
           <div className="font-semibold text-sm">{fmtCurrency(row.grand_total)}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-text-secondary">
             Tax: {fmtCurrency(row.tax_total)}
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function SalesInvoicesPage() {
       key:    "branch",
       header: "Branch",
       render: (_, row) => (
-        <span className="text-sm text-muted-foreground">{row.branch.name}</span>
+        <span className="text-sm text-text-secondary">{row.branch.name}</span>
       ),
     },
     {
@@ -198,9 +198,7 @@ export default function SalesInvoicesPage() {
   return (
     <>
     <AppShell>
-      <div className="p-6 space-y-4">
-        {/* Breadcrumb */}
-        <Breadcrumb items={[{ label: "Home", href: "/dashboard" }, { label: "Sales Invoices" }]} />
+      <div className="space-y-4">
 
         {/* Header */}
         <PageHeader
@@ -210,22 +208,24 @@ export default function SalesInvoicesPage() {
         />
 
         {/* Tabs */}
-        <div className="border-b flex gap-1">
+        <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
           {STATUS_TABS.map((tab) => {
             const count = tab.key ? (counts[tab.key] ?? 0) : totalCount;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.key
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "border-b-2 border-accent text-accent"
+                    : "border-transparent text-text-secondary hover:text-text-primary"
                 }`}
               >
                 {tab.label}
                 {count > 0 && (
-                  <span className="ml-1.5 text-xs bg-muted rounded-full px-1.5 py-0.5">
+                  <span className={`inline-flex items-center justify-center rounded-full min-w-[18px] px-1 py-0.5 text-[10px] font-medium ${
+                    activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-background-subtle text-text-secondary"
+                  }`}>
                     {count}
                   </span>
                 )}
@@ -236,7 +236,7 @@ export default function SalesInvoicesPage() {
 
         {/* Search */}
         <div className="relative w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-text-secondary" />
           <Input
             placeholder="Search by invoice # or customer…"
             value={search}
@@ -265,7 +265,7 @@ export default function SalesInvoicesPage() {
             >
               Previous
             </Button>
-            <span className="text-sm text-muted-foreground self-center">
+            <span className="text-sm text-text-secondary self-center">
               Page {page} of {totalPages}
             </span>
             <Button

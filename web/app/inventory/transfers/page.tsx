@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { API_URL } from "@/lib/api/client";
+
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, ArrowLeftRight } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { cn } from "@/lib/utils";
-
-const API = "http://localhost:3001/api/v1";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface TransferSummary {
@@ -79,7 +78,7 @@ export default function TransfersPage() {
 
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch(`${API}/branches?per_page=200`, {
+    fetch(`${API_URL}/api/v1/branches?per_page=200`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     }).then((r) => r.json()).then((j) => setBranches(j.data ?? []));
   }, [token, orgId]);
@@ -94,7 +93,7 @@ export default function TransfersPage() {
         ...(branchId   && { branch_id: branchId }),
         ...(search     && { q: search }),
       });
-      const res = await fetch(`${API}/stock_transfers?${p}`,
+      const res = await fetch(`${API_URL}/api/v1/stock_transfers?${p}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } });
       const json = await res.json();
       setTransfers(json.data ?? []);
@@ -118,7 +117,7 @@ export default function TransfersPage() {
       render: (_: unknown, row: TransferSummary) => (
         <div className="flex items-center gap-1.5 text-sm">
           <span>{row.source_branch?.name ?? "—"}</span>
-          <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <ArrowLeftRight className="h-3.5 w-3.5 text-text-secondary shrink-0" />
           <span>{row.destination_branch?.name ?? "—"}</span>
         </div>
       ),
@@ -152,17 +151,13 @@ export default function TransfersPage() {
     {
       key: "transfer_date", header: "Date",
       render: (_: unknown, row: TransferSummary) => (
-        <span className="text-sm text-muted-foreground">{fmtDate(row.transfer_date)}</span>
+        <span className="text-sm text-text-secondary">{fmtDate(row.transfer_date)}</span>
       ),
     },
   ];
 
   return (
     <AppShell>
-      <Breadcrumb items={[
-        { label: "Inventory", href: "/inventory/stock" },
-        { label: "Transfers" },
-      ]} />
 
       <PageHeader
         title="Stock Transfers"
@@ -201,7 +196,7 @@ export default function TransfersPage() {
           ))}
         </select>
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />
           <Input
             className="pl-8 w-56"
             placeholder="Search transfer #…"
@@ -220,7 +215,7 @@ export default function TransfersPage() {
       />
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+        <div className="mt-4 flex items-center justify-between text-sm text-text-secondary">
           <span>Page {page} of {totalPages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_06_000005) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_06_000006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -357,10 +357,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_000005) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "route_id"
     t.index ["branch_id"], name: "index_delivery_trips_on_branch_id"
     t.index ["driver_id"], name: "index_delivery_trips_on_driver_id"
     t.index ["organization_id", "trip_number"], name: "index_delivery_trips_on_organization_id_and_trip_number", unique: true
     t.index ["organization_id"], name: "index_delivery_trips_on_organization_id"
+    t.index ["route_id"], name: "index_delivery_trips_on_route_id"
     t.index ["status"], name: "index_delivery_trips_on_status"
     t.index ["trip_date"], name: "index_delivery_trips_on_trip_date"
     t.index ["vehicle_id"], name: "index_delivery_trips_on_vehicle_id"
@@ -851,9 +853,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_000005) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "vehicle_id"
+    t.bigint "default_driver_id"
     t.index ["branch_id", "code"], name: "index_routes_on_branch_id_and_code", unique: true
     t.index ["branch_id"], name: "index_routes_on_branch_id"
+    t.index ["default_driver_id"], name: "index_routes_on_default_driver_id"
     t.index ["organization_id"], name: "index_routes_on_organization_id"
+    t.index ["vehicle_id"], name: "index_routes_on_vehicle_id"
   end
 
   create_table "sales_invoice_lines", force: :cascade do |t|
@@ -1399,6 +1405,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_000005) do
   add_foreign_key "delivery_proofs", "users", column: "overridden_by_id"
   add_foreign_key "delivery_trips", "branches"
   add_foreign_key "delivery_trips", "organizations"
+  add_foreign_key "delivery_trips", "routes"
   add_foreign_key "delivery_trips", "users", column: "driver_id"
   add_foreign_key "delivery_trips", "vehicles"
   add_foreign_key "device_tokens", "organizations"
@@ -1463,6 +1470,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_000005) do
   add_foreign_key "return_requests", "users", column: "created_by_id"
   add_foreign_key "routes", "branches"
   add_foreign_key "routes", "organizations"
+  add_foreign_key "routes", "users", column: "default_driver_id"
+  add_foreign_key "routes", "vehicles"
   add_foreign_key "sales_invoice_lines", "products"
   add_foreign_key "sales_invoice_lines", "sales_invoices"
   add_foreign_key "sales_invoices", "branches"

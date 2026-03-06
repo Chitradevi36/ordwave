@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { API_URL } from "@/lib/api/client";
 
 export default function AcceptInvitePage() {
   const searchParams = useSearchParams();
@@ -31,7 +32,7 @@ export default function AcceptInvitePage() {
   const handleAccept = async () => {
     setStatus("loading");
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/invitations/accept", {
+      const res  = await fetch(`${API_URL}/api/v1/invitations/accept`, {
         method:  "POST",
         headers: {
           "Content-Type": "application/json",

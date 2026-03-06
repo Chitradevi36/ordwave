@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ChevronUp, ChevronDown, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Column<T> {
@@ -8,6 +9,7 @@ export interface Column<T> {
   header: string;
   render?: (value: unknown, row: T) => React.ReactNode;
   className?: string;
+  sortable?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -18,6 +20,10 @@ export interface DataTableProps<T> {
   emptyContent?: React.ReactNode;
   isLoading?: boolean;
   onRowClick?: (row: T) => void;
+  rowClassName?: (row: T) => string | undefined;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+  onSort?: (key: string) => void;
 }
 
 export function DataTable<T extends { id?: string | number }>({
@@ -28,29 +34,69 @@ export function DataTable<T extends { id?: string | number }>({
   emptyContent,
   isLoading = false,
   onRowClick,
+  rowClassName,
+  sortBy,
+  sortDir,
+  onSort,
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className={cn("w-full overflow-auto rounded-lg border border-border", className)}>
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="bg-background-subtle">
+            <tr>
+              {columns.map((col) => (
+                <th
+                  key={String(col.key)}
+                  className={cn(
+                    "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary",
+                    col.className
+                  )}
+                >
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border bg-background">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <tr key={idx}>
+                {columns.map((col) => (
+                  <td key={`${String(col.key)}-${idx}`} className={cn("px-4 py-3", col.className)}>
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-background-subtle" />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
 
   return (
     <div className={cn("w-full overflow-auto rounded-lg border border-border", className)}>
-      <table className="w-full text-sm">
-        <thead className="bg-background-subtle">
+      <table className="w-full min-w-[760px] text-sm">
+        <thead className="bg-background-subtle sticky top-0 z-10">
           <tr>
             {columns.map((col) => (
               <th
                 key={String(col.key)}
                 className={cn(
                   "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary",
+                  col.sortable && "cursor-pointer select-none",
                   col.className
                 )}
+                onClick={() => col.sortable && onSort?.(String(col.key))}
               >
-                {col.header}
+                {col.sortable ? (
+                  <span className="inline-flex items-center gap-1 hover:text-text-primary transition-colors">
+                    {col.header}
+                    {sortBy === String(col.key)
+                      ? sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                      : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                  </span>
+                ) : col.header}
               </th>
             ))}
           </tr>
@@ -72,7 +118,8 @@ export function DataTable<T extends { id?: string | number }>({
                 onClick={() => onRowClick?.(row)}
                 className={cn(
                   "hover:bg-background-subtle transition-colors",
-                  onRowClick && "cursor-pointer"
+                  onRowClick && "cursor-pointer",
+                  rowClassName?.(row)
                 )}
               >
                 {columns.map((col) => (

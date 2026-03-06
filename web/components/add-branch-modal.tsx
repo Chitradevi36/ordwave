@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, GitBranch, CheckCircle2 } from "lucide-react";
 import { usePincodeLookup } from "@/lib/use-pincode-lookup";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 interface Props {
   open: boolean;
@@ -73,7 +74,7 @@ export function AddBranchModal({ open, onClose, onCreated }: Props) {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:3001/api/v1/branches", {
+      const res = await fetch(`${API_URL}/api/v1/branches`, {
         method: "POST",
         headers: {
           "Content-Type":      "application/json",

@@ -1,11 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CustomerForm, type CustomerFormData } from "../_components/CustomerForm";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { API_URL } from "@/lib/api/client";
+
 
 interface Route { id: number; name: string; code: string; }
 
@@ -28,7 +29,7 @@ export default function NewCustomerPage() {
       if (defaultBranchId) qs.set("branch_id", defaultBranchId);
 
       const [routesRes] = await Promise.all([
-        fetch(`http://localhost:3001/api/v1/routes?${qs}`, { headers }),
+        fetch(`${API_URL}/api/v1/routes?${qs}`, { headers }),
       ]);
 
       if (routesRes.ok) { const j = await routesRes.json(); setRoutes(j.data ?? []); }
@@ -42,7 +43,7 @@ export default function NewCustomerPage() {
       if (!token || !orgId) return { exists: false };
       try {
         const res  = await fetch(
-          `http://localhost:3001/api/v1/customers/check_duplicate?field=${field}&value=${encodeURIComponent(value)}`,
+          `${API_URL}/api/v1/customers/check_duplicate?field=${field}&value=${encodeURIComponent(value)}`,
           { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } },
         );
         const json = await res.json();
@@ -71,7 +72,7 @@ export default function NewCustomerPage() {
         contacts_attributes:  contacts.map(({ _key, ...c }) => c),
       };
 
-      const res  = await fetch("http://localhost:3001/api/v1/customers", {
+      const res  = await fetch(`${API_URL}/api/v1/customers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,10 +95,6 @@ export default function NewCustomerPage() {
 
   return (
     <AppShell title="Customers">
-      <Breadcrumb items={[
-        { label: "Customers", href: "/customers" },
-        { label: "Add Customer" },
-      ]} />
       <PageHeader
         title="Add Customer"
         description="Fill in the essentials — you can add more details after creation."

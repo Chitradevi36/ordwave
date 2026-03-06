@@ -83,7 +83,7 @@ module Api
       private
 
       def apply_filters(scope)
-        scope = filter_by_role(scope)    if params[:role_id].present?
+        scope = filter_by_role(scope)    if params[:role_id].present? || params[:role_name].present?
         scope = filter_by_branch(scope)  if params[:branch_id].present?
         scope = filter_by_status(scope)  if params[:status].present?
         scope = filter_by_query(scope)   if params[:q].present?
@@ -91,8 +91,11 @@ module Api
       end
 
       def filter_by_role(scope)
+        role_id = params[:role_id] || (params[:role_name].present? && Role.find_by(name: params[:role_name])&.id)
+        return scope unless role_id
+
         scope.joins(:memberships)
-             .where(memberships: { organization: current_organization, role_id: params[:role_id],
+             .where(memberships: { organization: current_organization, role_id: role_id,
                                    deleted_at: nil, active: true })
       end
 

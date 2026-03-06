@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import { Pencil, PowerOff, Search, X, Plus, Package, Upload, Download, CheckCirc
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Sub-nav ──────────────────────────────────────────────────────────────────
 function ProductsSubNav({ active }: { active: "products" | "categories" | "uom" | "price-lists" }) {
@@ -83,7 +84,7 @@ function BulkImportModal({
 
   const downloadSample = () => {
     if (!token || !orgId) return;
-    fetch(`http://localhost:3001/api/v1/products/sample_csv`, {
+    fetch(`${API_URL}/api/v1/products/sample_csv`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.blob())
@@ -101,7 +102,7 @@ function BulkImportModal({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("http://localhost:3001/api/v1/products/bulk_import", {
+      const res = await fetch(`${API_URL}/api/v1/products/bulk_import`, {
         method:  "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         body:    fd,
@@ -257,7 +258,7 @@ export default function ProductsPage() {
   useEffect(() => {
     if (!token || !orgId) return;
     const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
-    fetch(`http://localhost:3001/api/v1/product_categories?per_page=100`, { headers })
+    fetch(`${API_URL}/api/v1/product_categories?per_page=100`, { headers })
       .then((r) => r.json())
       .then((j) => j.data && setCategories(j.data));
   }, [token, orgId]);
@@ -266,7 +267,7 @@ export default function ProductsPage() {
     if (!token || !orgId) return;
     setActionLoading(id);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/products/${id}/discontinue`, {
+      const res = await fetch(`${API_URL}/api/v1/products/${id}/discontinue`, {
         method:  "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
@@ -368,7 +369,7 @@ export default function ProductsPage() {
       if (categoryId) qs.set("category_id", categoryId);
       if (status)     qs.set("status",      status);
 
-      const res  = await fetch(`http://localhost:3001/api/v1/products?${qs}`, {
+      const res  = await fetch(`${API_URL}/api/v1/products?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -398,7 +399,7 @@ export default function ProductsPage() {
       if (search)     qs.set("q",           search);
       if (categoryId) qs.set("category_id", categoryId);
       if (status)     qs.set("status",      status);
-      const res = await fetch(`http://localhost:3001/api/v1/products/export_csv?${qs}`, {
+      const res = await fetch(`${API_URL}/api/v1/products/export_csv?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const blob = await res.blob();

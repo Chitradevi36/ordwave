@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { DataTable, Column } from "@/components/ui/data-table";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Pencil, CheckCircle2, XCircle } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface InvoiceLine {
@@ -300,7 +300,7 @@ export default function PurchaseInvoiceDetailPage() {
   const fetchInvoice = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
-    const res  = await fetch(`http://localhost:3001/api/v1/purchase_invoices/${params.id}`, {
+    const res  = await fetch(`${API_URL}/api/v1/purchase_invoices/${params.id}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
     if (!res.ok) { setNotFound(true); setLoading(false); return; }
@@ -314,7 +314,7 @@ export default function PurchaseInvoiceDetailPage() {
   const handlePost = async () => {
     if (!token || !orgId || !invoice) return;
     setActionLoading(true);
-    const res = await fetch(`http://localhost:3001/api/v1/purchase_invoices/${invoice.id}/post`, {
+    const res = await fetch(`${API_URL}/api/v1/purchase_invoices/${invoice.id}/post`, {
       method:  "POST",
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
@@ -325,7 +325,7 @@ export default function PurchaseInvoiceDetailPage() {
   const handleCancel = async (reason: string) => {
     if (!token || !orgId || !invoice) return;
     setActionLoading(true);
-    const res = await fetch(`http://localhost:3001/api/v1/purchase_invoices/${invoice.id}/cancel`, {
+    const res = await fetch(`${API_URL}/api/v1/purchase_invoices/${invoice.id}/cancel`, {
       method:  "POST",
       headers: {
         "Content-Type":      "application/json",
@@ -405,11 +405,10 @@ export default function PurchaseInvoiceDetailPage() {
   ];
 
   return (
-    <AppShell title={invoice.invoice_number}>
-      <Breadcrumb items={[
+    <AppShell breadcrumbs={[
         { label: "Purchases", href: "/purchases/invoices" },
         { label: invoice.invoice_number },
-      ]} />
+      ]}>
       <PageHeader
         title={invoice.invoice_number}
         description={

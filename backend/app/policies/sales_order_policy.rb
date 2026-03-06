@@ -27,16 +27,12 @@ class SalesOrderPolicy < ApplicationPolicy
 
   def approve?
     return false unless member?
-
-    # Managers can approve on_hold orders (credit flagged) OR
-    # submitted orders (credit ok but explicit manager sign-off required)
-    manager_above? && (record.on_hold? || record.submitted?)
+    manager_above?
   end
 
   def hold?
     return false unless member?
-
-    manager_above? && record.submitted?
+    manager_above?
   end
 
   def cancel?

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -14,8 +14,9 @@ import {
   AlertTriangle, Tag, UserCheck, Ban, CheckCircle2, Flag, History,
   TrendingUp, ExternalLink, ShoppingCart, ArrowRight,
 } from "lucide-react";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Address {
@@ -262,7 +263,7 @@ function CreditTab({ credit, editHref, creditDays, creditBlockRule, customerId }
   useEffect(() => {
     if (!credit || !token || !orgId) return;
     setCreditUsageLoading(true);
-    fetch(`http://localhost:3001/api/v1/customers/${customerId}/credit_usage`, {
+    fetch(`${API_URL}/api/v1/customers/${customerId}/credit_usage`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -274,7 +275,7 @@ function CreditTab({ credit, editHref, creditDays, creditBlockRule, customerId }
   const [isManager, setIsManager] = useState(false);
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch("http://localhost:3001/api/v1/profile", {
+    fetch(`${API_URL}/api/v1/profile`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -318,7 +319,7 @@ function CreditTab({ credit, editHref, creditDays, creditBlockRule, customerId }
     const newFlags = { ...flags, [flagConfirm.flagKey]: flagConfirm.newValue };
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/credit_accounts/${credit.id}/update_flags`,
+        `${API_URL}/api/v1/credit_accounts/${credit.id}/update_flags`,
         {
           method: "PATCH",
           headers: {
@@ -361,7 +362,7 @@ function CreditTab({ credit, editHref, creditDays, creditBlockRule, customerId }
     setHistoryLoading(true);
     try {
       const res  = await fetch(
-        `http://localhost:3001/api/v1/credit_limit_change_requests?credit_account_id=${credit.id}`,
+        `${API_URL}/api/v1/credit_limit_change_requests?credit_account_id=${credit.id}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
       );
       const json = await res.json();
@@ -378,7 +379,7 @@ function CreditTab({ credit, editHref, creditDays, creditBlockRule, customerId }
     setSubmittingReq(true);
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/credit_accounts/${credit.id}/limit_change_requests`,
+        `${API_URL}/api/v1/credit_accounts/${credit.id}/limit_change_requests`,
         {
           method: "POST",
           headers: {
@@ -966,7 +967,7 @@ export default function CustomerDetailPage() {
       if (!token || !orgId) return;
       setLoading(true);
       try {
-        const res  = await fetch(`http://localhost:3001/api/v1/customers/${customerId}`, {
+        const res  = await fetch(`${API_URL}/api/v1/customers/${customerId}`, {
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         });
         const json = await res.json();
@@ -984,7 +985,7 @@ export default function CustomerDetailPage() {
     if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} this customer?`)) return;
     setBlocking(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/customers/${customerId}/${action}`, {
+      const res = await fetch(`${API_URL}/api/v1/customers/${customerId}/${action}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
@@ -1000,7 +1001,7 @@ export default function CustomerDetailPage() {
     if (!confirm("Delete this customer? This action cannot be undone.")) return;
     setDeleting(true);
     try {
-      await fetch(`http://localhost:3001/api/v1/customers/${customerId}`, {
+      await fetch(`${API_URL}/api/v1/customers/${customerId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
@@ -1038,11 +1039,10 @@ export default function CustomerDetailPage() {
   ];
 
   return (
-    <AppShell title="Customers">
-      <Breadcrumb items={[
-        { label: "Customers", href: "/customers" },
-        { label: customer.name },
-      ]} />
+    <AppShell title="Customers" breadcrumbs={[
+      { label: "Customers", href: "/customers" },
+      { label: customer.name },
+    ]}>
 
       <PageHeader
         title={customer.name}

@@ -1,15 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AppShell } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Trash2, Plus, PackageSearch, X, Tag, Layers, IndianRupee, TrendingDown, ChevronDown, Pencil, AlertTriangle, Upload, Download, CheckCircle, FileWarning } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PriceListItem {
@@ -63,7 +63,7 @@ function AddItemModal({
   // Load all active products once when modal opens
   useEffect(() => {
     if (!open || !token || !orgId) return;
-    fetch(`http://localhost:3001/api/v1/products?per_page=200&status=active`, {
+    fetch(`${API_URL}/api/v1/products?per_page=200&status=active`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     }).then((r) => r.json()).then((j) => j.data && setAllProducts(j.data));
   }, [open, token, orgId]);
@@ -110,7 +110,7 @@ function AddItemModal({
     if (!token || !orgId || !selected) return;
     setLoading(true); setErrors([]);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/price_lists/${priceListId}/items`, {
+      const res = await fetch(`${API_URL}/api/v1/price_lists/${priceListId}/items`, {
         method:  "POST",
         headers: {
           "Content-Type":    "application/json",
@@ -283,7 +283,7 @@ function BulkImportModal({
   const downloadSample = () => {
     if (!token || !orgId) return;
     const a = document.createElement("a");
-    a.href = `http://localhost:3001/api/v1/price_lists/${priceListId}/items/sample_csv`;
+    a.href = `${API_URL}/api/v1/price_lists/${priceListId}/items/sample_csv`;
     // Append token via query param won't work with Bearer — open as a fetch/blob instead
     fetch(a.href, { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } })
       .then((r) => r.blob())
@@ -303,7 +303,7 @@ function BulkImportModal({
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch(
-        `http://localhost:3001/api/v1/price_lists/${priceListId}/items/bulk_import`,
+        `${API_URL}/api/v1/price_lists/${priceListId}/items/bulk_import`,
         {
           method:  "POST",
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
@@ -481,7 +481,7 @@ function EditItemModal({
     setLoading(true); setErrors([]);
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/price_lists/${priceListId}/items/${item.id}`,
+        `${API_URL}/api/v1/price_lists/${priceListId}/items/${item.id}`,
         {
           method:  "PATCH",
           headers: {
@@ -591,7 +591,7 @@ function DeleteConfirmModal({
     setLoading(true); setError("");
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/price_lists/${priceListId}/items/${item.id}`,
+        `${API_URL}/api/v1/price_lists/${priceListId}/items/${item.id}`,
         {
           method:  "DELETE",
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
@@ -655,7 +655,7 @@ export default function PriceListDetailPage() {
     if (!token || !orgId || !params.id) return;
     setFetching(true);
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/price_lists/${params.id}`, {
+      const res  = await fetch(`${API_URL}/api/v1/price_lists/${params.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -684,7 +684,7 @@ export default function PriceListDetailPage() {
   const downloadSampleCsv = useCallback(() => {
     if (!token || !orgId || !params.id) return;
     fetch(
-      `http://localhost:3001/api/v1/price_lists/${params.id}/items/sample_csv`,
+      `${API_URL}/api/v1/price_lists/${params.id}/items/sample_csv`,
       { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } },
     )
       .then((r) => r.blob())
@@ -701,7 +701,7 @@ export default function PriceListDetailPage() {
   const downloadExportCsv = useCallback(() => {
     if (!token || !orgId || !params.id) return;
     fetch(
-      `http://localhost:3001/api/v1/price_lists/${params.id}/items/export_csv`,
+      `${API_URL}/api/v1/price_lists/${params.id}/items/export_csv`,
       { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } },
     )
       .then((r) => r.blob())
@@ -733,12 +733,11 @@ export default function PriceListDetailPage() {
   }
 
   return (
-    <AppShell title="Price Lists">
-      <Breadcrumb items={[
-        { label: "Products", href: "/products" },
+    <AppShell breadcrumbs={[
+        { label: "Catalog", href: "/catalog" },
         { label: "Price Lists", href: "/products/price-lists" },
         { label: pl.name },
-      ]} />
+      ]}>
 
       <div className="mb-6 flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">

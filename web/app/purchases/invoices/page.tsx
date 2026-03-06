@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, X } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PurchaseInvoice {
@@ -67,7 +68,7 @@ export default function PurchaseInvoicesPage() {
   // Fetch supplier list for filter dropdown
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch("http://localhost:3001/api/v1/suppliers?per_page=200&status=active", {
+    fetch(`${API_URL}/api/v1/suppliers?per_page=200&status=active`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -85,7 +86,7 @@ export default function PurchaseInvoicesPage() {
       if (dateFrom)   qs.set("date_from",   dateFrom);
       if (dateTo)     qs.set("date_to",     dateTo);
 
-      const res  = await fetch(`http://localhost:3001/api/v1/purchase_invoices?${qs}`, {
+      const res  = await fetch(`${API_URL}/api/v1/purchase_invoices?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -242,14 +243,25 @@ export default function PurchaseInvoicesPage() {
         <DataTable
           columns={columns}
           data={invoices}
-          loading={loading}
+          isLoading={loading}
           onRowClick={(row) => router.push(`/purchases/invoices/${row.id}`)}
           emptyMessage="No purchase invoices found."
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
         />
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <span className="px-3 py-1.5 text-sm text-text-secondary">
+            Page {page} of {totalPages}
+          </span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+            Next
+          </Button>
+        </div>
+      )}
     </AppShell>
   );
 }

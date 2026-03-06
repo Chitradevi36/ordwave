@@ -10,6 +10,7 @@ import { Alert } from "@/components/ui/alert";
 import { ChevronRight, Save, Loader2 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { usePincodeLookup } from "@/lib/use-pincode-lookup";
+import { API_URL } from "@/lib/api/client";
 
 interface OrgSettings {
   id: number;
@@ -83,7 +84,7 @@ export default function OrganizationSettingsPage() {
       setFetchError(null);
       try {
         const res = await fetch(
-          `http://localhost:3001/api/v1/organizations/${orgId}/settings`,
+          `${API_URL}/api/v1/organizations/${orgId}/settings`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -122,7 +123,7 @@ export default function OrganizationSettingsPage() {
     setSuccess(false);
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/organizations/${orgId}/settings`,
+        `${API_URL}/api/v1/organizations/${orgId}/settings`,
         {
           method: "PATCH",
           headers: {
