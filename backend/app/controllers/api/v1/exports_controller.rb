@@ -16,6 +16,7 @@ module Api
       # Request a new export. Returns immediately; actual file generated async.
       def create
         authorize Export
+        plan_limits.enforce_feature!(:exports)
 
         export = Export.create!(
           organization: current_organization,

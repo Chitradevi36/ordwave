@@ -22,6 +22,7 @@ module Api
 
       def create
         authorize User.new
+        plan_limits.enforce_user_limit!
 
         result = Users::CreateUserService.new(**user_create_params).call
 
@@ -45,6 +46,7 @@ module Api
 
       def invite
         authorize User.new, :invite?
+        plan_limits.enforce_user_limit!
 
         result = Users::InviteService.new(
           email:        params[:email],

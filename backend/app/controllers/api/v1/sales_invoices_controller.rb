@@ -2,7 +2,7 @@ module Api
   module V1
     class SalesInvoicesController < BaseController
       before_action :require_organization!
-      before_action :set_invoice, only: %i[show issue void_invoice pdf]
+      before_action :set_invoice, only: %i[show issue void_invoice pdf einvoice]
 
       INVOICE_INCLUDES = [
         :branch, :customer, :sales_order, :created_by,
@@ -197,6 +197,40 @@ module Api
         end
       end
 
+      # ── POST /api/v1/sales_invoices/:id/einvoice ─────────────────────────────
+      # Triggers e-invoice (IRN) generation via the NIC IRP.
+      # Runs synchronously and returns the updated invoice payload.
+      # For fire-and-forget mode callers may pass ?async=true to enqueue instead.
+      def einvoice
+        authorize @invoice, :einvoice?
+
+        if @invoice.irn.present?
+          return render_errors(['IRN has already been generated for this invoice'])
+        end
+
+        unless @invoice.issued?
+          return render_errors(['Invoice must be in issued status before generating e-invoice'])
+        end
+
+        if params[:async].present?
+          EinvoiceJob.perform_later(@invoice.id)
+          @invoice.update_columns(einvoice_status: 'pending')
+          return render_success(
+            serialize_invoice(@invoice, detailed: true),
+            meta: { message: 'E-invoice generation queued' }
+          )
+        end
+
+        result = Gst::EinvoiceService.call(invoice: @invoice)
+
+        if result.success?
+          @invoice.reload
+          render_success(serialize_invoice(@invoice, detailed: true))
+        else
+          render_errors(result.errors)
+        end
+      end
+
       # ── GET /api/v1/sales_invoices/:id/pdf ────────────────────────────────
       def pdf
         authorize @invoice, :pdf?
@@ -267,6 +301,12 @@ module Api
           void_reason:       inv.void_reason,
           pdf_generated_at:  inv.pdf_generated_at,
           has_pdf:           inv.pdf_document.attached?,
+          einvoice_status:   inv.einvoice_status,
+          irn:               inv.irn,
+          ack_number:        inv.ack_number,
+          ack_datetime:      inv.ack_datetime,
+          einvoice_qr_code:  inv.einvoice_qr_code,
+          irn_generated_at:  inv.irn_generated_at,
           created_at:        inv.created_at,
           customer: {
             id:    inv.customer_id,

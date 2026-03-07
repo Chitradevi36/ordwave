@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Download, Ban, CheckCircle2, ExternalLink } from "lucide-react";
+import { Download, Ban, CheckCircle2, ExternalLink, FileCheck } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,6 +66,12 @@ interface InvoiceDetail {
   pdf_generated_at:  string | null;
   has_pdf:           boolean;
   pdf_url:           string | null;
+  einvoice_status:   string | null;
+  irn:               string | null;
+  ack_number:        string | null;
+  ack_datetime:      string | null;
+  einvoice_qr_code:  string | null;
+  irn_generated_at:  string | null;
   created_at:        string;
   customer:          { id: number; name: string; code: string; gstin: string | null };
   branch:            { id: number; name: string; code: string };
@@ -97,6 +103,7 @@ const ACTION_LABEL: Record<string, string> = {
   invoice_issued:        "Invoice Issued",
   invoice_voided:        "Invoice Voided",
   invoice_pdf_generated: "PDF Generated",
+  invoice_irn_generated:  "IRN Generated",
 };
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -119,7 +126,8 @@ export default function SalesInvoiceDetailPage() {
   const [voidReason, setVoidReason]   = useState("");
   const [saving, setSaving]           = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading]   = useState(false);
+  const [pdfLoading, setPdfLoading]         = useState(false);
+  const [einvoiceLoading, setEinvoiceLoading] = useState(false);
   const [activeTab, setActiveTab]     = useState<"summary" | "lines" | "tax" | "activity" | "linked">("summary");
 
   const fetchInvoice = useCallback(async () => {
@@ -193,6 +201,28 @@ export default function SalesInvoiceDetailPage() {
     }
   };
 
+  const handleGenerateEinvoice = async () => {
+    if (!invoice || !token || !orgId) return;
+    setEinvoiceLoading(true);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/v1/sales_invoices/${invoice.id}/einvoice`, {
+        method:  "POST",
+        headers: {
+          Authorization:       `Bearer ${token}`,
+          "X-Organization-Id": orgId,
+        },
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.errors?.join(", ") || "e-Invoice generation failed");
+      setInvoice(body.data);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setEinvoiceLoading(false);
+    }
+  };
+
   // ── Loading/Error ─────────────────────────────────────────────────────────
 
   if (loading) {
@@ -216,8 +246,9 @@ export default function SalesInvoiceDetailPage() {
     );
   }
 
-  const isVoidable  = invoice.status === "issued";
-  const isDraft     = invoice.status === "draft";
+  const isVoidable     = invoice.status === "issued";
+  const isDraft        = invoice.status === "draft";
+  const isEinvoiceable = invoice.status === "issued" && !invoice.irn;
 
   const headerActions = [
     {
@@ -227,6 +258,15 @@ export default function SalesInvoiceDetailPage() {
       icon:     Download,
       disabled: pdfLoading || isDraft,
     },
+    ...(isEinvoiceable
+      ? [{
+          label:    einvoiceLoading ? "Generating IRN…" : "Generate e-Invoice",
+          onClick:  handleGenerateEinvoice,
+          variant:  "outline" as const,
+          icon:     FileCheck,
+          disabled: einvoiceLoading,
+        }]
+      : []),
     ...(isVoidable
       ? [{ label: "Void", onClick: () => setVoidModal(true), variant: "danger" as const, icon: Ban }]
       : []),
@@ -294,7 +334,7 @@ export default function SalesInvoiceDetailPage() {
           </div>
 
           {/* ── Summary ── */}
-          {activeTab === "summary" && (<div className="mt-4">
+          {activeTab === "summary" && (<div className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-6">
               {/* Left: meta */}
               <div className="rounded-lg border bg-card p-5 space-y-4">
@@ -365,6 +405,75 @@ export default function SalesInvoiceDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* e-Invoice / IRN panel */}
+            {invoice.status === "issued" && (
+              <div className="rounded-lg border bg-card p-5">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">
+                  e-Invoice (IRP)
+                </h3>
+                {invoice.irn ? (
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                    <div className="col-span-2">
+                      <dt className="text-text-secondary">IRN</dt>
+                      <dd className="font-mono text-xs mt-0.5 break-all bg-muted/40 px-2 py-1 rounded">
+                        {invoice.irn}
+                      </dd>
+                    </div>
+                    {invoice.ack_number && (
+                      <div>
+                        <dt className="text-text-secondary">ACK Number</dt>
+                        <dd className="font-medium mt-0.5">{invoice.ack_number}</dd>
+                      </div>
+                    )}
+                    {invoice.ack_datetime && (
+                      <div>
+                        <dt className="text-text-secondary">ACK Date / Time</dt>
+                        <dd className="font-medium mt-0.5">{fmtDatetime(invoice.ack_datetime)}</dd>
+                      </div>
+                    )}
+                    {invoice.irn_generated_at && (
+                      <div>
+                        <dt className="text-text-secondary">Generated At</dt>
+                        <dd className="font-medium mt-0.5">{fmtDatetime(invoice.irn_generated_at)}</dd>
+                      </div>
+                    )}
+                    {invoice.einvoice_qr_code && (
+                      <div className="col-span-2 mt-2">
+                        <dt className="text-text-secondary mb-1.5">QR Code</dt>
+                        <img
+                          src={`data:image/png;base64,${invoice.einvoice_qr_code}`}
+                          alt="e-Invoice QR Code"
+                          className="h-32 w-32 rounded border"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      </div>
+                    )}
+                  </dl>
+                ) : (
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-sm">
+                      {invoice.einvoice_status === "pending" ? (
+                        <span className="text-amber-600 font-medium">IRN generation in progress…</span>
+                      ) : invoice.einvoice_status === "failed" ? (
+                        <span className="text-destructive font-medium">IRN generation failed. Retry below.</span>
+                      ) : (
+                        <span className="text-text-secondary">IRN not yet generated.</span>
+                      )}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={einvoiceLoading || invoice.einvoice_status === "pending"}
+                      onClick={handleGenerateEinvoice}
+                    >
+                      <FileCheck className="h-3.5 w-3.5 mr-1.5" />
+                      {einvoiceLoading ? "Generating IRN…" : "Generate e-Invoice"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>)}
 
           {/* ── Lines ── */}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { OrgBranchProvider } from "@/lib/org-branch-context";
+import { UpgradeBannerListener } from "@/components/ui/upgrade-banner";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -20,7 +21,10 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <OrgBranchProvider>{children}</OrgBranchProvider>
+      <OrgBranchProvider>
+        <UpgradeBannerListener />
+        {children}
+      </OrgBranchProvider>
     </QueryClientProvider>
   );
 }

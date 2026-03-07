@@ -13,6 +13,7 @@ module Api
       rescue_from Pundit::AuthorizationNotPerformedError, with: :forbidden
       rescue_from ActiveRecord::RecordNotFound,            with: :not_found
       rescue_from ActiveRecord::RecordInvalid,             with: :unprocessable
+      rescue_from PlanLimits::PlanLimitError,              with: :plan_limit_exceeded
 
       after_action :verify_authorized,             except: :index
       after_action :verify_policy_scoped,          only:   :index
@@ -143,6 +144,22 @@ module Api
 
       def unprocessable(exception)
         render_errors(exception.record.errors.full_messages)
+      end
+
+      def plan_limit_exceeded(exception)
+        render json: {
+          errors:     [exception.message],
+          limit_type: exception.limit_type,
+          current:    exception.current,
+          max:        exception.max,
+          upgrade_to: exception.upgrade_to
+        }, status: :payment_required  # HTTP 402
+      end
+
+      # ── Plan limits helper ────────────────────────────────────────────────
+
+      def plan_limits
+        @plan_limits ||= PlanLimits.for(current_organization)
       end
     end
   end
