@@ -21,7 +21,7 @@ module Organizations
           **@attrs.slice(:gst_number, :address, :city, :state, :pincode, :contact_email, :contact_phone)
         )
 
-        owner_role = Role.find_by!(name: 'owner')
+        owner_role = Role.fetch!('owner')
         # Use the first branch (created automatically) or a default org-level branch
         branch = organization.branches.create!(
           name:   'Head Office',

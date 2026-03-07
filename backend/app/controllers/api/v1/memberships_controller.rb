@@ -16,7 +16,10 @@ module Api
 
         user   = User.active.find(params.dig(:membership, :user_id))
         branch = current_organization.branches.active.find(params.dig(:membership, :branch_id))
-        role   = Role.find_by!(name: params.dig(:membership, :role))
+        role_name = params.dig(:membership, :role).to_s.strip
+        raise ActiveRecord::RecordNotFound, "Role '#{role_name}' is not valid" unless Role::NAMES.include?(role_name)
+
+        role = Role.fetch!(role_name)
 
         result = Memberships::CreateMembershipService.new(
           user:         user,
