@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { DataTable, Column } from "@/components/ui/data-table";
@@ -134,7 +134,7 @@ function StatCard({
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function OrdersPage() {
+function OrdersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { token, orgId, branches } = useOrgBranch();
@@ -950,5 +950,13 @@ export default function OrdersPage() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background-subtle" />}>
+      <OrdersPageContent />
+    </Suspense>
   );
 }
