@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus, Search, X, SlidersHorizontal, ClipboardList,
   MoreHorizontal, CheckSquare, Square, TrendingUp,
-  Clock, AlertTriangle,
+  Clock, AlertTriangle, ArrowLeft,
+  Download, Zap,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OrderSummary {
@@ -22,6 +24,7 @@ interface OrderSummary {
   order_number: string;
   status: string;
   credit_decision: string | null;
+  credit_reasons: string[] | null;
   total_amount: number;
   discount_amount: number;
   delivery_date: string | null;
@@ -133,6 +136,7 @@ function StatCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function OrdersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { token, orgId, branches } = useOrgBranch();
 
   const [orders, setOrders]   = useState<OrderSummary[]>([]);
@@ -140,15 +144,22 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(false);
 
   // Filters
-  const [tab,          setTab]          = useState("");
-  const [search,       setSearch]       = useState("");
-  const [branchFilter, setBranchFilter] = useState("");
-  const [minValue,     setMinValue]     = useState("");
-  const [maxValue,     setMaxValue]     = useState("");
-  const [dateFrom,     setDateFrom]     = useState("");
-  const [dateTo,       setDateTo]       = useState("");
-  const [showFilters,  setShowFilters]  = useState(false);
-  const [page,         setPage]         = useState(1);
+  const [tab,              setTab]              = useState("");
+  const [search,           setSearch]           = useState("");
+  const [branchFilter,     setBranchFilter]     = useState("");
+  const [minValue,         setMinValue]         = useState("");
+  const [maxValue,         setMaxValue]         = useState("");
+  const [dateFrom,         setDateFrom]         = useState("");
+  const [dateTo,           setDateTo]           = useState("");
+  const [createdByFilter,  setCreatedByFilter]  = useState("");
+  const [deliveryOverdue,  setDeliveryOverdue]  = useState(false);
+  const [showFilters,      setShowFilters]      = useState(false);
+  const [page,             setPage]             = useState(1);
+  const [activeChip,       setActiveChip]       = useState<string | null>(null);
+
+  // Sorting
+  const [sortBy,  setSortBy]  = useState("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   // Selection & action menu
   const [selectedIds,  setSelectedIds]  = useState<Set<number>>(new Set());
@@ -172,29 +183,60 @@ export default function OrdersPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const hasActiveFilters = !!(branchFilter || minValue || maxValue || dateFrom || dateTo);
+  const hasActiveFilters = !!(branchFilter || minValue || maxValue || dateFrom || dateTo || createdByFilter || deliveryOverdue);
 
   const clearAll = () => {
     setSearch(""); setBranchFilter(""); setMinValue(""); setMaxValue("");
-    setDateFrom(""); setDateTo(""); setPage(1);
+    setDateFrom(""); setDateTo(""); setCreatedByFilter(""); setDeliveryOverdue(false);
+    setActiveChip(null); setPage(1);
   };
+
+  useEffect(() => {
+    const dateScope = searchParams.get("date");
+    const filter = searchParams.get("filter");
+    const status = searchParams.get("status");
+
+    if (status) setTab(status);
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayIso = `${yyyy}-${mm}-${dd}`;
+
+    if (dateScope === "today") {
+      setDateFrom(todayIso);
+      setDateTo(todayIso);
+    } else if (dateScope === "mtd") {
+      setDateFrom(`${yyyy}-${mm}-01`);
+      setDateTo(todayIso);
+    }
+
+    if (filter === "credit_hold") {
+      setTab("on_hold");
+    }
+  }, [searchParams]);
 
   const fetchOrders = useCallback(async () => {
     if (!token || !orgId) return;
     setLoading(true);
     try {
       const qp = new URLSearchParams();
-      if (tab)          qp.set("status",     tab);
-      if (search)       qp.set("q",          search);
-      if (branchFilter) qp.set("branch_id",  branchFilter);
-      if (minValue)     qp.set("min_value",  minValue);
-      if (maxValue)     qp.set("max_value",  maxValue);
-      if (dateFrom)     qp.set("date_from",  dateFrom);
-      if (dateTo)       qp.set("date_to",    dateTo);
+      if (tab)              qp.set("status",           tab);
+      if (search)           qp.set("q",                search);
+      if (branchFilter)     qp.set("branch_id",        branchFilter);
+      if (minValue)         qp.set("min_value",        minValue);
+      if (maxValue)         qp.set("max_value",        maxValue);
+      if (dateFrom)         qp.set("date_from",        dateFrom);
+      if (dateTo)           qp.set("date_to",          dateTo);
+      if (createdByFilter)  qp.set("created_by_id",    createdByFilter);
+      if (deliveryOverdue)  qp.set("delivery_overdue", "1");
+      qp.set("sort_by",  sortBy);
+      qp.set("sort_dir", sortDir);
       qp.set("page",     String(page));
       qp.set("per_page", "25");
 
-      const res  = await fetch(`http://localhost:3001/api/v1/sales_orders?${qp}`, {
+      const res  = await fetch(`${API_URL}/api/v1/sales_orders?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -207,14 +249,14 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, orgId, tab, search, branchFilter, minValue, maxValue, dateFrom, dateTo, page]);
+  }, [token, orgId, tab, search, branchFilter, minValue, maxValue, dateFrom, dateTo, createdByFilter, deliveryOverdue, sortBy, sortDir, page]);
 
   useEffect(() => { void fetchOrders(); }, [fetchOrders]);
 
   // ─── Actions ────────────────────────────────────────────────────────────────
   const handleApprove = useCallback(async (id: number) => {
     setActionMenuId(null);
-    const res = await fetch(`http://localhost:3001/api/v1/sales_orders/${id}/approve`, {
+    const res = await fetch(`${API_URL}/api/v1/sales_orders/${id}/approve`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token!}`,
@@ -223,18 +265,25 @@ export default function OrdersPage() {
       },
       body: JSON.stringify({ decision: "approved" }),
     });
+    const j = await res.json();
     if (res.ok) {
-      showToast("success", "Order approved");
+      const at = j.data?.auto_trip;
+      if (at?.ok && at.action === "new_trip_created") {
+        showToast("success", `Order approved · New trip ${at.trip_number} created`);
+      } else if (at?.ok && at.action === "added_to_existing") {
+        showToast("success", `Order approved · Added to trip ${at.trip_number}`);
+      } else {
+        showToast("success", "Order approved");
+      }
       void fetchOrders();
     } else {
-      const j = await res.json();
       showToast("error", j.errors?.[0] ?? "Approve failed");
     }
   }, [token, orgId, fetchOrders]);
 
   const handleCancel = useCallback(async (id: number) => {
     setActionMenuId(null);
-    const res = await fetch(`http://localhost:3001/api/v1/sales_orders/${id}/cancel`, {
+    const res = await fetch(`${API_URL}/api/v1/sales_orders/${id}/cancel`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token!}`,
@@ -254,7 +303,7 @@ export default function OrdersPage() {
 
   const handleHold = useCallback(async (id: number) => {
     setActionMenuId(null);
-    const res = await fetch(`http://localhost:3001/api/v1/sales_orders/${id}/hold`, {
+    const res = await fetch(`${API_URL}/api/v1/sales_orders/${id}/hold`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token!}`,
@@ -280,6 +329,47 @@ export default function OrdersPage() {
   const handleBulkCancel = async () => {
     await Promise.all(Array.from(selectedIds).map(id => handleCancel(id)));
     setSelectedIds(new Set());
+  };
+
+  // ─── Sort ───────────────────────────────────────────────────────────────────
+  const handleSort = (key: string) => {
+    if (sortBy === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortBy(key); setSortDir("desc"); }
+    setPage(1);
+  };
+
+  // ─── Current user from JWT ───────────────────────────────────────────────
+  const currentUserId = (() => {
+    if (!token) return null;
+    try { return String(JSON.parse(atob(token.split(".")[1])).sub); } catch { return null; }
+  })();
+
+  // ─── Quick chips ─────────────────────────────────────────────────────────
+  const applyChip = (chip: string) => {
+    if (activeChip === chip) { clearAll(); return; }
+    setSearch(""); setBranchFilter(""); setMinValue(""); setMaxValue("");
+    setDateFrom(""); setDateTo(""); setCreatedByFilter(""); setDeliveryOverdue(false); setTab("");
+    setActiveChip(chip); setPage(1);
+    if (chip === "mine"   && currentUserId) setCreatedByFilter(currentUserId);
+    if (chip === "attn")    setTab("on_hold");
+    if (chip === "high")    setMinValue("50000");
+    if (chip === "overdue") setDeliveryOverdue(true);
+  };
+
+  // ─── Export CSV (current page) ───────────────────────────────────────────
+  const exportCsv = () => {
+    const hdrs = ["Order #","Customer","Branch","Status","Total (₹)","Discount (₹)","Delivery Date","Sales Rep","Created"];
+    const rows = orders.map(o => [
+      o.order_number, o.customer.name, o.branch.name, o.status,
+      o.total_amount, o.discount_amount, o.delivery_date ?? "",
+      o.created_by?.name ?? "", new Date(o.created_at).toLocaleDateString("en-IN"),
+    ]);
+    const csv = [hdrs, ...rows]
+      .map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const a = document.createElement("a"); a.href = url; a.download = "orders.csv"; a.click();
+    URL.revokeObjectURL(url);
   };
 
   // ─── Selection helpers ───────────────────────────────────────────────────
@@ -317,23 +407,31 @@ export default function OrdersPage() {
     {
       key:       "risk",
       header:    "Risk",
-      className: "w-24",
+      className: "w-28",
       render:    (_, o) => {
         if (!o.credit_decision || o.credit_decision === "ok") {
           return <span className="text-text-secondary text-xs">—</span>;
         }
-        const cfg = RISK_CONFIG[o.credit_decision];
+        const cfg     = RISK_CONFIG[o.credit_decision];
+        const reasons = o.credit_reasons ?? [];
         return (
-          <div className="flex items-center gap-1.5" title={cfg?.label ?? o.credit_decision}>
+          <div className="flex items-center gap-1.5 group relative cursor-help">
             <span className={`inline-block h-2 w-2 rounded-full ${cfg?.color ?? "bg-text-secondary"}`} />
             <span className="text-xs text-text-secondary capitalize">{o.credit_decision.replace("_", " ")}</span>
+            {reasons.length > 0 && (
+              <div className="absolute left-0 top-full z-50 mt-1 hidden group-hover:block w-60 rounded-lg border border-border bg-white p-2.5 shadow-xl text-xs leading-relaxed pointer-events-none">
+                <p className="font-semibold text-text-primary mb-1.5">{cfg?.label}</p>
+                {reasons.map((r, i) => <p key={i} className="text-text-secondary">{r}</p>)}
+              </div>
+            )}
           </div>
         );
       },
     },
     {
-      key:    "order_number",
-      header: "Order #",
+      key:      "order_number",
+      header:   "Order #",
+      sortable: true,
       render: (_, o) => (
         <button
           onClick={() => router.push(`/orders/${o.id}`)}
@@ -356,29 +454,65 @@ export default function OrdersPage() {
     {
       key:    "status",
       header: "Status",
-      render: (_, o) => (
-        <Badge variant={STATUS_VARIANT[o.status] ?? "secondary"}>
-          {o.status.replace("_", " ")}
-        </Badge>
-      ),
+      render: (_, o) => {
+        const pendingMs   = o.submitted_at ? Date.now() - new Date(o.submitted_at).getTime() : 0;
+        const pendingDays = Math.floor(pendingMs / 86_400_000);
+        const isStale     = ["submitted", "on_hold"].includes(o.status) && pendingDays >= 1;
+        return (
+          <div className="flex flex-col gap-0.5">
+            <Badge variant={STATUS_VARIANT[o.status] ?? "secondary"}>
+              {o.status.replace("_", " ")}
+            </Badge>
+            {isStale && (
+              <span className={`text-[10px] font-medium ${pendingDays >= 3 ? "text-danger" : "text-warning"}`}>
+                ⏱ {pendingDays}d pending
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
-      key:    "total_amount",
-      header: "Total",
-      render: (_, o) => (
-        <span className={`text-sm ${o.total_amount >= 10000 ? "font-bold text-text-primary" : "font-medium"}`}>
-          {fmtINR(o.total_amount)}
-        </span>
-      ),
+      key:      "total_amount",
+      header:   "Total",
+      sortable: true,
+      render: (_, o) => {
+        const discPct = o.total_amount > 0 && o.discount_amount > 0
+          ? Math.round((o.discount_amount / (o.total_amount + o.discount_amount)) * 100)
+          : 0;
+        return (
+          <div>
+            <span className={`text-sm ${o.total_amount >= 10000 ? "font-bold text-text-primary" : "font-medium"}`}>
+              {fmtINR(o.total_amount)}
+            </span>
+            {discPct > 0 && (
+              <span className="block text-[10px] text-success font-medium">-{discPct}% disc</span>
+            )}
+          </div>
+        );
+      },
     },
     {
-      key:    "delivery_date",
-      header: "Delivery",
-      render: (_, o) => (
-        <span className={`text-sm ${o.delivery_date ? "" : "text-text-secondary italic"}`}>
-          {o.delivery_date ? fmtDate(o.delivery_date) : "Not scheduled"}
-        </span>
-      ),
+      key:      "delivery_date",
+      header:   "Delivery",
+      sortable: true,
+      render: (_, o) => {
+        if (!o.delivery_date) return <span className="text-xs text-text-secondary italic">Not scheduled</span>;
+        const today    = new Date(); today.setHours(0, 0, 0, 0);
+        const delDate  = new Date(o.delivery_date); delDate.setHours(0, 0, 0, 0);
+        const terminal = ["cancelled", "rejected", "delivered", "partial_delivery"].includes(o.status);
+        const isOverdue = !terminal && delDate < today;
+        const isToday   = !terminal && delDate.getTime() === today.getTime();
+        return (
+          <div>
+            <span className={`text-sm ${isOverdue ? "text-danger font-medium" : isToday ? "text-warning font-medium" : ""}`}>
+              {fmtDate(o.delivery_date)}
+            </span>
+            {isOverdue && <span className="block text-[10px] font-semibold text-danger">Overdue</span>}
+            {isToday   && <span className="block text-[10px] font-semibold text-warning">Today</span>}
+          </div>
+        );
+      },
     },
     {
       key:    "created_by",
@@ -386,8 +520,9 @@ export default function OrdersPage() {
       render: (_, o) => <span className="text-sm">{o.created_by?.name ?? "—"}</span>,
     },
     {
-      key:    "created_at",
-      header: "Created",
+      key:      "created_at",
+      header:   "Created",
+      sortable: true,
       render: (_, o) => (
         <span className="text-sm text-text-secondary" title={fmtDate(o.created_at)}>
           {relativeTime(o.created_at)}
@@ -400,10 +535,19 @@ export default function OrdersPage() {
       className: "w-12",
       render:    (_, o) => (
         <div
-          className="relative"
+          className="relative flex items-center gap-1"
           data-action-menu
           onClick={e => e.stopPropagation()}
         >
+          {["submitted", "on_hold"].includes(o.status) && (
+            <button
+              onClick={() => handleApprove(o.id)}
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-success bg-success/10 hover:bg-success/20 transition-colors"
+              title="Quick approve"
+            >
+              <Zap className="h-3 w-3" /> Approve
+            </button>
+          )}
           <button
             onClick={() => setActionMenuId(actionMenuId === o.id ? null : o.id)}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-background-subtle text-text-secondary"
@@ -448,7 +592,7 @@ export default function OrdersPage() {
                 </button>
               )}
 
-              {!["cancelled", "rejected", "approved"].includes(o.status) && (
+              {!["cancelled", "rejected", "approved", "delivered"].includes(o.status) && (
                 <>
                   <div className="my-1 border-t border-border" />
                   <button
@@ -474,6 +618,19 @@ export default function OrdersPage() {
     return counts[key];
   };
 
+  const dateScope = searchParams.get("date");
+  const filterScope = searchParams.get("filter");
+  const scopedLabel =
+    dateScope === "today"
+      ? "Scope: Orders Today"
+      : dateScope === "mtd"
+      ? "Scope: Sales MTD"
+      : filterScope === "credit_hold"
+      ? "Scope: Credit Hold Orders"
+      : filterScope
+      ? `Scope: ${filterScope.replace("_", " ")}`
+      : undefined;
+
   return (
     <AppShell>
       {/* Toast */}
@@ -489,9 +646,45 @@ export default function OrdersPage() {
         title="Sales Orders"
         description={meta ? `${meta.total_count} order${meta.total_count !== 1 ? "s" : ""}` : undefined}
         actions={[
+          // { label: "Sales Control Center", icon: ArrowLeft, variant: "outline", onClick: () => router.push("/sales") },
+          { label: "Export CSV", icon: Download, variant: "outline" as const, onClick: exportCsv },
           { label: "New Order", icon: Plus, onClick: () => router.push("/orders/new") },
         ]}
       />
+
+      {scopedLabel && (
+        <div className="mb-4">
+          <Badge variant="outline">{scopedLabel}</Badge>
+        </div>
+      )}
+
+      {/* Quick filter chips */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <span className="text-xs text-text-secondary">Quick:</span>
+        {([
+          { key: "mine",    label: "My Orders" },
+          { key: "attn",    label: "Needs Attention" },
+          { key: "overdue", label: "Overdue Delivery" },
+          { key: "high",    label: "High Value >\u20b950k" },
+        ] as const).map(chip => (
+          <button
+            key={chip.key}
+            onClick={() => applyChip(chip.key)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+              activeChip === chip.key
+                ? "bg-primary text-white border-primary"
+                : "bg-white text-text-secondary border-border hover:border-primary/40 hover:text-text-primary"
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+        {activeChip && (
+          <button onClick={clearAll} className="text-xs text-text-secondary hover:text-danger">
+            × Clear
+          </button>
+        )}
+      </div>
 
       {/* Summary bar */}
       {metrics && (
@@ -535,7 +728,7 @@ export default function OrdersPage() {
               onClick={() => { setTab(t.key); setPage(1); setSelectedIds(new Set()); }}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                 tab === t.key
-                  ? "border-b-2 border-primary text-primary"
+                  ? "border-b-2 border-accent text-accent"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -717,6 +910,18 @@ export default function OrdersPage() {
           data={orders}
           isLoading={loading}
           onRowClick={(o) => router.push(`/orders/${o.id}`)}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          onSort={handleSort}
+          rowClassName={(o) => {
+            if (!o.delivery_date) return undefined;
+            const today   = new Date(); today.setHours(0, 0, 0, 0);
+            const delDate = new Date(o.delivery_date); delDate.setHours(0, 0, 0, 0);
+            const terminal = ["cancelled", "rejected", "delivered", "partial_delivery"].includes(o.status);
+            if (!terminal && delDate < today)  return "bg-danger/5";
+            if (!terminal && delDate.getTime() === today.getTime()) return "bg-warning/5";
+            return undefined;
+          }}
         />
       )}
 

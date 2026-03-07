@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { Alert } from "@/components/ui/alert";
 import { ChevronRight, Save, Loader2 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { usePincodeLookup } from "@/lib/use-pincode-lookup";
+import { API_URL } from "@/lib/api/client";
 
 interface BranchSettings {
   id: number;
@@ -85,7 +86,7 @@ export default function BranchSettingsPage() {
       setLoading(true);
       setFetchError(null);
       try {
-        const res  = await fetch(`http://localhost:3001/api/v1/branches/${branchId}/settings`, {
+        const res  = await fetch(`${API_URL}/api/v1/branches/${branchId}/settings`, {
           headers: {
             Authorization:       `Bearer ${token}`,
             "X-Organization-Id": orgId,
@@ -114,7 +115,7 @@ export default function BranchSettingsPage() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/branches/${branchId}/settings`, {
+      const res = await fetch(`${API_URL}/api/v1/branches/${branchId}/settings`, {
         method: "PATCH",
         headers: {
           "Content-Type":      "application/json",

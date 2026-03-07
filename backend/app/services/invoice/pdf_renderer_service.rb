@@ -98,7 +98,7 @@ module Invoice
         ["Branch",      branch.name]
       ]
 
-      pdf.table([meta_left.zip(meta_right).map(&:flatten)],
+      pdf.table(meta_left.zip(meta_right).map(&:flatten),
         cell_style: { border_width: 0, size: 9 },
         width: pdf.bounds.width
       ) do |t|

@@ -1,13 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { AppShell, PageHeader } from "@/components/layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { RefreshCw, MapPin, CheckCircle, ShoppingCart, Wallet, ChevronRight } from "lucide-react";
-
-const API = "http://localhost:3001";
+import { API_URL } from "@/lib/api/client";
+import { RefreshCw, MapPin, CheckCircle, ShoppingCart, Wallet } from "lucide-react";
 
 function fmt(n: number | undefined | null) {
   if (n == null) return "—";
@@ -89,7 +87,7 @@ export default function InsightsBeatPerformancePage() {
       if (branchId) qp.set("branch_id", branchId);
       if (dateFrom) qp.set("date_from", dateFrom);
       if (dateTo)   qp.set("date_to", dateTo);
-      const res = await fetch(`${API}/api/v1/analytics/beat_performance?${qp}`, {
+      const res = await fetch(`${API_URL}/api/v1/analytics/beat_performance?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       if (!res.ok) throw new Error("Failed to load beat performance data");
@@ -115,12 +113,10 @@ export default function InsightsBeatPerformancePage() {
   ];
 
   return (
-    <AppShell title="Beat Performance">
-      <nav className="flex items-center gap-1.5 mb-4 text-sm">
-        <Link href="/insights" className="text-text-secondary hover:text-text-primary transition-colors">Insights</Link>
-        <ChevronRight className="h-3.5 w-3.5 text-text-secondary" />
-        <span className="font-medium text-text-primary">Beat Performance</span>
-      </nav>
+    <AppShell title="Beat Performance" breadcrumbs={[
+      { label: "Insights", href: "/insights" },
+      { label: "Beat Performance" },
+    ]}>
       <PageHeader
         title="Beat Performance"
         description="Visit activity and conversion rates for the selected period."

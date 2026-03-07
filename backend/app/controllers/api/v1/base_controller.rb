@@ -7,6 +7,7 @@ module Api
 
       before_action :authenticate_user!
       before_action :set_current_organization
+      before_action :set_current_context
 
       rescue_from Pundit::NotAuthorizedError,              with: :forbidden
       rescue_from Pundit::AuthorizationNotPerformedError, with: :forbidden
@@ -62,7 +63,11 @@ module Api
         # Controllers that strictly require it call require_organization! explicitly.
         @current_organization = resolve_organization
       end
-
+      def set_current_context
+        Current.user         = current_user
+        Current.organization = current_organization
+        Current.request_id   = request.uuid
+      end
       def require_organization!
         render json: { errors: ['X-Organization-Id header is required'] }, status: :bad_request unless current_organization
       end
@@ -94,8 +99,11 @@ module Api
 
       # ── Pagination ────────────────────────────────────────────────────────
 
+      MAX_PER_PAGE = 100
+
       def paginate(scope)
-        scope.page(params[:page] || 1).per(params[:per_page] || 25)
+        per = [[( params[:per_page] || 25).to_i, 1].max, MAX_PER_PAGE].min
+        scope.page(params[:page] || 1).per(per)
       end
 
       def pagination_meta(scope)

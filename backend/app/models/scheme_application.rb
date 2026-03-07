@@ -3,7 +3,7 @@ class SchemeApplication < ApplicationRecord
 
   belongs_to :organization
   belongs_to :sales_order, optional: true
-  belongs_to :scheme
+  belongs_to :scheme, optional: true
   belongs_to :applied_by, class_name: 'User', optional: true
 
   validates :source, inclusion: { in: SOURCES }

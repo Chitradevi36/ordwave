@@ -112,7 +112,7 @@ function ProductSearch({ token, orgId, value, onSelect }: ProductSearchProps) {
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-secondary pointer-events-none" />
         <input
           type="text"
           className="w-full pl-8 pr-2 py-1.5 text-sm rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
@@ -122,7 +122,7 @@ function ProductSearch({ token, orgId, value, onSelect }: ProductSearchProps) {
           onFocus={() => query && results.length && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
         />
-        {loading && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+        {loading && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-text-secondary" />}
       </div>
       {open && results.length > 0 && (
         <ul className="absolute z-50 left-0 right-0 mt-1 rounded-md border border-border bg-background shadow-lg max-h-52 overflow-auto text-sm">
@@ -133,7 +133,7 @@ function ProductSearch({ token, orgId, value, onSelect }: ProductSearchProps) {
               onMouseDown={() => handleSelect(p)}
             >
               <span className="font-medium truncate">{p.name}</span>
-              <span className="text-xs text-muted-foreground shrink-0">{p.sku} · GST {p.gst_rate}%</span>
+              <span className="text-xs text-text-secondary shrink-0">{p.sku} · GST {p.gst_rate}%</span>
             </li>
           ))}
         </ul>
@@ -378,7 +378,7 @@ export default function CreateInvoiceModal({ onClose, onCreated }: Props) {
           </div>
 
           {/* Table header */}
-          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-2 px-2 py-1.5 bg-muted rounded-t-md text-xs font-semibold text-muted-foreground">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-2 px-2 py-1.5 bg-muted rounded-t-md text-xs font-semibold text-text-secondary">
             <span>Product</span>
             <span>Qty</span>
             <span>Unit Price</span>
@@ -459,7 +459,7 @@ export default function CreateInvoiceModal({ onClose, onCreated }: Props) {
                   <button
                     type="button"
                     onClick={() => removeLine(line.key)}
-                    className="text-muted-foreground hover:text-destructive transition-colors"
+                    className="text-text-secondary hover:text-destructive transition-colors"
                     aria-label="Remove line"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -473,11 +473,11 @@ export default function CreateInvoiceModal({ onClose, onCreated }: Props) {
         {/* ── Totals ── */}
         <div className="flex justify-end">
           <div className="w-64 space-y-1 text-sm">
-            <div className="flex justify-between text-muted-foreground">
+            <div className="flex justify-between text-text-secondary">
               <span>Subtotal (taxable)</span>
               <span className="tabular-nums">{fmtINR(totals.subtotal)}</span>
             </div>
-            <div className="flex justify-between text-muted-foreground">
+            <div className="flex justify-between text-text-secondary">
               <span>Total GST</span>
               <span className="tabular-nums">{fmtINR(totals.tax)}</span>
             </div>

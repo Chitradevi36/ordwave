@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Modal } from "@/components/ui/modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { Plus, PowerOff, Search, X } from "lucide-react";
+import { API_URL } from "@/lib/api/client";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -92,7 +93,7 @@ function ProductCombobox({
     setSearching(true);
     try {
       const res  = await fetch(
-        `http://localhost:3001/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`,
+        `${API_URL}/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
       );
       const json = await res.json();
@@ -204,7 +205,7 @@ export default function PrepaymentSkusPage() {
     setLoading(true);
     try {
       const activeParam = filterActive !== "all" ? `?active=${filterActive === "active"}` : "";
-      const res  = await fetch(`http://localhost:3001/api/v1/prepayment_skus${activeParam}`, {
+      const res  = await fetch(`${API_URL}/api/v1/prepayment_skus${activeParam}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -220,7 +221,7 @@ export default function PrepaymentSkusPage() {
     if (!token || !orgId || !form.product_id) return;
     setSaving(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/prepayment_skus", {
+      const res  = await fetch(`${API_URL}/api/v1/prepayment_skus`, {
         method:  "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -254,7 +255,7 @@ export default function PrepaymentSkusPage() {
     if (!confirm(`Deactivate prepayment requirement for "${sku.product_name}"?`)) return;
     setDeactivatingId(sku.id);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/prepayment_skus/${sku.id}/deactivate`, {
+      const res = await fetch(`${API_URL}/api/v1/prepayment_skus/${sku.id}/deactivate`, {
         method:  "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
@@ -323,10 +324,6 @@ export default function PrepaymentSkusPage() {
 
   return (
     <AppShell title="Prepayment SKUs">
-      <Breadcrumb items={[
-        { label: "Settings", href: "/settings" },
-        { label: "Prepayment SKUs" },
-      ]} />
       <PageHeader
         title="Prepayment SKUs"
         description="Products that require advance payment before order fulfilment."

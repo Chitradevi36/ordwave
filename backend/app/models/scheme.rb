@@ -35,6 +35,32 @@ class Scheme < ApplicationRecord
   }
   scope :by_priority,  -> { order(priority: :asc) }  # lower number = higher priority
 
+  # ── Product-scoped queries ────────────────────────────────────────────────
+  # Schemes whose product_inclusion / product_exclusion conditions reference this product.
+  # Also matches buy_x_get_y reward rows where target_product_id = product_id.
+  scope :involving_product, ->(product_id) {
+    pid = product_id.to_i
+    joins(:conditions)
+      .where(
+        "scheme_conditions.condition_type IN ('product_inclusion','product_exclusion') " \
+        "AND scheme_conditions.value->'product_ids' @> :pid::jsonb",
+        pid: "[#{pid}]"
+      )
+      .or(
+        joins(:rewards).where(scheme_rewards: { target_product_id: pid })
+      )
+      .distinct
+  }
+
+  # Collect all product IDs referenced in a scheme's conditions + rewards (for eager enrichment).
+  def all_referenced_product_ids
+    cond_ids = conditions
+                 .select { |c| %w[product_inclusion product_exclusion].include?(c.condition_type) }
+                 .flat_map { |c| Array(c.value['product_ids']).map(&:to_i) }
+    reward_ids = rewards.map(&:target_product_id).compact
+    (cond_ids + reward_ids).uniq
+  end
+
   # ── Active eligible scope for a cart context ─────────────────────────────
   def self.eligible(organization_id:, branch_id:, date: Date.current)
     for_org(organization_id)

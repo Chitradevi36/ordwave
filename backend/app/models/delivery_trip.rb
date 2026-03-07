@@ -12,6 +12,7 @@ class DeliveryTrip < ApplicationRecord
   # ── Associations ─────────────────────────────────────────────────────────
   belongs_to :organization
   belongs_to :branch
+  belongs_to :route,           optional: true
   belongs_to :vehicle,         optional: true
   belongs_to :driver, class_name: 'User', foreign_key: :driver_id, optional: true
 

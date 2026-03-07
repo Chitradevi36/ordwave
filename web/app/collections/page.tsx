@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
+
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -150,7 +150,7 @@ export default function CollectionsPage() {
       render: (_, p) =>
         p.unallocated_amount > 0
           ? <span className="text-amber-600 font-medium">{fmtCurrency(p.unallocated_amount)}</span>
-          : <span className="text-muted-foreground">—</span>,
+          : <span className="text-text-secondary">—</span>,
     },
   ];
 
@@ -159,87 +159,69 @@ export default function CollectionsPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="px-6 pt-5 pb-3">
-          <Breadcrumb items={[{ label: "Home", href: "/dashboard" }, { label: "Collections" }]} />
-          <PageHeader
-            title="Payments & Collections"
-            actions={[{ label: "Record Payment", onClick: () => setShowCreate(true), icon: Plus }]}
-          />
-        </div>
+      <PageHeader
+        title="Payments & Collections"
+        actions={[{ label: "Record Payment", onClick: () => setShowCreate(true), icon: Plus }]}
+      />
 
-        {/* Status Tabs */}
-        <div className="border-b bg-background px-6">
-          <div className="flex gap-0">
-            {STATUS_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => { setActiveTab(tab.key); setPage(1); }}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.key
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-                <span className="ml-2 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-                  {tabTotal(tab.key)}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex items-center gap-3 px-6 py-3 border-b bg-background">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search payment # or reference..."
-              className="pl-9"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            />
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="flex-1 overflow-auto px-6 py-4">
-          <DataTable
-            columns={columns}
-            data={payments}
-            isLoading={loading}
-            onRowClick={(row) => router.push(`/collections/${row.id}`)}
-            emptyMessage="No payments recorded yet."
-          />
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 py-4 border-t bg-background">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Previous
-            </Button>
-            <span className="px-3 py-1.5 text-sm text-muted-foreground">
-              Page {page} of {totalPages}
+      {/* Status Tabs */}
+      <div className="flex items-center gap-1 border-b border-border mb-4 overflow-x-auto">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => { setActiveTab(tab.key); setPage(1); }}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === tab.key
+                ? "border-b-2 border-accent text-accent"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {tab.label}
+            <span className={`inline-flex items-center justify-center rounded-full min-w-[18px] px-1 py-0.5 text-[10px] font-medium ${
+              activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-background-subtle text-text-secondary"
+            }`}>
+              {tabTotal(tab.key)}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+          </button>
+        ))}
       </div>
+
+      {/* Search */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-[180px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+          <Input
+            placeholder="Search payment # or reference..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <DataTable
+        columns={columns}
+        data={payments}
+        isLoading={loading}
+        onRowClick={(row) => router.push(`/collections/${row.id}`)}
+        emptyMessage="No payments recorded yet."
+      />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <span className="px-3 py-1.5 text-sm text-text-secondary">
+            Page {page} of {totalPages}
+          </span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+            Next
+          </Button>
+        </div>
+      )}
 
       {/* Create Modal */}
       {showCreate && (

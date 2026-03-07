@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_06_000006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -72,7 +72,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.string "reason"
     t.datetime "created_at", null: false
     t.index ["actor_id"], name: "index_audit_logs_on_actor_id"
+    t.index ["auditable_type", "auditable_id", "created_at"], name: "idx_audit_logs_auditable_created_at"
     t.index ["auditable_type", "auditable_id"], name: "index_audit_logs_on_auditable"
+    t.index ["organization_id", "created_at"], name: "idx_audit_logs_org_created_at"
     t.index ["organization_id"], name: "index_audit_logs_on_organization_id"
   end
 
@@ -164,7 +166,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.string "overdue_bucket_cached"
     t.index ["branch_id"], name: "index_credit_accounts_on_branch_id"
     t.index ["customer_id"], name: "index_credit_accounts_on_customer_id"
+    t.index ["organization_id", "customer_id"], name: "idx_credit_accounts_overdue", where: "(current_balance > (0)::numeric)"
     t.index ["organization_id"], name: "index_credit_accounts_on_organization_id"
+    t.check_constraint "credit_limit >= 0::numeric", name: "chk_credit_accounts_credit_limit_non_negative"
   end
 
   create_table "credit_limit_change_requests", force: :cascade do |t|
@@ -353,13 +357,49 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "route_id"
     t.index ["branch_id"], name: "index_delivery_trips_on_branch_id"
     t.index ["driver_id"], name: "index_delivery_trips_on_driver_id"
     t.index ["organization_id", "trip_number"], name: "index_delivery_trips_on_organization_id_and_trip_number", unique: true
     t.index ["organization_id"], name: "index_delivery_trips_on_organization_id"
+    t.index ["route_id"], name: "index_delivery_trips_on_route_id"
     t.index ["status"], name: "index_delivery_trips_on_status"
     t.index ["trip_date"], name: "index_delivery_trips_on_trip_date"
     t.index ["vehicle_id"], name: "index_delivery_trips_on_vehicle_id"
+  end
+
+  create_table "device_tokens", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "organization_id", null: false
+    t.string "token", null: false
+    t.string "platform", null: false
+    t.string "device_name"
+    t.boolean "active", default: true, null: false
+    t.datetime "last_used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "active"], name: "idx_device_tokens_org_active"
+    t.index ["organization_id"], name: "index_device_tokens_on_organization_id"
+    t.index ["user_id", "token"], name: "idx_device_tokens_user_token", unique: true
+    t.index ["user_id"], name: "index_device_tokens_on_user_id"
+  end
+
+  create_table "exports", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "requested_by_id", null: false
+    t.string "export_type", null: false
+    t.string "status", default: "pending", null: false
+    t.string "format", default: "csv", null: false
+    t.jsonb "filters", default: {}, null: false
+    t.text "error_message"
+    t.integer "row_count"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "status", "created_at"], name: "idx_exports_org_status_created"
+    t.index ["organization_id"], name: "index_exports_on_organization_id"
+    t.index ["requested_by_id", "created_at"], name: "idx_exports_user_created"
+    t.index ["requested_by_id"], name: "index_exports_on_requested_by_id"
   end
 
   create_table "hsn_sac_codes", force: :cascade do |t|
@@ -391,10 +431,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.decimal "min_qty_threshold", precision: 14, scale: 3
+    t.index ["branch_id", "product_id"], name: "idx_inventory_levels_branch_product"
     t.index ["branch_id", "product_id"], name: "index_inventory_levels_branch_product", unique: true
     t.index ["branch_id"], name: "index_inventory_levels_on_branch_id"
     t.index ["organization_id"], name: "index_inventory_levels_on_organization_id"
     t.index ["product_id"], name: "index_inventory_levels_on_product_id"
+    t.check_constraint "qty_on_hand >= 0::numeric", name: "chk_inventory_levels_qty_on_hand_non_negative"
+    t.check_constraint "qty_reserved >= 0::numeric", name: "chk_inventory_levels_qty_reserved_non_negative"
   end
 
   create_table "inventory_reservations", force: :cascade do |t|
@@ -533,6 +576,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.datetime "updated_at", null: false
     t.index ["branch_id"], name: "index_payments_on_branch_id"
     t.index ["created_by_id"], name: "index_payments_on_created_by_id"
+    t.index ["customer_id", "received_date"], name: "idx_payments_customer_payment_date"
     t.index ["customer_id", "status"], name: "idx_payments_customer_status"
     t.index ["customer_id"], name: "index_payments_on_customer_id"
     t.index ["metadata"], name: "idx_payments_metadata", using: :gin
@@ -541,6 +585,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.index ["organization_id"], name: "index_payments_on_organization_id"
     t.index ["payment_mode"], name: "idx_payments_mode"
     t.index ["received_date"], name: "idx_payments_received_date"
+    t.check_constraint "amount > 0::numeric", name: "chk_payments_amount_positive"
   end
 
   create_table "pending_registrations", force: :cascade do |t|
@@ -808,9 +853,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "vehicle_id"
+    t.bigint "default_driver_id"
     t.index ["branch_id", "code"], name: "index_routes_on_branch_id_and_code", unique: true
     t.index ["branch_id"], name: "index_routes_on_branch_id"
+    t.index ["default_driver_id"], name: "index_routes_on_default_driver_id"
     t.index ["organization_id"], name: "index_routes_on_organization_id"
+    t.index ["vehicle_id"], name: "index_routes_on_vehicle_id"
   end
 
   create_table "sales_invoice_lines", force: :cascade do |t|
@@ -871,12 +920,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.datetime "updated_at", null: false
     t.decimal "outstanding_amount", precision: 14, scale: 2, default: "0.0", null: false, comment: "Unpaid balance; decremented by payment allocations"
     t.decimal "paid_amount", precision: 14, scale: 2, default: "0.0", null: false, comment: "Sum of confirmed payment allocations"
+    t.string "irn", comment: "Invoice Reference Number from GST IRP"
+    t.datetime "irn_generated_at"
+    t.string "ack_number", comment: "IRP acknowledgement number"
+    t.string "ack_datetime"
+    t.text "einvoice_qr_code", comment: "Signed QR code from IRP"
+    t.string "einvoice_status", default: "not_required"
+    t.text "einvoice_error"
     t.index ["branch_id"], name: "index_sales_invoices_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_invoices_on_created_by_id"
     t.index ["customer_id", "status"], name: "idx_sales_invoices_customer_status"
     t.index ["customer_id"], name: "index_sales_invoices_on_customer_id"
     t.index ["deleted_at"], name: "index_sales_invoices_on_deleted_at"
     t.index ["invoice_date"], name: "index_sales_invoices_on_invoice_date"
+    t.index ["irn"], name: "idx_sales_invoices_irn_unique", unique: true, where: "(irn IS NOT NULL)"
     t.index ["metadata"], name: "index_sales_invoices_on_metadata", using: :gin
     t.index ["organization_id", "invoice_number"], name: "idx_sales_invoices_org_number", unique: true
     t.index ["organization_id", "status"], name: "idx_sales_invoices_org_status"
@@ -949,15 +1006,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.datetime "delivered_at"
     t.text "delivery_failure_reason"
     t.jsonb "scheme_snapshot", default: {}
+    t.index ["branch_id", "created_at"], name: "idx_sales_orders_branch_created_at"
     t.index ["branch_id"], name: "index_sales_orders_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_orders_on_created_by_id"
     t.index ["customer_id"], name: "index_sales_orders_on_customer_id"
     t.index ["deleted_at"], name: "index_sales_orders_on_deleted_at"
     t.index ["idempotency_key"], name: "index_sales_orders_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["order_number"], name: "index_sales_orders_on_order_number"
+    t.index ["organization_id", "created_at"], name: "idx_sales_orders_active_status", order: { created_at: :desc }, where: "((status)::text = ANY ((ARRAY['draft'::character varying, 'submitted'::character varying, 'on_hold'::character varying, 'approved'::character varying, 'dispatched'::character varying])::text[]))"
     t.index ["organization_id", "order_number"], name: "index_sales_orders_on_organization_id_and_order_number", unique: true
     t.index ["organization_id"], name: "index_sales_orders_on_organization_id"
     t.index ["status"], name: "index_sales_orders_on_status"
+    t.check_constraint "total_amount >= 0::numeric", name: "chk_sales_orders_total_non_negative"
   end
 
   create_table "scheme_applications", force: :cascade do |t|
@@ -1265,6 +1325,41 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
     t.index ["visit_status"], name: "index_visit_logs_on_status"
   end
 
+  create_table "webhook_deliveries", force: :cascade do |t|
+    t.bigint "webhook_endpoint_id", null: false
+    t.bigint "organization_id", null: false
+    t.string "event", null: false
+    t.string "status", default: "pending", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.integer "response_code"
+    t.text "response_body"
+    t.integer "attempt_count", default: 0, null: false
+    t.datetime "delivered_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "status", "created_at"], name: "idx_webhook_deliveries_org_status"
+    t.index ["organization_id"], name: "index_webhook_deliveries_on_organization_id"
+    t.index ["webhook_endpoint_id", "event", "created_at"], name: "idx_webhook_deliveries_endpoint_event"
+    t.index ["webhook_endpoint_id"], name: "index_webhook_deliveries_on_webhook_endpoint_id"
+  end
+
+  create_table "webhook_endpoints", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "url", null: false
+    t.string "secret", null: false
+    t.string "description"
+    t.jsonb "events", default: [], null: false
+    t.boolean "active", default: true, null: false
+    t.integer "failure_count", default: 0, null: false
+    t.datetime "last_success_at"
+    t.datetime "last_failure_at"
+    t.string "last_failure_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "active"], name: "idx_webhook_endpoints_org_active"
+    t.index ["organization_id"], name: "index_webhook_endpoints_on_organization_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "advance_payments", "branches"
@@ -1310,8 +1405,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
   add_foreign_key "delivery_proofs", "users", column: "overridden_by_id"
   add_foreign_key "delivery_trips", "branches"
   add_foreign_key "delivery_trips", "organizations"
+  add_foreign_key "delivery_trips", "routes"
   add_foreign_key "delivery_trips", "users", column: "driver_id"
   add_foreign_key "delivery_trips", "vehicles"
+  add_foreign_key "device_tokens", "organizations"
+  add_foreign_key "device_tokens", "users"
+  add_foreign_key "exports", "organizations"
+  add_foreign_key "exports", "users", column: "requested_by_id"
   add_foreign_key "inventory_levels", "branches"
   add_foreign_key "inventory_levels", "organizations"
   add_foreign_key "inventory_levels", "products"
@@ -1370,6 +1470,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
   add_foreign_key "return_requests", "users", column: "created_by_id"
   add_foreign_key "routes", "branches"
   add_foreign_key "routes", "organizations"
+  add_foreign_key "routes", "users", column: "default_driver_id"
+  add_foreign_key "routes", "vehicles"
   add_foreign_key "sales_invoice_lines", "products"
   add_foreign_key "sales_invoice_lines", "sales_invoices"
   add_foreign_key "sales_invoices", "branches"
@@ -1422,4 +1524,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_05_135256) do
   add_foreign_key "visit_logs", "organizations"
   add_foreign_key "visit_logs", "routes"
   add_foreign_key "visit_logs", "users", column: "sales_rep_id"
+  add_foreign_key "webhook_deliveries", "organizations"
+  add_foreign_key "webhook_deliveries", "webhook_endpoints"
+  add_foreign_key "webhook_endpoints", "organizations"
 end

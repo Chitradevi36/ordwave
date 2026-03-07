@@ -4,10 +4,10 @@ module Api
       before_action :require_organization!
 
       def index
-        scope    = policy_scope(Route)
-        scope    = scope.where(branch_id: params[:branch_id]) if params[:branch_id].present?
-        scope    = filter_by_query(scope)                      if params[:q].present?
-        routes   = paginate(scope)
+        scope  = policy_scope(Route).includes(:vehicle, :default_driver)
+        scope  = scope.where(branch_id: params[:branch_id]) if params[:branch_id].present?
+        scope  = filter_by_query(scope)                      if params[:q].present?
+        routes = paginate(scope)
 
         render_success(
           routes.map { |r| serialize_route(r) },
@@ -16,7 +16,7 @@ module Api
       end
 
       def show
-        route = Route.for_org(current_organization.id).find(params[:id])
+        route = Route.for_org(current_organization.id).includes(:vehicle, :default_driver).find(params[:id])
         authorize route
 
         render_success(serialize_route(route, detailed: true))
@@ -64,18 +64,28 @@ module Api
       end
 
       def route_params
-        params.require(:route).permit(:name, :code, :branch_id, :active)
+        params.require(:route).permit(:name, :code, :branch_id, :active,
+                                      :vehicle_id, :default_driver_id)
       end
 
       def serialize_route(route, detailed: false)
         data = {
-          id:        route.id,
-          name:      route.name,
-          code:      route.code,
-          active:    route.active,
-          branch_id: route.branch_id
+          id:              route.id,
+          name:            route.name,
+          code:            route.code,
+          active:          route.active,
+          branch_id:       route.branch_id,
+          vehicle:         route.vehicle ? {
+            id:                  route.vehicle.id,
+            registration_number: route.vehicle.registration_number,
+            vehicle_type:        route.vehicle.vehicle_type
+          } : nil,
+          default_driver:  route.default_driver ? {
+            id:   route.default_driver.id,
+            name: route.default_driver.full_name
+          } : nil
         }
-        data[:customers_count] = route.customers.not_deleted.count if detailed
+        data[:customers_count] = route.customers.not_deleted.count
         data
       end
     end

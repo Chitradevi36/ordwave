@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { API_URL } from "@/lib/api/client";
+
 import { Truck, User, Package, X, GripVertical, Plus, ChevronRight } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
-
-const API = "http://localhost:3001/api/v1";
 
 interface ApprovedOrder {
   id: number;
@@ -67,9 +66,9 @@ export default function NewTripPage() {
   useEffect(() => {
     if (!token || !orgId) return;
     Promise.all([
-      fetch(`${API}/vehicles?status=active&per_page=100`, { headers: authHeaders }),
-      fetch(`${API}/users?role=driver&per_page=100`, { headers: authHeaders }),
-      fetch(`${API}/branches?per_page=100`, { headers: authHeaders }),
+      fetch(`${API_URL}/api/v1/vehicles?status=active&per_page=100`, { headers: authHeaders }),
+      fetch(`${API_URL}/api/v1/users?role=driver&per_page=100`, { headers: authHeaders }),
+      fetch(`${API_URL}/api/v1/branches?per_page=100`, { headers: authHeaders }),
     ]).then(async ([vRes, uRes, bRes]) => {
       if (vRes.ok) { const d = await vRes.json(); setVehicles(d.data ?? []); }
       if (uRes.ok) { const d = await uRes.json(); setDrivers(d.data ?? []); }
@@ -84,7 +83,7 @@ export default function NewTripPage() {
     const qp = new URLSearchParams({ status: "approved", per_page: "100" });
     if (selectedBranchId) qp.set("branch_id", selectedBranchId);
     if (orderSearch)      qp.set("q", orderSearch);
-    const res = await fetch(`${API}/sales_orders?${qp}`, { headers: authHeaders });
+    const res = await fetch(`${API_URL}/api/v1/sales_orders?${qp}`, { headers: authHeaders });
     if (res.ok) { const d = await res.json(); setOrders(d.data ?? []); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, orgId, selectedBranchId, orderSearch]);
@@ -111,7 +110,7 @@ export default function NewTripPage() {
     setSaving(true);
     setErrors([]);
     try {
-      const res = await fetch(`${API}/delivery_trips`, {
+      const res = await fetch(`${API_URL}/api/v1/delivery_trips`, {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({
@@ -141,17 +140,14 @@ export default function NewTripPage() {
   );
 
   return (
-    <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Delivery",       href: "/delivery" },
-          { label: "New Trip" },
-        ]}
-      />
+    <AppShell breadcrumbs={[
+      { label: "Delivery", href: "/delivery" },
+      { label: "New Trip" },
+    ]}>
 
       <PageHeader
         title="Create Delivery Trip"
-        subtitle="Assign approved orders to a vehicle and driver"
+        description="Assign approved orders to a vehicle and driver"
       />
 
       {errors.length > 0 && (
@@ -163,16 +159,16 @@ export default function NewTripPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left — Trip details */}
         <div className="lg:col-span-1 space-y-4">
-          <Card className="border border-slate-200 shadow-none">
+          <Card className="border border-border shadow-none">
             <CardContent className="py-4 space-y-4">
-              <h3 className="font-semibold text-sm text-slate-700 flex items-center gap-2">
+              <h3 className="font-semibold text-sm text-text-primary flex items-center gap-2">
                 <Truck className="h-4 w-4" /> Trip Details
               </h3>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 block mb-1">Branch</label>
+                <label className="text-xs font-medium text-text-secondary block mb-1">Branch</label>
                 <select
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   value={selectedBranchId}
                   onChange={(e) => setSelectedBranchId(e.target.value)}
                 >
@@ -184,7 +180,7 @@ export default function NewTripPage() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 block mb-1">Trip Date *</label>
+                <label className="text-xs font-medium text-text-secondary block mb-1">Trip Date *</label>
                 <Input
                   type="date"
                   value={tripDate}
@@ -193,9 +189,9 @@ export default function NewTripPage() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 block mb-1">Vehicle</label>
+                <label className="text-xs font-medium text-text-secondary block mb-1">Vehicle</label>
                 <select
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   value={vehicleId}
                   onChange={(e) => setVehicleId(e.target.value)}
                 >
@@ -209,9 +205,9 @@ export default function NewTripPage() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 block mb-1">Driver</label>
+                <label className="text-xs font-medium text-text-secondary block mb-1">Driver</label>
                 <select
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   value={driverId}
                   onChange={(e) => setDriverId(e.target.value)}
                 >
@@ -225,9 +221,9 @@ export default function NewTripPage() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 block mb-1">Notes</label>
+                <label className="text-xs font-medium text-text-secondary block mb-1">Notes</label>
                 <textarea
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                   rows={2}
                   placeholder="Route notes…"
                   value={notes}
@@ -238,23 +234,23 @@ export default function NewTripPage() {
           </Card>
 
           {/* Selected stops */}
-          <Card className="border border-slate-200 shadow-none">
+          <Card className="border border-border shadow-none">
             <CardContent className="py-4">
-              <h3 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
+              <h3 className="font-semibold text-sm text-text-primary mb-3 flex items-center gap-2">
                 <Package className="h-4 w-4" /> Stops ({selectedOrders.length})
               </h3>
               {selectedOrders.length === 0 ? (
-                <p className="text-xs text-slate-400">No orders selected yet.</p>
+                <p className="text-xs text-text-secondary">No orders selected yet.</p>
               ) : (
                 <ol className="space-y-2">
                   {selectedOrders.map((o, idx) => (
                     <li key={o.id} className="flex items-center gap-2 text-sm">
-                      <span className="text-xs tabular-nums text-slate-400 w-5 shrink-0">{idx + 1}</span>
+                      <span className="text-xs tabular-nums text-text-secondary w-5 shrink-0">{idx + 1}</span>
                       <span className="flex-1 truncate">{o.customer.name}</span>
-                      <span className="text-xs text-slate-500 font-mono">{o.order_number}</span>
+                      <span className="text-xs text-text-secondary font-mono">{o.order_number}</span>
                       <button
                         onClick={() => removeOrder(o.id)}
-                        className="text-slate-400 hover:text-red-500"
+                        className="text-text-secondary hover:text-red-500"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -276,10 +272,10 @@ export default function NewTripPage() {
 
         {/* Right — Order picker */}
         <div className="lg:col-span-2">
-          <Card className="border border-slate-200 shadow-none">
+          <Card className="border border-border shadow-none">
             <CardContent className="py-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm text-slate-700">
+                <h3 className="font-semibold text-sm text-text-primary">
                   Approved Orders ({availableOrders.length})
                 </h3>
                 <Input
@@ -291,30 +287,30 @@ export default function NewTripPage() {
               </div>
 
               {availableOrders.length === 0 ? (
-                <p className="text-sm text-slate-400 py-8 text-center">No approved orders available.</p>
+                <p className="text-sm text-text-secondary py-8 text-center">No approved orders available.</p>
               ) : (
                 <div className="divide-y divide-slate-100 max-h-[480px] overflow-y-auto">
                   {availableOrders.map((order) => (
                     <div
                       key={order.id}
-                      className="flex items-center gap-3 py-3 px-1 hover:bg-slate-50 cursor-pointer"
+                      className="flex items-center gap-3 py-3 px-1 hover:bg-background-subtle cursor-pointer"
                       onClick={() => toggleOrder(order)}
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{order.customer.name}</p>
-                        <p className="text-xs text-slate-500 font-mono">{order.order_number}</p>
+                        <p className="text-xs text-text-secondary font-mono">{order.order_number}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-semibold tabular-nums">
                           ₹{Number(order.total_amount).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                         </p>
                         {order.delivery_date && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-text-secondary">
                             {new Date(order.delivery_date).toLocaleDateString("en-IN")}
                           </p>
                         )}
                       </div>
-                      <Plus className="h-4 w-4 text-indigo-500 shrink-0" />
+                      <Plus className="h-4 w-4 text-accent shrink-0" />
                     </div>
                   ))}
                 </div>

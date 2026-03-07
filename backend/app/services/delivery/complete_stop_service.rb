@@ -163,9 +163,11 @@ module Delivery
     end
 
     def auto_invoice_enabled?
-      org      = @stop.delivery_trip.organization
-      trigger  = org.settings['auto_invoice_trigger'].to_s
-      trigger == 'on_delivery' && @outcome.in?(%w[delivered partial_delivery])
+      return false unless @outcome.in?(%w[delivered partial_delivery])
+      org     = @stop.delivery_trip.organization
+      trigger = org.settings&.dig('auto_invoice_trigger').to_s
+      # Default to on_delivery when setting is absent
+      trigger.blank? || trigger == 'on_delivery'
     end
 
     def check_and_complete_trip!

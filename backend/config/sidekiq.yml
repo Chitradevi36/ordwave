@@ -1,0 +1,20 @@
+---
+# Sidekiq process concurrency (default 10; tune per dyno/VM RAM)
+:concurrency: 10
+
+# Queue order: higher weight = more frequently polled
+:queues:
+  - [critical,  3]   # invoice PDFs, webhook delivery, push notifications
+  - [invoicing, 3]   # auto-invoice generation from delivery stops
+  - [default,   2]   # most background jobs
+  - [low,       1]   # exports, report generation, beat scheduling
+
+# Dead job retention
+:dead_max_jobs: 10_000
+:dead_timeout_in_seconds: 2_592_000   # 30 days
+
+# Retry configuration (Sidekiq default is 25; lower for noisy queues if needed)
+:max_retries: 25
+
+# Log level (debug | info | warn | error)
+:log_level: info

@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,8 @@ import {
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
 import { Alert } from "@/components/ui/alert";
+import { API_URL } from "@/lib/api/client";
+import { LifecycleTab } from "@/components/orders/lifecycle-tab";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OrderLine {
@@ -150,10 +152,12 @@ function OverviewTab({ order }: { order: OrderDetail }) {
             <p className="text-text-secondary mb-1">Gross Total</p>
             <p className="text-lg font-semibold">{fmtINR(Number(order.total_amount) + Number(order.discount_amount))}</p>
           </div>
-          <div>
-            <p className="text-text-secondary mb-1">Discount</p>
-            <p className="text-lg font-semibold text-danger">−{fmtINR(Number(order.discount_amount))}</p>
-          </div>
+          {order.discount_amount > 0 && (
+            <div>
+              <p className="text-text-secondary mb-1">Discount</p>
+              <p className="text-lg font-semibold text-danger">−{fmtINR(Number(order.discount_amount))}</p>
+            </div>
+          )}
           <div>
             <p className="text-text-secondary mb-1">Net Total</p>
             <p className="text-lg font-bold">{fmtINR(Number(order.total_amount))}</p>
@@ -295,29 +299,136 @@ function CreditTab({ order }: { order: OrderDetail }) {
 }
 
 function TimelineTab({ timeline }: { timeline: AuditEntry[] }) {
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
   if (!timeline.length) return <p className="text-sm text-text-secondary">No activity yet.</p>;
 
+  // Colour dot by action category
+  function dotColor(action: string): string {
+    if (action.includes("approved"))               return "bg-success";
+    if (action.includes("rejected") || action.includes("cancelled")) return "bg-danger";
+    if (action.includes("hold"))                   return "bg-warning";
+    if (action.includes("submitted"))              return "bg-blue-500";
+    if (action.includes("invoice"))                return "bg-purple-500";
+    if (action.includes("payment") || action.includes("collection")) return "bg-emerald-500";
+    if (action.includes("deliver") || action.includes("trip") || action.includes("dispatch")) return "bg-amber-500";
+    return "bg-primary/40";
+  }
+
+  // Group by calendar day
+  const groups: { bucket: string; entries: AuditEntry[] }[] = [];
+  for (const entry of timeline) {
+    const date  = new Date(entry.created_at);
+    const today = new Date();
+    const diff  = Math.floor(
+      (new Date(today.setHours(0,0,0,0)).getTime() - new Date(date).setHours(0,0,0,0)) / 86_400_000
+    );
+    const bucket = diff === 0 ? "Today"
+      : diff === 1 ? "Yesterday"
+      : date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+    const last = groups[groups.length - 1];
+    if (last?.bucket === bucket) last.entries.push(entry);
+    else groups.push({ bucket, entries: [entry] });
+  }
+
+  const toggleExpanded = (id: number) =>
+    setExpanded(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
   return (
-    <div className="relative pl-6 space-y-4">
-      {/* Vertical line */}
-      <div className="absolute left-2.5 top-0 bottom-0 w-px bg-border" />
+    <div className="space-y-6">
+      {groups.map((group, gi) => (
+        <div key={gi}>
+          {/* Day separator */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+              {group.bucket}
+            </span>
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[11px] text-text-secondary">{group.entries.length} event{group.entries.length !== 1 ? "s" : ""}</span>
+          </div>
 
-      {timeline.map(entry => (
-        <div key={entry.id} className="relative">
-          {/* Dot */}
-          <div className="absolute -left-[15px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-white" />
+          <div className="relative pl-6 space-y-2">
+            <div className="absolute left-2.5 top-0 bottom-0 w-px bg-border" />
 
-          <div className="bg-muted/30 rounded-md p-3 text-sm">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-medium">{ACTION_LABEL[entry.action] ?? entry.action}</span>
-              <span className="text-xs text-text-secondary">{fmtDateTime(entry.created_at)}</span>
-            </div>
-            {entry.actor_name && (
-              <p className="text-xs text-text-secondary">by {entry.actor_name}</p>
-            )}
-            {entry.reason && (
-              <p className="mt-1 text-xs italic text-text-secondary">"{entry.reason}"</p>
-            )}
+            {group.entries.map(entry => {
+              const hasChanges = entry.changes && Object.keys(entry.changes).length > 0;
+              const isOpen     = expanded.has(entry.id);
+
+              return (
+                <div key={entry.id} className="relative group">
+                  {/* Semantic dot */}
+                  <div
+                    className={`absolute -left-[15px] top-3 h-3 w-3 rounded-full ring-2 ring-white ${
+                      dotColor(entry.action)
+                    }`}
+                  />
+
+                  <div className="rounded-md border border-border/60 bg-bg p-3 text-sm hover:border-border transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <span className="font-medium text-text-primary">
+                          {ACTION_LABEL[entry.action] ?? entry.action.replace(/_/g, " ")}
+                        </span>
+                        <div className="flex flex-wrap items-center gap-x-3 mt-0.5">
+                          {entry.actor_name && (
+                            <span className="text-xs text-text-secondary">by {entry.actor_name}</span>
+                          )}
+                          {entry.reason && (
+                            <span className="text-xs text-text-secondary italic">"{entry.reason}"</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center gap-2">
+                        {hasChanges && (
+                          <button
+                            onClick={() => toggleExpanded(entry.id)}
+                            className="text-[10px] font-medium text-text-secondary border border-border/60
+                              rounded px-1.5 py-0.5 hover:border-primary/50 hover:text-primary transition-colors"
+                          >
+                            {isOpen ? "Hide" : "Changes"}
+                          </button>
+                        )}
+                        <time className="text-[11px] text-text-secondary tabular-nums whitespace-nowrap">
+                          {fmtDateTime(entry.created_at)}
+                        </time>
+                      </div>
+                    </div>
+
+                    {/* Changes delta — shown on demand */}
+                    {hasChanges && isOpen && (
+                      <div className="mt-2 pt-2 border-t border-border/50">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-text-secondary">
+                              <th className="text-left font-medium pb-1 pr-4 w-1/3">Field</th>
+                              <th className="text-left font-medium pb-1">Value</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/40">
+                            {Object.entries(entry.changes).map(([k, v]) => (
+                              <tr key={k}>
+                                <td className="py-1 pr-4 text-text-secondary font-medium align-top">
+                                  {k.replace(/_/g, " ")}
+                                </td>
+                                <td className="py-1 text-text-primary font-mono break-all">
+                                  {typeof v === "object" ? JSON.stringify(v) : String(v ?? "—")}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
@@ -364,7 +475,7 @@ export default function OrderDetailPage() {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/sales_orders/${params.id}`, {
+      const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -380,7 +491,7 @@ export default function OrderDetailPage() {
   const postAction = async (path: string, body: Record<string, unknown>): Promise<boolean> => {
     setActing(true);
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/sales_orders/${params.id}/${path}`, {
+      const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}/${path}`, {
         method:  "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -406,7 +517,7 @@ export default function OrderDetailPage() {
   const handleSubmit = async () => {
     setActing(true);
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/sales_orders/${params.id}/submit`, {
+      const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}/submit`, {
         method:  "POST",
         headers: {
           Authorization:       `Bearer ${token}`,
@@ -446,7 +557,7 @@ export default function OrderDetailPage() {
   const handleLimitedEditSubmit = async () => {
     setActing(true);
     try {
-      const res  = await fetch(`http://localhost:3001/api/v1/sales_orders/${params.id}`, {
+      const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}`, {
         method:  "PATCH",
         headers: {
           Authorization:       `Bearer ${token}`,
@@ -469,8 +580,41 @@ export default function OrderDetailPage() {
   };
 
   const handleApproveSubmit = async () => {
-    const ok = await postAction("approve", { decision, reason: decisionReason });
-    if (ok) { setApproveModal(false); setDecisionReason(""); setDecision("approved"); }
+    setActing(true);
+    try {
+      const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}/approve`, {
+        method:  "POST",
+        headers: {
+          Authorization:       `Bearer ${token}`,
+          "X-Organization-Id": orgId!,
+          "Content-Type":      "application/json",
+        },
+        body: JSON.stringify({ decision, reason: decisionReason }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setOrder(json.data);
+        setApproveModal(false);
+        setDecisionReason("");
+        setDecision("approved");
+        if (decision === "approved") {
+          const at = json.data?.auto_trip;
+          if (at?.ok && at.action === "new_trip_created") {
+            showToast("success", `Order approved · Trip ${at.trip_number} created`);
+          } else if (at?.ok && at.action === "added_to_existing") {
+            showToast("success", `Order approved · Added to trip ${at.trip_number}`);
+          } else {
+            showToast("success", "Order approved");
+          }
+        } else {
+          showToast("success", "Order rejected");
+        }
+      } else {
+        showToast("error", json.errors?.[0] ?? "Action failed");
+      }
+    } finally {
+      setActing(false);
+    }
   };
   const handleCancelSubmit = async () => {
     const ok = await postAction("cancel", { reason: cancelReason });
@@ -494,14 +638,19 @@ export default function OrderDetailPage() {
   if (!order) return null;
 
   const tabItems = [
-    { value: "overview", label: "Overview",     content: <OverviewTab order={order} /> },
-    { value: "lines",    label: `Lines (${order.lines.length})`, content: <LinesTab lines={order.lines} /> },
-    { value: "credit",   label: "Credit Check",  content: <CreditTab order={order} /> },
-    { value: "timeline", label: "Timeline",      content: <TimelineTab timeline={order.timeline} /> },
+    { value: "overview",  label: "Overview",               content: <OverviewTab order={order} /> },
+    { value: "lines",     label: `Lines (${order.lines.length})`, content: <LinesTab lines={order.lines} /> },
+    { value: "credit",   label: "Credit Check",            content: <CreditTab order={order} /> },
+    { value: "journey",  label: "Journey",                 content: <LifecycleTab orderId={order.id} token={token!} orgId={orgId!} /> },
+    { value: "activity", label: "Activity",                content: <TimelineTab timeline={order.timeline} /> },
   ];
 
   return (
-    <AppShell>
+    <AppShell breadcrumbs={[
+        { label: "Sales", href: "/sales" },
+        { label: "Orders", href: "/orders" },
+        { label: order.order_number },
+      ]}>
       {toast && (
         <div className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${
           toast.type === "success" ? "bg-success" : "bg-danger"
@@ -509,11 +658,6 @@ export default function OrderDetailPage() {
           {toast.msg}
         </div>
       )}
-
-      <Breadcrumb items={[
-        { label: "Orders", href: "/orders" },
-        { label: order.order_number },
-      ]} />
 
       <PageHeader
         title={order.order_number}

@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { X, PackagePlus, FolderOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PriceList {
@@ -44,8 +45,8 @@ export function AssignPriceModal({
   useEffect(() => {
     const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
     const url = branchId
-      ? `http://localhost:3001/api/v1/price_lists?branch_id=${branchId}&per_page=50`
-      : `http://localhost:3001/api/v1/price_lists?per_page=50`;
+      ? `${API_URL}/api/v1/price_lists?branch_id=${branchId}&per_page=50`
+      : `${API_URL}/api/v1/price_lists?per_page=50`;
     setListLoading(true);
     fetch(url, { headers })
       .then((r) => r.json())
@@ -69,7 +70,7 @@ export function AssignPriceModal({
     setErrors([]);
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/price_lists/${priceListId}/items`,
+        `${API_URL}/api/v1/price_lists/${priceListId}/items`,
         {
           method:  "POST",
           headers: {

@@ -1,15 +1,13 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { AppShell, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { RefreshCw, Download, Wallet, AlertCircle, ChevronRight } from "lucide-react";
-
-const API = "http://localhost:3001";
+import { API_URL } from "@/lib/api/client";
+import { RefreshCw, Download, Wallet, AlertCircle } from "lucide-react";
 
 function fmt(n: number | undefined | null, prefix = "") {
   if (n == null) return "—";
@@ -89,7 +87,7 @@ export default function InsightsCollectionsPage() {
       if (branchId) qp.set("branch_id", branchId);
       if (dateFrom) qp.set("date_from", dateFrom);
       if (dateTo)   qp.set("date_to", dateTo);
-      const res = await fetch(`${API}/api/v1/analytics/collections?${qp}`, {
+      const res = await fetch(`${API_URL}/api/v1/analytics/collections?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       if (!res.ok) throw new Error("Failed to load collections data");
@@ -111,7 +109,7 @@ export default function InsightsCollectionsPage() {
     if (branchId) qp.set("branch_id", branchId);
     if (dateFrom) qp.set("date_from", dateFrom);
     if (dateTo)   qp.set("date_to", dateTo);
-    window.location.href = `${API}/api/v1/analytics/collections/export?${qp}`;
+    window.location.href = `${API_URL}/api/v1/analytics/collections/export?${qp}`;
   };
 
   const s = data?.summary;
@@ -125,12 +123,10 @@ export default function InsightsCollectionsPage() {
   ];
 
   return (
-    <AppShell title="Collections Insights">
-      <nav className="flex items-center gap-1.5 mb-4 text-sm">
-        <Link href="/insights" className="text-text-secondary hover:text-text-primary transition-colors">Insights</Link>
-        <ChevronRight className="h-3.5 w-3.5 text-text-secondary" />
-        <span className="font-medium text-text-primary">Collections</span>
-      </nav>
+    <AppShell title="Collections Insights" breadcrumbs={[
+      { label: "Insights", href: "/insights" },
+      { label: "Collections" },
+    ]}>
       <PageHeader
         title="Collections"
         description="Payment collections and outstanding invoice tracking."

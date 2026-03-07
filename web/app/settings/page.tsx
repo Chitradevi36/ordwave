@@ -9,6 +9,7 @@ import { Building2, GitBranch, Users, ChevronRight, Plus, UserCircle, Receipt, U
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { AddBranchModal } from "@/components/add-branch-modal";
 import { AddOrganizationModal } from "@/components/add-organization-modal";
+import { API_URL } from "@/lib/api/client";
 
 function SkeletonRow() {
   return (
@@ -39,7 +40,7 @@ export default function SettingsPage() {
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch(`http://localhost:3001/api/v1/branches/bulk_import`, {
+      const res = await fetch(`${API_URL}/api/v1/branches/bulk_import`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         body: form,

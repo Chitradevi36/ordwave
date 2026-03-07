@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { ArrowLeftRight, Pencil, Truck, PackageCheck, XCircle, TrendingUp, TrendingDown, Clock } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { cn } from "@/lib/utils";
-
-const API = "http://localhost:3001/api/v1";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface TransferLine {
@@ -171,7 +169,7 @@ export default function TransferDetailPage() {
     if (!token || !orgId) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`${API}/stock_transfers/${params.id}`,
+      const res = await fetch(`${API_URL}/api/v1/stock_transfers/${params.id}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } });
       const json = await res.json();
       if (res.ok) setTransfer(json.data);
@@ -221,7 +219,7 @@ export default function TransferDetailPage() {
     setDispatchErrors([]);
     setIsDispatching(true);
     try {
-      const res = await fetch(`${API}/stock_transfers/${params.id}/dispatch`, {
+      const res = await fetch(`${API_URL}/api/v1/stock_transfers/${params.id}/dispatch`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -250,7 +248,7 @@ export default function TransferDetailPage() {
     setReceiveErrors([]);
     setIsReceiving(true);
     try {
-      const res = await fetch(`${API}/stock_transfers/${params.id}/receive`, {
+      const res = await fetch(`${API_URL}/api/v1/stock_transfers/${params.id}/receive`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -281,7 +279,7 @@ export default function TransferDetailPage() {
     if (!cancelReason.trim()) return;
     setIsCancelling(true);
     try {
-      const res = await fetch(`${API}/stock_transfers/${params.id}/cancel`, {
+      const res = await fetch(`${API_URL}/api/v1/stock_transfers/${params.id}/cancel`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -303,7 +301,7 @@ export default function TransferDetailPage() {
   if (isLoading || !transfer) {
     return (
       <AppShell>
-        <div className="flex items-center gap-2 text-muted-foreground mt-8">
+        <div className="flex items-center gap-2 text-text-secondary mt-8">
           <Clock className="h-4 w-4 animate-spin" /> Loading transfer…
         </div>
       </AppShell>
@@ -364,7 +362,7 @@ export default function TransferDetailPage() {
       ) },
     { key: "occurred_at",   header: "Date",
       render: (_: unknown, r: StockMovement) => (
-        <span className="text-sm text-muted-foreground">{fmtDate(r.occurred_at)}</span>
+        <span className="text-sm text-text-secondary">{fmtDate(r.occurred_at)}</span>
       ) },
   ];
 
@@ -383,7 +381,7 @@ export default function TransferDetailPage() {
               { label: "Total Damaged",    value: fmtQty(transfer.lines.reduce((s, l) => s + l.qty_damaged, 0)) },
             ].map((c) => (
               <div key={c.label} className="rounded-lg border bg-card p-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{c.label}</p>
+                <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">{c.label}</p>
                 <p className="text-2xl font-bold font-mono">{c.value}</p>
               </div>
             ))}
@@ -392,38 +390,38 @@ export default function TransferDetailPage() {
           {/* Meta */}
           <div className="rounded-lg border p-4 text-sm space-y-2">
             <div className="flex gap-2">
-              <span className="w-32 text-muted-foreground">Route</span>
+              <span className="w-32 text-text-secondary">Route</span>
               <span className="flex items-center gap-1.5 font-medium">
                 {transfer.source_branch?.name}
-                <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <ArrowLeftRight className="h-3.5 w-3.5 text-text-secondary" />
                 {transfer.destination_branch?.name}
               </span>
             </div>
             <div className="flex gap-2">
-              <span className="w-32 text-muted-foreground">Transfer Date</span>
+              <span className="w-32 text-text-secondary">Transfer Date</span>
               <span>{fmtDate(transfer.transfer_date)}</span>
             </div>
             {transfer.dispatched_at && (
               <div className="flex gap-2">
-                <span className="w-32 text-muted-foreground">Dispatched</span>
+                <span className="w-32 text-text-secondary">Dispatched</span>
                 <span>{fmtDate(transfer.dispatched_at)} by {transfer.dispatched_by?.name}</span>
               </div>
             )}
             {transfer.received_at && (
               <div className="flex gap-2">
-                <span className="w-32 text-muted-foreground">Received</span>
+                <span className="w-32 text-text-secondary">Received</span>
                 <span>{fmtDate(transfer.received_at)} by {transfer.received_by?.name}</span>
               </div>
             )}
             {transfer.notes && (
               <div className="flex gap-2">
-                <span className="w-32 text-muted-foreground">Notes</span>
+                <span className="w-32 text-text-secondary">Notes</span>
                 <span className="text-foreground">{transfer.notes}</span>
               </div>
             )}
             {transfer.cancellation_reason && (
               <div className="flex gap-2 text-destructive">
-                <span className="w-32 text-muted-foreground">Cancel Reason</span>
+                <span className="w-32 text-text-secondary">Cancel Reason</span>
                 <span>{transfer.cancellation_reason}</span>
               </div>
             )}
@@ -459,14 +457,14 @@ export default function TransferDetailPage() {
       content: (
         <div className="space-y-3">
           {transfer.timeline.length === 0 && (
-            <p className="text-sm text-muted-foreground">No events yet.</p>
+            <p className="text-sm text-text-secondary">No events yet.</p>
           )}
           {transfer.timeline.map((ev) => (
             <div key={ev.id} className="flex gap-3 items-start">
               <div className="mt-1 h-2 w-2 rounded-full bg-primary shrink-0" />
               <div>
                 <p className="text-sm font-medium">{ACTION_LABEL[ev.action] ?? ev.action}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-secondary">
                   {ev.actor_name} · {fmtDate(ev.created_at)}
                 </p>
               </div>
@@ -478,12 +476,11 @@ export default function TransferDetailPage() {
   ];
 
   return (
-    <AppShell>
-      <Breadcrumb items={[
-        { label: "Inventory", href: "/inventory/stock" },
+    <AppShell breadcrumbs={[
+        { label: "Operations", href: "/operations" },
         { label: "Transfers", href: "/inventory/transfers" },
         { label: transfer.transfer_number },
-      ]} />
+      ]}>
 
       <PageHeader
         title={transfer.transfer_number}
@@ -492,7 +489,7 @@ export default function TransferDetailPage() {
             <Badge variant={STATUS_VARIANT[transfer.status] ?? "secondary"}>
               {STATUS_LABEL[transfer.status] ?? transfer.status}
             </Badge>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-text-secondary">
               {transfer.source_branch?.name} → {transfer.destination_branch?.name}
             </span>
           </div>
@@ -534,7 +531,7 @@ export default function TransferDetailPage() {
 
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-muted-foreground text-xs">
+              <tr className="border-b text-text-secondary text-xs">
                 <th className="text-left pb-2 font-medium">Product</th>
                 <th className="text-right pb-2 font-medium w-24">Requested</th>
                 <th className="text-right pb-2 font-medium w-28">Dispatch Qty</th>
@@ -545,7 +542,7 @@ export default function TransferDetailPage() {
                 <tr key={row.line_id} className="py-2">
                   <td className="py-2">
                     <p className="font-medium">{row.product_name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{row.product_sku}</p>
+                    <p className="text-xs text-text-secondary font-mono">{row.product_sku}</p>
                   </td>
                   <td className="text-right py-2 font-mono">{fmtQty(row.qty_requested)}</td>
                   <td className="text-right py-2">
@@ -596,7 +593,7 @@ export default function TransferDetailPage() {
 
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-muted-foreground text-xs">
+              <tr className="border-b text-text-secondary text-xs">
                 <th className="text-left pb-2 font-medium">Product</th>
                 <th className="text-right pb-2 font-medium w-20">In Transit</th>
                 <th className="text-right pb-2 font-medium w-24">Received</th>
@@ -609,7 +606,7 @@ export default function TransferDetailPage() {
                 <tr key={row.line_id}>
                   <td className="py-2 pr-2">
                     <p className="font-medium">{row.product_name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{row.product_sku}</p>
+                    <p className="text-xs text-text-secondary font-mono">{row.product_sku}</p>
                   </td>
                   <td className="text-right py-2 font-mono">{fmtQty(row.qty_dispatched)}</td>
                   <td className="text-right py-2">
@@ -664,7 +661,7 @@ export default function TransferDetailPage() {
           </table>
 
           {receiveRows.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-sm text-text-secondary text-center py-4">
               All quantities have already been accounted for.
             </p>
           )}

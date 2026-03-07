@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,10 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import {
   Plus, Trash2, Search, Loader2, History, X,
-  RefreshCw, Minus, Info,
+  RefreshCw, Minus, Info, Tag, CheckCircle, Zap,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
+import { API_URL } from "@/lib/api/client";
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface CustomerOption { id: number; name: string; code: string; branch_id: number }
@@ -49,6 +50,53 @@ interface PriceData {
   price_list_name?: string;
   min_qty?:      number;
   valid_until?:  string;
+}
+
+interface SchemeFreebie {
+  product_id:    number;
+  qty_free:      number;
+  scheme_id:     number;
+  scheme_code:   string;
+  scheme_name?:  string;
+  product_name?: string;
+  product_sku?:  string;
+  gst_rate?:     number;
+  hsn_code?:     string | null;
+}
+interface SchemeOrderDiscount {
+  scheme_id: number;
+  amount:    number;
+}
+interface SchemeExplainItem {
+  scheme_id: number;
+  code:      string;
+  name:      string;
+  message?:  string;
+  reason?:   string;
+  hint?:     SchemeHint | null;
+}
+type SchemeHint =
+  | { type: 'increase_qty'; product_ids: number[]; qualifying_product_ids?: number[];
+      current_qty: number;  target_qty: number;    gap: number }
+  | { type: 'total_qty';    product_ids: number[]; current_qty: number;
+      target_qty: number;   gap: number }
+  | { type: 'order_value';  current: number;       target: number; gap: number }
+  | { type: 'add_products'; product_ids: number[] }
+  | { type: 'add_category'; category_ids: number[] };
+interface SchemePreviewResult {
+  lines:           { product_id: number; scheme_discount_pct: number; scheme_tags: string[] }[];
+  freebies:        SchemeFreebie[];
+  order_discounts: SchemeOrderDiscount[];
+  totals: {
+    subtotal:              number;
+    scheme_discount_total: number;
+    order_scheme_discount: number;
+    grand_total:           number;
+  };
+  explain: {
+    applied:     SchemeExplainItem[];
+    not_applied: SchemeExplainItem[];
+  };
 }
 
 interface OrderLine {
@@ -154,6 +202,11 @@ export default function NewOrderPage() {
   // Available credit (fetched when customer is selected)
   const [availableCredit, setAvailableCredit] = useState<number | null>(null);
 
+  // Scheme preview
+  const [schemePreview,  setSchemePreview]  = useState<SchemePreviewResult | null>(null);
+  const [schemeLoading,  setSchemeLoading]  = useState(false);
+  const schemeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Credit decision modal
   const [creditModal,    setCreditModal]    = useState(false);
   const [creditResult,   setCreditResult]   = useState<CreditResult | null>(null);
@@ -180,7 +233,7 @@ export default function NewOrderPage() {
   // â”€â”€ Load branches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch("http://localhost:3001/api/v1/branches?per_page=100", {
+    fetch(`${API_URL}/api/v1/branches?per_page=100`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then(r => r.json())
@@ -190,7 +243,7 @@ export default function NewOrderPage() {
   // â”€â”€ Customer search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const searchCustomers = useCallback((q: string) => {
     if (!token || !orgId || q.length < 2) { setCustomerResults([]); return; }
-    fetch(`http://localhost:3001/api/v1/customers?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
+    fetch(`${API_URL}/api/v1/customers?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then(r => r.json())
@@ -222,7 +275,7 @@ export default function NewOrderPage() {
     }
     if (token && orgId) {
       // Fetch available credit for this customer
-      fetch(`http://localhost:3001/api/v1/customers/${c.id}/credit_usage`, {
+      fetch(`${API_URL}/api/v1/customers/${c.id}/credit_usage`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       })
         .then(r => r.json())
@@ -230,7 +283,7 @@ export default function NewOrderPage() {
         .catch(() => {});
 
       setRecentLoading(true);
-      fetch(`http://localhost:3001/api/v1/sales_orders/recent_for_customer?customer_id=${c.id}`, {
+      fetch(`${API_URL}/api/v1/sales_orders/recent_for_customer?customer_id=${c.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       })
         .then(r => r.json())
@@ -250,7 +303,7 @@ export default function NewOrderPage() {
       setLines(prev => prev.map(l => l._key === lineKey ? { ...l, productResults: [] } : l));
       return;
     }
-    fetch(`http://localhost:3001/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
+    fetch(`${API_URL}/api/v1/products?q=${encodeURIComponent(q)}&status=active&per_page=20`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then(r => r.json())
@@ -277,7 +330,7 @@ export default function NewOrderPage() {
     try {
       const qp = new URLSearchParams({ branch_id: bid, qty: qty || "1" });
       if (cust) qp.set("retailer_id", String(cust.id));
-      const res  = await fetch(`http://localhost:3001/api/v1/products/${productId}/price?${qp}`, {
+      const res  = await fetch(`${API_URL}/api/v1/products/${productId}/price?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -332,6 +385,61 @@ export default function NewOrderPage() {
   const addLine    = ()           => { setLines(prev => [...prev, newLine()]); markDirty(); };
   const removeLine = (key: string) => { setLines(prev => prev.filter(l => l._key !== key)); markDirty(); };
 
+  // ── Add freebie line to cart ──────────────────────────────────────────────
+  const addFreebieToCart = async (freebie: SchemeFreebie) => {
+    const doAppend = (p: ProductOption) => {
+      setLines(prev => [...prev, {
+        _key:           crypto.randomUUID(),
+        product:        p,
+        productQuery:   `${p.sku} — ${p.name} (FREE)`,
+        productResults: [],
+        productOpen:    false,
+        qty:            String(freebie.qty_free),
+        unit_price:     "0",
+        discount_pct:   "0",
+        price_source:   "promo",
+        priceLoading:   false,
+        priceData:      null,
+      }]);
+      markDirty();
+      showToast("success", `${freebie.qty_free}× ${p.name} added as free item`);
+    };
+    // Fast path — product info already in preview payload, no extra fetch needed
+    if (freebie.product_name && freebie.product_sku) {
+      doAppend({ id: freebie.product_id, name: freebie.product_name, sku: freebie.product_sku,
+                 gst_rate: freebie.gst_rate ?? 0, hsn_code: freebie.hsn_code ?? null });
+      return;
+    }
+    // Fallback: fetch from API when product info is absent
+    if (!token || !orgId) return;
+    try {
+      const res  = await fetch(`${API_URL}/api/v1/products/${freebie.product_id}`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      const json = await res.json();
+      if (!res.ok || !json.data) { showToast("error", "Could not load product"); return; }
+      doAppend(json.data);
+    } catch {
+      showToast("error", "Failed to add free item");
+    }
+  };
+
+  // ── Quick-apply: bump line qty to unlock a near-miss scheme ───────────────
+  const quickApplyScheme = (hint: SchemeHint, schemeName: string) => {
+    if (hint.type !== "increase_qty" && hint.type !== "total_qty") return;
+    const eligible = lines
+      .filter(l => l.product && hint.product_ids.includes(l.product.id))
+      .sort((a, b) => (parseFloat(b.qty) || 0) - (parseFloat(a.qty) || 0));
+    if (!eligible.length) {
+      showToast("error", "Add a qualifying product line first");
+      return;
+    }
+    const target = eligible[0];
+    const newQty = String((parseFloat(target.qty) || 0) + hint.gap);
+    updateLine(target._key, "qty", newQty);
+    showToast("success", `+${hint.gap} added to unlock '${schemeName}'`);
+  };
+
   // â”€â”€ Repeat Order â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const repeatOrder = (order: RecentOrder) => {
     const newLines: OrderLine[] = order.lines.map(l => ({
@@ -385,12 +493,51 @@ export default function NewOrderPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDirty, savedOrderId, lines, deliveryDate, notes]);
 
+  // ── Scheme preview (debounced 600 ms) ───────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const cust       = customer;
+    const bid        = branchId;
+    const validLines = lines.filter(l => l.product && parseFloat(l.qty) > 0);
+    if (!cust || !bid || !validLines.length || !token || !orgId) {
+      setSchemePreview(null);
+      return;
+    }
+    if (schemeTimer.current) clearTimeout(schemeTimer.current);
+    schemeTimer.current = setTimeout(async () => {
+      setSchemeLoading(true);
+      try {
+        const res  = await fetch(`${API_URL}/api/v1/order_pricing/preview`, {
+          method: "POST",
+          headers: {
+            Authorization:       `Bearer ${token}`,
+            "X-Organization-Id": orgId,
+            "Content-Type":      "application/json",
+          },
+          body: JSON.stringify({
+            customer_id: cust.id,
+            branch_id:   parseInt(bid),
+            lines: validLines.map(l => ({ product_id: l.product!.id, qty: parseFloat(l.qty) })),
+          }),
+        });
+        const json = await res.json();
+        if (res.ok && json.data) setSchemePreview(json.data);
+        else setSchemePreview(null);
+      } catch {
+        setSchemePreview(null);
+      } finally {
+        setSchemeLoading(false);
+      }
+    }, 600);
+    return () => { if (schemeTimer.current) clearTimeout(schemeTimer.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer?.id, branchId, lines]);
+
   const autoSave = async () => {
     if (!customer || !branchId || !savedOrderId) return;
     const validLines = lines.filter(l => l.product && parseFloat(l.qty) > 0);
     if (!validLines.length) return;
     try {
-      await fetch(`http://localhost:3001/api/v1/sales_orders/${savedOrderId}`, {
+      await fetch(`${API_URL}/api/v1/sales_orders/${savedOrderId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -447,8 +594,8 @@ export default function NewOrderPage() {
       // Create or update draft
       const isUpdate = !!savedOrderId;
       const url    = isUpdate
-        ? `http://localhost:3001/api/v1/sales_orders/${savedOrderId}`
-        : "http://localhost:3001/api/v1/sales_orders";
+        ? `${API_URL}/api/v1/sales_orders/${savedOrderId}`
+        : `${API_URL}/api/v1/sales_orders`;
       const method = isUpdate ? "PATCH" : "POST";
 
       const res  = await fetch(url, {
@@ -473,7 +620,7 @@ export default function NewOrderPage() {
       setIsDirty(false);
 
       if (andSubmit) {
-        const subRes  = await fetch(`http://localhost:3001/api/v1/sales_orders/${orderId}/submit`, {
+        const subRes  = await fetch(`${API_URL}/api/v1/sales_orders/${orderId}/submit`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -509,6 +656,13 @@ export default function NewOrderPage() {
   };
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Scheme discount badge map: product_id → cumulative scheme_discount_pct
+  const schemeLineMap: Record<number, number> = {};
+  schemePreview?.lines.forEach(l => {
+    if (l.scheme_discount_pct > 0)
+      schemeLineMap[l.product_id] = (schemeLineMap[l.product_id] ?? 0) + l.scheme_discount_pct;
+  });
+
   return (
     <>
     <AppShell>
@@ -520,7 +674,7 @@ export default function NewOrderPage() {
         </div>
       )}
 
-      <Breadcrumb items={[{ label: "Orders", href: "/orders" }, { label: "New Order" }]} />
+
       <PageHeader title="New Sales Order" description="Create a draft order" />
 
       {/* Two-panel grid */}
@@ -632,6 +786,167 @@ export default function NewOrderPage() {
             </Card>
           )}
 
+
+          {/* Schemes Panel ─ appears once customer + branch + ≥1 line are filled */}
+          {(customer && branchId && lines.some(l => l.product)) && (
+            <Card className={schemePreview?.explain.applied.length ? "border-success/40" : "border-border"}>
+              <CardHeader className="flex flex-row items-center justify-between py-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-primary" />
+                  Active Schemes
+                  {schemeLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-text-secondary" />}
+                  {!schemeLoading && schemePreview && schemePreview.explain.applied.length > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                      {schemePreview.explain.applied.length} applied
+                    </span>
+                  )}
+                </CardTitle>
+                {!schemeLoading && schemePreview && (schemePreview.totals.scheme_discount_total + schemePreview.totals.order_scheme_discount) > 0 && (
+                  <span className="text-xs font-semibold text-success">
+                    Saving {fmtINR(schemePreview.totals.scheme_discount_total + schemePreview.totals.order_scheme_discount)}
+                  </span>
+                )}
+              </CardHeader>
+              <CardContent className="pt-0 space-y-3">
+                {schemeLoading && (
+                  <div className="space-y-2">
+                    {[1, 2].map(i => <div key={i} className="h-6 rounded bg-muted animate-pulse" />)}
+                  </div>
+                )}
+                {!schemeLoading && schemePreview &&
+                  schemePreview.explain.applied.length === 0 &&
+                  schemePreview.freebies.length === 0 &&
+                  schemePreview.order_discounts.length === 0 && (
+                  <p className="text-xs text-text-secondary">No schemes qualify for this cart yet.</p>
+                )}
+                {/* Applied */}
+                {!schemeLoading && schemePreview && schemePreview.explain.applied.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary mb-1.5">Applied</p>
+                    <div className="flex flex-wrap gap-2">
+                      {schemePreview.explain.applied.map(s => (
+                        <span key={s.scheme_id} className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
+                          <CheckCircle className="h-3 w-3 shrink-0" />
+                          {s.name}
+                          {s.message && <span className="ml-0.5 text-[10px] opacity-70">· {s.message}</span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Freebies */}
+                {!schemeLoading && schemePreview && schemePreview.freebies.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary mb-1.5">Free Items</p>
+                    <div className="space-y-1.5">
+                      {schemePreview.freebies.map((f, i) => {
+                        const alreadyAdded = lines.some(l => l.product?.id === f.product_id && l.unit_price === "0");
+                        return (
+                          <div key={i} className="flex items-center justify-between rounded-md border border-success/20 bg-success/5 px-3 py-2 gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-text-primary truncate">
+                                {f.product_name ?? `Product #${f.product_id}`}
+                                {f.product_sku && (
+                                  <span className="ml-1.5 font-mono text-xs text-text-secondary">{f.product_sku}</span>
+                                )}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="text-xs font-semibold text-success">×{f.qty_free} FREE</span>
+                                <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded-full">
+                                  {f.scheme_name ?? f.scheme_code}
+                                </span>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm" variant="outline"
+                              className="h-6 text-[10px] px-2 border-success/40 text-success hover:bg-success/10"
+                              onClick={() => void addFreebieToCart(f)}
+                              disabled={alreadyAdded}
+                            >
+                              {alreadyAdded ? "Added ✓" : "+ Add Free"}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {/* Order discounts */}
+                {!schemeLoading && schemePreview && schemePreview.order_discounts.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary mb-1.5">Order Discounts</p>
+                    <div className="space-y-1">
+                      {schemePreview.order_discounts.map((d, i) => {
+                        const name = schemePreview.explain.applied.find(a => a.scheme_id === d.scheme_id)?.name;
+                        return (
+                          <div key={i} className="flex items-center justify-between rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs">
+                            <span className="text-text-secondary">{name ?? `Scheme #${d.scheme_id}`}</span>
+                            <span className="font-semibold text-primary">−{fmtINR(d.amount)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {/* Near-misses — expanded, now actionable with Quick Apply */}
+                {!schemeLoading && schemePreview && schemePreview.explain.not_applied.length > 0 && (
+                  <details className="group" open>
+                    <summary className="cursor-pointer select-none list-none flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
+                      <span className="inline-block transition-transform group-open:rotate-90">›</span>
+                      {schemePreview.explain.not_applied.length} scheme{schemePreview.explain.not_applied.length !== 1 ? "s" : ""} not yet unlocked
+                    </summary>
+                    <div className="mt-1.5 space-y-2">
+                      {schemePreview.explain.not_applied.map(s => {
+                        const prog = parseNearMissProgress(s.reason ?? "");
+                        const hint = s.hint;
+                        const hasQtyApply = hint &&
+                          (hint.type === "increase_qty" || hint.type === "total_qty") &&
+                          lines.some(l => l.product && hint.product_ids.includes(l.product.id));
+                        return (
+                          <div key={s.scheme_id} className="rounded-md border border-border bg-background px-3 py-2 space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-xs font-semibold text-text-primary truncate">{s.name}</span>
+                                {prog && (
+                                  <span className="text-[10px] tabular-nums text-text-secondary whitespace-nowrap">{prog.pct}%</span>
+                                )}
+                              </div>
+                              {hasQtyApply && hint && (hint.type === "increase_qty" || hint.type === "total_qty") && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 shrink-0 text-[10px] px-2 border-primary/40 text-primary hover:bg-primary/5 gap-1"
+                                  onClick={() => quickApplyScheme(hint, s.name)}
+                                >
+                                  <Zap className="h-2.5 w-2.5" />
+                                  +{hint.gap} qty
+                                </Button>
+                              )}
+                              {hint?.type === "order_value" && (
+                                <span className="text-[10px] text-warning whitespace-nowrap shrink-0 font-medium">
+                                  Need {fmtINR(hint.gap)} more
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-text-secondary">{s.reason}</p>
+                            {prog && (
+                              <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-[width] bg-gradient-to-r from-primary/40 to-primary"
+                                  style={{ width: `${prog.pct}%` }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Lines */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -727,6 +1042,11 @@ export default function NewOrderPage() {
                             <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin text-text-secondary" />
                           )}
                         </div>
+                        {line.product && (schemeLineMap[line.product.id] ?? 0) > 0 && (
+                          <p className="mt-0.5 text-[10px] font-medium text-success text-right tabular-nums">
+                            −{schemeLineMap[line.product.id].toFixed(2)}% scheme
+                          </p>
+                        )}
                       </td>
 
                       {/* Discount */}
@@ -835,7 +1155,7 @@ export default function NewOrderPage() {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="text-sm font-medium mb-1 block">Notes</label>
                 <textarea
                   rows={3}
@@ -844,7 +1164,7 @@ export default function NewOrderPage() {
                   onChange={e => { setNotes(e.target.value); markDirty(); }}
                   className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
-              </div>
+              </div> */}
             </CardContent>
           </Card>
 
@@ -864,6 +1184,12 @@ export default function NewOrderPage() {
                 <span className="text-text-secondary">Discount</span>
                 <span className="tabular-nums text-danger">−{fmtINR(discountAmount)}</span>
               </div>
+              {schemePreview && schemePreview.totals.scheme_discount_total > 0 && (
+                <div className="flex justify-between text-success">
+                  <span>Scheme Savings</span>
+                  <span className="tabular-nums font-medium">−{fmtINR(schemePreview.totals.scheme_discount_total)}</span>
+                </div>
+              )}
               <div className="flex justify-between pt-2 border-t border-border">
                 <span className="font-semibold">Net Total</span>
                 <span className="tabular-nums font-bold text-base">{fmtINR(totalAmount)}</span>
@@ -987,6 +1313,14 @@ export default function NewOrderPage() {
     </Modal>
     </>
   );
+}
+
+function parseNearMissProgress(reason: string): { pct: number } | null {
+  const m = reason.match(/(\d+(?:\.\d+)?)\s*<\s*(?:minimum|min)\s*(\d+(?:\.\d+)?)/i);
+  if (!m) return null;
+  const threshold = parseFloat(m[2]);
+  if (threshold <= 0) return null;
+  return { pct: Math.min(99, Math.round((parseFloat(m[1]) / threshold) * 100)) };
 }
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {

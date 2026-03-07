@@ -1012,21 +1012,41 @@ if Rails.env.development?
 
   # â”€â”€ J. Customers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   puts ''
-  puts '  == Seeding customers...'
+  # Routes (J0) -- seeded before customers so route FK can be assigned
+  puts ''
+  puts '  == Seeding delivery routes...'
+
+  route_defs = [
+    { name: 'North Zone', code: 'ROUTE-N', active: true },
+    { name: 'South Zone', code: 'ROUTE-S', active: true },
+  ]
+
+  routes = {}
+  route_defs.each do |attrs|
+    r = Route.find_or_initialize_by(code: attrs[:code], branch: branch)
+    r.assign_attributes(name: attrs[:name], active: attrs[:active], organization: org)
+    r.save!
+    routes[attrs[:code]] = r
+    puts "    Route: \#{r.code} - \#{r.name}"
+  end
+
+  puts '  == Routes seeded.'
+
+    puts '  == Seeding customers...'
 
   customer_defs = [
     { name: 'Sri Balaji Stores',      code: 'CUST-001', phone: '9848012345',
       gstin: '36AABCS1234Z1Z5', channel: 'general_trade',    tier: 'gold',
-      credit_limit: 50_000,  credit_days: 30 },
+      credit_limit: 50_000,  credit_days: 30, route_code: 'ROUTE-N' },
     { name: 'Ravi General Merchants', code: 'CUST-002', phone: '9848023456',
       gstin: nil,             channel: 'general_trade',    tier: 'silver',
-      credit_limit: 20_000,  credit_days: 15 },
+      credit_limit: 20_000,  credit_days: 15, route_code: 'ROUTE-N' },
     { name: 'Lakshmi Kirana Depot',   code: 'CUST-003', phone: '9848034567',
       gstin: '36AADCL4567B1ZD', channel: 'wholesale', tier: 'platinum',
-      credit_limit: 150_000, credit_days: 45 },
+      credit_limit: 150_000, credit_days: 45, route_code: 'ROUTE-S' },
     { name: 'Sai Traders',            code: 'CUST-004', phone: '9848045678',
       gstin: nil,             channel: 'general_trade',    tier: 'bronze',
-      credit_limit: 10_000,  credit_days: 7 },
+      credit_limit: 10_000,  credit_days: 7,  route_code: 'ROUTE-S' },
   ]
 
   customers = {}
@@ -1041,12 +1061,27 @@ if Rails.env.development?
       credit_limit:  attrs[:credit_limit],
       credit_days:   attrs[:credit_days],
       branch:        branch,
+      route:         attrs[:route_code] ? routes[attrs[:route_code]] : nil,
       status:        'active',
       customer_type: 'retailer'
     )
     c.save!
+
+    # Ensure a CreditAccount exists — credit engine reads from here, not Customer.credit_limit
+    ca = c.credit_account || c.build_credit_account
+    ca.assign_attributes(
+      organization:    org,
+      branch:          branch,
+      credit_limit:    attrs[:credit_limit] || 0,
+      current_balance: ca.persisted? ? ca.current_balance : 0,
+      overdue_amount:  ca.persisted? ? ca.overdue_amount  : 0,
+      overdue_days:    ca.persisted? ? ca.overdue_days    : 0
+    )
+    # available_credit is recalculated by before_save callback on CreditAccount
+    ca.save!
+
     customers[attrs[:code]] = c
-    puts "    Customer: #{c.code} â€“ #{c.name}"
+    puts "    Customer: #{c.code} — #{c.name} (credit_limit: #{ca.credit_limit})"
   end
 
   puts '  == Customers seeded.'

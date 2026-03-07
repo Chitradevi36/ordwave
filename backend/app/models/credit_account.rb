@@ -16,7 +16,7 @@ class CreditAccount < ApplicationRecord
            foreign_key: :credit_account_id,
            dependent:   :destroy
 
-  has_many :audit_logs, as: :auditable, dependent: :destroy
+  include Auditable
 
   validates :credit_limit,     numericality: { greater_than_or_equal_to: 0 }
   validates :current_balance,  numericality: true

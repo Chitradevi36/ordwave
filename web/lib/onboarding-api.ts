@@ -1,4 +1,6 @@
-// API utility functions for onboarding
+﻿// API utility functions for onboarding
+import { API_URL } from "@/lib/api/client";
+
 export const onboardingAPI = {
   create: async (data: {
     org_name: string;
@@ -9,7 +11,7 @@ export const onboardingAPI = {
     gst_number?: string;
     contact_phone?: string;
   }) => {
-    const res = await fetch('http://localhost:3001/api/v1/onboarding/create', {
+    const res = await fetch(`${API_URL}/api/v1/onboarding/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,10 +41,10 @@ export const onboardingAPI = {
 
     const orgId = localStorage.getItem('organization_id');
     if (orgId) {
-      headers['X-Organization-Id'] = orgId;
+      headers[`X-Organization-Id`] = orgId;
     }
 
-    const res = await fetch('http://localhost:3001/api/v1/onboarding/setup', {
+    const res = await fetch(`${API_URL}/api/v1/onboarding/setup`, {
       method: 'POST',
       headers,
       body: JSON.stringify(data),
@@ -63,10 +65,10 @@ export const onboardingAPI = {
 
     const orgId = localStorage.getItem('organization_id');
     if (orgId) {
-      headers['X-Organization-Id'] = orgId;
+      headers[`X-Organization-Id`] = orgId;
     }
 
-    const res = await fetch('http://localhost:3001/api/v1/onboarding', {
+    const res = await fetch(`${API_URL}/api/v1/onboarding`, {
       method: 'GET',
       headers,
     });
@@ -87,10 +89,10 @@ export const onboardingAPI = {
 
     const orgId = localStorage.getItem('organization_id');
     if (orgId) {
-      headers['X-Organization-Id'] = orgId;
+      headers[`X-Organization-Id`] = orgId;
     }
 
-    const res = await fetch('http://localhost:3001/api/v1/onboarding/complete_step', {
+    const res = await fetch(`${API_URL}/api/v1/onboarding/complete_step`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ step_name: stepName }),

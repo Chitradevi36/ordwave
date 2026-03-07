@@ -11,7 +11,8 @@ class Payment < ApplicationRecord
   has_many :allocations,      class_name: 'PaymentAllocation', dependent: :destroy
   has_many :sales_invoices,   through: :allocations
   has_many :advance_payments, foreign_key: :source_payment_id, dependent: :destroy
-  has_many :audit_logs,       as: :auditable, dependent: :nullify
+  include Auditable
+
 
   # ── Validations ──────────────────────────────────────────────────────────────
   validates :payment_number,  presence: true,

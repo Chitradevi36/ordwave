@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Warehouse, ArrowLeft, TrendingUp, TrendingDown, Package, Plus } from "l
 import Link from "next/link";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface BalanceSummary {
@@ -102,7 +103,7 @@ export default function ProductStockDetailPage() {
   useEffect(() => {
     if (!token || !orgId || !productId) return;
     const p = new URLSearchParams({ product_id: productId, ...(branchId && { branch_id: branchId }) });
-    fetch(`http://localhost:3001/api/v1/inventory/balances?${p}&per_page=1`, {
+    fetch(`${API_URL}/api/v1/inventory/balances?${p}&per_page=1`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -121,7 +122,7 @@ export default function ProductStockDetailPage() {
         ...(branchId && { branch_id: branchId }),
       });
       const res = await fetch(
-        `http://localhost:3001/api/v1/inventory/movements?${p}`,
+        `${API_URL}/api/v1/inventory/movements?${p}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
       );
       const json = await res.json();
@@ -139,7 +140,7 @@ export default function ProductStockDetailPage() {
     {
       key: "occurrence",
       header: "Date",
-      render: (_: unknown, m: StockMovement) => <span className="text-sm text-muted-foreground">{fmtDate(m.occurred_at)}</span>,
+      render: (_: unknown, m: StockMovement) => <span className="text-sm text-text-secondary">{fmtDate(m.occurred_at)}</span>,
     },
     {
       key: "movement_type",
@@ -167,7 +168,7 @@ export default function ProductStockDetailPage() {
       header: "Reference",
       render: (_: unknown, m: StockMovement) =>
         m.reference_type ? (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-text-secondary">
             {m.reference_type} #{m.reference_id}
           </span>
         ) : null,
@@ -175,7 +176,7 @@ export default function ProductStockDetailPage() {
     {
       key: "actor",
       header: "By",
-      render: (_: unknown, m: StockMovement) => <span className="text-xs text-muted-foreground">{m.created_by_name ?? "—"}</span>,
+      render: (_: unknown, m: StockMovement) => <span className="text-xs text-text-secondary">{m.created_by_name ?? "—"}</span>,
     },
   ];
 
@@ -186,12 +187,11 @@ export default function ProductStockDetailPage() {
   ];
 
   return (
-    <AppShell>
-      <Breadcrumb items={[
-        { label: "Inventory", href: "/inventory/stock" },
-        { label: "Stock Overview", href: "/inventory/stock" },
-        { label: balance?.product_name ?? "Product" },
-      ]} />
+    <AppShell breadcrumbs={[
+      { label: "Inventory",     href: "/inventory" },
+      { label: "Stock",         href: "/inventory/stock" },
+      { label: balance?.product_name ?? "Product" },
+    ]}>
       <PageHeader
         title={balance?.product_name ?? "Product Stock Detail"}
         subtitle={balance ? `SKU: ${balance.sku} · ${balance.branch_name}` : "Loading…"}
@@ -211,7 +211,7 @@ export default function ProductStockDetailPage() {
               "px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors",
               activeTab === t.key
                 ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             )}
           >
             {t.label}
@@ -229,11 +229,11 @@ export default function ProductStockDetailPage() {
             {
               label: "Min Threshold",
               value: balance.min_qty_threshold != null ? fmtQty(balance.min_qty_threshold) : "—",
-              color: balance.low_stock ? "text-destructive" : "text-muted-foreground",
+              color: balance.low_stock ? "text-destructive" : "text-text-secondary",
             },
           ].map((card) => (
             <div key={card.label} className="rounded-lg border bg-card p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{card.label}</p>
+              <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">{card.label}</p>
               <p className={cn("text-2xl font-bold font-mono", card.color)}>{card.value}</p>
             </div>
           ))}
@@ -255,7 +255,7 @@ export default function ProductStockDetailPage() {
             emptyMessage="No movements recorded for this product."
           />
           {mvTotalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+            <div className="mt-4 flex items-center justify-between text-sm text-text-secondary">
               <span>Page {mvPage} of {mvTotalPages}</span>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" disabled={mvPage <= 1} onClick={() => setMvPage((p) => p - 1)}>Previous</Button>
@@ -268,7 +268,7 @@ export default function ProductStockDetailPage() {
 
       {/* ── Reservations Tab ── */}
       {activeTab === "reservations" && (
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-text-secondary">
           {reservations.length === 0
             ? "No active reservations."
             : reservations.map((r) => (

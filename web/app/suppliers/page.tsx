@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, X, Pencil, Ban, CheckCircle2 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Supplier {
@@ -57,7 +58,7 @@ export default function SuppliersPage() {
       if (search) qs.set("q",      search);
       if (status) qs.set("status", status);
 
-      const res  = await fetch(`http://localhost:3001/api/v1/suppliers?${qs}`, {
+      const res  = await fetch(`${API_URL}/api/v1/suppliers?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -77,7 +78,7 @@ export default function SuppliersPage() {
     if (!token || !orgId) return;
     setActionLoading(id);
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/suppliers/${id}/${action}`, {
+      const res = await fetch(`${API_URL}/api/v1/suppliers/${id}/${action}`, {
         method:  "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });

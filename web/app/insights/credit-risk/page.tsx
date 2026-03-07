@@ -1,14 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { AppShell, PageHeader } from "@/components/layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { RefreshCw, AlertTriangle, ShieldAlert, Eye, ChevronRight } from "lucide-react";
-
-const API = "http://localhost:3001";
+import { API_URL } from "@/lib/api/client";
+import { RefreshCw, AlertTriangle, ShieldAlert, Eye } from "lucide-react";
 
 function fmt(n: number | undefined | null, prefix = "") {
   if (n == null) return "—";
@@ -83,7 +81,7 @@ export default function InsightsCreditRiskPage() {
     try {
       const qp = new URLSearchParams();
       if (branchId) qp.set("branch_id", branchId);
-      const res = await fetch(`${API}/api/v1/analytics/credit_risk?${qp}`, {
+      const res = await fetch(`${API_URL}/api/v1/analytics/credit_risk?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       if (!res.ok) throw new Error("Failed to load credit risk data");
@@ -120,12 +118,10 @@ export default function InsightsCreditRiskPage() {
   ];
 
   return (
-    <AppShell title="Credit Risk">
-      <nav className="flex items-center gap-1.5 mb-4 text-sm">
-        <Link href="/insights" className="text-text-secondary hover:text-text-primary transition-colors">Insights</Link>
-        <ChevronRight className="h-3.5 w-3.5 text-text-secondary" />
-        <span className="font-medium text-text-primary">Credit Risk</span>
-      </nav>
+    <AppShell title="Credit Risk" breadcrumbs={[
+      { label: "Insights", href: "/insights" },
+      { label: "Credit Risk" },
+    ]}>
       <PageHeader
         title="Credit Risk"
         description="Credit accounts with overdue, blocked or watchlist status."

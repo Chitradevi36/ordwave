@@ -22,9 +22,18 @@ module Invoice
       order  = stop.sales_order
       branch = order.branch
 
-      # Build delivered_lines from sales_order_lines.delivered_qty
+      # Build delivered_lines from sales_order_lines.
+      # If delivered_qty was never stamped (driver marked stop delivered without
+      # per-line data), fall back to the ordered qty for fully-delivered stops.
       delivered_lines = order.lines.map do |sol|
-        invoiceable_qty = sol.delivered_qty.to_d - sol.invoiced_qty.to_d
+        effective_delivered = sol.delivered_qty.to_d
+        # Fallback: treat ordered qty as delivered when stop is fully delivered
+        # and the line never received an explicit delivered_qty
+        if effective_delivered.zero? && stop.delivered?
+          effective_delivered = sol.qty.to_d
+        end
+
+        invoiceable_qty = effective_delivered - sol.invoiced_qty.to_d
         next if invoiceable_qty <= 0
 
         {

@@ -1,16 +1,17 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, AlertTriangle, SlidersHorizontal, Plus } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface InventoryBalance {
@@ -53,7 +54,7 @@ export default function StockOverviewPage() {
   // Fetch branches for filter
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch("http://localhost:3001/api/v1/branches?per_page=200", {
+    fetch(`${API_URL}/api/v1/branches?per_page=200`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -73,7 +74,7 @@ export default function StockOverviewPage() {
       });
 
       const res = await fetch(
-        `http://localhost:3001/api/v1/inventory/balances?${params}`,
+        `${API_URL}/api/v1/inventory/balances?${params}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
       );
       const json = await res.json();
@@ -106,7 +107,7 @@ export default function StockOverviewPage() {
           >
             {row.product_name}
           </Link>
-          <p className="text-xs text-muted-foreground">{row.sku}</p>
+          <p className="text-xs text-text-secondary">{row.sku}</p>
         </div>
       ),
     },
@@ -146,7 +147,6 @@ export default function StockOverviewPage() {
 
   return (
     <AppShell>
-      <Breadcrumb items={[{ label: "Inventory", href: "/inventory/stock" }, { label: "Stock Overview" }]} />
       <PageHeader
         title="Stock Overview"
         description={`${totalCount} inventory record${totalCount !== 1 ? "s" : ""}`}
@@ -169,7 +169,7 @@ export default function StockOverviewPage() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />
           <Input
             className="pl-8 w-56"
             placeholder="Search product or SKU…"
@@ -199,7 +199,7 @@ export default function StockOverviewPage() {
         onRowClick={(row) => router.push(`/inventory/stock/${row.product_id}?branch_id=${row.branch_id}`)}
       />
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+        <div className="mt-4 flex items-center justify-between text-sm text-text-secondary">
           <span>Page {page} of {totalPages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>

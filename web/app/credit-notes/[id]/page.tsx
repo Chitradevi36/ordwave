@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -153,17 +153,15 @@ export default function CreditNoteDetailPage() {
     );
   }
 
-  const breadcrumbs: BreadcrumbItem[] = [
-    { label: "Credit Notes", href: "/credit-notes" },
-    { label: cn.credit_note_number },
-  ];
-
   const isVoidable = cn.status === "issued";
 
   return (
-    <AppShell>
+    <AppShell breadcrumbs={[
+      { label: "Finance",      href: "/finance" },
+      { label: "Credit Notes", href: "/credit-notes" },
+      { label: cn.credit_note_number },
+    ]}>
       <div className="max-w-4xl space-y-6">
-        <Breadcrumb items={breadcrumbs} />
 
         <PageHeader
           title={cn.credit_note_number}
@@ -358,7 +356,7 @@ export default function CreditNoteDetailPage() {
           <div>
             <label className="block text-sm font-medium mb-1">Reason <span className="text-red-500">*</span></label>
             <textarea
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none"
               rows={3}
               value={voidReason}
               onChange={(e) => setVoidReason(e.target.value)}

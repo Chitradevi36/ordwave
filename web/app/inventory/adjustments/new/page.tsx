@@ -1,15 +1,16 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Product { id: number; name: string; sku: string; }
@@ -47,9 +48,9 @@ export default function NewAdjustmentPage() {
     if (!token || !orgId) return;
     const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
     Promise.all([
-      fetch("http://localhost:3001/api/v1/products?per_page=500&status=active", { headers })
+      fetch(`${API_URL}/api/v1/products?per_page=500&status=active`, { headers })
         .then((r) => r.json()).then((j) => setProducts(j.data ?? [])),
-      fetch("http://localhost:3001/api/v1/branches?per_page=200", { headers })
+      fetch(`${API_URL}/api/v1/branches?per_page=200`, { headers })
         .then((r) => r.json()).then((j) => setBranches(j.data ?? [])),
     ]);
   }, [token, orgId]);
@@ -68,7 +69,7 @@ export default function NewAdjustmentPage() {
     setErrors([]);
 
     try {
-      const res = await fetch("http://localhost:3001/api/v1/inventory/adjustments", {
+      const res = await fetch(`${API_URL}/api/v1/inventory/adjustments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -102,12 +103,10 @@ export default function NewAdjustmentPage() {
   };
 
   return (
-    <AppShell>
-      <Breadcrumb items={[
-        { label: "Inventory", href: "/inventory/stock" },
-        { label: "Stock Overview", href: "/inventory/stock" },
-        { label: "New Adjustment" },
-      ]} />
+    <AppShell breadcrumbs={[
+      { label: "Inventory", href: "/inventory" },
+      { label: "New Adjustment" },
+    ]}>
       <PageHeader
         title="New Stock Adjustment"
         description="Manually add or remove inventory"
@@ -172,7 +171,7 @@ export default function NewAdjustmentPage() {
                       ? d === "in"
                         ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                         : "border-rose-500 bg-rose-50 text-rose-700"
-                      : "border-input bg-background text-muted-foreground hover:bg-accent"
+                      : "border-input bg-background text-text-secondary hover:bg-accent"
                   )}
                 >
                   {d === "in" ? "➕ Stock In" : "➖ Stock Out"}

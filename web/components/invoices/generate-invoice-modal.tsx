@@ -155,12 +155,12 @@ export function GenerateInvoiceModal({
     <Modal open={open} onClose={onClose} title="Generate Invoice from Order">
       <div className="space-y-4 min-w-[560px]">
         {invoiceableLines.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-6 text-center">
+          <div className="text-sm text-text-secondary py-6 text-center">
             All delivered quantities have already been invoiced.
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-secondary">
               Adjust quantities if you want to create a partial invoice. Maximum is the
               uninvoiced delivered quantity per line.
             </p>
@@ -171,7 +171,7 @@ export function GenerateInvoiceModal({
                 <thead className="bg-muted/40">
                   <tr>
                     {["Product", "Rate", "Max Qty", "Invoice Qty", "Taxable", "GST"].map((h) => (
-                      <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
+                      <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-text-secondary">
                         {h}
                       </th>
                     ))}
@@ -186,10 +186,10 @@ export function GenerateInvoiceModal({
                       <tr key={l.id}>
                         <td className="px-3 py-2">
                           <div className="font-medium">{l.product_name}</div>
-                          <div className="text-xs text-muted-foreground">{l.product_sku}</div>
+                          <div className="text-xs text-text-secondary">{l.product_sku}</div>
                         </td>
                         <td className="px-3 py-2 text-right">{fmt(l.unit_price)}</td>
-                        <td className="px-3 py-2 text-center text-muted-foreground">{maxQty}</td>
+                        <td className="px-3 py-2 text-center text-text-secondary">{maxQty}</td>
                         <td className="px-3 py-2">
                           <Input
                             type="number"
@@ -214,11 +214,11 @@ export function GenerateInvoiceModal({
 
             {/* Totals preview */}
             <div className="bg-muted/30 rounded-lg p-3 text-sm space-y-1">
-              <div className="flex justify-between text-muted-foreground">
+              <div className="flex justify-between text-text-secondary">
                 <span>Subtotal (Taxable)</span>
                 <span>{fmt(totals.subtotal)}</span>
               </div>
-              <div className="flex justify-between text-muted-foreground">
+              <div className="flex justify-between text-text-secondary">
                 <span>Total Tax</span>
                 <span>{fmt(totals.taxTotal)}</span>
               </div>

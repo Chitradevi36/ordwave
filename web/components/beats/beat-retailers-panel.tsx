@@ -113,9 +113,9 @@ function CustomerSearch({ token, orgId, branchId, excludeIds, onAdd }: CustomerS
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-secondary pointer-events-none" />
         {loading && (
-          <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground animate-spin" />
+          <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-secondary animate-spin" />
         )}
         <input
           type="text"
@@ -137,7 +137,7 @@ function CustomerSearch({ token, orgId, branchId, excludeIds, onAdd }: CustomerS
                 onMouseDown={() => handleSelect(c)}
                 className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2"
               >
-                <span className="font-mono text-xs text-muted-foreground">{c.code}</span>
+                <span className="font-mono text-xs text-text-secondary">{c.code}</span>
                 <span>{c.name}</span>
               </button>
             </li>
@@ -146,7 +146,7 @@ function CustomerSearch({ token, orgId, branchId, excludeIds, onAdd }: CustomerS
       )}
 
       {open && !loading && results.length === 0 && query.trim() && (
-        <div className="absolute z-10 mt-1 w-full bg-background border border-border rounded-md shadow-lg px-3 py-2 text-sm text-muted-foreground">
+        <div className="absolute z-10 mt-1 w-full bg-background border border-border rounded-md shadow-lg px-3 py-2 text-sm text-text-secondary">
           No matching customers
         </div>
       )}
@@ -296,7 +296,7 @@ export function BeatRetailersPanel({
 
   if (schedules.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground text-sm">
+      <div className="py-12 text-center text-text-secondary text-sm">
         No schedules configured yet. Add a schedule from the Schedule tab first.
       </div>
     );
@@ -308,7 +308,7 @@ export function BeatRetailersPanel({
     <div className="space-y-4">
       {/* Schedule selector */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground mr-1">Schedule:</span>
+        <span className="text-sm text-text-secondary mr-1">Schedule:</span>
         {schedules.map((s) => (
           <button
             key={s.id}
@@ -333,7 +333,7 @@ export function BeatRetailersPanel({
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-secondary">
           {selectedSched
             ? `${rows.length} retailer${rows.length !== 1 ? "s" : ""} · ${selectedSched.weekday_name}`
             : ""}
@@ -356,18 +356,18 @@ export function BeatRetailersPanel({
       {/* Retailer list */}
       {loading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <Loader2 className="h-5 w-5 animate-spin text-text-secondary" />
         </div>
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">
           {rows.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="py-8 text-center text-sm text-text-secondary">
               No retailers assigned. Use the search below to add customers.
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-muted/50 text-left text-muted-foreground text-xs">
+                <tr className="bg-muted/50 text-left text-text-secondary text-xs">
                   <th className="px-3 py-2 w-10">#</th>
                   <th className="px-3 py-2">Customer</th>
                   <th className="px-3 py-2 w-40">Visit Override</th>
@@ -378,12 +378,12 @@ export function BeatRetailersPanel({
               <tbody className="divide-y divide-border">
                 {rows.map((row, idx) => (
                   <tr key={row.customer_id} className="bg-background hover:bg-muted/30 transition-colors">
-                    <td className="px-3 py-2.5 text-muted-foreground font-mono text-xs">
+                    <td className="px-3 py-2.5 text-text-secondary font-mono text-xs">
                       {idx + 1}
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="font-medium">{row.customer_name}</div>
-                      <div className="text-xs text-muted-foreground font-mono">{row.customer_code}</div>
+                      <div className="text-xs text-text-secondary font-mono">{row.customer_code}</div>
                     </td>
                     <td className="px-3 py-2.5">
                       <select
@@ -451,7 +451,7 @@ export function BeatRetailersPanel({
             onAdd={addCustomer}
           />
         </div>
-        <div className="text-xs text-muted-foreground pt-2.5 whitespace-nowrap">
+        <div className="text-xs text-text-secondary pt-2.5 whitespace-nowrap">
           <Plus className="h-3.5 w-3.5 inline mr-0.5" />
           type to search
         </div>

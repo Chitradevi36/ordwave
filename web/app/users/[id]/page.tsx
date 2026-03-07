@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Mail, Phone, UserX } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 interface UserDetail {
   id: number;
@@ -52,7 +53,7 @@ export default function UserDetailPage() {
       if (!token || !orgId) return;
       setLoading(true);
       try {
-        const res  = await fetch(`http://localhost:3001/api/v1/users/${userId}`, {
+        const res  = await fetch(`${API_URL}/api/v1/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         });
         const json = await res.json();
@@ -68,7 +69,7 @@ export default function UserDetailPage() {
     if (!confirm("Deactivate this user from your organization?")) return;
     setDeactivating(true);
     try {
-      await fetch(`http://localhost:3001/api/v1/users/${userId}/deactivate`, {
+      await fetch(`${API_URL}/api/v1/users/${userId}/deactivate`, {
         method:  "POST",
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
@@ -80,7 +81,10 @@ export default function UserDetailPage() {
 
   if (loading) {
     return (
-      <AppShell title="Team">
+      <AppShell title="Team" breadcrumbs={[
+        { label: "Team", href: "/users" },
+        { label: "User" },
+      ]}>
         <div className="flex items-center justify-center h-48">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
         </div>
@@ -90,14 +94,20 @@ export default function UserDetailPage() {
 
   if (!user) {
     return (
-      <AppShell title="Team">
+      <AppShell title="Team" breadcrumbs={[
+        { label: "Team", href: "/users" },
+        { label: "User" },
+      ]}>
         <p className="text-text-secondary">User not found.</p>
       </AppShell>
     );
   }
 
   return (
-    <AppShell title="Team">
+    <AppShell title="Team" breadcrumbs={[
+      { label: "Team", href: "/users" },
+      { label: user.full_name },
+    ]}>
       <div className="mb-4">
         <button
           onClick={() => router.push("/users")}

@@ -1,15 +1,14 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { API_URL } from "@/lib/api/client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Search } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
-
-const API = "http://localhost:3001/api/v1";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Branch  { id: number; name: string; }
@@ -59,7 +58,7 @@ export default function NewTransferPage() {
   // Load branches
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch(`${API}/branches?per_page=200`, {
+    fetch(`${API_URL}/api/v1/branches?per_page=200`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     }).then((r) => r.json()).then((j) => setBranches(j.data ?? []));
   }, [token, orgId]);
@@ -68,7 +67,7 @@ export default function NewTransferPage() {
   const searchProducts = useCallback(async (query: string, lineKey: string) => {
     if (query.length < 2 || !token || !orgId) return;
     const p = new URLSearchParams({ q: query, per_page: "20" });
-    const res = await fetch(`${API}/products?${p}`,
+    const res = await fetch(`${API_URL}/api/v1/products?${p}`,
       { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } });
     const json = await res.json();
     setLines((prev) => prev.map((l) =>
@@ -102,7 +101,7 @@ export default function NewTransferPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API}/stock_transfers`, {
+      const res = await fetch(`${API_URL}/api/v1/stock_transfers`, {
         method:  "POST",
         headers: {
           "Content-Type": "application/json",
@@ -123,12 +122,10 @@ export default function NewTransferPage() {
   };
 
   return (
-    <AppShell>
-      <Breadcrumb items={[
-        { label: "Inventory", href: "/inventory/stock" },
-        { label: "Transfers", href: "/inventory/transfers" },
-        { label: "New Transfer" },
-      ]} />
+    <AppShell breadcrumbs={[
+      { label: "Inventory Transfers", href: "/inventory/transfers" },
+      { label: "New Transfer" },
+    ]}>
 
       <PageHeader
         title="New Stock Transfer"
@@ -198,12 +195,12 @@ export default function NewTransferPage() {
           <div className="space-y-3">
             {lines.map((line, idx) => (
               <div key={line._key} className="flex items-start gap-2 p-3 border rounded-md bg-background">
-                <span className="text-xs text-muted-foreground pt-2 w-5 shrink-0">{idx + 1}.</span>
+                <span className="text-xs text-text-secondary pt-2 w-5 shrink-0">{idx + 1}.</span>
 
                 {/* Product search */}
                 <div className="relative flex-1">
                   <div className="flex items-center gap-2">
-                    <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <Search className="h-3.5 w-3.5 text-text-secondary shrink-0" />
                     <Input
                       className="flex-1 h-8 text-sm"
                       placeholder="Search product or SKU…"
@@ -228,7 +225,7 @@ export default function NewTransferPage() {
                           })}
                         >
                           <span className="font-medium">{p.name}</span>
-                          <span className="ml-2 text-xs text-muted-foreground">{p.sku}</span>
+                          <span className="ml-2 text-xs text-text-secondary">{p.sku}</span>
                         </button>
                       ))}
                     </div>

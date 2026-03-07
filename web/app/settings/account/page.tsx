@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import {
   User, Lock, Building2, CheckCircle2, AlertCircle, Eye, EyeOff, ShieldCheck,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface OrgSummary {
@@ -164,7 +165,7 @@ export default function AccountSettingsPage() {
     if (!token) return;
     setProfileLoading(true);
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/profile", {
+      const res  = await fetch(`${API_URL}/api/v1/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -190,7 +191,7 @@ export default function AccountSettingsPage() {
     setProfileSaving(true);
     setProfileMsg(null);
     try {
-      const res = await fetch("http://localhost:3001/api/v1/profile", {
+      const res = await fetch(`${API_URL}/api/v1/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -232,7 +233,7 @@ export default function AccountSettingsPage() {
     setPwSaving(true);
     setPwMsg(null);
     try {
-      const res = await fetch("http://localhost:3001/api/v1/profile/change_password", {
+      const res = await fetch(`${API_URL}/api/v1/profile/change_password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -268,10 +269,6 @@ export default function AccountSettingsPage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <AppShell title="Account Settings">
-      <Breadcrumb items={[
-        { label: "Settings", href: "/settings" },
-        { label: "Account" },
-      ]} />
 
       <PageHeader
         title="Account Settings"

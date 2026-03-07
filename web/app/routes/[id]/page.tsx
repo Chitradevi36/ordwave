@@ -13,10 +13,15 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import {
   ArrowLeft, MapPin, Users, CalendarCheck, Pencil, X,
-  Check, Trash2, UserPlus, Search,
+  Check, Trash2, UserPlus, Search, Truck, User as UserIcon,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+interface RouteVehicle { id: number; registration_number: string; vehicle_type: string }
+interface RouteDriver  { id: number; name: string }
+interface VehicleOption { id: number; registration_number: string; vehicle_type: string }
+interface DriverOption  { id: number; full_name: string }
+
 interface Route {
   id: number;
   name: string;
@@ -24,6 +29,8 @@ interface Route {
   active: boolean;
   branch_id: number;
   customers_count: number;
+  vehicle?: RouteVehicle | null;
+  default_driver?: RouteDriver | null;
 }
 
 interface Customer {
@@ -165,6 +172,11 @@ export default function RouteDetailPage() {
   const [editCode, setEditCode]     = useState("");
   const [editActive, setEditActive] = useState(true);
   const [saving, setSaving]         = useState(false);
+  const [editVehicleId, setEditVehicleId] = useState<number | null>(null);
+  const [editDriverId, setEditDriverId]   = useState<number | null>(null);
+  const [vehicles, setVehicles]           = useState<VehicleOption[]>([]);
+  const [drivers, setDrivers]             = useState<DriverOption[]>([]);
+  const [loadingOpts, setLoadingOpts]     = useState(false);
 
   const [customers, setCustomers]     = useState<Customer[]>([]);
   const [custLoading, setCustLoading] = useState(false);
@@ -200,6 +212,24 @@ export default function RouteDetailPage() {
   }, [id, orgId, token]);
 
   useEffect(() => { fetchRoute(); }, [fetchRoute]);
+
+  // ── Fetch vehicle + driver options (loaded on edit open) ────────────────
+  const fetchAssignmentOptions = useCallback(async () => {
+    if (!orgId) return;
+    setLoadingOpts(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
+      const [veRes, drRes] = await Promise.all([
+        fetch(`/api/v1/vehicles?status=active&per_page=100`, { headers }),
+        fetch(`/api/v1/users?role_name=driver&status=active&per_page=100`, { headers }),
+      ]);
+      const [veData, drData] = await Promise.all([veRes.json(), drRes.json()]);
+      setVehicles(veData.data ?? []);
+      setDrivers(drData.data ?? []);
+    } finally {
+      setLoadingOpts(false);
+    }
+  }, [orgId, token]);
 
   // ── Fetch customers (lazy) ───────────────────────────────────────────────
   const fetchCustomers = useCallback(async () => {
@@ -252,7 +282,8 @@ export default function RouteDetailPage() {
           Authorization: `Bearer ${token}`,
           "X-Organization-Id": orgId,
         },
-        body: JSON.stringify({ route: { name: editName, code: editCode.toUpperCase(), active: editActive } }),
+        body: JSON.stringify({ route: { name: editName, code: editCode.toUpperCase(), active: editActive,
+          vehicle_id: editVehicleId ?? null, default_driver_id: editDriverId ?? null } }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -503,7 +534,10 @@ export default function RouteDetailPage() {
   ];
 
   return (
-    <AppShell>
+    <AppShell breadcrumbs={[
+      { label: "Routes", href: "/routes" },
+      { label: route.name || route.code || "Route" },
+    ]}>
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${
@@ -553,6 +587,45 @@ export default function RouteDetailPage() {
                   <span className="text-sm font-medium text-text-primary">Active</span>
                 </label>
               </div>
+              {/* ── Delivery assignment ─────────────────────────────────── */}
+              <div className="border-t border-border pt-3 mt-1">
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5" /> Delivery Assignment
+                  {loadingOpts && <span className="ml-1 text-xs font-normal normal-case">(loading…)</span>}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-text-primary mb-1.5 block">Vehicle</label>
+                    <select
+                      value={editVehicleId ?? ""}
+                      onChange={(e) => setEditVehicleId(e.target.value ? Number(e.target.value) : null)}
+                      disabled={loadingOpts}
+                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+                    >
+                      <option value="">— No vehicle —</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.registration_number} ({v.vehicle_type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-text-primary mb-1.5 block">Default Driver</label>
+                    <select
+                      value={editDriverId ?? ""}
+                      onChange={(e) => setEditDriverId(e.target.value ? Number(e.target.value) : null)}
+                      disabled={loadingOpts}
+                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+                    >
+                      <option value="">— No driver —</option>
+                      {drivers.map((d) => (
+                        <option key={d.id} value={d.id}>{d.full_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center gap-2 pt-1">
                 <Button size="sm" onClick={saveRoute} isLoading={saving} disabled={saving}>
                   <Check className="mr-1.5 h-3.5 w-3.5" /> Save
@@ -583,6 +656,23 @@ export default function RouteDetailPage() {
                     <Users className="h-3.5 w-3.5" />
                     {route.customers_count} customer{route.customers_count !== 1 ? "s" : ""}
                   </p>
+                  <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
+                    <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+                      <Truck className="h-3.5 w-3.5 shrink-0" />
+                      {route.vehicle ? (
+                        <>
+                          <span className="font-mono font-semibold text-text-primary">{route.vehicle.registration_number}</span>
+                          <span className="capitalize text-xs text-text-secondary">{route.vehicle.vehicle_type}</span>
+                        </>
+                      ) : <span className="italic text-xs">No vehicle assigned</span>}
+                    </span>
+                    <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+                      <UserIcon className="h-3.5 w-3.5 shrink-0" />
+                      {route.default_driver ? (
+                        <span className="font-medium text-text-primary">{route.default_driver.name}</span>
+                      ) : <span className="italic text-xs">No driver assigned</span>}
+                    </span>
+                  </div>
                 </div>
               </div>
               <Button
@@ -592,7 +682,10 @@ export default function RouteDetailPage() {
                   setEditName(route.name);
                   setEditCode(route.code);
                   setEditActive(route.active);
+                  setEditVehicleId(route.vehicle?.id ?? null);
+                  setEditDriverId(route.default_driver?.id ?? null);
                   setEditing(true);
+                  void fetchAssignmentOptions();
                 }}
               >
                 <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
@@ -616,30 +709,3 @@ export default function RouteDetailPage() {
 }
 
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Route {
-  id: number;
-  name: string;
-  code: string;
-  active: boolean;
-  branch_id: number;
-  customers_count: number;
-}
-
-interface Customer {
-  id: number;
-  name: string;
-  code: string;
-  channel: string | null;
-  tier: string | null;
-  active: boolean;
-}
-
-interface Beat {
-  id: number;
-  name: string;
-  code: string;
-  active: boolean;
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────

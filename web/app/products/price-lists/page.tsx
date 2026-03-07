@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Plus, X, Search, Pencil, List } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import Link from "next/link";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Sub-nav ──────────────────────────────────────────────────────────────────
 function ProductsSubNav({ active }: { active: "products" | "categories" | "uom" | "price-lists" }) {
@@ -98,7 +99,7 @@ function NewPriceListModal({
       if (form.valid_from) body.valid_from = form.valid_from;
       if (form.valid_to)   body.valid_to   = form.valid_to;
 
-      const res  = await fetch("http://localhost:3001/api/v1/price_lists", {
+      const res  = await fetch(`${API_URL}/api/v1/price_lists`, {
         method:  "POST",
         headers: {
           "Content-Type": "application/json",
@@ -236,7 +237,7 @@ export default function PriceListsPage() {
       if (listType) qs.set("list_type", listType);
       if (branchId) qs.set("branch_id", branchId);
 
-      const res  = await fetch(`http://localhost:3001/api/v1/price_lists?${qs}`, {
+      const res  = await fetch(`${API_URL}/api/v1/price_lists?${qs}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
@@ -257,8 +258,7 @@ export default function PriceListsPage() {
   useEffect(() => { fetchPriceLists(); }, [fetchPriceLists]);
 
   return (
-    <AppShell title="Price Lists">
-      <Breadcrumb items={[{ label: "Products", href: "/products" }, { label: "Price Lists" }]} />
+    <AppShell>
       <PageHeader
         title="Price Lists"
         description={totalCount > 0 ? `${totalCount} lists` : undefined}

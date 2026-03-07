@@ -1,10 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, PackagePlus, Plus, Clock3, ArrowRight, List } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import {
@@ -14,6 +13,7 @@ import {
   type ProductFormData,
 } from "../_components/ProductForm";
 import { AssignPriceModal } from "../_components/AssignPriceModal";
+import { API_URL } from "@/lib/api/client";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -59,9 +59,9 @@ export default function NewProductPage() {
     if (!token || !orgId) return;
     const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
     Promise.all([
-      fetch(`http://localhost:3001/api/v1/product_categories?per_page=100`, { headers }).then((r) => r.json()),
-      fetch(`http://localhost:3001/api/v1/units_of_measure?per_page=100`,   { headers }).then((r) => r.json()),
-      fetch(`http://localhost:3001/api/v1/profile`,                         { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/product_categories?per_page=100`, { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/units_of_measure?per_page=100`,   { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/profile`,                         { headers }).then((r) => r.json()),
     ]).then(([cats, uomList, profile]) => {
       if (cats.data)    setCategories(cats.data);
       if (uomList.data) setUoms(uomList.data);
@@ -78,7 +78,7 @@ export default function NewProductPage() {
   // Call backend SKU generator
   const handleGenerateSku = useCallback(async (): Promise<string> => {
     if (!token || !orgId) return "";
-    const res  = await fetch(`http://localhost:3001/api/v1/products/generate_sku`, {
+    const res  = await fetch(`${API_URL}/api/v1/products/generate_sku`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
     const json = await res.json();
@@ -90,7 +90,7 @@ export default function NewProductPage() {
     setLoading(true);
     setErrors([]);
     try {
-      const res  = await fetch("http://localhost:3001/api/v1/products", {
+      const res  = await fetch(`${API_URL}/api/v1/products`, {
         method:  "POST",
         headers: {
           "Content-Type":      "application/json",
@@ -121,8 +121,11 @@ export default function NewProductPage() {
   // ── Post-create success panel ───────────────────────────────────────────────
   if (createdProductId) {
     return (
-      <AppShell title="Products">
-        <Breadcrumb items={[{ label: "Products", href: "/products" }, { label: "Add Product" }]} />
+      <AppShell breadcrumbs={[
+        { label: "Catalog", href: "/catalog" },
+        { label: "Products", href: "/products" },
+        { label: "Add Product" },
+      ]}>
         <PageHeader title="Product Created" description="Next, assign a selling price to start selling." />
 
         <div className="max-w-2xl">
@@ -191,11 +194,11 @@ export default function NewProductPage() {
 
   // ── Create form ────────────────────────────────────────────────────────────
   return (
-    <AppShell title="Products">
-      <Breadcrumb items={[
+    <AppShell breadcrumbs={[
+        { label: "Catalog", href: "/catalog" },
         { label: "Products", href: "/products" },
         { label: "Add Product" },
-      ]} />
+      ]}>
       <PageHeader title="Add Product" description="Create a new product in your catalogue" />
 
       <div className="max-w-2xl">

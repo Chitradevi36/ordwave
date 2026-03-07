@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { Plus, Search, Pencil, Trash2, X, AlertTriangle, Tag } from "lucide-react";
 import Link from "next/link";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Category {
@@ -81,8 +82,8 @@ function CategoryModal({
     setLoading(true); setErrors([]);
 
     const url    = isEdit
-      ? `http://localhost:3001/api/v1/product_categories/${existing!.id}`
-      : "http://localhost:3001/api/v1/product_categories";
+      ? `${API_URL}/api/v1/product_categories/${existing!.id}`
+      : `${API_URL}/api/v1/product_categories`;
     const method = isEdit ? "PATCH" : "POST";
 
     try {
@@ -203,7 +204,7 @@ function DeleteModal({
     setLoading(true); setError("");
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/product_categories/${category.id}`,
+        `${API_URL}/api/v1/product_categories/${category.id}`,
         {
           method:  "DELETE",
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
@@ -280,7 +281,7 @@ export default function CategoriesPage() {
       const params = new URLSearchParams({ page: String(page), per_page: "25" });
       if (search) params.set("q", search);
       const res  = await fetch(
-        `http://localhost:3001/api/v1/product_categories?${params}`,
+        `${API_URL}/api/v1/product_categories?${params}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } },
       );
       const json = await res.json();
@@ -380,10 +381,6 @@ export default function CategoriesPage() {
 
   return (
     <AppShell title="Categories">
-      <Breadcrumb items={[
-        { label: "Products", href: "/products" },
-        { label: "Categories" },
-      ]} />
       <PageHeader
         title="Product Categories"
         description={`${totalCount} categor${totalCount !== 1 ? "ies" : "y"} · organise your catalogue`}

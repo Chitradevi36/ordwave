@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -11,8 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AlertTriangle, XCircle, TrendingDown, Search } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
-
-const API = "http://localhost:3001/api/v1";
+import { API_URL } from "@/lib/api/client";
 
 interface ExceptionStop {
   id: number;
@@ -78,7 +77,7 @@ export default function DeliveryExceptionsPage() {
       if (fromDate)      qp.set("from_date",       fromDate);
       if (toDate)        qp.set("to_date",         toDate);
 
-      const res  = await fetch(`${API}/delivery_exceptions?${qp}`, { headers: authHeaders });
+      const res  = await fetch(`${API_URL}/api/v1/delivery_exceptions?${qp}`, { headers: authHeaders });
       const json = await res.json();
       if (res.ok) { setExceptions(json.data ?? []); setMeta(json.meta ?? null); }
     } finally {
@@ -110,7 +109,7 @@ export default function DeliveryExceptionsPage() {
         ? Object.entries(summary.by_code).sort(([, a], [, b]) => b - a)[0]?.[0]?.replace(/_/g, " ") ?? "—"
         : "—",
       icon:  TrendingDown,
-      color: "text-slate-500",
+      color: "text-text-secondary",
     },
   ];
 
@@ -121,7 +120,7 @@ export default function DeliveryExceptionsPage() {
       render: (_cell, e) => (
         <button
           onClick={() => router.push(`/delivery/${e.trip.id}`)}
-          className="font-mono text-sm text-indigo-600 hover:underline"
+          className="font-mono text-sm text-accent hover:underline"
         >
           {e.trip.trip_number}
         </button>
@@ -138,7 +137,7 @@ export default function DeliveryExceptionsPage() {
       render: (_cell, e) => (
         <div>
           <p className="text-sm font-medium">{e.order.customer_name}</p>
-          <p className="font-mono text-xs text-slate-400">{e.order.order_number}</p>
+          <p className="font-mono text-xs text-text-secondary">{e.order.order_number}</p>
         </div>
       ),
     },
@@ -164,7 +163,7 @@ export default function DeliveryExceptionsPage() {
       key: "delivery_notes",
       header: "Notes",
       render: (_cell, e) => (
-        <span className="text-xs text-slate-500 line-clamp-1">
+        <span className="text-xs text-text-secondary line-clamp-1">
           {e.delivery_notes ?? "—"}
         </span>
       ),
@@ -190,11 +189,11 @@ export default function DeliveryExceptionsPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {statCards.map((s) => (
-          <Card key={s.label} className="border border-slate-200 shadow-none">
+          <Card key={s.label} className="border border-border shadow-none">
             <CardContent className="flex items-center gap-3 py-4 px-4">
               <s.icon className={`h-5 w-5 shrink-0 ${s.color}`} />
               <div>
-                <p className="text-xs text-slate-500">{s.label}</p>
+                <p className="text-xs text-text-secondary">{s.label}</p>
                 <p className="text-xl font-bold tabular-nums">{s.value}</p>
               </div>
             </CardContent>
@@ -204,27 +203,29 @@ export default function DeliveryExceptionsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <Input
-          placeholder="Exception code…"
-          value={exceptionCode}
-          onChange={(e) => setExceptionCode(e.target.value)}
-          className="w-48"
-          prefix={<Search className="h-4 w-4 text-slate-400" />}
-        />
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+          <Input
+            placeholder="Exception code…"
+            value={exceptionCode}
+            onChange={(e) => setExceptionCode(e.target.value)}
+            className="pl-9 w-48"
+          />
+        </div>
         <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-36" />
         <Input type="date" value={toDate}   onChange={(e) => setToDate(e.target.value)}   className="w-36" />
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 border-b border-slate-200">
+      <div className="flex gap-1 mb-4 border-b border-border">
         {EXCEPTION_TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => { setActiveTab(tab.key); setPage(1); }}
             className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "border-accent text-accent"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             {tab.label}
@@ -234,10 +235,10 @@ export default function DeliveryExceptionsPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Loading…</div>
+        <div className="text-center py-12 text-text-secondary">Loading…</div>
       ) : exceptions.length === 0 ? (
         <EmptyState
-          icon={<AlertTriangle className="h-10 w-10 text-slate-400" />}
+          icon={<AlertTriangle className="h-10 w-10 text-text-secondary" />}
           title="No exceptions found"
           description="All stops are on track."
         />
@@ -251,7 +252,7 @@ export default function DeliveryExceptionsPage() {
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
             Previous
           </Button>
-          <span className="text-sm text-slate-500 px-2 py-1.5">
+          <span className="text-sm text-text-secondary px-2 py-1.5">
             {page} / {meta.total_pages}
           </span>
           <Button variant="outline" size="sm" disabled={page >= meta.total_pages} onClick={() => setPage(page + 1)}>

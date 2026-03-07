@@ -79,6 +79,9 @@ class AuditLog < ApplicationRecord
     visit_checked_in
     visit_checked_out
     visit_skipped
+    record_created
+    record_updated
+    record_deleted
   ].freeze
 
   belongs_to :organization

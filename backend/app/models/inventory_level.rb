@@ -1,4 +1,6 @@
 class InventoryLevel < ApplicationRecord
+  include Auditable
+
   # ── Associations ─────────────────────────────────────────────────────────────
   belongs_to :organization
   belongs_to :branch

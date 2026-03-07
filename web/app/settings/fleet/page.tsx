@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,7 @@ import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Truck, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
-
-const API = "http://localhost:3001/api/v1";
+import { API_URL } from "@/lib/api/client";
 
 interface Vehicle {
   id: number;
@@ -69,7 +67,7 @@ export default function FleetPage() {
     if (!token || !orgId) return;
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/vehicles?per_page=100`, { headers: authHeaders });
+      const res  = await fetch(`${API_URL}/api/v1/vehicles?per_page=100`, { headers: authHeaders });
       const json = await res.json();
       if (res.ok) setVehicles(json.data ?? []);
     } finally {
@@ -109,7 +107,7 @@ export default function FleetPage() {
     setSaving(true);
     setErrors([]);
     try {
-      const url    = editing ? `${API}/vehicles/${editing.id}` : `${API}/vehicles`;
+      const url    = editing ? `${API_URL}/api/v1/vehicles/${editing.id}` : `${API_URL}/api/v1/vehicles`;
       const method = editing ? "PATCH" : "POST";
       const res    = await fetch(url, {
         method,
@@ -141,7 +139,7 @@ export default function FleetPage() {
     if (!deleteConfirm) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(`${API}/vehicles/${deleteConfirm.id}`, {
+      const res = await fetch(`${API_URL}/api/v1/vehicles/${deleteConfirm.id}`, {
         method: "DELETE", headers: authHeaders,
       });
       const json = await res.json();
@@ -175,7 +173,7 @@ export default function FleetPage() {
       key: "capacity_kg",
       header: "Capacity",
       render: (_cell, v) => (
-        <span className="text-sm text-slate-600 tabular-nums">
+        <span className="text-sm text-text-secondary tabular-nums">
           {v.capacity_kg ? `${v.capacity_kg} kg` : ""}
           {v.capacity_kg && v.capacity_units ? " / " : ""}
           {v.capacity_units ? `${v.capacity_units} units` : ""}
@@ -196,18 +194,18 @@ export default function FleetPage() {
       key: "insurance_expiry",
       header: "Insurance Exp.",
       render: (_cell, v) => v.insurance_expiry ? (
-        <span className={`text-sm ${expiryWarning(v.insurance_expiry) ? "text-amber-600 font-medium" : "text-slate-600"}`}>
+        <span className={`text-sm ${expiryWarning(v.insurance_expiry) ? "text-amber-600 font-medium" : "text-text-secondary"}`}>
           {new Date(v.insurance_expiry).toLocaleDateString("en-IN")}
           {expiryWarning(v.insurance_expiry) && <AlertTriangle className="inline h-3.5 w-3.5 ml-1 text-amber-500" />}
         </span>
-      ) : <span className="text-slate-400 text-sm">—</span>,
+      ) : <span className="text-text-secondary text-sm">—</span>,
     },
     {
       key: "default_driver",
       header: "Default Driver",
       render: (_cell, v) => v.default_driver ? (
         <span className="text-sm">{v.default_driver.name}</span>
-      ) : <span className="text-sm text-slate-400">—</span>,
+      ) : <span className="text-sm text-text-secondary">—</span>,
     },
     {
       key: "id",
@@ -231,13 +229,10 @@ export default function FleetPage() {
   ];
 
   return (
-    <AppShell>
-      <Breadcrumb
-        items={[
-          { label: "Settings", href: "/settings" },
-          { label: "Fleet" },
-        ]}
-      />
+    <AppShell breadcrumbs={[
+        { label: "Settings", href: "/settings" },
+        { label: "Fleet" },
+      ]}>
       <PageHeader
         title="Fleet Management"
         subtitle="Manage vehicles used for deliveries"
@@ -251,10 +246,10 @@ export default function FleetPage() {
       />
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Loading fleet…</div>
+        <div className="text-center py-12 text-text-secondary">Loading fleet…</div>
       ) : vehicles.length === 0 ? (
         <EmptyState
-          icon={<Truck className="h-10 w-10 text-slate-400" />}
+          icon={<Truck className="h-10 w-10 text-text-secondary" />}
           title="No vehicles yet"
           description="Add your first vehicle to start planning delivery trips."
           action={
@@ -282,7 +277,7 @@ export default function FleetPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Registration No. *</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Registration No. *</label>
               <Input
                 value={form.registration_number}
                 onChange={(e) => setForm({ ...form, registration_number: e.target.value })}
@@ -290,9 +285,9 @@ export default function FleetPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Type *</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Type *</label>
               <select
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 value={form.vehicle_type}
                 onChange={(e) => setForm({ ...form, vehicle_type: e.target.value })}
               >
@@ -302,7 +297,7 @@ export default function FleetPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Capacity (kg)</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Capacity (kg)</label>
               <Input
                 type="number"
                 value={form.capacity_kg}
@@ -311,7 +306,7 @@ export default function FleetPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Capacity (units)</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Capacity (units)</label>
               <Input
                 type="number"
                 value={form.capacity_units}
@@ -320,7 +315,7 @@ export default function FleetPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Insurance Expiry</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Insurance Expiry</label>
               <Input
                 type="date"
                 value={form.insurance_expiry}
@@ -328,7 +323,7 @@ export default function FleetPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Fitness Expiry</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Fitness Expiry</label>
               <Input
                 type="date"
                 value={form.fitness_expiry}
@@ -336,7 +331,7 @@ export default function FleetPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Permit Expiry</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Permit Expiry</label>
               <Input
                 type="date"
                 value={form.permit_expiry}
@@ -344,9 +339,9 @@ export default function FleetPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">Status</label>
+              <label className="text-xs font-medium text-text-secondary block mb-1">Status</label>
               <select
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
               >
@@ -357,7 +352,7 @@ export default function FleetPage() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600 block mb-1">Notes</label>
+            <label className="text-xs font-medium text-text-secondary block mb-1">Notes</label>
             <Input
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -381,7 +376,7 @@ export default function FleetPage() {
         title="Delete Vehicle"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-text-secondary">
             Delete vehicle <span className="font-semibold">{deleteConfirm?.registration_number}</span>?
             This cannot be undone if the vehicle has no active trips.
           </p>

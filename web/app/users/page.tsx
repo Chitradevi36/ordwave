@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { UserPlus, Search, X, ChevronRight } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface Role {
@@ -224,7 +225,7 @@ export default function UsersPage() {
   // ── Fetch roles once ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!token || !orgId) return;
-    fetch("http://localhost:3001/api/v1/roles", {
+    fetch(`${API_URL}/api/v1/roles`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
@@ -257,8 +258,8 @@ export default function UsersPage() {
         };
 
         const [usersRes, invitesRes] = await Promise.all([
-          fetch(`http://localhost:3001/api/v1/users?${params}`, { headers }),
-          fetch(`http://localhost:3001/api/v1/invitations?per_page=100`, { headers }),
+          fetch(`${API_URL}/api/v1/users?${params}`, { headers }),
+          fetch(`${API_URL}/api/v1/invitations?per_page=100`, { headers }),
         ]);
 
         if (cancelled) return;
@@ -291,7 +292,7 @@ export default function UsersPage() {
   // ── Revoke invitation ──────────────────────────────────────────────────────
   const handleRevoke = async (invitationId: number) => {
     if (!confirm("Revoke this invitation?")) return;
-    await fetch(`http://localhost:3001/api/v1/invitations/${invitationId}`, {
+    await fetch(`${API_URL}/api/v1/invitations/${invitationId}`, {
       method: "DELETE",
       headers: {
         Authorization:       `Bearer ${token}`,
@@ -304,7 +305,7 @@ export default function UsersPage() {
   // ── Deactivate ─────────────────────────────────────────────────────────────
   const handleDeactivate = async (userId: number) => {
     if (!confirm("Deactivate this user from your organization?")) return;
-    await fetch(`http://localhost:3001/api/v1/users/${userId}/deactivate`, {
+    await fetch(`${API_URL}/api/v1/users/${userId}/deactivate`, {
       method: "POST",
       headers: {
         Authorization:      `Bearer ${token}`,
@@ -323,7 +324,7 @@ export default function UsersPage() {
     setInviteLoading(true);
     setInviteError(null);
     try {
-      const res = await fetch("http://localhost:3001/api/v1/invitations", {
+      const res = await fetch(`${API_URL}/api/v1/invitations`, {
         method: "POST",
         headers: {
           "Content-Type":      "application/json",

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb, BreadcrumbItem } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -199,7 +198,7 @@ export default function SalesInvoiceDetailPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="p-6 text-sm text-muted-foreground">Loading invoice…</div>
+        <div className="p-6 text-sm text-text-secondary">Loading invoice…</div>
       </AppShell>
     );
   }
@@ -234,10 +233,12 @@ export default function SalesInvoiceDetailPage() {
   ];
 
   return (
-    <AppShell>
-      <div className="p-6 max-w-5xl space-y-5">
-        {/* Breadcrumb */}
-        <Breadcrumb items={[{ label: "Sales Invoices", href: "/sales-invoices" }, { label: invoice.invoice_number }]} />
+    <AppShell breadcrumbs={[
+        { label: "Finance", href: "/finance" },
+        { label: "Sales Invoices", href: "/sales-invoices" },
+        { label: invoice.invoice_number },
+      ]}>
+      <div className="max-w-5xl space-y-5">
 
         {/* Header */}
         <PageHeader
@@ -247,10 +248,10 @@ export default function SalesInvoiceDetailPage() {
               <Badge variant={STATUS_VARIANT[invoice.status] ?? "secondary"}>
                 {invoice.status.toUpperCase()}
               </Badge>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-text-secondary">
                 {invoice.customer.name} · {invoice.branch.name}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-text-secondary">
                 {SOURCE_LABEL[invoice.generation_source] ?? invoice.generation_source}
               </span>
             </span>
@@ -283,7 +284,7 @@ export default function SalesInvoiceDetailPage() {
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === key
                       ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      : "border-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   {label[key]}
@@ -297,7 +298,7 @@ export default function SalesInvoiceDetailPage() {
             <div className="grid grid-cols-2 gap-6">
               {/* Left: meta */}
               <div className="rounded-lg border bg-card p-5 space-y-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Invoice Details
                 </h3>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -310,20 +311,20 @@ export default function SalesInvoiceDetailPage() {
                     ["Branch",        invoice.branch.name],
                   ].map(([label, value]) => (
                     <div key={label}>
-                      <dt className="text-muted-foreground">{label}</dt>
+                      <dt className="text-text-secondary">{label}</dt>
                       <dd className="font-medium mt-0.5">{value}</dd>
                     </div>
                   ))}
                   {invoice.voided_at && (
                     <>
                       <div>
-                        <dt className="text-muted-foreground">Voided At</dt>
+                        <dt className="text-text-secondary">Voided At</dt>
                         <dd className="font-medium text-destructive mt-0.5">
                           {fmtDatetime(invoice.voided_at)}
                         </dd>
                       </div>
                       <div className="col-span-2">
-                        <dt className="text-muted-foreground">Void Reason</dt>
+                        <dt className="text-text-secondary">Void Reason</dt>
                         <dd className="font-medium text-destructive mt-0.5">
                           {invoice.void_reason}
                         </dd>
@@ -332,7 +333,7 @@ export default function SalesInvoiceDetailPage() {
                   )}
                   {invoice.notes && (
                     <div className="col-span-2">
-                      <dt className="text-muted-foreground">Notes</dt>
+                      <dt className="text-text-secondary">Notes</dt>
                       <dd className="font-medium mt-0.5">{invoice.notes}</dd>
                     </div>
                   )}
@@ -341,7 +342,7 @@ export default function SalesInvoiceDetailPage() {
 
               {/* Right: financials */}
               <div className="rounded-lg border bg-card p-5 space-y-3">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Financials
                 </h3>
                 <div className="space-y-2 text-sm">
@@ -352,7 +353,7 @@ export default function SalesInvoiceDetailPage() {
                     ["IGST",              invoice.tax_breakup.igst_total],
                     ["Total Tax",         invoice.tax_total],
                   ].map(([label, value]) => (
-                    <div key={String(label)} className="flex justify-between text-muted-foreground">
+                    <div key={String(label)} className="flex justify-between text-text-secondary">
                       <span>{label}</span>
                       <span>{fmt(value as number)}</span>
                     </div>
@@ -373,7 +374,7 @@ export default function SalesInvoiceDetailPage() {
                 <thead className="bg-muted/40">
                   <tr>
                     {["#", "Product", "HSN", "Qty", "Rate", "Disc%", "Taxable", "GST%", "Tax", "Total"].map((h) => (
-                      <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground">
+                      <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">
                         {h}
                       </th>
                     ))}
@@ -382,12 +383,12 @@ export default function SalesInvoiceDetailPage() {
                 <tbody className="divide-y">
                   {invoice.lines.map((l, i) => (
                     <tr key={l.id} className="hover:bg-muted/20">
-                      <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="px-3 py-2 text-text-secondary">{i + 1}</td>
                       <td className="px-3 py-2">
                         <div className="font-medium">{l.product_name}</div>
-                        <div className="text-xs text-muted-foreground">{l.product_sku}</div>
+                        <div className="text-xs text-text-secondary">{l.product_sku}</div>
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{l.hsn_code ?? "—"}</td>
+                      <td className="px-3 py-2 font-mono text-xs text-text-secondary">{l.hsn_code ?? "—"}</td>
                       <td className="px-3 py-2 text-right">{Number(l.qty).toFixed(2)}</td>
                       <td className="px-3 py-2 text-right">{fmt(l.unit_price)}</td>
                       <td className="px-3 py-2 text-right">{l.discount_pct ? `${l.discount_pct}%` : "—"}</td>
@@ -396,12 +397,12 @@ export default function SalesInvoiceDetailPage() {
                       <td className="px-3 py-2 text-right">
                         <div>{fmt(l.tax_amount)}</div>
                         {l.cgst_amount > 0 && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-text-secondary">
                             C: {fmt(l.cgst_amount)} S: {fmt(l.sgst_amount)}
                           </div>
                         )}
                         {l.igst_amount > 0 && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-text-secondary">
                             I: {fmt(l.igst_amount)}
                           </div>
                         )}
@@ -426,7 +427,7 @@ export default function SalesInvoiceDetailPage() {
           {/* ── Tax Breakup ── */}
           {activeTab === "tax" && (<div className="mt-4 space-y-4">
             <div className="rounded-lg border overflow-hidden">
-              <div className="bg-muted/40 px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">
+              <div className="bg-muted/40 px-4 py-2 text-xs font-semibold text-text-secondary uppercase">
                 Tax Summary
               </div>
               <div className="p-4 grid grid-cols-3 gap-4 text-sm">
@@ -436,7 +437,7 @@ export default function SalesInvoiceDetailPage() {
                   ["IGST Total",   invoice.tax_breakup.igst_total],
                 ].map(([label, value]) => (
                   <div key={String(label)} className="text-center p-3 rounded border">
-                    <div className="text-muted-foreground text-xs">{label}</div>
+                    <div className="text-text-secondary text-xs">{label}</div>
                     <div className="font-bold text-lg mt-1">{fmt(value as number)}</div>
                   </div>
                 ))}
@@ -446,14 +447,14 @@ export default function SalesInvoiceDetailPage() {
             {/* HSN Summary */}
             {Object.keys(invoice.tax_breakup.hsn_summary).length > 0 && (
               <div className="rounded-lg border overflow-hidden">
-                <div className="bg-muted/40 px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">
+                <div className="bg-muted/40 px-4 py-2 text-xs font-semibold text-text-secondary uppercase">
                   HSN / SAC Summary
                 </div>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
                       {["HSN Code", "Taxable Value", "GST Rate", "Tax Amount"].map((h) => (
-                        <th key={h} className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground">
+                        <th key={h} className="px-4 py-2 text-left text-xs font-semibold text-text-secondary">
                           {h}
                         </th>
                       ))}
@@ -478,7 +479,7 @@ export default function SalesInvoiceDetailPage() {
           {activeTab === "activity" && (<div className="mt-4">
             <div className="rounded-lg border divide-y">
               {invoice.audit_trail.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                <div className="px-4 py-8 text-center text-sm text-text-secondary">
                   No activity recorded yet.
                 </div>
               ) : (
@@ -490,12 +491,12 @@ export default function SalesInvoiceDetailPage() {
                         <span className="text-sm font-medium">
                           {ACTION_LABEL[entry.action] ?? entry.action}
                         </span>
-                        <span className="text-xs text-muted-foreground shrink-0">
+                        <span className="text-xs text-text-secondary shrink-0">
                           {fmtDatetime(entry.created_at)}
                         </span>
                       </div>
                       {entry.actor && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-text-secondary mt-0.5">
                           by {entry.actor.name}
                         </p>
                       )}
@@ -516,7 +517,7 @@ export default function SalesInvoiceDetailPage() {
             {invoice.sales_order ? (
               <div className="rounded-lg border p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Sales Order</p>
+                  <p className="text-xs text-text-secondary">Sales Order</p>
                   <p className="font-mono text-sm font-medium">{invoice.sales_order.order_number}</p>
                 </div>
                 <Button
@@ -529,7 +530,7 @@ export default function SalesInvoiceDetailPage() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+              <div className="rounded-lg border p-4 text-sm text-text-secondary">
                 No linked sales order.
               </div>
             )}
@@ -543,7 +544,7 @@ export default function SalesInvoiceDetailPage() {
           title="Void Invoice"
         >
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-secondary">
               Voiding <span className="font-semibold">{invoice.invoice_number}</span> is
               irreversible. The invoice will be marked void and its outstanding balance cleared.
             </p>

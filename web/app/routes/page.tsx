@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreateRouteModal } from "@/components/routes/create-route-modal";
-import { Plus, Search, X, MapPin, CheckCircle2, Route as RouteIcon } from "lucide-react";
+import { Plus, Search, X, MapPin, CheckCircle2, Route as RouteIcon, Truck, User as UserIcon } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Route {
@@ -21,6 +21,8 @@ interface Route {
   active: boolean;
   branch_id: number;
   customers_count?: number;
+  vehicle?: { id: number; registration_number: string; vehicle_type: string } | null;
+  default_driver?: { id: number; name: string } | null;
 }
 
 interface PageMeta {
@@ -153,6 +155,27 @@ export default function RoutesPage() {
           {row.customers_count != null ? row.customers_count : "—"}
         </span>
       ),
+    },
+    {
+      key: "vehicle" as keyof Route,
+      header: "Vehicle",
+      render: (_, row) => row.vehicle ? (
+        <span className="flex items-center gap-1.5 text-sm">
+          <Truck className="h-3.5 w-3.5 text-text-secondary shrink-0" />
+          <span className="font-mono text-text-primary">{row.vehicle.registration_number}</span>
+          <span className="text-xs text-text-secondary capitalize">({row.vehicle.vehicle_type})</span>
+        </span>
+      ) : <span className="text-text-secondary text-sm">—</span>,
+    },
+    {
+      key: "default_driver" as keyof Route,
+      header: "Driver",
+      render: (_, row) => row.default_driver ? (
+        <span className="flex items-center gap-1.5 text-sm">
+          <UserIcon className="h-3.5 w-3.5 text-text-secondary shrink-0" />
+          <span className="text-text-primary">{row.default_driver.name}</span>
+        </span>
+      ) : <span className="text-text-secondary text-sm">—</span>,
     },
     {
       key: "active",

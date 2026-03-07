@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
+import { API_URL } from "@/lib/api/client";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -23,14 +24,14 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (!token) {
-      setError('Invalid reset link');
+      setError(`Invalid reset link`);
       setValidatingToken(false);
       return;
     }
 
     // Validate token
-    fetch('http://localhost:3001/api/v1/passwords/validate_token', {
-      method: 'POST',
+    fetch(`${API_URL}/api/v1/passwords/validate_token`, {
+      method: `POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reset_token: token }),
     })
@@ -52,12 +53,12 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(``);
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/v1/passwords/reset', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/v1/passwords/reset`, {
+        method: `POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reset_token: token,

@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { API_URL } from "@/lib/api/client";
 
 export interface SupplierFormData {
   name:               string;
@@ -87,8 +88,8 @@ export function SupplierForm({ initial, supplierId, token, orgId }: SupplierForm
 
     try {
       const url    = isEdit
-        ? `http://localhost:3001/api/v1/suppliers/${supplierId}`
-        : `http://localhost:3001/api/v1/suppliers`;
+        ? `${API_URL}/api/v1/suppliers/${supplierId}`
+        : `${API_URL}/api/v1/suppliers`;
       const method = isEdit ? "PATCH" : "POST";
 
       const res  = await fetch(url, {

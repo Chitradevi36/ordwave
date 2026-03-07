@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { Plus, Search, Pencil, Trash2, X, AlertTriangle, Ruler } from "lucide-react";
 import Link from "next/link";
+import { API_URL } from "@/lib/api/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Uom {
@@ -80,8 +81,8 @@ function UomModal({
     setLoading(true); setErrors([]);
 
     const url    = isEdit
-      ? `http://localhost:3001/api/v1/units_of_measure/${existing!.id}`
-      : "http://localhost:3001/api/v1/units_of_measure";
+      ? `${API_URL}/api/v1/units_of_measure/${existing!.id}`
+      : `${API_URL}/api/v1/units_of_measure`;
     const method = isEdit ? "PATCH" : "POST";
 
     try {
@@ -209,7 +210,7 @@ function DeleteModal({
     setLoading(true); setError("");
     try {
       const res = await fetch(
-        `http://localhost:3001/api/v1/units_of_measure/${uom.id}`,
+        `${API_URL}/api/v1/units_of_measure/${uom.id}`,
         {
           method:  "DELETE",
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
@@ -285,7 +286,7 @@ export default function UomPage() {
       const params = new URLSearchParams({ page: String(page), per_page: "25" });
       if (search) params.set("q", search);
       const res  = await fetch(
-        `http://localhost:3001/api/v1/units_of_measure?${params}`,
+        `${API_URL}/api/v1/units_of_measure?${params}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } },
       );
       const json = await res.json();
@@ -385,10 +386,6 @@ export default function UomPage() {
 
   return (
     <AppShell title="Units of Measure">
-      <Breadcrumb items={[
-        { label: "Products", href: "/products" },
-        { label: "Units of Measure" },
-      ]} />
       <PageHeader
         title="Units of Measure"
         description={`${totalCount} unit${totalCount !== 1 ? "s" : ""} · global catalogue`}

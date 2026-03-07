@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { SupplierForm, SupplierFormData } from "@/app/suppliers/_components/supplier-form";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { API_URL } from "@/lib/api/client";
 
 export default function EditSupplierPage() {
   const params = useParams<{ id: string }>();
@@ -17,7 +17,7 @@ export default function EditSupplierPage() {
 
   useEffect(() => {
     if (!token || !orgId || !params.id) return;
-    fetch(`http://localhost:3001/api/v1/suppliers/${params.id}`, {
+    fetch(`${API_URL}/api/v1/suppliers/${params.id}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => {
@@ -72,12 +72,11 @@ export default function EditSupplierPage() {
   }
 
   return (
-    <AppShell title="Edit Supplier">
-      <Breadcrumb items={[
+    <AppShell breadcrumbs={[
         { label: "Suppliers", href: "/suppliers" },
         { label: initial.name ?? "Supplier", href: `/suppliers/${params.id}` },
         { label: "Edit" },
-      ]} />
+      ]}>
       <PageHeader title="Edit Supplier" description={`Editing: ${initial.name}`} />
       <div className="mt-6">
         <SupplierForm
