@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 
@@ -27,7 +27,7 @@ const REASON_CODES = [
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function NewAdjustmentPage() {
+function NewAdjustmentPageContent() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const { token, orgId } = useOrgBranch();
@@ -228,5 +228,13 @@ export default function NewAdjustmentPage() {
         </form>
       </div>
     </AppShell>
+  );
+}
+
+export default function NewAdjustmentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background-subtle" />}>
+      <NewAdjustmentPageContent />
+    </Suspense>
   );
 }
