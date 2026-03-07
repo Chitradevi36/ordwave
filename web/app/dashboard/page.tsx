@@ -152,7 +152,7 @@ export default function DashboardPage() {
   const router  = useRouter();
 
   const { data, isLoading, isError } = useDashboardData();
-  const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 3, sort_by: "created_at", sort_dir: "desc" });
+  const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 3, sort: "created_at_desc" });
 
   if (!isReady) return null;
 
