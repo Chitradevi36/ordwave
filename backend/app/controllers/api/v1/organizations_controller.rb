@@ -63,6 +63,35 @@ module Api
         end
       end
 
+      # ── GET /api/v1/organizations/:id/plan_info ───────────────────────────────
+      # Returns the org's plan limits, current usage, and a per-feature flag
+      # map so the frontend can show upgrade prompts.
+      def plan_info
+        organization = Organization.active.find(params[:id])
+        authorize organization, :show?
+
+        limits = PlanLimits.for(organization)
+        summary = limits.summary
+
+        current_branches = organization.branches.not_deleted.count
+        current_users    = organization.memberships.active.select(:user_id).distinct.count
+
+        render_success(
+          plan:             summary[:plan],
+          max_branches:     summary[:max_branches],
+          max_active_users: summary[:max_active_users],
+          features:         summary[:features],
+          usage: {
+            branches:     current_branches,
+            active_users: current_users
+          },
+          at_limit: {
+            branches: summary[:max_branches] && current_branches >= summary[:max_branches],
+            users:    summary[:max_active_users] && current_users >= summary[:max_active_users]
+          }
+        )
+      end
+
       private
 
       def org_params

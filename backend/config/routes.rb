@@ -51,6 +51,7 @@ Rails.application.routes.draw do
         member do
           get   :settings
           patch :settings, action: :update_settings
+          get   :plan_info
         end
       end
 
@@ -265,6 +266,7 @@ Rails.application.routes.draw do
           post :issue
           post :void_invoice, path: 'void'
           get  :pdf
+          post :einvoice
         end
         collection do
           post 'generate_from_order/:sales_order_id', action: :generate_from_order,       as: :generate_invoice_from_order

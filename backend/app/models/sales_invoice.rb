@@ -81,6 +81,9 @@ class SalesInvoice < ApplicationRecord
   end
 
   # ── Tax summary aggregated across lines ──────────────────────────────────
+  # gst_summary is an alias used by Gst::EinvoiceService
+  alias_method :gst_summary, :tax_breakup
+
   def tax_breakup
     {
       cgst_total: lines.sum { |l| l.cgst_amount.to_d }.round(2),

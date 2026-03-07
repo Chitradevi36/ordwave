@@ -19,6 +19,7 @@ module Api
 
       def create
         authorize Branch.new(organization: current_organization)
+        plan_limits.enforce_branch_limit!
 
         branch = current_organization.branches.build(branch_params)
         if branch.save

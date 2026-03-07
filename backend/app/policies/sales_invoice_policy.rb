@@ -23,6 +23,9 @@ class SalesInvoicePolicy < ApplicationPolicy
   def generate_from_order? = manager_above? && within_org?
   def generate_from_stop?  = manager_above? && within_org?
 
+  # Generate IRN via NIC IRP → accounts + manager + owner, invoice must be issued
+  def einvoice? = manager_above? && within_org? && record.issued?
+
   # ── Scope ────────────────────────────────────────────────────────────────
 
   class Scope < ApplicationPolicy::Scope
