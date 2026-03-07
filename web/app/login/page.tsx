@@ -33,7 +33,8 @@ export default function LoginPage() {
       if (response.ok) {
         // Store token — organization_id is resolved by OrgBranchProvider after login
         localStorage.setItem('auth_token', data.data.token);
-        localStorage.removeItem('organization_id'); // clear stale value so context auto-selects
+        localStorage.removeItem('organization_id');          // clear stale value so context auto-selects
+        localStorage.removeItem('orderlane_profile_cache'); // clear stale role cache from previous user
         localStorage.setItem('user', JSON.stringify(data.data.user));
         
         router.push('/dashboard');

@@ -16,9 +16,9 @@ export type UserRole =
   | "admin"
   | "manager"
   | "sales_rep"
+  | "warehouse_staff"
+  | "accountant"
   | "driver"
-  | "accounts"
-  | "warehouse"
   | string;
 
 // ── Workspace nav item ────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: "/catalog",
     icon: BookOpen,
     matchers: ["/catalog", "/products", "/pricing", "/promotions"],
-    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "warehouse"],
+    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "warehouse_staff"],
   },
   {
     key: "operations",
@@ -70,7 +70,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: "/operations",
     icon: Truck,
     matchers: ["/operations", "/delivery", "/returns", "/inventory/transfers"],
-    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "driver", "warehouse"],
+    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "driver", "warehouse_staff"],
   },
   {
     key: "inventory",
@@ -78,7 +78,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: "/inventory",
     icon: Layers,
     matchers: ["/inventory", "/suppliers", "/purchases"],
-    rolesAllowed: ["owner", "admin", "manager", "warehouse"],
+    rolesAllowed: ["owner", "admin", "manager", "warehouse_staff"],
   },
   {
     key: "finance",
@@ -86,7 +86,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: "/finance",
     icon: DollarSign,
     matchers: ["/finance", "/collections", "/sales-invoices", "/credit-notes", "/advance-payments", "/payments"],
-    rolesAllowed: ["owner", "admin", "manager", "accounts"],
+    rolesAllowed: ["owner", "admin", "manager", "accountant"],
   },
   {
     key: "insights",
@@ -94,7 +94,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: "/insights",
     icon: BarChart2,
     matchers: ["/insights", "/reports"],
-    rolesAllowed: ["owner", "admin", "manager", "accounts"],
+    rolesAllowed: ["owner", "admin", "manager", "accountant"],
   },
 ];
 
@@ -128,13 +128,13 @@ export interface CreateAction {
 export const CREATE_ACTIONS: CreateAction[] = [
   { label: "New Order",               href: "/orders/new",               rolesAllowed: ["owner","admin","manager","sales_rep"] },
   { label: "New Customer",            href: "/customers/new",            rolesAllowed: ["owner","admin","manager","sales_rep"] },
-  { label: "Record Collection",       href: "/collections/new",          rolesAllowed: ["owner","admin","manager","sales_rep","accounts"] },
-  { label: "Create Credit Note",      href: "/credit-notes/new",         rolesAllowed: ["owner","admin","manager","accounts"] },
-  { label: "Allocate Payment",        href: "/collections/allocate",     rolesAllowed: ["owner","admin","accounts"] },
-  { label: "Purchase Invoice",        href: "/purchases/invoices/new",   rolesAllowed: ["owner","admin","manager","warehouse"] },
-  { label: "Receive Purchase",        href: "/purchases/receive",        rolesAllowed: ["owner","admin","manager","warehouse"] },
-  { label: "Stock Transfer",          href: "/inventory/transfers/new",  rolesAllowed: ["owner","admin","manager","warehouse"] },
-  { label: "Stock Adjustment",        href: "/inventory/adjustments/new",rolesAllowed: ["owner","admin","manager","warehouse"] },
+  { label: "Record Collection",       href: "/collections/new",          rolesAllowed: ["owner","admin","manager","sales_rep","accountant"] },
+  { label: "Create Credit Note",      href: "/credit-notes/new",         rolesAllowed: ["owner","admin","manager","accountant"] },
+  { label: "Allocate Payment",        href: "/collections/allocate",     rolesAllowed: ["owner","admin","accountant"] },
+  { label: "Purchase Invoice",        href: "/purchases/invoices/new",   rolesAllowed: ["owner","admin","manager","warehouse_staff"] },
+  { label: "Receive Purchase",        href: "/purchases/receive",        rolesAllowed: ["owner","admin","manager","warehouse_staff"] },
+  { label: "Stock Transfer",          href: "/inventory/transfers/new",  rolesAllowed: ["owner","admin","manager","warehouse_staff"] },
+  { label: "Stock Adjustment",        href: "/inventory/adjustments/new",rolesAllowed: ["owner","admin","manager","warehouse_staff"] },
   { label: "New Return",              href: "/returns/new",              rolesAllowed: ["owner","admin","manager","sales_rep","driver"] },
   { label: "Start Trip",              href: "/delivery/new",             rolesAllowed: ["owner","admin","manager","driver"] },
 ];

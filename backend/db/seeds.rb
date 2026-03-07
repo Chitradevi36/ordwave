@@ -345,7 +345,31 @@ if Rails.env.development?
 
   puts '  == Vehicles and drivers seeded.'
 
-  # ── Suppliers ─────────────────────────────────────────────────────────────
+  # ── Additional role users ──────────────────────────────────────────────────
+  puts ''
+  puts '  == Seeding additional role users...'
+
+  role_user_defs = [
+    { email: 'admin2@riceoms.dev',      first_name: 'Rakesh',  last_name: 'Verma',  role: 'admin'           },
+    { email: 'manager@riceoms.dev',     first_name: 'Priya',   last_name: 'Sharma', role: 'manager'         },
+    { email: 'salesrep@riceoms.dev',    first_name: 'Arjun',   last_name: 'Reddy',  role: 'sales_rep'       },
+    { email: 'accountant@riceoms.dev',  first_name: 'Kavitha', last_name: 'Nair',   role: 'accountant'      },
+    { email: 'warehouse@riceoms.dev',   first_name: 'Ganesh',  last_name: 'Pillai', role: 'warehouse_staff' },
+  ]
+
+  role_user_defs.each do |attrs|
+    u = User.find_or_initialize_by(email: attrs[:email])
+    u.assign_attributes(first_name: attrs[:first_name], last_name: attrs[:last_name], active: true, plan: 'starter')
+    u.password = 'Password@123' if u.new_record? || u.encrypted_password.blank?
+    u.save!
+    r = Role.find_by!(name: attrs[:role])
+    unless Membership.exists?(user: u, organization: org, branch: branch)
+      Membership.create!(user: u, organization: org, branch: branch, role: r, active: true)
+    end
+    puts "    User: #{u.email} — role: #{attrs[:role]}"
+  end
+
+  puts '  == Additional role users seeded.'
   puts ''
   puts '  == Seeding suppliers...'
 
@@ -1543,10 +1567,17 @@ if Rails.env.development?
   end
 
   puts ''
-  puts '  ┌─ Dev login credentials ────────────────'
-  puts "  │  POST /api/v1/auth/login"
-  puts "  │  email:    admin@riceoms.dev"
-  puts "  │  password: Password@123"
-  puts "  │  X-Organization-Id: #{org.id}"
-  puts '  └────────────────────────────────────────'
+  puts '  ┌─ Dev login credentials ─────────────────────────────────────────────────'
+  puts "  │  POST /api/v1/auth/login   (header: X-Organization-Id: #{org.id})"
+  puts '  │'
+  puts '  │  admin@riceoms.dev        Password@123   owner'
+  puts '  │  admin2@riceoms.dev       Password@123   admin'
+  puts '  │  manager@riceoms.dev      Password@123   manager'
+  puts '  │  salesrep@riceoms.dev     Password@123   sales_rep'
+  puts '  │  accountant@riceoms.dev   Password@123   accountant'
+  puts '  │  warehouse@riceoms.dev    Password@123   warehouse_staff'
+  puts '  │  driver1@riceoms.dev      Password@123   driver'
+  puts '  │  driver2@riceoms.dev      Password@123   driver'
+  puts '  │  driver3@riceoms.dev      Password@123   driver'
+  puts '  └─────────────────────────────────────────────────────────────────────────'
 end

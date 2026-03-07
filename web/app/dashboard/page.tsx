@@ -15,6 +15,11 @@ import { KpiCard, KpiCardSkeleton } from "@/components/dashboard/KpiCard";
 import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
 import { useDashboardData, DashboardAlert } from "@/lib/api/hooks/useDashboard";
 import { useOrders } from "@/lib/api/hooks/useOrders";
+import { useCurrentRoleWithLoading } from "@/lib/hooks/use-current-role";
+import { SalesRepView } from "@/components/dashboard/SalesRepView";
+import { AccountantView } from "@/components/dashboard/AccountantView";
+import { WarehouseView } from "@/components/dashboard/WarehouseView";
+import { DriverView } from "@/components/dashboard/DriverView";
 
 // â”€â”€ Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -153,6 +158,7 @@ export default function DashboardPage() {
 
   const { data, isLoading, isError } = useDashboardData();
   const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 3, sort: "created_at_desc" });
+  const { role, loading: roleLoading } = useCurrentRoleWithLoading();
 
   if (!isReady) return null;
 
@@ -176,24 +182,44 @@ export default function DashboardPage() {
           )}
           <p className="text-sm text-text-secondary">{today()}</p>
         </div>
-        <div className="flex gap-2 mt-3 sm:mt-0">
-          <button
-            onClick={() => router.push("/orders/new")}
-            className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
-          >
-            <Plus className="h-4 w-4" /> New Order
-          </button>
-          <button
-            onClick={() => router.push("/sales")}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-text-primary hover:bg-background-subtle transition-colors"
-          >
-            Sales
-          </button>
-        </div>
-      </div>
-
+        {(!role || role === "owner" || role === "admin" || role === "manager" || role === "sales_rep") && (
+          <div className="flex gap-2 mt-3 sm:mt-0">
+            <button
+              onClick={() => router.push("/orders/new")}
+              className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+            >
+              <Plus className="h-4 w-4" /> New Order
+            </button>
+            <button
+              onClick={() => router.push("/sales")}
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-text-primary hover:bg-background-subtle transition-colors"
+            >
+              Sales
+            </button>
+          </div>
+        )}
+      </div>      
       {/* â”€â”€ Alert ribbon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      {!isLoading && data?.alerts && <AlertRibbon alerts={data.alerts} />}
+      {/* ── Role-specific dashboard view ────────────────────────────────────── */}
+      {roleLoading ? (
+        // While resolving the user role, show a neutral loading skeleton
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {[1,2,3,4,5].map(i => <KpiCardSkeleton key={i} />)}
+          </div>
+          <div className="h-64 rounded-xl bg-gray-100 animate-pulse" />
+        </div>
+      ) : role === "sales_rep" ? (
+        <SalesRepView data={data} isLoading={isLoading} isError={isError} />
+      ) : role === "accountant" ? (
+        <AccountantView data={data} isLoading={isLoading} isError={isError} />
+      ) : role === "warehouse_staff" ? (
+        <WarehouseView data={data} isLoading={isLoading} isError={isError} />
+      ) : role === "driver" ? (
+        <DriverView data={data} isLoading={isLoading} isError={isError} />
+      ) : (
+        <>
+          {!isLoading && data?.alerts && <AlertRibbon alerts={data.alerts} />}
 
       {/* â”€â”€ Primary KPI row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 mb-5">
@@ -408,6 +434,8 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+        </>
+      )}
 
     </AppShell>
   );

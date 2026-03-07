@@ -2,6 +2,7 @@ module Api
   module V1
     class ProfilesController < BaseController
       skip_before_action :set_current_organization
+      skip_after_action  :verify_policy_scoped
 
       after_action :verify_authorized
 
@@ -75,7 +76,7 @@ module Api
       end
 
       def current_user
-        @current_user ||= User.active.find_by(id: jwt_payload['user_id'])
+        @current_user ||= User.active.find_by(id: jwt_payload['sub'])
       end
     end
   end

@@ -160475,3 +160475,903 @@ Shutting down background worker
 [Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
 Initializing the Sentry background worker with 8 threads
 [Sidekiq] Worker started — PID 14200
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[36mActiveRecord::SchemaMigration Load (11.8ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (1.1ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (16.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to SeedDefaultRoles (20260307000001)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (12.7ms)[0m  [1m[32mINSERT INTO roles (name, description, created_at, updated_at)
+VALUES ('owner', 'Organization owner — full access, billing control', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+[0m
+  [1m[35m (0.2ms)[0m  [1m[32mINSERT INTO roles (name, description, created_at, updated_at)
+VALUES ('admin', 'Administrator — full operational access within org', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+[0m
+  [1m[35m (0.1ms)[0m  [1m[32mINSERT INTO roles (name, description, created_at, updated_at)
+VALUES ('manager', 'Branch manager — manage staff, inventory, orders', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+[0m
+  [1m[35m (0.1ms)[0m  [1m[32mINSERT INTO roles (name, description, created_at, updated_at)
+VALUES ('sales_rep', 'Sales representative — create and manage orders', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+[0m
+  [1m[35m (0.1ms)[0m  [1m[32mINSERT INTO roles (name, description, created_at, updated_at)
+VALUES ('warehouse_staff', 'Warehouse staff — manage inventory and dispatch', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+[0m
+  [1m[35m (0.1ms)[0m  [1m[32mINSERT INTO roles (name, description, created_at, updated_at)
+VALUES ('accountant', 'Accountant — view financials, manage payments', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+[0m
+  [1m[35m (0.1ms)[0m  [1m[32mINSERT INTO roles (name, description, created_at, updated_at)
+VALUES ('driver', 'Delivery driver — complete trip stops via mobile app', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+[0m
+  [1m[36mActiveRecord::SchemaMigration Create (1.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260307000001') RETURNING "version"[0m
+  [1m[36mTRANSACTION (7.7ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mUnitsOfMeasure Load (22.8ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "EA"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Each"], ["id", 1], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "EA"], ["id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.3ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "PC"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Piece"], ["id", 2], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.6ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "PC"], ["id", 2], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.3ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "BOX"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Box"], ["id", 3], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "BOX"], ["id", 3], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.3ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "CTN"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Carton"], ["id", 4], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "CTN"], ["id", 4], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.4ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "KG"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Kilogram"], ["id", 5], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "KG"], ["id", 5], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "GRM"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Gram"], ["id", 6], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "GRM"], ["id", 6], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "LTR"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (9.8ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Litre"], ["id", 7], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "LTR"], ["id", 7], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.1ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "ML"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Millilitre"], ["id", 8], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "ML"], ["id", 8], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.1ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "BAG"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.4ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Bag"], ["id", 9], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "BAG"], ["id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.3ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "PACK"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.9ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Pack"], ["id", 10], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "PACK"], ["id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.3ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "CASE"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Case"], ["id", 11], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "CASE"], ["id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "DZN"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Dozen"], ["id", 12], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "DZN"], ["id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mHsnSacCode Load (36.7ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10061090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10062000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10063000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10064000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10019900"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.6ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10011100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "11010000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "11022000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "11031300"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07132000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07133100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07134000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07135000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15121110"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15121990"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15131100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15131990"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15141100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.4ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15089000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "17011200"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "17011400"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "17029090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "25010010"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09041100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09042210"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09030000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "04012000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "04069000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "22021090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09021000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "19053100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "19054000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "34011100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "34029010"], ["LIMIT", 1]]
+  [1m[36mRole Load (17.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "owner"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.3ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "admin"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.2ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "manager"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.2ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "sales_rep"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "warehouse_staff"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "accountant"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.2ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "driver"], ["LIMIT", 1]]
+  [1m[36mUser Load (33.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "admin@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "admin@riceoms.dev"], ["id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mOrganization Load (37.4ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."slug" = $1 LIMIT $2[0m  [["slug", "arya-rice"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mBranch Load (35.0ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."code" = $1 LIMIT $2[0m  [["code", "ARYA-HO"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Role Load (0.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "owner"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (49.0ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 1], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (52.8ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "RICE-CRL"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.2ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "PULSES"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.2ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "OILS"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.6ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "SUGAR"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.3ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "SPICES"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE UnitsOfMeasure Load (0.0ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "KG"], ["LIMIT", 1]]
+  [1m[36mCACHE UnitsOfMeasure Load (0.0ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "LTR"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "10061090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "07134000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "15121990"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "17011400"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.4ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "25010010"], ["LIMIT", 1]]
+  [1m[36mProduct Load (47.7ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "RICE-BSMT-5KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "RICE-BSMT-5KG"], ["id", 6], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.5ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "RICE-BSMT-25KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "RICE-BSMT-25KG"], ["id", 7], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.3ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "RICE-SONA-5KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "RICE-SONA-5KG"], ["id", 8], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.3ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "PULSE-TOOR-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "PULSE-TOOR-1KG"], ["id", 9], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.2ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "PULSE-URAD-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "PULSE-URAD-1KG"], ["id", 10], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.2ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "OIL-SFR-1L"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "OIL-SFR-1L"], ["id", 11], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.1ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "OIL-SFR-5L"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "OIL-SFR-5L"], ["id", 12], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.1ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "SUGAR-REF-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "SUGAR-REF-1KG"], ["id", 13], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.1ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "SALT-CMN-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "SALT-CMN-1KG"], ["id", 14], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceList Load (41.9ms)[0m  [1m[34mSELECT "price_lists".* FROM "price_lists" WHERE "price_lists"."organization_id" = $1 AND "price_lists"."branch_id" IS NULL AND "price_lists"."list_type" = $2 AND "price_lists"."name" = $3 LIMIT $4[0m  [["organization_id", 1], ["list_type", "standard"], ["name", "Standard Price List"], ["LIMIT", 1]]
+  [1m[36mPriceListItem Load (36.7ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 1], ["price_list_id", 1], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 7], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 2], ["price_list_id", 1], ["product_id", 7], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 3], ["price_list_id", 1], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 4], ["price_list_id", 1], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 16], ["price_list_id", 1], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 6], ["price_list_id", 1], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 7], ["price_list_id", 1], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 8], ["price_list_id", 1], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 9], ["price_list_id", 1], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" = $3 LIMIT $4[0m  [["price_list_id", 1], ["product_id", 6], ["min_qty", "10.0"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.6ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" = $3 LIMIT $4[0m  [["price_list_id", 1], ["product_id", 8], ["min_qty", "10.0"], ["LIMIT", 1]]
+  [1m[36mPriceList Load (0.2ms)[0m  [1m[34mSELECT "price_lists".* FROM "price_lists" WHERE "price_lists"."organization_id" = $1 AND "price_lists"."branch_id" = $2 AND "price_lists"."list_type" = $3 AND "price_lists"."name" = $4 LIMIT $5[0m  [["organization_id", 1], ["branch_id", 1], ["list_type", "promo"], ["name", "Summer Promo — Oils & Pulses"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceList Update (1.0ms)[0m  [1m[33mUPDATE "price_lists" SET "valid_from" = $1, "valid_to" = $2, "updated_at" = $3 WHERE "price_lists"."id" = $4[0m  [["valid_from", "2026-03-07"], ["valid_to", "2026-04-06"], ["updated_at", "2026-03-07 17:58:13.068004"], ["id", 2]]
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 12], ["price_list_id", 2], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (1.6ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 13], ["price_list_id", 2], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 14], ["price_list_id", 2], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 15], ["price_list_id", 2], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "driver"], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "driver1@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "driver1@riceoms.dev"], ["id", 15], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 15], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "driver2@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "driver2@riceoms.dev"], ["id", 16], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 16], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "driver3@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "driver3@riceoms.dev"], ["id", 17], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mMembership Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 17], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mVehicle Load (32.2ms)[0m  [1m[34mSELECT "vehicles".* FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."organization_id" = $2 LIMIT $3[0m  [["registration_number", "TS09EA4321"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mVehicle Exists? (1.2ms)[0m  [1m[34mSELECT 1 AS one FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."id" != $2 AND "vehicles"."organization_id" = $3 AND "vehicles"."deleted_at" IS NULL LIMIT $4[0m  [["registration_number", "TS09EA4321"], ["id", 2], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mVehicle Update (0.3ms)[0m  [1m[33mUPDATE "vehicles" SET "insurance_expiry" = $1, "fitness_expiry" = $2, "updated_at" = $3 WHERE "vehicles"."id" = $4[0m  [["insurance_expiry", "2027-03-07"], ["fitness_expiry", "2027-03-07"], ["updated_at", "2026-03-07 17:58:13.178167"], ["id", 2]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mVehicle Load (0.5ms)[0m  [1m[34mSELECT "vehicles".* FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."organization_id" = $2 LIMIT $3[0m  [["registration_number", "TS09EA8765"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mVehicle Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."id" != $2 AND "vehicles"."organization_id" = $3 AND "vehicles"."deleted_at" IS NULL LIMIT $4[0m  [["registration_number", "TS09EA8765"], ["id", 3], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mVehicle Update (0.3ms)[0m  [1m[33mUPDATE "vehicles" SET "insurance_expiry" = $1, "fitness_expiry" = $2, "updated_at" = $3 WHERE "vehicles"."id" = $4[0m  [["insurance_expiry", "2026-11-07"], ["fitness_expiry", "2027-01-07"], ["updated_at", "2026-03-07 17:58:13.183400"], ["id", 3]]
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mVehicle Load (0.3ms)[0m  [1m[34mSELECT "vehicles".* FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."organization_id" = $2 LIMIT $3[0m  [["registration_number", "TS09EA2201"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mVehicle Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."id" != $2 AND "vehicles"."organization_id" = $3 AND "vehicles"."deleted_at" IS NULL LIMIT $4[0m  [["registration_number", "TS09EA2201"], ["id", 4], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mVehicle Update (0.9ms)[0m  [1m[33mUPDATE "vehicles" SET "insurance_expiry" = $1, "updated_at" = $2 WHERE "vehicles"."id" = $3[0m  [["insurance_expiry", "2026-09-07"], ["updated_at", "2026-03-07 17:58:13.188345"], ["id", 4]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "admin2@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (1.4ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) LIMIT $2[0m  [["email", "admin2@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mUser Create (9.0ms)[0m  [1m[32mINSERT INTO "users" ("email", "encrypted_password", "first_name", "last_name", "phone", "active", "deleted_at", "created_at", "updated_at", "sign_in_count", "current_sign_in_at", "last_sign_in_at", "current_sign_in_ip", "last_sign_in_ip", "reset_password_token", "reset_password_sent_at", "remember_created_at", "plan") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING "id"[0m  [["email", "admin2@riceoms.dev"], ["encrypted_password", "[FILTERED]"], ["first_name", "Rakesh"], ["last_name", "Verma"], ["phone", nil], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.374488"], ["updated_at", "2026-03-07 17:58:13.374488"], ["sign_in_count", 0], ["current_sign_in_at", nil], ["last_sign_in_at", nil], ["current_sign_in_ip", nil], ["last_sign_in_ip", nil], ["reset_password_token", "[FILTERED]"], ["reset_password_sent_at", "[FILTERED]"], ["remember_created_at", nil], ["plan", "starter"]]
+  [1m[36mTRANSACTION (1.5ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.2ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "admin"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 18], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Membership Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 18], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mMembership Create (8.9ms)[0m  [1m[32mINSERT INTO "memberships" ("user_id", "organization_id", "branch_id", "role_id", "active", "deleted_at", "created_at", "updated_at", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING "id"[0m  [["user_id", 18], ["organization_id", 1], ["branch_id", 1], ["role_id", 2], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.401524"], ["updated_at", "2026-03-07 17:58:13.401524"], ["status", "active"]]
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "manager@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) LIMIT $2[0m  [["email", "manager@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mUser Create (0.5ms)[0m  [1m[32mINSERT INTO "users" ("email", "encrypted_password", "first_name", "last_name", "phone", "active", "deleted_at", "created_at", "updated_at", "sign_in_count", "current_sign_in_at", "last_sign_in_at", "current_sign_in_ip", "last_sign_in_ip", "reset_password_token", "reset_password_sent_at", "remember_created_at", "plan") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING "id"[0m  [["email", "manager@riceoms.dev"], ["encrypted_password", "[FILTERED]"], ["first_name", "Priya"], ["last_name", "Sharma"], ["phone", nil], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.582922"], ["updated_at", "2026-03-07 17:58:13.582922"], ["sign_in_count", 0], ["current_sign_in_at", nil], ["last_sign_in_at", nil], ["current_sign_in_ip", nil], ["last_sign_in_ip", nil], ["reset_password_token", "[FILTERED]"], ["reset_password_sent_at", "[FILTERED]"], ["remember_created_at", nil], ["plan", "starter"]]
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.2ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "manager"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 19], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Membership Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 19], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mMembership Create (1.2ms)[0m  [1m[32mINSERT INTO "memberships" ("user_id", "organization_id", "branch_id", "role_id", "active", "deleted_at", "created_at", "updated_at", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING "id"[0m  [["user_id", 19], ["organization_id", 1], ["branch_id", 1], ["role_id", 3], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.588748"], ["updated_at", "2026-03-07 17:58:13.588748"], ["status", "active"]]
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "salesrep@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (1.7ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) LIMIT $2[0m  [["email", "salesrep@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mUser Create (0.3ms)[0m  [1m[32mINSERT INTO "users" ("email", "encrypted_password", "first_name", "last_name", "phone", "active", "deleted_at", "created_at", "updated_at", "sign_in_count", "current_sign_in_at", "last_sign_in_at", "current_sign_in_ip", "last_sign_in_ip", "reset_password_token", "reset_password_sent_at", "remember_created_at", "plan") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING "id"[0m  [["email", "salesrep@riceoms.dev"], ["encrypted_password", "[FILTERED]"], ["first_name", "Arjun"], ["last_name", "Reddy"], ["phone", nil], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.761670"], ["updated_at", "2026-03-07 17:58:13.761670"], ["sign_in_count", 0], ["current_sign_in_at", nil], ["last_sign_in_at", nil], ["current_sign_in_ip", nil], ["last_sign_in_ip", nil], ["reset_password_token", "[FILTERED]"], ["reset_password_sent_at", "[FILTERED]"], ["remember_created_at", nil], ["plan", "starter"]]
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.2ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "sales_rep"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 20], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Membership Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 20], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mMembership Create (1.1ms)[0m  [1m[32mINSERT INTO "memberships" ("user_id", "organization_id", "branch_id", "role_id", "active", "deleted_at", "created_at", "updated_at", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING "id"[0m  [["user_id", 20], ["organization_id", 1], ["branch_id", 1], ["role_id", 4], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.767333"], ["updated_at", "2026-03-07 17:58:13.767333"], ["status", "active"]]
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "accountant@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) LIMIT $2[0m  [["email", "accountant@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mUser Create (0.2ms)[0m  [1m[32mINSERT INTO "users" ("email", "encrypted_password", "first_name", "last_name", "phone", "active", "deleted_at", "created_at", "updated_at", "sign_in_count", "current_sign_in_at", "last_sign_in_at", "current_sign_in_ip", "last_sign_in_ip", "reset_password_token", "reset_password_sent_at", "remember_created_at", "plan") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING "id"[0m  [["email", "accountant@riceoms.dev"], ["encrypted_password", "[FILTERED]"], ["first_name", "Kavitha"], ["last_name", "Nair"], ["phone", nil], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.939431"], ["updated_at", "2026-03-07 17:58:13.939431"], ["sign_in_count", 0], ["current_sign_in_at", nil], ["last_sign_in_at", nil], ["current_sign_in_ip", nil], ["last_sign_in_ip", nil], ["reset_password_token", "[FILTERED]"], ["reset_password_sent_at", "[FILTERED]"], ["remember_created_at", nil], ["plan", "starter"]]
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "accountant"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 21], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Membership Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 21], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mMembership Create (1.8ms)[0m  [1m[32mINSERT INTO "memberships" ("user_id", "organization_id", "branch_id", "role_id", "active", "deleted_at", "created_at", "updated_at", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING "id"[0m  [["user_id", 21], ["organization_id", 1], ["branch_id", 1], ["role_id", 6], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:13.945269"], ["updated_at", "2026-03-07 17:58:13.945269"], ["status", "active"]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "warehouse@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) LIMIT $2[0m  [["email", "warehouse@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mUser Create (0.3ms)[0m  [1m[32mINSERT INTO "users" ("email", "encrypted_password", "first_name", "last_name", "phone", "active", "deleted_at", "created_at", "updated_at", "sign_in_count", "current_sign_in_at", "last_sign_in_at", "current_sign_in_ip", "last_sign_in_ip", "reset_password_token", "reset_password_sent_at", "remember_created_at", "plan") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING "id"[0m  [["email", "warehouse@riceoms.dev"], ["encrypted_password", "[FILTERED]"], ["first_name", "Ganesh"], ["last_name", "Pillai"], ["phone", nil], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:14.118203"], ["updated_at", "2026-03-07 17:58:14.118203"], ["sign_in_count", 0], ["current_sign_in_at", nil], ["last_sign_in_at", nil], ["current_sign_in_ip", nil], ["last_sign_in_ip", nil], ["reset_password_token", "[FILTERED]"], ["reset_password_sent_at", "[FILTERED]"], ["remember_created_at", nil], ["plan", "starter"]]
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.2ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "warehouse_staff"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 22], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Membership Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 22], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mMembership Create (1.2ms)[0m  [1m[32mINSERT INTO "memberships" ("user_id", "organization_id", "branch_id", "role_id", "active", "deleted_at", "created_at", "updated_at", "status") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING "id"[0m  [["user_id", 22], ["organization_id", 1], ["branch_id", 1], ["role_id", 5], ["active", true], ["deleted_at", nil], ["created_at", "2026-03-07 17:58:14.123256"], ["updated_at", "2026-03-07 17:58:14.123256"], ["status", "active"]]
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mSupplier Load (39.7ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-001"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-001"], ["id", 2], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mSupplier Load (0.2ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-002"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-002"], ["id", 3], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mSupplier Load (0.1ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-003"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-003"], ["id", 4], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mSupplier Load (0.4ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-004"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-004"], ["id", 5], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Supplier Load (0.0ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-001"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Supplier Load (0.0ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-002"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Supplier Load (0.0ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-003"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (52.5ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-001"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.5ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-002"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-006"], ["supplier_id", 4], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-003"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.2ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-003"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-004"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.2ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-004"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-005"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.3ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-005"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-007"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.1ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-007"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Count (0.6ms)[0m  [1m[34mSELECT COUNT(*) FROM "purchase_invoices" WHERE "purchase_invoices"."organization_id" = $1 AND "purchase_invoices"."status" = $2[0m  [["organization_id", 1], ["status", "draft"]]
+  [1m[36mPurchaseInvoice Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "purchase_invoices" WHERE "purchase_invoices"."organization_id" = $1 AND "purchase_invoices"."status" = $2[0m  [["organization_id", 1], ["status", "posted"]]
+  [1m[36mPurchaseInvoice Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "purchase_invoices" WHERE "purchase_invoices"."organization_id" = $1 AND "purchase_invoices"."status" = $2[0m  [["organization_id", 1], ["status", "cancelled"]]
+  [1m[36mStockMovement Exists? (50.0ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'opening_rice_25kg') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'opening_oil_1l') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'opening_oil_5l') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'writeoff_salt_damaged') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'return_rice_bsmt_5kg_cust01') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mBranch Load (0.2ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."code" = $1 LIMIT $2[0m  [["code", "ARYA-SD"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 1], ["organization_id", 1], ["branch_id", 7], ["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_rice_bsmt_5kg') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_rice_sona_5kg') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_toor') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_oil_1l') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_sugar') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'transfer_out_salt_to_depot') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (61.4ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_draft]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (1.2ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_draft]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_dispatched]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.4ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_dispatched]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_partial]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.3ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_partial]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_received]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.3ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_received]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_cancelled]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.3ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_cancelled]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Count (0.4ms)[0m  [1m[34mSELECT COUNT(*) AS "count_all", "stock_transfers"."status" AS "stock_transfers_status" FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 GROUP BY "stock_transfers"."status"[0m  [["organization_id", 1]]
+  [1m[36mAuditLog Count (45.8ms)[0m  [1m[34mSELECT COUNT(*) FROM "audit_logs" WHERE "audit_logs"."organization_id" = $1 AND "audit_logs"."auditable_type" = $2[0m  [["organization_id", 1], ["auditable_type", "StockTransfer"]]
+  [1m[36mInventoryLevel Load (40.3ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.7ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "30.0"], ["id", 1]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.4ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "20.0"], ["id", 10]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 7], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.4ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "50.0"], ["id", 7]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "30.0"], ["id", 2]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.4ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "20.0"], ["id", 11]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "100.0"], ["id", 4]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.4ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "80.0"], ["id", 12]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "100.0"], ["id", 5]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.6ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "60.0"], ["id", 8]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "30.0"], ["id", 13]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "20.0"], ["id", 9]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "80.0"], ["id", 6]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.2ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "60.0"], ["id", 14]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "150.0"], ["id", 3]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "50.0"], ["id", 15]]
+  [1m[35mSQL (1.1ms)[0m  [1m[34mSELECT "inventory_levels"."id" AS t0_r0, "inventory_levels"."organization_id" AS t0_r1, "inventory_levels"."branch_id" AS t0_r2, "inventory_levels"."product_id" AS t0_r3, "inventory_levels"."qty_on_hand" AS t0_r4, "inventory_levels"."qty_reserved" AS t0_r5, "inventory_levels"."created_at" AS t0_r6, "inventory_levels"."updated_at" AS t0_r7, "inventory_levels"."min_qty_threshold" AS t0_r8, "products"."id" AS t1_r0, "products"."organization_id" AS t1_r1, "products"."product_category_id" AS t1_r2, "products"."units_of_measure_id" AS t1_r3, "products"."sku" AS t1_r4, "products"."name" AS t1_r5, "products"."barcode" AS t1_r6, "products"."description" AS t1_r7, "products"."hsn_sac_code_id" AS t1_r8, "products"."gst_rate" AS t1_r9, "products"."min_order_qty" AS t1_r10, "products"."purchase_price" AS t1_r11, "products"."weight_kg" AS t1_r12, "products"."image_url" AS t1_r13, "products"."status" AS t1_r14, "products"."deleted_at" AS t1_r15, "products"."created_at" AS t1_r16, "products"."updated_at" AS t1_r17, "branches"."id" AS t2_r0, "branches"."name" AS t2_r1, "branches"."organization_id" AS t2_r2, "branches"."code" AS t2_r3, "branches"."city" AS t2_r4, "branches"."state" AS t2_r5, "branches"."active" AS t2_r6, "branches"."deleted_at" AS t2_r7, "branches"."created_at" AS t2_r8, "branches"."updated_at" AS t2_r9, "branches"."address" AS t2_r10, "branches"."pincode" AS t2_r11, "branches"."settings" AS t2_r12, "branches"."state_code" AS t2_r13 FROM "inventory_levels" LEFT OUTER JOIN "products" ON "products"."id" = "inventory_levels"."product_id" LEFT OUTER JOIN "branches" ON "branches"."id" = "inventory_levels"."branch_id" WHERE "inventory_levels"."organization_id" = $1 ORDER BY branches.name ASC, products.name ASC[0m  [["organization_id", 1]]
+  [1m[36mInventoryLevel Load (0.4ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mInventoryLevel Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mStockMovement Count (0.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "stock_movements" WHERE "stock_movements"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mStockTransfer Count (0.6ms)[0m  [1m[34mSELECT COUNT(*) FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mRoute Load (34.6ms)[0m  [1m[34mSELECT "routes".* FROM "routes" WHERE "routes"."code" = $1 AND "routes"."branch_id" = $2 LIMIT $3[0m  [["code", "ROUTE-N"], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mBranch Load (0.2ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRoute Load (0.2ms)[0m  [1m[34mSELECT "routes".* FROM "routes" WHERE "routes"."code" = $1 AND "routes"."branch_id" = $2 LIMIT $3[0m  [["code", "ROUTE-S"], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Branch Load (0.0ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mCustomer Load (88.0ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-001"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCreditAccount Load (28.8ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 3], ["LIMIT", 1]]
+  [1m[36mCustomer Load (0.6ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-002"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCreditAccount Load (0.3ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 4], ["LIMIT", 1]]
+  [1m[36mCustomer Load (0.4ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-003"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCreditAccount Load (0.4ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 5], ["LIMIT", 1]]
+  [1m[36mCustomer Load (0.3ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-004"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mCustomer Update (2.6ms)[0m  [1m[33mUPDATE "customers" SET "gstin" = $1, "route_id" = $2, "updated_at" = $3 WHERE "customers"."id" = $4[0m  [["gstin", nil], ["route_id", 4], ["updated_at", "2026-03-07 17:58:15.192128"], ["id", 6]]
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCreditAccount Load (0.3ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 6], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (64.9ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000001"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000002"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000003"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000004"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000005"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.5ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000006"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Count (0.9ms)[0m  [1m[34mSELECT COUNT(*) FROM "return_requests" WHERE "return_requests"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mCreditNote Count (65.5ms)[0m  [1m[34mSELECT COUNT(*) FROM "credit_notes" WHERE "credit_notes"."organization_id" = $1[0m  [["organization_id", 1]]
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mUnitsOfMeasure Load (0.4ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "EA"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Each"], ["id", 1], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "EA"], ["id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "PC"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Piece"], ["id", 2], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "PC"], ["id", 2], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.3ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "BOX"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Box"], ["id", 3], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "BOX"], ["id", 3], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.4ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "CTN"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Carton"], ["id", 4], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "CTN"], ["id", 4], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "KG"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Kilogram"], ["id", 5], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "KG"], ["id", 5], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.1ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "GRM"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Gram"], ["id", 6], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "GRM"], ["id", 6], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.1ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "LTR"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Litre"], ["id", 7], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "LTR"], ["id", 7], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "ML"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Millilitre"], ["id", 8], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "ML"], ["id", 8], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "BAG"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Bag"], ["id", 9], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "BAG"], ["id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.1ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "PACK"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.4ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Pack"], ["id", 10], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "PACK"], ["id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.1ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "CASE"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.7ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Case"], ["id", 11], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "CASE"], ["id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUnitsOfMeasure Load (0.2ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "DZN"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUnitsOfMeasure Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."name") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["name", "Dozen"], ["id", 12], ["LIMIT", 1]]
+  [1m[36mUnitsOfMeasure Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "units_of_measures" WHERE LOWER("units_of_measures"."symbol") = LOWER($1) AND "units_of_measures"."id" != $2 LIMIT $3[0m  [["symbol", "DZN"], ["id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mHsnSacCode Load (0.5ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10061090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10062000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10063000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.4ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10064000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.5ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10019900"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "10011100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "11010000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "11022000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "11031300"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07132000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07133100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07134000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "07135000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15121110"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15121990"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15131100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15131990"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15141100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "15089000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "17011200"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "17011400"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "17029090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "25010010"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09041100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09042210"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09030000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.4ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "04012000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "04069000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "22021090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "09021000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.3ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "19053100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "19054000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "34011100"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.1ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 AND "hsn_sac_codes"."effective_to" IS NULL LIMIT $2[0m  [["code", "34029010"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.4ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "owner"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "admin"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "manager"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "sales_rep"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "warehouse_staff"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "accountant"], ["LIMIT", 1]]
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "driver"], ["LIMIT", 1]]
+  [1m[36mUser Load (0.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "admin@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "admin@riceoms.dev"], ["id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mOrganization Load (0.5ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."slug" = $1 LIMIT $2[0m  [["slug", "arya-rice"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mBranch Load (1.9ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."code" = $1 LIMIT $2[0m  [["code", "ARYA-HO"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Role Load (0.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "owner"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 1], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.8ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "RICE-CRL"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.4ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "PULSES"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.3ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "OILS"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.3ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "SUGAR"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mProductCategory Load (0.2ms)[0m  [1m[34mSELECT "product_categories".* FROM "product_categories" WHERE "product_categories"."code" = $1 AND "product_categories"."organization_id" = $2 LIMIT $3[0m  [["code", "SPICES"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE UnitsOfMeasure Load (0.0ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "KG"], ["LIMIT", 1]]
+  [1m[36mCACHE UnitsOfMeasure Load (0.0ms)[0m  [1m[34mSELECT "units_of_measures".* FROM "units_of_measures" WHERE "units_of_measures"."symbol" = $1 LIMIT $2[0m  [["symbol", "LTR"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.4ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "10061090"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "07134000"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.5ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "15121990"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.4ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "17011400"], ["LIMIT", 1]]
+  [1m[36mHsnSacCode Load (0.2ms)[0m  [1m[34mSELECT "hsn_sac_codes".* FROM "hsn_sac_codes" WHERE "hsn_sac_codes"."code" = $1 LIMIT $2[0m  [["code", "25010010"], ["LIMIT", 1]]
+  [1m[36mProduct Load (0.7ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "RICE-BSMT-5KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "RICE-BSMT-5KG"], ["id", 6], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.2ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "RICE-BSMT-25KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "RICE-BSMT-25KG"], ["id", 7], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.4ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "RICE-SONA-5KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "RICE-SONA-5KG"], ["id", 8], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.3ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "PULSE-TOOR-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "PULSE-TOOR-1KG"], ["id", 9], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.2ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "PULSE-URAD-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "PULSE-URAD-1KG"], ["id", 10], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.1ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "OIL-SFR-1L"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "OIL-SFR-1L"], ["id", 11], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.3ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "OIL-SFR-5L"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "OIL-SFR-5L"], ["id", 12], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.1ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "SUGAR-REF-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "SUGAR-REF-1KG"], ["id", 13], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mProduct Load (0.1ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."sku" = $1 AND "products"."organization_id" = $2 LIMIT $3[0m  [["sku", "SALT-CMN-1KG"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mProduct Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "products" WHERE "products"."sku" = $1 AND "products"."id" != $2 AND "products"."organization_id" = $3 AND "products"."deleted_at" IS NULL LIMIT $4[0m  [["sku", "SALT-CMN-1KG"], ["id", 14], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceList Load (1.7ms)[0m  [1m[34mSELECT "price_lists".* FROM "price_lists" WHERE "price_lists"."organization_id" = $1 AND "price_lists"."branch_id" IS NULL AND "price_lists"."list_type" = $2 AND "price_lists"."name" = $3 LIMIT $4[0m  [["organization_id", 1], ["list_type", "standard"], ["name", "Standard Price List"], ["LIMIT", 1]]
+  [1m[36mPriceListItem Load (0.7ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 1], ["price_list_id", 1], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 7], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 2], ["price_list_id", 1], ["product_id", 7], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 3], ["price_list_id", 1], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.5ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 4], ["price_list_id", 1], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 16], ["price_list_id", 1], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 6], ["price_list_id", 1], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 7], ["price_list_id", 1], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.3ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 8], ["price_list_id", 1], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.4ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 1], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 9], ["price_list_id", 1], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" = $3 LIMIT $4[0m  [["price_list_id", 1], ["product_id", 6], ["min_qty", "10.0"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.2ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" = $3 LIMIT $4[0m  [["price_list_id", 1], ["product_id", 8], ["min_qty", "10.0"], ["LIMIT", 1]]
+  [1m[36mPriceList Load (0.3ms)[0m  [1m[34mSELECT "price_lists".* FROM "price_lists" WHERE "price_lists"."organization_id" = $1 AND "price_lists"."branch_id" = $2 AND "price_lists"."list_type" = $3 AND "price_lists"."name" = $4 LIMIT $5[0m  [["organization_id", 1], ["branch_id", 1], ["list_type", "promo"], ["name", "Summer Promo — Oils & Pulses"], ["LIMIT", 1]]
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 12], ["price_list_id", 2], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 13], ["price_list_id", 2], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (5.4ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 14], ["price_list_id", 2], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mPriceListItem Load (0.1ms)[0m  [1m[34mSELECT "price_list_items".* FROM "price_list_items" WHERE "price_list_items"."price_list_id" = $1 AND "price_list_items"."product_id" = $2 AND "price_list_items"."min_qty" IS NULL LIMIT $3[0m  [["price_list_id", 2], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mPriceListItem Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "price_list_items" WHERE "price_list_items"."min_qty" IS NULL AND "price_list_items"."id" != $1 AND "price_list_items"."price_list_id" = $2 AND "price_list_items"."product_id" = $3 LIMIT $4[0m  [["id", 15], ["price_list_id", 2], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Role Load (0.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "driver"], ["LIMIT", 1]]
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "driver1@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "driver1@riceoms.dev"], ["id", 15], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mMembership Exists? (0.5ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 15], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "driver2@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "driver2@riceoms.dev"], ["id", 16], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 16], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "driver3@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "driver3@riceoms.dev"], ["id", 17], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 17], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mVehicle Load (0.8ms)[0m  [1m[34mSELECT "vehicles".* FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."organization_id" = $2 LIMIT $3[0m  [["registration_number", "TS09EA4321"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mVehicle Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."id" != $2 AND "vehicles"."organization_id" = $3 AND "vehicles"."deleted_at" IS NULL LIMIT $4[0m  [["registration_number", "TS09EA4321"], ["id", 2], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mVehicle Load (0.1ms)[0m  [1m[34mSELECT "vehicles".* FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."organization_id" = $2 LIMIT $3[0m  [["registration_number", "TS09EA8765"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mVehicle Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."id" != $2 AND "vehicles"."organization_id" = $3 AND "vehicles"."deleted_at" IS NULL LIMIT $4[0m  [["registration_number", "TS09EA8765"], ["id", 3], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mVehicle Load (0.2ms)[0m  [1m[34mSELECT "vehicles".* FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."organization_id" = $2 LIMIT $3[0m  [["registration_number", "TS09EA2201"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mVehicle Exists? (2.6ms)[0m  [1m[34mSELECT 1 AS one FROM "vehicles" WHERE "vehicles"."registration_number" = $1 AND "vehicles"."id" != $2 AND "vehicles"."organization_id" = $3 AND "vehicles"."deleted_at" IS NULL LIMIT $4[0m  [["registration_number", "TS09EA2201"], ["id", 4], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "admin2@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "admin2@riceoms.dev"], ["id", 18], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Role Load (0.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "admin"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 18], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "manager@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "manager@riceoms.dev"], ["id", 19], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Role Load (0.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "manager"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 19], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "salesrep@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "salesrep@riceoms.dev"], ["id", 20], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Role Load (0.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "sales_rep"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 20], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "accountant@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "accountant@riceoms.dev"], ["id", 21], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Role Load (0.0ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "accountant"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 21], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = $1 LIMIT $2[0m  [["email", "warehouse@riceoms.dev"], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mUser Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER($1) AND "users"."id" != $2 LIMIT $3[0m  [["email", "warehouse@riceoms.dev"], ["id", 22], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRole Load (0.1ms)[0m  [1m[34mSELECT "roles".* FROM "roles" WHERE "roles"."name" = $1 LIMIT $2[0m  [["name", "warehouse_staff"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 22], ["organization_id", 1], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mSupplier Load (0.6ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-001"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-001"], ["id", 2], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mSupplier Load (0.1ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-002"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-002"], ["id", 3], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mSupplier Load (0.1ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-003"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-003"], ["id", 4], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mSupplier Load (0.1ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-004"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mSupplier Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."id" != $2 AND "suppliers"."organization_id" = $3 AND "suppliers"."deleted_at" IS NULL LIMIT $4[0m  [["code", "SUPP-004"], ["id", 5], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCACHE Supplier Load (0.0ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-001"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Supplier Load (0.0ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-002"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Supplier Load (0.0ms)[0m  [1m[34mSELECT "suppliers".* FROM "suppliers" WHERE "suppliers"."code" = $1 AND "suppliers"."organization_id" = $2 LIMIT $3[0m  [["code", "SUPP-003"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-001"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-002"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-006"], ["supplier_id", 4], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-003"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.2ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-003"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-004"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.2ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-004"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-005"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.2ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-005"], ["supplier_id", 3], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-007"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Load (0.3ms)[0m  [1m[34mSELECT "purchase_invoices".* FROM "purchase_invoices" WHERE "purchase_invoices"."invoice_number" = $1 AND "purchase_invoices"."supplier_id" = $2 LIMIT $3[0m  [["invoice_number", "SEED-INV-007"], ["supplier_id", 2], ["LIMIT", 1]]
+  [1m[36mPurchaseInvoice Count (0.5ms)[0m  [1m[34mSELECT COUNT(*) FROM "purchase_invoices" WHERE "purchase_invoices"."organization_id" = $1 AND "purchase_invoices"."status" = $2[0m  [["organization_id", 1], ["status", "draft"]]
+  [1m[36mPurchaseInvoice Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "purchase_invoices" WHERE "purchase_invoices"."organization_id" = $1 AND "purchase_invoices"."status" = $2[0m  [["organization_id", 1], ["status", "posted"]]
+  [1m[36mPurchaseInvoice Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "purchase_invoices" WHERE "purchase_invoices"."organization_id" = $1 AND "purchase_invoices"."status" = $2[0m  [["organization_id", 1], ["status", "cancelled"]]
+  [1m[36mStockMovement Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'opening_rice_25kg') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'opening_oil_1l') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'opening_oil_5l') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'writeoff_salt_damaged') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'return_rice_bsmt_5kg_cust01') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mBranch Load (0.2ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."code" = $1 LIMIT $2[0m  [["code", "ARYA-SD"], ["LIMIT", 1]]
+  [1m[36mMembership Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "memberships" WHERE "memberships"."user_id" = $1 AND "memberships"."organization_id" = $2 AND "memberships"."branch_id" = $3 LIMIT $4[0m  [["user_id", 1], ["organization_id", 1], ["branch_id", 7], ["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.6ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_rice_bsmt_5kg') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_rice_sona_5kg') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_toor') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_oil_1l') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'depot_opening_sugar') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockMovement Exists? (0.5ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_movements" WHERE (metadata->>'scenario' = 'transfer_out_salt_to_depot') LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (2.0ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_draft]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.4ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_draft]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_dispatched]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.2ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_dispatched]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_partial]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.2ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_partial]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_received]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.2ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_received]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_cancelled]%') LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Load (0.2ms)[0m  [1m[34mSELECT "stock_transfers".* FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 AND (notes LIKE '%[seed:trf_cancelled]%') ORDER BY "stock_transfers"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mStockTransfer Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) AS "count_all", "stock_transfers"."status" AS "stock_transfers_status" FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1 GROUP BY "stock_transfers"."status"[0m  [["organization_id", 1]]
+  [1m[36mAuditLog Count (0.6ms)[0m  [1m[34mSELECT COUNT(*) FROM "audit_logs" WHERE "audit_logs"."organization_id" = $1 AND "audit_logs"."auditable_type" = $2[0m  [["organization_id", 1], ["auditable_type", "StockTransfer"]]
+  [1m[36mInventoryLevel Load (0.5ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (19.7ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "30.0"], ["id", 1]]
+  [1m[36mInventoryLevel Load (0.3ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 6], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.4ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "20.0"], ["id", 10]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 7], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (1.2ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "50.0"], ["id", 7]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "30.0"], ["id", 2]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 8], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.7ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "20.0"], ["id", 11]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.5ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "100.0"], ["id", 4]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 9], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "80.0"], ["id", 12]]
+  [1m[36mInventoryLevel Load (0.5ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 10], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.4ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "100.0"], ["id", 5]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.5ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "60.0"], ["id", 8]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 11], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.5ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "30.0"], ["id", 13]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 12], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.5ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "20.0"], ["id", 9]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.5ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "80.0"], ["id", 6]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 13], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.5ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "60.0"], ["id", 14]]
+  [1m[36mInventoryLevel Load (0.2ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 1], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (0.3ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "150.0"], ["id", 3]]
+  [1m[36mInventoryLevel Load (0.1ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1 AND "inventory_levels"."branch_id" = $2 AND "inventory_levels"."product_id" = $3 LIMIT $4[0m  [["organization_id", 1], ["branch_id", 7], ["product_id", 14], ["LIMIT", 1]]
+  [1m[36mInventoryLevel Update (1.0ms)[0m  [1m[33mUPDATE "inventory_levels" SET "min_qty_threshold" = $1 WHERE "inventory_levels"."id" = $2[0m  [["min_qty_threshold", "50.0"], ["id", 15]]
+  [1m[35mSQL (0.9ms)[0m  [1m[34mSELECT "inventory_levels"."id" AS t0_r0, "inventory_levels"."organization_id" AS t0_r1, "inventory_levels"."branch_id" AS t0_r2, "inventory_levels"."product_id" AS t0_r3, "inventory_levels"."qty_on_hand" AS t0_r4, "inventory_levels"."qty_reserved" AS t0_r5, "inventory_levels"."created_at" AS t0_r6, "inventory_levels"."updated_at" AS t0_r7, "inventory_levels"."min_qty_threshold" AS t0_r8, "products"."id" AS t1_r0, "products"."organization_id" AS t1_r1, "products"."product_category_id" AS t1_r2, "products"."units_of_measure_id" AS t1_r3, "products"."sku" AS t1_r4, "products"."name" AS t1_r5, "products"."barcode" AS t1_r6, "products"."description" AS t1_r7, "products"."hsn_sac_code_id" AS t1_r8, "products"."gst_rate" AS t1_r9, "products"."min_order_qty" AS t1_r10, "products"."purchase_price" AS t1_r11, "products"."weight_kg" AS t1_r12, "products"."image_url" AS t1_r13, "products"."status" AS t1_r14, "products"."deleted_at" AS t1_r15, "products"."created_at" AS t1_r16, "products"."updated_at" AS t1_r17, "branches"."id" AS t2_r0, "branches"."name" AS t2_r1, "branches"."organization_id" AS t2_r2, "branches"."code" AS t2_r3, "branches"."city" AS t2_r4, "branches"."state" AS t2_r5, "branches"."active" AS t2_r6, "branches"."deleted_at" AS t2_r7, "branches"."created_at" AS t2_r8, "branches"."updated_at" AS t2_r9, "branches"."address" AS t2_r10, "branches"."pincode" AS t2_r11, "branches"."settings" AS t2_r12, "branches"."state_code" AS t2_r13 FROM "inventory_levels" LEFT OUTER JOIN "products" ON "products"."id" = "inventory_levels"."product_id" LEFT OUTER JOIN "branches" ON "branches"."id" = "inventory_levels"."branch_id" WHERE "inventory_levels"."organization_id" = $1 ORDER BY branches.name ASC, products.name ASC[0m  [["organization_id", 1]]
+  [1m[36mInventoryLevel Load (0.3ms)[0m  [1m[34mSELECT "inventory_levels".* FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mInventoryLevel Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "inventory_levels" WHERE "inventory_levels"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mStockMovement Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "stock_movements" WHERE "stock_movements"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mStockTransfer Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "stock_transfers" WHERE "stock_transfers"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mRoute Load (0.7ms)[0m  [1m[34mSELECT "routes".* FROM "routes" WHERE "routes"."code" = $1 AND "routes"."branch_id" = $2 LIMIT $3[0m  [["code", "ROUTE-N"], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mBranch Load (0.1ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mRoute Load (0.2ms)[0m  [1m[34mSELECT "routes".* FROM "routes" WHERE "routes"."code" = $1 AND "routes"."branch_id" = $2 LIMIT $3[0m  [["code", "ROUTE-S"], ["branch_id", 1], ["LIMIT", 1]]
+  [1m[36mCACHE Branch Load (0.0ms)[0m  [1m[34mSELECT "branches".* FROM "branches" WHERE "branches"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mCustomer Load (1.2ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-001"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[36mCreditAccount Load (0.5ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 3], ["LIMIT", 1]]
+  [1m[36mCustomer Load (0.5ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-002"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCreditAccount Load (0.2ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 4], ["LIMIT", 1]]
+  [1m[36mCustomer Load (0.3ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-003"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCreditAccount Load (0.2ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 5], ["LIMIT", 1]]
+  [1m[36mCustomer Load (0.3ms)[0m  [1m[34mSELECT "customers".* FROM "customers" WHERE "customers"."code" = $1 AND "customers"."organization_id" = $2 LIMIT $3[0m  [["code", "CUST-004"], ["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mCreditAccount Load (0.3ms)[0m  [1m[34mSELECT "credit_accounts".* FROM "credit_accounts" WHERE "credit_accounts"."customer_id" = $1 LIMIT $2[0m  [["customer_id", 6], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000001"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000002"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000003"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000004"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.5ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000005"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "return_requests" WHERE "return_requests"."organization_id" = $1 AND "return_requests"."return_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["return_number", "RET-0001-000006"], ["LIMIT", 1]]
+  [1m[36mReturnRequest Count (0.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "return_requests" WHERE "return_requests"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mCreditNote Count (1.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "credit_notes" WHERE "credit_notes"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mSalesInvoice Exists? (81.3ms)[0m  [1m[34mSELECT 1 AS one FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0001"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Load (0.4ms)[0m  [1m[34mSELECT "sales_invoices".* FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0001"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Exists? (0.6ms)[0m  [1m[34mSELECT 1 AS one FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0002"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Load (0.6ms)[0m  [1m[34mSELECT "sales_invoices".* FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0002"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0003"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Load (0.3ms)[0m  [1m[34mSELECT "sales_invoices".* FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0003"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0004"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Load (0.3ms)[0m  [1m[34mSELECT "sales_invoices".* FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0004"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0005"], ["LIMIT", 1]]
+  [1m[36mSalesInvoice Load (0.5ms)[0m  [1m[34mSELECT "sales_invoices".* FROM "sales_invoices" WHERE "sales_invoices"."organization_id" = $1 AND "sales_invoices"."invoice_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["invoice_number", "SI-ARYA-202603-0005"], ["LIMIT", 1]]
+  [1m[36mPayment Exists? (73.8ms)[0m  [1m[34mSELECT 1 AS one FROM "payments" WHERE "payments"."organization_id" = $1 AND "payments"."payment_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["payment_number", "PAY-ARYA-202603-0001"], ["LIMIT", 1]]
+  [1m[36mPayment Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "payments" WHERE "payments"."organization_id" = $1 AND "payments"."payment_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["payment_number", "PAY-ARYA-202603-0002"], ["LIMIT", 1]]
+  [1m[36mPayment Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "payments" WHERE "payments"."organization_id" = $1 AND "payments"."payment_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["payment_number", "PAY-ARYA-202603-0003"], ["LIMIT", 1]]
+  [1m[36mPayment Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "payments" WHERE "payments"."organization_id" = $1 AND "payments"."payment_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["payment_number", "PAY-ARYA-202603-0004"], ["LIMIT", 1]]
+  [1m[36mPayment Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "payments" WHERE "payments"."organization_id" = $1 AND "payments"."payment_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["payment_number", "PAY-ARYA-202603-0005"], ["LIMIT", 1]]
+  [1m[36mPayment Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "payments" WHERE "payments"."organization_id" = $1 AND "payments"."payment_number" = $2 LIMIT $3[0m  [["organization_id", 1], ["payment_number", "PAY-ARYA-202603-0006"], ["LIMIT", 1]]
+  [1m[36mPayment Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "payments" WHERE "payments"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mPaymentAllocation Count (35.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "payment_allocations" WHERE "payment_allocations"."payment_id" IN (SELECT "payments"."id" FROM "payments" WHERE "payments"."organization_id" = $1)[0m  [["organization_id", 1]]
+  [1m[36mAdvancePayment Count (38.8ms)[0m  [1m[34mSELECT COUNT(*) FROM "advance_payments" WHERE "advance_payments"."organization_id" = $1[0m  [["organization_id", 1]]
+  [1m[36mRoute Load (0.7ms)[0m  [1m[34mSELECT "routes".* FROM "routes" WHERE "routes"."organization_id" = $1 ORDER BY "routes"."id" ASC LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" INNER JOIN "memberships" ON "memberships"."user_id" = "users"."id" WHERE "memberships"."organization_id" = $1 AND "memberships"."role_id" = $2 ORDER BY "users"."id" ASC LIMIT $3[0m  [["organization_id", 1], ["role_id", nil], ["LIMIT", 1]]
+  [1m[36mBeat Exists? (61.5ms)[0m  [1m[34mSELECT 1 AS one FROM "beats" WHERE "beats"."organization_id" = $1 LIMIT $2[0m  [["organization_id", 1], ["LIMIT", 1]]
+Shutting down background worker

@@ -46,6 +46,7 @@ module Api
         jti = SecureRandom.uuid
         payload = {
           sub:   user.id,
+          aud:   'user',
           email: user.email,
           jti:   jti,
           exp:   24.hours.from_now.to_i,
