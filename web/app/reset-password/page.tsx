@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
 
     // Validate token
     fetch(`${API_URL}/api/v1/passwords/validate_token`, {
-      method: `POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reset_token: token }),
     })
@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
 
     try {
       const response = await fetch(`${API_URL}/api/v1/passwords/reset`, {
-        method: `POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reset_token: token,

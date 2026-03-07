@@ -66,7 +66,7 @@ export default function SignupPage() {
 
     try {
       const response = await fetch(`${API_URL}/api/v1/signup/initiate`, {
-        method: `POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
@@ -95,7 +95,7 @@ export default function SignupPage() {
 
     try {
       const response = await fetch(`${API_URL}/api/v1/signup/verify_otp`, {
-        method: `POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp_code: otpCode }),
       });
@@ -132,7 +132,7 @@ export default function SignupPage() {
 
     try {
       const response = await fetch(`${API_URL}/api/v1/signup/set_password`, {
-        method: `POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
@@ -163,7 +163,7 @@ export default function SignupPage() {
     try {
       // Complete the signup with plan selection
       const response = await fetch(`${API_URL}/api/v1/signup/choose_plan`, {
-        method: `POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
