@@ -78,7 +78,11 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  <<: *default
+  adapter: postgresql
+  encoding: unicode
   database: backend_production
   username: backend
   password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
+  host: 127.0.0.1
+  port: 5432
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>

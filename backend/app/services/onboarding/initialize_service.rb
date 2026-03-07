@@ -15,8 +15,10 @@ module Onboarding
 
     def call
       begin
+        owner_role = Role.fetch!('owner')
+
         # Check if user already has an organization (idempotency)
-        existing_membership = @user.memberships.where(role_id: Role.find_by!(name: 'owner').id).first
+        existing_membership = @user.memberships.where(role_id: owner_role.id).first
         if existing_membership
           # User already has an organization as owner, return it
           return Result.new(
@@ -54,7 +56,6 @@ module Onboarding
           )
 
           # Create owner membership
-          owner_role = Role.find_by!(name: 'owner')
           membership = Membership.create!(
             user:         @user,
             organization: organization,
