@@ -41,10 +41,13 @@ Rails.application.routes.draw do
       post 'onboarding/setup',         to: 'onboarding#setup'
       post 'onboarding/complete_step', to: 'onboarding#complete_step'
 
-      # Current user profile
-      get  'profile',                 to: 'profiles#show'
-      put  'profile',                 to: 'profiles#update'
-      post 'profile/change_password', to: 'profiles#change_password'
+      # Current user profile (both singular and plural path accepted)
+      get  'profile',                  to: 'profiles#show'
+      put  'profile',                  to: 'profiles#update'
+      post 'profile/change_password',  to: 'profiles#change_password'
+      get  'profiles',                 to: 'profiles#show'
+      put  'profiles',                 to: 'profiles#update'
+      post 'profiles/change_password', to: 'profiles#change_password'
 
       # Resources
       resources :organizations, only: %i[index show create update] do
