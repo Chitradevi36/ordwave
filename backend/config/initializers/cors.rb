@@ -7,7 +7,21 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins 'localhost:3000', 'localhost:3001', '127.0.0.1:3000', '127.0.0.1:3001', /\Ahttp:\/\/localhost:\d+\z/
+    default_origins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      'https://ordwave.com',
+      'https://www.ordwave.com'
+    ]
+
+    env_origins = ENV.fetch('CORS_ALLOWED_ORIGINS', '')
+                     .split(',')
+                     .map(&:strip)
+                     .reject(&:empty?)
+
+    origins(*(default_origins + env_origins).uniq, /\Ahttp:\/\/localhost:\d+\z/)
 
     resource '*',
       headers: :any,
