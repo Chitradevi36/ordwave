@@ -198720,3 +198720,30 @@ app/controllers/api/v1/accounting/integrations_controller.rb:12:in `index'
   ↳ app/controllers/api/v1/organizations_controller.rb:9:in `map'
 {"method":"GET","path":"/api/v1/branches","format":"*/*","controller":"Api::V1::BranchesController","action":"index","status":200,"allocations":37218,"duration":139.52,"view":0.38,"db":33.48,"request_id":"6c93bd68-384d-4071-bcdf-50a51ac6cd7a","user_id":1,"organization_id":1,"params":"{\"per_page\"=>\"100\"}"}
 {"method":"GET","path":"/api/v1/organizations","format":"*/*","controller":"Api::V1::OrganizationsController","action":"index","status":200,"allocations":33513,"duration":123.65,"view":0.24,"db":26.85,"request_id":"52a473e6-5056-4b6e-857a-8f76acf8c4e9","user_id":1,"params":"{}"}
+  [1m[36mActiveRecord::SchemaMigration Load (2.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mJwtDenylist Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "jwt_denylist" WHERE "jwt_denylist"."jti" = $1 LIMIT $2[0m  [["jti", "24e089fb-b62a-4fec-8d55-d666a5c4847c"], ["LIMIT", 1]]
+  ↳ app/controllers/api/v1/base_controller.rb:35:in `current_user'
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."active" = $1 AND "users"."deleted_at" IS NULL AND "users"."id" = $2 LIMIT $3[0m  [["active", true], ["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/api/v1/base_controller.rb:39:in `current_user'
+  [1m[36mOrganization Load (0.4ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."active" = $1 AND "organizations"."id" = $2 LIMIT $3[0m  [["active", true], ["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/api/v1/base_controller.rb:84:in `resolve_organization'
+  [1m[36mAccountingIntegration Load (1.6ms)[0m  [1m[34mSELECT "accounting_integrations".* FROM "accounting_integrations" WHERE "accounting_integrations"."organization_id" = $1 ORDER BY "accounting_integrations"."provider" ASC[0m  [["organization_id", 1]]
+  ↳ app/controllers/api/v1/accounting/integrations_controller.rb:13:in `map'
+  [1m[36mAccountingSyncRecord Count (2.9ms)[0m  [1m[34mSELECT COUNT(*) FROM "accounting_sync_records" WHERE "accounting_sync_records"."accounting_integration_id" = $1[0m  [["accounting_integration_id", 1]]
+  ↳ app/controllers/api/v1/accounting/integrations_controller.rb:112:in `serialize'
+  [1m[36mAccountingSyncRecord Count (1.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "accounting_sync_records" WHERE "accounting_sync_records"."accounting_integration_id" = $1 AND "accounting_sync_records"."status" = $2[0m  [["accounting_integration_id", 1], ["status", "failed"]]
+  ↳ app/controllers/api/v1/accounting/integrations_controller.rb:113:in `serialize'
+{"method":"GET","path":"/api/v1/accounting/integrations","format":"html","controller":"Api::V1::Accounting::IntegrationsController","action":"index","status":200,"allocations":41427,"duration":250.58,"view":1.59,"db":47.19,"request_id":"9acb34a5-2062-476e-b82e-08cd8e87d03b","user_id":1,"organization_id":1,"params":"{}"}
+  [1m[36mJwtDenylist Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "jwt_denylist" WHERE "jwt_denylist"."jti" = $1 LIMIT $2[0m  [["jti", "24e089fb-b62a-4fec-8d55-d666a5c4847c"], ["LIMIT", 1]]
+  ↳ app/controllers/api/v1/base_controller.rb:35:in `current_user'
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."active" = $1 AND "users"."deleted_at" IS NULL AND "users"."id" = $2 LIMIT $3[0m  [["active", true], ["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/api/v1/base_controller.rb:39:in `current_user'
+  [1m[36mOrganization Load (0.4ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."active" = $1 AND "organizations"."id" = $2 LIMIT $3[0m  [["active", true], ["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/api/v1/base_controller.rb:84:in `resolve_organization'
+  [1m[36mAccountingIntegration Load (0.4ms)[0m  [1m[34mSELECT "accounting_integrations".* FROM "accounting_integrations" WHERE "accounting_integrations"."organization_id" = $1 ORDER BY "accounting_integrations"."provider" ASC[0m  [["organization_id", 1]]
+  ↳ app/controllers/api/v1/accounting/integrations_controller.rb:13:in `map'
+  [1m[36mAccountingSyncRecord Count (0.7ms)[0m  [1m[34mSELECT COUNT(*) FROM "accounting_sync_records" WHERE "accounting_sync_records"."accounting_integration_id" = $1[0m  [["accounting_integration_id", 1]]
+  ↳ app/controllers/api/v1/accounting/integrations_controller.rb:112:in `serialize'
+  [1m[36mAccountingSyncRecord Count (0.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "accounting_sync_records" WHERE "accounting_sync_records"."accounting_integration_id" = $1 AND "accounting_sync_records"."status" = $2[0m  [["accounting_integration_id", 1], ["status", "failed"]]
+  ↳ app/controllers/api/v1/accounting/integrations_controller.rb:113:in `serialize'
+{"method":"GET","path":"/api/v1/accounting/integrations","format":"html","controller":"Api::V1::Accounting::IntegrationsController","action":"index","status":200,"allocations":3452,"duration":20.17,"view":0.23,"db":2.94,"request_id":"2a64cde2-679b-4403-9a22-9b636f224fa6","user_id":1,"organization_id":1,"params":"{}"}

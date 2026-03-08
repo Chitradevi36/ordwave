@@ -82,4 +82,17 @@ class Supplier < ApplicationRecord
     # Returns human-readable reasons if not deletable.
     []
   end
+
+  # ── Accounting Sync Triggers ────────────────────────────────────────────────
+  include AccountingSyncTriggers
+
+  accounting_sync_trigger(
+    event_type: "supplier_synced",
+    on:         %i[create update],
+    if:         :sync_to_accounting?
+  )
+
+  def sync_to_accounting?
+    active?
+  end
 end
