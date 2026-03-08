@@ -7,6 +7,7 @@ import {
   Layers,
   DollarSign,
   BarChart2,
+  BookMarked,
   type LucideIcon,
 } from "lucide-react";
 
@@ -95,6 +96,14 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     icon: BarChart2,
     matchers: ["/insights", "/reports"],
     rolesAllowed: ["owner", "admin", "manager", "accountant"],
+  },
+  {
+    key: "accounting",
+    label: "Accounting",
+    href: "/accounting",
+    icon: BookMarked,
+    matchers: ["/accounting"],
+    rolesAllowed: ["owner", "admin", "accountant"],
   },
 ];
 

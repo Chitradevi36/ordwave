@@ -349,6 +349,24 @@ Rails.application.routes.draw do
       # -- Device Tokens (Push Notifications) ---------------------------------
       resources :device_tokens, only: %i[create destroy]
 
+      # -- Accounting Integration ------------------------------------------
+      namespace :accounting do
+        resources :integrations, only: %i[index show create update] do
+          member do
+            post :test_configuration
+            post :mark_connected
+            post :mark_disconnected
+          end
+          resources :mappings, only: %i[index create update destroy]
+        end
+        resources :sync_records, only: %i[index show] do
+          member { post :retry }
+        end
+        resources :export_files, only: %i[index show create] do
+          member { get :download_url }
+        end
+      end
+
     end
 
     namespace :v2 do

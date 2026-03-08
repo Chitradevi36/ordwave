@@ -61,4 +61,17 @@ class Payment < ApplicationRecord
   def overallocated?
     allocated_amount > amount
   end
+
+  # ── Accounting Sync Triggers ────────────────────────────────────────────────
+  include AccountingSyncTriggers
+
+  accounting_sync_trigger(
+    event_type: "payment_recorded",
+    on:         %i[create update],
+    if:         :sync_to_accounting?
+  )
+
+  def sync_to_accounting?
+    confirmed?
+  end
 end

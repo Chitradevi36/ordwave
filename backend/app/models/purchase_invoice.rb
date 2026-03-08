@@ -69,6 +69,19 @@ class PurchaseInvoice < ApplicationRecord
     )
   end
 
+  # ── Accounting Sync Triggers ────────────────────────────────────────────────
+  include AccountingSyncTriggers
+
+  accounting_sync_trigger(
+    event_type: "purchase_invoice_posted",
+    on:         %i[create update],
+    if:         :sync_to_accounting?
+  )
+
+  def sync_to_accounting?
+    posted?
+  end
+
   private
 
   def due_date_after_invoice_date

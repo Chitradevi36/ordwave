@@ -140,4 +140,17 @@ class Customer < ApplicationRecord
       next_due_on:     compute_next_due_on(visited_at.to_date)
     )
   end
+
+  # ── Accounting Sync Triggers ────────────────────────────────────────────────
+  include AccountingSyncTriggers
+
+  accounting_sync_trigger(
+    event_type: "retailer_synced",
+    on:         %i[create update],
+    if:         :sync_to_accounting?
+  )
+
+  def sync_to_accounting?
+    active?
+  end
 end
