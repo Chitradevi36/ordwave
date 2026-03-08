@@ -16,6 +16,11 @@ class Organization < ApplicationRecord
   has_many :customers,          dependent: :destroy
   has_one  :credit_policy,      dependent: :destroy
 
+  # Accounting
+  has_many :accounting_integrations,  dependent: :destroy
+  has_many :accounting_sync_records,  dependent: :destroy
+  has_many :accounting_export_files,  dependent: :destroy
+
   # Validations
   validates :name,          presence: true, length: { maximum: 100 }
   validates :slug,          presence: true, uniqueness: true,

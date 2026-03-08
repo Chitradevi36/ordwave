@@ -10,9 +10,103 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_07_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_08_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "accounting_export_files", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "accounting_integration_id", null: false
+    t.string "provider", null: false
+    t.string "export_type", null: false
+    t.date "date_from"
+    t.date "date_to"
+    t.bigint "branch_id"
+    t.jsonb "filters_json", default: {}, null: false
+    t.string "file_path"
+    t.string "status", default: "generating", null: false
+    t.bigint "generated_by_id"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["accounting_integration_id"], name: "idx_accounting_export_files_integration"
+    t.index ["accounting_integration_id"], name: "index_accounting_export_files_on_accounting_integration_id"
+    t.index ["branch_id"], name: "index_accounting_export_files_on_branch_id"
+    t.index ["created_at"], name: "idx_accounting_export_files_created_at"
+    t.index ["export_type"], name: "idx_accounting_export_files_export_type"
+    t.index ["generated_by_id"], name: "index_accounting_export_files_on_generated_by_id"
+    t.index ["organization_id", "provider"], name: "idx_accounting_export_files_org_provider"
+    t.index ["organization_id", "status"], name: "idx_accounting_export_files_org_status"
+    t.index ["organization_id"], name: "index_accounting_export_files_on_organization_id"
+  end
+
+  create_table "accounting_integrations", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "provider", null: false
+    t.string "status", default: "disconnected", null: false
+    t.string "sync_mode", default: "batch_export", null: false
+    t.jsonb "config_json", default: {}, null: false
+    t.datetime "last_synced_at"
+    t.datetime "last_error_at"
+    t.text "last_error_message"
+    t.bigint "connected_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["connected_by_id"], name: "index_accounting_integrations_on_connected_by_id"
+    t.index ["last_synced_at"], name: "idx_accounting_integrations_last_synced_at"
+    t.index ["organization_id", "provider"], name: "idx_accounting_integrations_org_provider_unique", unique: true
+    t.index ["organization_id"], name: "index_accounting_integrations_on_organization_id"
+    t.index ["status"], name: "idx_accounting_integrations_status"
+    t.index ["sync_mode"], name: "idx_accounting_integrations_sync_mode"
+  end
+
+  create_table "accounting_mappings", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "accounting_integration_id", null: false
+    t.string "mapping_key", null: false
+    t.string "mapping_value", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["accounting_integration_id", "mapping_key"], name: "idx_accounting_mappings_integration_key_unique", unique: true
+    t.index ["accounting_integration_id"], name: "index_accounting_mappings_on_accounting_integration_id"
+    t.index ["organization_id", "mapping_key"], name: "idx_accounting_mappings_org_key"
+    t.index ["organization_id"], name: "index_accounting_mappings_on_organization_id"
+  end
+
+  create_table "accounting_sync_records", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "accounting_integration_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "entity_id", null: false
+    t.string "entity_version", null: false
+    t.string "event_type", null: false
+    t.string "provider", null: false
+    t.string "direction", default: "outbound", null: false
+    t.string "status", default: "pending", null: false
+    t.string "priority", default: "medium", null: false
+    t.string "idempotency_key", null: false
+    t.string "external_reference"
+    t.jsonb "payload_json", default: {}, null: false
+    t.text "response_body"
+    t.text "error_message"
+    t.integer "attempt_count", default: 0, null: false
+    t.datetime "last_attempted_at"
+    t.datetime "succeeded_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["accounting_integration_id", "status"], name: "idx_accounting_sync_records_integration_status"
+    t.index ["accounting_integration_id"], name: "index_accounting_sync_records_on_accounting_integration_id"
+    t.index ["created_at"], name: "idx_accounting_sync_records_created_at"
+    t.index ["entity_type", "entity_id"], name: "idx_accounting_sync_records_entity"
+    t.index ["event_type"], name: "idx_accounting_sync_records_event_type"
+    t.index ["last_attempted_at"], name: "idx_accounting_sync_records_last_attempted_at"
+    t.index ["organization_id", "provider"], name: "idx_accounting_sync_records_org_provider"
+    t.index ["organization_id", "status"], name: "idx_accounting_sync_records_org_status"
+    t.index ["organization_id"], name: "index_accounting_sync_records_on_organization_id"
+    t.index ["priority"], name: "idx_accounting_sync_records_priority"
+    t.index ["provider", "idempotency_key"], name: "idx_accounting_sync_records_idempotency_unique", unique: true
+    t.index ["status", "priority", "created_at"], name: "idx_accounting_sync_records_worker_poll"
+  end
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -1360,6 +1454,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_07_000001) do
     t.index ["organization_id"], name: "index_webhook_endpoints_on_organization_id"
   end
 
+  add_foreign_key "accounting_export_files", "accounting_integrations"
+  add_foreign_key "accounting_export_files", "branches"
+  add_foreign_key "accounting_export_files", "organizations"
+  add_foreign_key "accounting_export_files", "users", column: "generated_by_id"
+  add_foreign_key "accounting_integrations", "organizations"
+  add_foreign_key "accounting_integrations", "users", column: "connected_by_id"
+  add_foreign_key "accounting_integrations", "users", column: "connected_by_id", name: "fk_accounting_integrations_connected_by"
+  add_foreign_key "accounting_mappings", "accounting_integrations"
+  add_foreign_key "accounting_mappings", "organizations"
+  add_foreign_key "accounting_sync_records", "accounting_integrations"
+  add_foreign_key "accounting_sync_records", "organizations"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "advance_payments", "branches"

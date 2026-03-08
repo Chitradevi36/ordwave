@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= content_for?(:title) ? yield(:title) : "Accounting" %> · OrderLane</title>
+
+  <!-- Inter font (matches web app) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN – config mirrors web/tailwind.config.ts brand tokens -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            primary:   { DEFAULT: '#1B4332', 50: '#E8F5EE', 100: '#C6E6D3', 200: '#95CDB0', 300: '#64B48C', 500: '#2D6A4F', 600: '#1B4332', 700: '#163727' },
+            accent:    { DEFAULT: '#52B788' },
+            success:   '#52B788',
+            danger:    '#DC2626',
+            warning:   '#D97706',
+            background:{ DEFAULT: '#FFFFFF', subtle: '#F8FAF8' },
+            text:      { primary: '#1E293B', secondary: '#64748B' },
+            border:    '#E2E8F0',
+          },
+        }
+      }
+    }
+  </script>
+  <%= csrf_meta_tags %>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Tighten focus ring */
+    *:focus-visible { outline: 2px solid #52B788; outline-offset: 2px; }
+  </style>
+</head>
+<body class="bg-[#F8FAF8] text-[#1E293B] antialiased min-h-screen flex flex-col">
+
+  <%# ── Top header bar (matches app forest-green brand) ───────────────── %>
+  <header class="bg-[#1B4332] text-white shadow-md">
+    <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+
+      <div class="flex items-center gap-3">
+        <%# Brand wordmark %>
+        <a href="/" class="flex items-center gap-2 text-white hover:text-[#52B788] transition-colors">
+          <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <span class="text-sm font-bold tracking-tight">OrderLane</span>
+        </a>
+        <span class="text-white/30 text-sm">/</span>
+        <span class="text-sm font-medium text-white/80">Accounting Admin</span>
+        <% if current_organization %>
+          <span class="hidden sm:inline-flex items-center text-xs font-medium bg-white/10 text-white/80 px-2.5 py-0.5 rounded-full">
+            <%= current_organization.name %>
+          </span>
+        <% end %>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <span class="hidden sm:block text-xs text-white/60"><%= current_user&.email %></span>
+        <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+              class: "text-xs text-white/60 hover:text-white underline bg-transparent border-0 cursor-pointer transition-colors" %>
+      </div>
+    </div>
+  </header>
+
+  <%# ── Secondary navigation ───────────────────────────────────────────── %>
+  <nav class="bg-white border-b border-[#E2E8F0]">
+    <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+      <ul class="flex gap-0 text-sm font-medium text-[#64748B] h-11 items-stretch">
+        <%
+          nav_items = [
+            { label: "Integrations",   path: web_accounting_integrations_path,  match: "integrations" },
+            { label: "Sync Dashboard", path: web_accounting_sync_records_path,   match: "sync_records" },
+            { label: "Export Center",  path: web_accounting_export_files_path,   match: "export_files" },
+          ]
+        %>
+        <% nav_items.each do |item| %>
+          <% active = controller_path.include?(item[:match]) %>
+          <li class="flex items-stretch">
+            <%= link_to item[:label], item[:path],
+                  class: [
+                    "flex items-center px-4 text-sm font-medium border-b-2 transition-colors",
+                    active ? "border-[#1B4332] text-[#1B4332]" : "border-transparent text-[#64748B] hover:text-[#1B4332] hover:border-[#95CDB0]"
+                  ].join(" ") %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </nav>
+
+  <%# ── Flash messages ────────────────────────────────────────────────── %>
+  <% { notice: ["bg-[#E8F5EE] border-[#52B788] text-[#1B4332]", "✓"],
+       alert:   ["bg-red-50 border-red-400 text-red-800", "✕"],
+       warning: ["bg-yellow-50 border-yellow-400 text-yellow-800", "⚠"] }.each do |key, (css, icon)| %>
+    <% if flash[key].present? %>
+      <div class="max-w-screen-xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-4">
+        <div class="flex items-start gap-2 border-l-4 px-4 py-3 text-sm rounded-r <%= css %>">
+          <span class="font-semibold mt-px"><%= icon %></span>
+          <span><%= flash[key] %></span>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%# ── Main content ──────────────────────────────────────────────────── %>
+  <main class="flex-1 max-w-screen-xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <%= yield %>
+  </main>
+
+  <footer class="text-center text-xs text-[#64748B] py-4 border-t border-[#E2E8F0] bg-white mt-8">
+    OrderLane · Accounting Admin · <%= Time.current.year %>
+  </footer>
+
+</body>
+</html>

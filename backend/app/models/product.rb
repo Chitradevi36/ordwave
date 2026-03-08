@@ -76,6 +76,19 @@ class Product < ApplicationRecord
     { cgst: half, sgst: half, igst: gst_rate }
   end
 
+  # ── Accounting Sync Triggers ────────────────────────────────────────────────
+  include AccountingSyncTriggers
+
+  accounting_sync_trigger(
+    event_type: "product_synced",
+    on:         %i[create update],
+    if:         :sync_to_accounting?
+  )
+
+  def sync_to_accounting?
+    active?
+  end
+
   private
 
   def upcase_sku

@@ -108,6 +108,19 @@ class SalesInvoice < ApplicationRecord
     "#{prefix}-#{(max_seq + 1).to_s.rjust(4, '0')}"
   end
 
+  # ── Accounting Sync Triggers ────────────────────────────────────────────────
+  include AccountingSyncTriggers
+
+  accounting_sync_trigger(
+    event_type: "invoice_issued",
+    on:         %i[create update],
+    if:         :sync_to_accounting?
+  )
+
+  def sync_to_accounting?
+    issued? || partially_paid?
+  end
+
   private
 
   def due_date_after_invoice_date

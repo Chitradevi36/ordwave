@@ -38,6 +38,19 @@ class CreditNote < ApplicationRecord
     update!(subtotal: sub, tax_total: tax, total: sub + tax)
   end
 
+  # ── Accounting Sync Triggers ────────────────────────────────────────────────
+  include AccountingSyncTriggers
+
+  accounting_sync_trigger(
+    event_type: "credit_note_issued",
+    on:         %i[create update],
+    if:         :sync_to_accounting?
+  )
+
+  def sync_to_accounting?
+    issued?
+  end
+
   private
 
   def assign_credit_note_number
