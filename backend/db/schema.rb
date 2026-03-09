@@ -10,9 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_08_000004) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "accounting_agents", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "accounting_integration_id", null: false
+    t.string "agent_id", null: false
+    t.string "api_key_digest", null: false
+    t.string "agent_version"
+    t.string "os_info"
+    t.string "tally_version"
+    t.datetime "last_heartbeat_at"
+    t.datetime "registered_at"
+    t.string "status", default: "offline", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["accounting_integration_id"], name: "index_accounting_agents_on_accounting_integration_id"
+    t.index ["agent_id"], name: "index_accounting_agents_on_agent_id", unique: true
+    t.index ["last_heartbeat_at"], name: "index_accounting_agents_on_last_heartbeat_at"
+    t.index ["organization_id"], name: "index_accounting_agents_on_organization_id"
+    t.index ["status"], name: "index_accounting_agents_on_status"
+  end
 
   create_table "accounting_export_files", force: :cascade do |t|
     t.bigint "organization_id", null: false
@@ -1454,6 +1474,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_08_000004) do
     t.index ["organization_id"], name: "index_webhook_endpoints_on_organization_id"
   end
 
+  add_foreign_key "accounting_agents", "accounting_integrations"
+  add_foreign_key "accounting_agents", "organizations"
   add_foreign_key "accounting_export_files", "accounting_integrations"
   add_foreign_key "accounting_export_files", "branches"
   add_foreign_key "accounting_export_files", "organizations"
