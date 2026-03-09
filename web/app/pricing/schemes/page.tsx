@@ -86,12 +86,14 @@ const REWARD_TYPE_LABELS: Record<string, string> = {
 };
 
 const CONDITION_TYPE_LABELS: Record<string, string> = {
-  min_order_value: "Min Order Value (?)",
-  min_total_qty: "Min Total Qty",
-  product_inclusion: "Product Inclusion",
+  min_order_value:    "Min Order Value (?)",
+  min_total_qty:      "Min Total Qty",
+  product_inclusion:  "Product Inclusion",
   category_inclusion: "Category Inclusion",
   retailer_inclusion: "Retailer Inclusion",
   retailer_exclusion: "Retailer Exclusion",
+  customer_tier:      "Customer Tier",
+  customer_channel:   "Customer Channel",
 };
 
 const TYPE_CHIP: Record<string, string> = {
@@ -322,6 +324,20 @@ function ConditionValueInput({ type, value, onChange }: {
   if (type === "min_total_qty")
     return <input type="number" placeholder="e.g. 10" value={String(value.qty ?? "")}
       onChange={(e) => onChange({ qty: Number(e.target.value) })} className={`${cls} w-36`} />;
+  if (type === "customer_tier")
+    return (
+      <input placeholder="e.g. gold,silver,platinum"
+        value={Array.isArray(value.tiers) ? (value.tiers as string[]).join(", ") : ""}
+        onChange={(e) => onChange({ tiers: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+        className={`${cls} w-48`} />
+    );
+  if (type === "customer_channel")
+    return (
+      <input placeholder="e.g. modern_trade,general_trade"
+        value={Array.isArray(value.channels) ? (value.channels as string[]).join(", ") : ""}
+        onChange={(e) => onChange({ channels: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+        className={`${cls} w-48`} />
+    );
   const key = type === "product_inclusion" ? "product_ids"
     : type === "category_inclusion" ? "category_ids" : "customer_ids";
   return (
@@ -352,17 +368,19 @@ function SchemeFormModal({ token, orgId, scheme, isDuplicate = false, onClose, o
   const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const [form, setForm] = useState({
-    code:           isDuplicate ? `${scheme?.code ?? ""}-COPY` : (scheme?.code ?? ""),
-    name:           isDuplicate ? `${scheme?.name ?? ""} (Copy)` : (scheme?.name ?? ""),
-    scheme_type:    scheme?.scheme_type ?? "item_discount",
-    status:         scheme?.status ?? "active",
-    applies_to:     scheme?.applies_to ?? "all",
-    priority:       String(scheme?.priority ?? 10),
-    exclusive:      scheme?.exclusive ?? false,
-    start_date:     scheme?.start_date ? scheme.start_date.slice(0, 10) : "",
-    end_date:       scheme?.end_date ? scheme.end_date.slice(0, 10) : "",
+    code:            isDuplicate ? `${scheme?.code ?? ""}-COPY` : (scheme?.code ?? ""),
+    name:            isDuplicate ? `${scheme?.name ?? ""} (Copy)` : (scheme?.name ?? ""),
+    scheme_type:     scheme?.scheme_type ?? "item_discount",
+    status:          scheme?.status ?? "active",
+    applies_to:      scheme?.applies_to ?? "all",
+    priority:        String(scheme?.priority ?? 10),
+    exclusive:       scheme?.exclusive ?? false,
+    start_date:      scheme?.start_date ? scheme.start_date.slice(0, 10) : "",
+    end_date:        scheme?.end_date ? scheme.end_date.slice(0, 10) : "",
     applicable_days: scheme?.applicable_days ?? ([] as number[]),
-    notes:          scheme?.notes ?? "",
+    notes:           scheme?.notes ?? "",
+    budget_amount:      String((scheme as any)?.budget_amount ?? ""),
+    budget_alert_pct:   String((scheme as any)?.budget_alert_pct ?? "80"),
   });
 
   const [reward, setReward] = useState({
@@ -385,6 +403,8 @@ function SchemeFormModal({ token, orgId, scheme, isDuplicate = false, onClose, o
     if (type === "min_total_qty") return { qty: 0 };
     if (type === "product_inclusion") return { product_ids: [] };
     if (type === "category_inclusion") return { category_ids: [] };
+    if (type === "customer_tier") return { tiers: [] };
+    if (type === "customer_channel") return { channels: [] };
     return { customer_ids: [] };
   }
 
@@ -404,6 +424,8 @@ function SchemeFormModal({ token, orgId, scheme, isDuplicate = false, onClose, o
       scheme: {
         ...form,
         priority: Number(form.priority),
+        budget_amount:    form.budget_amount ? Number(form.budget_amount) : null,
+        budget_alert_pct: Number(form.budget_alert_pct) || 80,
         conditions,
         rewards: [{
           ...(() => { const { target_product_label: _l, ...r } = reward; return r; })(),
@@ -542,6 +564,19 @@ function SchemeFormModal({ token, orgId, scheme, isDuplicate = false, onClose, o
               </>
             )}
           </div>
+        </section>
+
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-3">Budget (optional)</p>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Budget Amount (₹)" type="number" min={0} placeholder="Leave blank for unlimited"
+              value={form.budget_amount}
+              onChange={(e) => setForm((f) => ({ ...f, budget_amount: e.target.value }))} />
+            <Input label="Alert Threshold (%)" type="number" min={1} max={100} placeholder="80"
+              value={form.budget_alert_pct}
+              onChange={(e) => setForm((f) => ({ ...f, budget_alert_pct: e.target.value }))} />
+          </div>
+          <p className="text-xs text-text-secondary mt-1.5">You&apos;ll be alerted and the scheme will auto-pause when utilization reaches the threshold.</p>
         </section>
 
         <section>

@@ -19,12 +19,16 @@ const STATUS_VARIANT: Record<string, "secondary" | "warning" | "default" | "succ
 };
 
 interface QcLine {
-  return_line_id: number;
-  qty_resalable:  string;
-  qty_damaged:    string;
-  qty_expired:    string;
-  condition_final: string;
-  qc_notes:       string;
+  return_line_id:           number;
+  qty_resalable:            string;
+  qty_damaged:              string;
+  qty_expired:              string;
+  qty_discounted_resalable: string;
+  qty_return_to_supplier:   string;
+  discount_pct:             string;
+  supplier_return_reason:   string;
+  condition_final:          string;
+  qc_notes:                 string;
 }
 
 export default function ReturnDetailPage() {
@@ -64,12 +68,16 @@ export default function ReturnDetailPage() {
       if (body.data?.lines) {
         setQcLines(
           body.data.lines.map((l: any) => ({
-            return_line_id: l.id,
-            qty_resalable:  l.qc_item?.qty_resalable?.toString() ?? "",
-            qty_damaged:    l.qc_item?.qty_damaged?.toString() ?? "",
-            qty_expired:    l.qc_item?.qty_expired?.toString() ?? "",
-            condition_final: l.qc_item?.condition_final ?? "resalable",
-            qc_notes:       l.qc_item?.qc_notes ?? "",
+            return_line_id:           l.id,
+            qty_resalable:            l.qc_item?.qty_resalable?.toString() ?? "",
+            qty_damaged:              l.qc_item?.qty_damaged?.toString() ?? "",
+            qty_expired:              l.qc_item?.qty_expired?.toString() ?? "",
+            qty_discounted_resalable: l.qc_item?.qty_discounted_resalable?.toString() ?? "",
+            qty_return_to_supplier:   l.qc_item?.qty_return_to_supplier?.toString() ?? "",
+            discount_pct:             l.qc_item?.discount_pct?.toString() ?? "",
+            supplier_return_reason:   l.qc_item?.supplier_return_reason ?? "",
+            condition_final:          l.qc_item?.condition_final ?? "resalable",
+            qc_notes:                 l.qc_item?.qc_notes ?? "",
           }))
         );
       }
@@ -111,12 +119,16 @@ export default function ReturnDetailPage() {
   const handleCompleteQc  = async () => {
     const ok = await postAction("complete_qc", {
       qc_lines: qcLines.map((l) => ({
-        return_line_id:  l.return_line_id,
-        qty_resalable:   parseFloat(l.qty_resalable)  || 0,
-        qty_damaged:     parseFloat(l.qty_damaged)    || 0,
-        qty_expired:     parseFloat(l.qty_expired)    || 0,
-        condition_final: l.condition_final,
-        qc_notes:        l.qc_notes,
+        return_line_id:           l.return_line_id,
+        qty_resalable:            parseFloat(l.qty_resalable)            || 0,
+        qty_damaged:              parseFloat(l.qty_damaged)              || 0,
+        qty_expired:              parseFloat(l.qty_expired)              || 0,
+        qty_discounted_resalable: parseFloat(l.qty_discounted_resalable) || 0,
+        qty_return_to_supplier:   parseFloat(l.qty_return_to_supplier)   || 0,
+        discount_pct:             parseFloat(l.discount_pct)             || 0,
+        supplier_return_reason:   l.supplier_return_reason || undefined,
+        condition_final:          l.condition_final,
+        qc_notes:                 l.qc_notes,
       })),
     });
     if (ok) { setQcModal(false); fetchReturn(); }
@@ -527,6 +539,56 @@ export default function ReturnDetailPage() {
                         onChange={(e) => updateQcLine(idx, "qty_expired", e.target.value)}
                         className="w-full border rounded-md px-2 py-1.5 text-sm border-danger/30"
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-blue-600 mb-1">Discounted Resalable</label>
+                      <input
+                        type="number" min="0" step="0.001"
+                        value={qc.qty_discounted_resalable ?? ""}
+                        onChange={(e) => updateQcLine(idx, "qty_discounted_resalable", e.target.value)}
+                        className="w-full border rounded-md px-2 py-1.5 text-sm border-blue-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Discount %</label>
+                      <input
+                        type="number" min="0" max="100" step="0.1"
+                        value={qc.discount_pct ?? ""}
+                        onChange={(e) => updateQcLine(idx, "discount_pct", e.target.value)}
+                        placeholder="e.g. 30"
+                        className="w-full border rounded-md px-2 py-1.5 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-orange-600 mb-1">Return to Supplier</label>
+                      <input
+                        type="number" min="0" step="0.001"
+                        value={qc.qty_return_to_supplier ?? ""}
+                        onChange={(e) => updateQcLine(idx, "qty_return_to_supplier", e.target.value)}
+                        className="w-full border rounded-md px-2 py-1.5 text-sm border-orange-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Supplier Return Reason</label>
+                      <select
+                        value={qc.supplier_return_reason ?? ""}
+                        onChange={(e) => updateQcLine(idx, "supplier_return_reason", e.target.value)}
+                        className="w-full border rounded-md px-2 py-1.5 text-sm h-[34px]"
+                      >
+                        <option value="">Select…</option>
+                        <option value="quality_issue">Quality Issue</option>
+                        <option value="expired">Expired</option>
+                        <option value="short_supply">Short Supply</option>
+                        <option value="damaged">Damaged</option>
+                        <option value="wrong_item">Wrong Item</option>
+                        <option value="other">Other</option>
+                      </select>
                     </div>
                   </div>
 

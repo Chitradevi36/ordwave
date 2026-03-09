@@ -102,14 +102,18 @@ module Pricing
       scope_check = evaluate_scope(scheme)
       return { applied: false, reason: scope_check } unless scope_check.nil?
 
-      # 2. Conditions
+      # 2. Budget check — skip if budget exhausted
+      budget_check = check_budget(scheme)
+      return { applied: false, reason: budget_check } if budget_check
+
+      # 3. Conditions
       scheme.conditions.each do |cond|
         result = evaluate_condition(cond, scheme)
         reason, hint = Array(result)
         return { applied: false, reason: reason, hint: hint } if reason
       end
 
-      # 3. Scheme-type specific check
+      # 4. Scheme-type specific check
       case scheme.scheme_type
       when 'buy_x_get_y'
         match = evaluate_buy_x_get_y(scheme)
@@ -132,7 +136,7 @@ module Pricing
         nil
       when 'retailer_segment'
         # Check if any condition has retailer_inclusion matching this retailer's tier
-        nil # base: pass — tier checked via conditions
+        nil # base: pass — tier/channel checked via conditions
       when 'specific_retailers'
         incl = scheme.conditions.find { |c| c.condition_type == 'retailer_inclusion' }
         if incl
@@ -199,6 +203,20 @@ module Pricing
       when 'retailer_exclusion'
         ids = Array(cond.value['customer_ids']).map(&:to_i)
         return "Retailer excluded from this scheme", nil if ids.include?(@retailer.id)
+      when 'customer_tier'
+        tiers = Array(cond.value['tiers']).map(&:to_s).map(&:downcase)
+        retailer_tier = @retailer.try(:tier).to_s.downcase
+        unless tiers.include?(retailer_tier)
+          return "Customer tier '#{retailer_tier}' not in #{tiers.join(', ')}",
+                 { type: 'customer_tier', current: retailer_tier, allowed: tiers }
+        end
+      when 'customer_channel'
+        channels = Array(cond.value['channels']).map(&:to_s).map(&:downcase)
+        retailer_channel = @retailer.try(:channel).to_s.downcase
+        unless channels.include?(retailer_channel)
+          return "Customer channel '#{retailer_channel}' not in #{channels.join(', ')}",
+                 { type: 'customer_channel', current: retailer_channel, allowed: channels }
+        end
       end
       nil
     end
@@ -245,27 +263,70 @@ module Pricing
     end
 
     def evaluate_slab(scheme)
-      reward = scheme.rewards.first
-      return { applied: false, reason: "No reward configured" } unless reward
+      rewards = scheme.rewards.order(:reward_value)
+      return { applied: false, reason: "No reward configured" } if rewards.empty?
 
-      # Slab: check if order subtotal meets the minimum (from conditions)
-      # The slab threshold is encoded as min_order_value condition
-      min_cond = scheme.conditions.find { |c| c.condition_type == 'min_order_value' }
-      if min_cond
-        threshold = min_cond.value['amount'].to_f
-        if subtotal < threshold
-          return { applied: false,
-                   reason: "Order value #{subtotal.round(2)} < slab #{threshold}",
-                   hint:   { type: 'order_value', current: subtotal.round(2), target: threshold,
-                              gap: (threshold - subtotal).round(2) } }
+      # Multi-slab resolution: find the highest applicable slab
+      # Each reward can have a min_order_value condition threshold
+      # We pick the best reward whose threshold the order meets
+      best_reward = nil
+      best_threshold = 0
+
+      if scheme.rewards.size > 1
+        # Multi-slab: rewards sorted by reward_value ascending
+        # Match against min_order_value conditions or use reward_value as threshold
+        slab_conditions = scheme.conditions.select { |c| c.condition_type == 'min_order_value' }
+
+        if slab_conditions.any?
+          # Multiple slabs with explicit thresholds
+          slab_conditions.sort_by { |c| c.value['amount'].to_f }.each_with_index do |cond, idx|
+            threshold = cond.value['amount'].to_f
+            if subtotal >= threshold
+              best_reward = rewards[idx] || rewards.last
+              best_threshold = threshold
+            end
+          end
+        else
+          # Fallback: use single min_order_value or just pick the first reward
+          best_reward = rewards.first
         end
+      else
+        # Single reward (original behavior)
+        best_reward = rewards.first
+      end
+
+      # If no slab matched, check if there's at least a base condition
+      if best_reward.nil?
+        min_cond = scheme.conditions.find { |c| c.condition_type == 'min_order_value' }
+        if min_cond
+          threshold = min_cond.value['amount'].to_f
+          if subtotal < threshold
+            return { applied: false,
+                     reason: "Order value #{subtotal.round(2)} < slab #{threshold}",
+                     hint:   { type: 'order_value', current: subtotal.round(2), target: threshold,
+                               gap: (threshold - subtotal).round(2) } }
+          end
+        end
+        best_reward = rewards.first
       end
 
       {
         applied: true,
-        message: "Slab discount: #{reward.reward_value}#{reward.reward_type == 'percent_off' ? '%' : '₹'} off",
-        data:    { type: :slab, reward: reward }
+        message: "Slab discount: #{best_reward.reward_value}#{best_reward.reward_type == 'percent_off' ? '%' : '₹'} off" \
+                 "#{best_threshold > 0 ? " (slab ≥ #{best_threshold})" : ''}",
+        data:    { type: :slab, reward: best_reward }
       }
+    end
+
+    # ── Budget enforcement ─────────────────────────────────────────────────────
+
+    def check_budget(scheme)
+      return nil unless scheme.budget_amount.present? && scheme.budget_amount.to_d.positive?
+
+      remaining = scheme.budget_amount.to_d - scheme.utilized_amount.to_d
+      return "Scheme budget exhausted (₹#{scheme.utilized_amount} of ₹#{scheme.budget_amount} used)" if remaining <= 0
+
+      nil
     end
 
     # ── Application ────────────────────────────────────────────────────────────

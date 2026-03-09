@@ -53,6 +53,10 @@ interface InvoiceDetail {
   posted_at:           string | null;
   cancelled_at:        string | null;
   cancellation_reason: string | null;
+  is_reverse_charge:   boolean;
+  rcm_tax_amount:      number | null;
+  supplier_gstin:      string | null;
+  place_of_supply:     string | null;
   created_at:          string;
   supplier:    { id: number; name: string; code: string } | null;
   branch:      { id: number; name: string } | null;
@@ -165,6 +169,26 @@ function SummaryTab({ inv }: { inv: InvoiceDetail }) {
           <div className="sm:col-span-2 lg:col-span-3">
             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Notes</p>
             <p className="text-sm text-text-primary whitespace-pre-line">{inv.notes}</p>
+          </div>
+        )}
+        {/* RCM Banner */}
+        {inv.is_reverse_charge && (
+          <div className="sm:col-span-2 lg:col-span-3 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3">
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-2">Reverse Charge Mechanism (RCM)</p>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <dt className="text-xs font-medium text-text-secondary uppercase">RCM Tax Payable</dt>
+                <dd className="mt-0.5 font-semibold text-amber-700">{fmt(inv.rcm_tax_amount ?? 0)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-text-secondary uppercase">Supplier GSTIN</dt>
+                <dd className="mt-0.5 font-mono text-sm">{inv.supplier_gstin ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-text-secondary uppercase">Place of Supply</dt>
+                <dd className="mt-0.5 text-sm">{inv.place_of_supply ?? "—"}</dd>
+              </div>
+            </div>
           </div>
         )}
       </div>

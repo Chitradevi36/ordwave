@@ -2,7 +2,7 @@ module Api
   module V1
     class SalesInvoicesController < BaseController
       before_action :require_organization!
-      before_action :set_invoice, only: %i[show issue void_invoice pdf einvoice]
+      before_action :set_invoice, only: %i[show issue void_invoice pdf einvoice ewaybill cancel_ewaybill]
 
       INVOICE_INCLUDES = [
         :branch, :customer, :sales_order, :created_by,
@@ -231,6 +231,59 @@ module Api
         end
       end
 
+      # ── POST /api/v1/sales_invoices/:id/ewaybill ─────────────────────────
+      # Generates an e-waybill via the NIC E-Way Bill API.
+      def ewaybill
+        authorize @invoice, :ewaybill?
+
+        existing = @invoice.ewaybill_requests.order(:created_at).last
+        if existing&.status == 'generated'
+          return render_errors(['E-waybill has already been generated for this invoice'])
+        end
+
+        unless @invoice.issued?
+          return render_errors(['Invoice must be in issued status before generating e-waybill'])
+        end
+
+        result = Gst::EwaybillService.generate(
+          sales_invoice:    @invoice,
+          transport_mode:   params[:transport_mode].presence || 'road',
+          vehicle_number:   params[:vehicle_number],
+          distance_km:      params[:distance_km],
+          transporter_id:   params[:transporter_id],
+          transporter_name: params[:transporter_name]
+        )
+
+        if result.success?
+          @invoice.reload
+          render_success(serialize_invoice(@invoice, detailed: true))
+        else
+          render_errors(result.errors)
+        end
+      end
+
+      # ── POST /api/v1/sales_invoices/:id/cancel_ewaybill ───────────────────
+      def cancel_ewaybill
+        authorize @invoice, :cancel_ewaybill?
+
+        ewb = @invoice.ewaybill_requests.order(:created_at).last
+        unless ewb&.status == 'generated'
+          return render_errors(['No active e-waybill found for this invoice'])
+        end
+
+        result = Gst::EwaybillService.cancel(
+          ewaybill_request: ewb,
+          reason:           params[:reason].presence || 'Data Entry Mistake'
+        )
+
+        if result.success?
+          @invoice.reload
+          render_success(serialize_invoice(@invoice, detailed: true))
+        else
+          render_errors(result.errors)
+        end
+      end
+
       # ── GET /api/v1/sales_invoices/:id/pdf ────────────────────────────────
       def pdf
         authorize @invoice, :pdf?
@@ -308,6 +361,10 @@ module Api
           einvoice_qr_code:  inv.einvoice_qr_code,
           irn_generated_at:  inv.irn_generated_at,
           created_at:        inv.created_at,
+          ewaybill_number:      (ewb = inv.association(:ewaybill_requests).loaded? ? inv.ewaybill_requests.max_by(&:created_at) : inv.ewaybill_requests.order(:created_at).last)&.ewaybill_number,
+          ewaybill_status:      ewb&.status,
+          ewaybill_valid_upto:  ewb&.valid_until,
+          ewaybill_generated_at: ewb&.generated_at,
           customer: {
             id:    inv.customer_id,
             name:  inv.customer.name,

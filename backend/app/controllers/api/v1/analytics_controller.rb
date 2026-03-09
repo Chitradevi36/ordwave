@@ -98,6 +98,31 @@ module Api
         render_success(data)
       end
 
+      # GET /api/v1/analytics/returns
+      def returns
+        data = cached("returns") do
+          {
+            summary:     returns_query.summary,
+            by_reason:   returns_query.by_reason,
+            by_month:    returns_query.by_month,
+            by_product:  returns_query.by_product,
+            by_customer: returns_query.by_customer,
+          }
+        end
+        render_success(data)
+      end
+
+      # GET /api/v1/analytics/schemes
+      def schemes
+        data = cached("schemes") do
+          {
+            summary: schemes_query.summary,
+            schemes: schemes_query.schemes,
+          }
+        end
+        render_success(data)
+      end
+
       # GET /api/v1/analytics/collections/export
       def collections_csv
         authorize_export!
@@ -152,11 +177,11 @@ module Api
       end
 
       def filter_date_from
-        params[:date_from].presence
+        params[:date_from].presence || params[:from].presence
       end
 
       def filter_date_to
-        params[:date_to].presence
+        params[:date_to].presence || params[:to].presence
       end
 
       # If the current user is a sales_rep, lock to their own data.
@@ -210,6 +235,24 @@ module Api
         @inventory_query ||= ::Analytics::InventoryHealthQuery.new(
           organization: current_organization,
           branch_id:    filter_branch_id
+        )
+      end
+
+      def returns_query
+        @returns_query ||= ::Analytics::ReturnsQuery.new(
+          organization: current_organization,
+          branch_id:    filter_branch_id,
+          date_from:    filter_date_from,
+          date_to:      filter_date_to
+        )
+      end
+
+      def schemes_query
+        @schemes_query ||= ::Analytics::SchemesQuery.new(
+          organization: current_organization,
+          branch_id:    filter_branch_id,
+          date_from:    filter_date_from,
+          date_to:      filter_date_to
         )
       end
 
