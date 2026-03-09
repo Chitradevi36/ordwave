@@ -9,6 +9,9 @@ class CreditNotePolicy < ApplicationPolicy
   # Only owner can void a credit note
   def void? = owner?
 
+  # Managers can apply credit notes to invoices
+  def apply? = manager_above?
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       scope.for_org(organization).not_deleted

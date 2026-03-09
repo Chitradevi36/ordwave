@@ -11,6 +11,8 @@ import {
   MapPin,
   Package,
   RefreshCw,
+  RotateCcw,
+  Tag,
 } from "lucide-react";
 
 function fmt(n: number | undefined | null, prefix = "") {
@@ -133,6 +135,24 @@ export default function InsightsOverviewPage() {
         { label: "Low Stock SKUs",      value: fmt(data?.inventory?.low_stock_count) },
         { label: "Dead Stock SKUs",     value: fmt(data?.inventory?.dead_stock_count) },
         { label: "Total SKUs Tracked",  value: fmt(data?.inventory?.total_skus) },
+      ],
+    },
+    {
+      title: "Returns",
+      href: "/insights/returns",
+      icon: RotateCcw,
+      color: "text-amber-600",
+      stats: [
+        { label: "View return reason analytics", value: "" },
+      ],
+    },
+    {
+      title: "Scheme Analytics",
+      href: "/insights/schemes",
+      icon: Tag,
+      color: "text-violet-600",
+      stats: [
+        { label: "Budget utilization & ROI", value: "" },
       ],
     },
   ];

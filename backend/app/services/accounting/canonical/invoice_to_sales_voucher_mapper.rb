@@ -50,7 +50,7 @@ module Accounting
           cgst_total:            decimal!(tax_summary[:cgst]),
           sgst_total:            decimal!(tax_summary[:sgst]),
           igst_total:            decimal!(tax_summary[:igst]),
-          cess_total:            BigDecimal("0"),
+          cess_total:            decimal(tax_summary[:cess]),
           round_off_amount:      decimal(invoice.try(:round_off_amount)),
           grand_total:           decimal!(fetch_first_present(invoice, :grand_total, :total)),
           inventory_lines:       inv_lines,
@@ -92,7 +92,7 @@ module Accounting
         "Sales Invoice #{invoice.try(:invoice_number)} — #{customer_name}".strip
       end
 
-      # Returns { cgst: BigDecimal, sgst: BigDecimal, igst: BigDecimal }
+      # Returns { cgst: BigDecimal, sgst: BigDecimal, igst: BigDecimal, cess: BigDecimal }
       # Reads from tax_breakup if available; otherwise sums from lines.
       def compute_tax_summary(invoice)
         if invoice.respond_to?(:tax_breakup)
@@ -100,7 +100,8 @@ module Accounting
           return {
             cgst: decimal!(tb[:cgst_total]),
             sgst: decimal!(tb[:sgst_total]),
-            igst: decimal!(tb[:igst_total])
+            igst: decimal!(tb[:igst_total]),
+            cess: decimal(tb[:cess_total])
           }
         end
 
@@ -108,7 +109,8 @@ module Accounting
         {
           cgst: decimal!(lines.sum { |l| decimal!(l.try(:cgst_amount)) }),
           sgst: decimal!(lines.sum { |l| decimal!(l.try(:sgst_amount)) }),
-          igst: decimal!(lines.sum { |l| decimal!(l.try(:igst_amount)) })
+          igst: decimal!(lines.sum { |l| decimal!(l.try(:igst_amount)) }),
+          cess: decimal(lines.sum  { |l| decimal(l.try(:cess_amount)) })
         }
       end
 
@@ -144,7 +146,9 @@ module Accounting
           half_rate: half_rate,
           cgst_amt:  cgst_amt,
           sgst_amt:  sgst_amt,
-          igst_amt:  igst_amt
+          igst_amt:  igst_amt,
+          cess_rate: decimal(line.try(:cess_rate)),
+          cess_amt:  decimal(line.try(:cess_amount))
         )
 
         InventoryLine.new(
@@ -162,11 +166,11 @@ module Accounting
           cgst_rate:       half_rate,
           sgst_rate:       half_rate,
           igst_rate:       gst_rate,
-          cess_rate:       BigDecimal("0"),
+          cess_rate:       decimal(line.try(:cess_rate)),
           cgst_amount:     cgst_amt,
           sgst_amount:     sgst_amt,
           igst_amount:     igst_amt,
-          cess_amount:     BigDecimal("0"),
+          cess_amount:     decimal(line.try(:cess_amount)),
           total_amount:    decimal!(line.try(:line_total) || line.try(:total_amount)),
           tax_entries:     line_tax_entries
         )
@@ -197,7 +201,7 @@ module Accounting
         string_value(fetch_first_present(uom, :symbol, :short_name, :name))
       end
 
-      def build_line_tax_entries(gst_rate:, half_rate:, cgst_amt:, sgst_amt:, igst_amt:)
+      def build_line_tax_entries(gst_rate:, half_rate:, cgst_amt:, sgst_amt:, igst_amt:, cess_rate: BigDecimal("0"), cess_amt: BigDecimal("0"))
         entries = []
         if igst_amt.positive?
           entries << TaxEntry.new(
@@ -213,6 +217,12 @@ module Accounting
             tax_type: "sgst", rate: half_rate, amount: sgst_amt,
             ledger_kind: "output_tax", label: "SGST #{half_rate}%"
           ) if sgst_amt.positive?
+        end
+        if cess_amt.positive?
+          entries << TaxEntry.new(
+            tax_type: "cess", rate: cess_rate, amount: cess_amt,
+            ledger_kind: "output_tax", label: "Cess #{cess_rate}%"
+          )
         end
         entries
       end
@@ -233,6 +243,12 @@ module Accounting
             tax_type: "sgst", rate: nil, amount: tax_summary[:sgst],
             ledger_kind: ledger_kind, label: "SGST"
           ) if tax_summary[:sgst].positive?
+        end
+        if tax_summary[:cess]&.positive?
+          entries << TaxEntry.new(
+            tax_type: "cess", rate: nil, amount: tax_summary[:cess],
+            ledger_kind: ledger_kind, label: "Cess"
+          )
         end
         entries
       end

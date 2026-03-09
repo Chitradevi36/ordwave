@@ -36,6 +36,9 @@ interface HsnSacCode {
   cgst_rate: number;
   sgst_rate: number;
   igst_rate: number;
+  cess_type: "none" | "ad_valorem" | "specific" | "both" | null;
+  cess_rate: number | null;
+  cess_specific_amount: number | null;
   active: boolean;
   current_rate: boolean;
   effective_from: string;
@@ -120,10 +123,13 @@ function CodeFormModal({ open, editing, onClose, onSaved }: CodeFormModalProps) 
   const [codeType,      setCodeType]      = useState<"HSN" | "SAC">("HSN");
   const [description,   setDescription]   = useState("");
   const [chapter,       setChapter]       = useState("");
-  const [gstRate,       setGstRate]       = useState<number>(5);
-  const [effectiveFrom, setEffectiveFrom] = useState("");
-  const [saving,        setSaving]        = useState(false);
-  const [error,         setError]         = useState<string | null>(null);
+  const [gstRate,             setGstRate]             = useState<number>(5);
+  const [cessType,            setCessType]            = useState<string>("none");
+  const [cessRate,            setCessRate]            = useState<string>("");
+  const [cessSpecificAmount,  setCessSpecificAmount]  = useState<string>("");
+  const [effectiveFrom,       setEffectiveFrom]       = useState("");
+  const [saving,              setSaving]              = useState(false);
+  const [error,               setError]               = useState<string | null>(null);
 
   // Seed from editing record
   useEffect(() => {
@@ -133,10 +139,14 @@ function CodeFormModal({ open, editing, onClose, onSaved }: CodeFormModalProps) 
       setDescription(editing.description ?? "");
       setChapter(editing.chapter ?? "");
       setGstRate(editing.gst_rate);
+      setCessType(editing.cess_type ?? "none");
+      setCessRate(editing.cess_rate != null ? String(editing.cess_rate) : "");
+      setCessSpecificAmount(editing.cess_specific_amount != null ? String(editing.cess_specific_amount) : "");
       setEffectiveFrom(editing.effective_from?.slice(0, 10) ?? "");
     } else {
       setCode(""); setCodeType("HSN"); setDescription(""); setChapter("");
-      setGstRate(5); setEffectiveFrom(new Date().toISOString().slice(0, 10));
+      setGstRate(5); setCessType("none"); setCessRate(""); setCessSpecificAmount("");
+      setEffectiveFrom(new Date().toISOString().slice(0, 10));
     }
     setError(null);
   }, [editing, open]);
@@ -153,7 +163,13 @@ function CodeFormModal({ open, editing, onClose, onSaved }: CodeFormModalProps) 
         method: editing ? "PATCH" : "POST",
         headers: authHeaders(token, orgId),
         body: JSON.stringify({
-          hsn_sac_code: { code, code_type: codeType, description, chapter, gst_rate: gstRate, effective_from: effectiveFrom },
+          hsn_sac_code: {
+            code, code_type: codeType, description, chapter, gst_rate: gstRate,
+            cess_type: cessType,
+            cess_rate: cessRate !== "" ? Number(cessRate) : null,
+            cess_specific_amount: cessSpecificAmount !== "" ? Number(cessSpecificAmount) : null,
+            effective_from: effectiveFrom,
+          },
         }),
       });
       const json = await res.json();
@@ -211,6 +227,49 @@ function CodeFormModal({ open, editing, onClose, onSaved }: CodeFormModalProps) 
                   <option key={r} value={String(r)}>{r}%</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* ── Cess ── */}
+          <div className="rounded-md border border-border p-3 space-y-3 bg-background-subtle">
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Cess (if applicable)</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <label htmlFor="cessType" className="text-sm font-medium text-text-primary">Cess Type</label>
+                <select
+                  id="cessType"
+                  value={cessType}
+                  onChange={(e) => setCessType(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <option value="none">None</option>
+                  <option value="ad_valorem">Ad Valorem (%)</option>
+                  <option value="specific">Specific (₹/unit)</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="cessRate" className="text-sm font-medium text-text-primary">Cess Rate (%)</label>
+                <Input
+                  id="cessRate"
+                  type="number" min="0" step="0.01"
+                  value={cessRate}
+                  onChange={(e) => setCessRate(e.target.value)}
+                  placeholder="e.g. 22"
+                  disabled={cessType === "none" || cessType === "specific"}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="cessSpecific" className="text-sm font-medium text-text-primary">Specific (₹/unit)</label>
+                <Input
+                  id="cessSpecific"
+                  type="number" min="0" step="0.01"
+                  value={cessSpecificAmount}
+                  onChange={(e) => setCessSpecificAmount(e.target.value)}
+                  placeholder="e.g. 4000"
+                  disabled={cessType === "none" || cessType === "ad_valorem"}
+                />
+              </div>
             </div>
           </div>
 
