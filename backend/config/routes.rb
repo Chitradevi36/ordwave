@@ -356,6 +356,8 @@ Rails.application.routes.draw do
             post :test_configuration
             post :mark_connected
             post :mark_disconnected
+            get :agents
+            get :queue_stats
           end
           resources :mappings, only: %i[index create update destroy]
         end
@@ -364,6 +366,16 @@ Rails.application.routes.draw do
         end
         resources :export_files, only: %i[index show create] do
           member { get :download_url }
+        end
+
+        # Agent communication endpoints (Phase 2)
+        namespace :agent do
+          post :register
+          post :heartbeat
+          get :poll
+          post 'ack/:id', to: 'agent#ack'
+          post 'fail/:id', to: 'agent#fail'
+          post :push_from_tally
         end
       end
 

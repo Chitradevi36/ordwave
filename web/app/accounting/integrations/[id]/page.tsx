@@ -24,6 +24,8 @@ import {
   type AccountingMapping,
 } from "@/lib/api/accounting";
 import { IntegrationStatusBadge, providerLabel, fmtDatetime } from "../../_utils";
+import { AgentStatus } from "./agent-status";
+import { AgentSyncQueueStats } from "./agent-sync-queue-stats";
 
 // ── Config field groups for Tally ─────────────────────────────────────────────
 
@@ -426,6 +428,14 @@ export default function IntegrationDetailPage() {
 
         {/* ── Right: Summary + mappings (1/3 width) ── */}
         <div className="space-y-5">
+
+          {/* Agent status & sync queue (only for realtime_agent mode) */}
+          {syncMode === "realtime_agent" && (
+            <>
+              <AgentStatus integrationId={integration.id} />
+              <AgentSyncQueueStats integrationId={integration.id} />
+            </>
+          )}
 
           {/* Quick links */}
           <Card>

@@ -80,6 +80,33 @@ export interface PaginationMeta {
   per_page: number;
 }
 
+export interface AccountingAgent {
+  id: number;
+  agent_id: string;
+  status: string;
+  last_heartbeat_at: string | null;
+  registered_at: string;
+  agent_version: string | null;
+  os_info: string | null;
+  tally_version: string | null;
+}
+
+export interface AgentRegistrationResponse {
+  agent_id: string;
+  api_key: string;
+  message: string;
+}
+
+export interface AgentQueueStats {
+  pending: number;
+  processing: number;
+  retrying: number;
+  failed: number;
+  success: number;
+  agents_online: number;
+  agents_total: number;
+}
+
 // ── Integrations ──────────────────────────────────────────────────────────────
 
 export async function fetchIntegrations(token: string, orgId: string): Promise<AccountingIntegration[]> {
@@ -259,3 +286,46 @@ export async function downloadExportFileUrl(id: number, token: string, orgId: st
   });
   return res.data.data?.url ?? "";
 }
+
+// ── Agent Operations ──────────────────────────────────────────────────────────
+
+export async function fetchAgents(integrationId: number, token: string, orgId: string): Promise<AccountingAgent[]> {
+  const res = await apiClient.get(`/api/v1/accounting/integrations/${integrationId}/agents`, {
+    headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+  });
+  return res.data.data ?? [];
+}
+
+export async function registerAgent(
+  integrationId: number,
+  payload: {
+    agent_version?: string;
+    os_info?: string;
+    tally_version?: string;
+  },
+  token: string,
+  orgId: string
+): Promise<AgentRegistrationResponse> {
+  const res = await apiClient.post(
+    `/api/v1/accounting/agent/register`,
+    { integration_id: integrationId, ...payload },
+    { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
+  );
+  return res.data;
+}
+
+export async function fetchAgentQueueStats(integrationId: number, token: string, orgId: string): Promise<AgentQueueStats> {
+  const res = await apiClient.get(`/api/v1/accounting/integrations/${integrationId}/queue_stats`, {
+    headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+  });
+  return res.data.data ?? {
+    pending: 0,
+    processing: 0,
+    retrying: 0,
+    failed: 0,
+    success: 0,
+    agents_online: 0,
+    agents_total: 0,
+  };
+}
+

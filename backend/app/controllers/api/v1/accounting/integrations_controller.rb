@@ -5,7 +5,7 @@ module Api
     module Accounting
       class IntegrationsController < BaseController
         before_action :require_organization!
-        before_action :set_integration, only: %i[show update test_configuration mark_connected mark_disconnected]
+        before_action :set_integration, only: %i[show update test_configuration mark_connected mark_disconnected agents queue_stats]
 
         # GET /api/v1/accounting/integrations
         def index
@@ -79,6 +79,34 @@ module Api
           end
         end
 
+        # GET /api/v1/accounting/integrations/:id/agents
+        def agents
+          authorize @integration
+
+          agents = @integration.accounting_agents.order(last_heartbeat_at: :desc)
+          render_success(agents.map { |agent| serialize_agent(agent) })
+        end
+
+        # GET /api/v1/accounting/integrations/:id/queue_stats
+        def queue_stats
+          authorize @integration
+
+          sync_records = @integration.accounting_sync_records
+          agents = @integration.accounting_agents
+
+          stats = {
+            pending: sync_records.where(status: 'pending').count,
+            processing: sync_records.where(status: 'processing').count,
+            retrying: sync_records.where(status: 'retrying').count,
+            failed: sync_records.where(status: 'failed').count,
+            success: sync_records.where(status: 'success').count,
+            agents_online: agents.select { |a| a.online? }.count,
+            agents_total: agents.count
+          }
+
+          render_success(stats)
+        end
+
         private
 
         def set_integration
@@ -116,6 +144,19 @@ module Api
           }
           base[:config_json] = integration.config_json if detailed
           base
+        end
+
+        def serialize_agent(agent)
+          {
+            id: agent.id,
+            agent_id: agent.agent_id,
+            status: agent.status,
+            last_heartbeat_at: agent.last_heartbeat_at,
+            registered_at: agent.registered_at,
+            agent_version: agent.agent_version,
+            os_info: agent.os_info,
+            tally_version: agent.tally_version
+          }
         end
       end
     end

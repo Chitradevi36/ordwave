@@ -34,6 +34,10 @@ class AccountingIntegrationPolicy < ApplicationPolicy
   def mark_connected?    = owner_or_admin? && belongs_to_organization?
   def mark_disconnected? = owner_or_admin? && belongs_to_organization?
 
+  # Read-only agent monitoring (managers and above)
+  def agents?      = manager_above? && belongs_to_organization?
+  def queue_stats? = manager_above? && belongs_to_organization?
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       scope.where(organization: organization)
