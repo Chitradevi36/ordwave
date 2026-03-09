@@ -8,6 +8,7 @@ class AccountingIntegration < ApplicationRecord
   has_many :accounting_sync_records,  dependent: :restrict_with_error
   has_many :accounting_export_files,  dependent: :restrict_with_error
   has_many :accounting_mappings,      dependent: :destroy
+  has_many :accounting_agents,        dependent: :destroy
 
   # ---------------------------------------------------------------------------
   # Enums

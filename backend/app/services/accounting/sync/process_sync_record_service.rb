@@ -62,15 +62,31 @@ module Accounting
         adpt.validate_config!
 
         output    = build_provider_output(adpt)
-        summary   = output_summary_for_storage(output)
 
-        @sync_record.update_columns(
-          status:        "completed",
-          response_body: summary,
-          error_message: nil
-        )
+        # Phase 2: Check sync mode - realtime agent or batch export
+        if @sync_record.accounting_integration.sync_mode_realtime_agent?
+          # Realtime agent mode: store XML and mark as pending for agent pickup
+          @sync_record.update_columns(
+            status:        "pending",
+            response_body: output[:xml], # Store full XML for agent to consume
+            error_message: nil
+          )
 
-        Rails.logger.info("[ProcessSyncRecordService] sync_record##{@sync_record.id} completed")
+          Rails.logger.info(
+            "[ProcessSyncRecordService] sync_record##{@sync_record.id} ready for agent pickup"
+          )
+        else
+          # Batch export mode: mark as completed with summary
+          summary = output_summary_for_storage(output)
+
+          @sync_record.update_columns(
+            status:        "completed",
+            response_body: summary,
+            error_message: nil
+          )
+
+          Rails.logger.info("[ProcessSyncRecordService] sync_record##{@sync_record.id} completed")
+        end
       rescue Accounting::Adapters::InvalidConfigurationError => e
         finalize_failure(e, retryable: false)
       rescue => e
