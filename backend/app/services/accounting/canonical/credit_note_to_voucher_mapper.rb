@@ -42,7 +42,7 @@ module Accounting
           cgst_total:              decimal!(tax_summary[:cgst]),
           sgst_total:              decimal!(tax_summary[:sgst]),
           igst_total:              decimal!(tax_summary[:igst]),
-          cess_total:              BigDecimal("0"),
+          cess_total:              decimal(tax_summary[:cess]),
           grand_total:             decimal!(fetch_first_present(cn, :total, :grand_total, :net_total)),
           inventory_lines:         inv_lines,
           tax_entries:             tax_entries,
@@ -95,6 +95,7 @@ module Accounting
         cgst = decimal!(lines.sum { |l| decimal!(l.try(:cgst_amount)) })
         sgst = decimal!(lines.sum { |l| decimal!(l.try(:sgst_amount)) })
         igst = decimal!(lines.sum { |l| decimal!(l.try(:igst_amount)) })
+        cess = decimal(lines.sum  { |l| decimal(l.try(:cess_amount)) })
 
         if cgst.zero? && sgst.zero? && igst.zero? && total_tax.positive?
           # Default to intra-state split (safe fallback; inter-state would be unusual for credit notes)
@@ -102,7 +103,7 @@ module Accounting
           sgst = total_tax - cgst
         end
 
-        { cgst: cgst, sgst: sgst, igst: igst }
+        { cgst: cgst, sgst: sgst, igst: igst, cess: cess }
       end
 
       def resolve_lines(cn)
@@ -137,11 +138,11 @@ module Accounting
           cgst_rate:      half,
           sgst_rate:      half,
           igst_rate:      gst_rate,
-          cess_rate:      BigDecimal("0"),
+          cess_rate:      decimal(line.try(:cess_rate)),
           cgst_amount:    cgst_amt,
           sgst_amount:    sgst_amt,
           igst_amount:    igst_amt,
-          cess_amount:    BigDecimal("0"),
+          cess_amount:    decimal(line.try(:cess_amount)),
           total_amount:   decimal!(line.try(:line_total) || line.try(:total_amount)),
           tax_entries:    []
         )
@@ -163,6 +164,10 @@ module Accounting
                                   ledger_kind: "output_tax", label: "CGST") if tax_summary[:cgst].positive?
           entries << TaxEntry.new(tax_type: "sgst", rate: nil, amount: tax_summary[:sgst],
                                   ledger_kind: "output_tax", label: "SGST") if tax_summary[:sgst].positive?
+        end
+        if tax_summary[:cess]&.positive?
+          entries << TaxEntry.new(tax_type: "cess", rate: nil, amount: tax_summary[:cess],
+                                  ledger_kind: "output_tax", label: "Cess")
         end
         entries
       end

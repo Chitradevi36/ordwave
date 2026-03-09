@@ -6,17 +6,19 @@ import { WorkspaceKpis, WorkspaceActions, WorkspaceActivity } from "@/components
 import { WORKSPACE_CONFIGS } from "@/components/workspace/workspace.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useOverviewStats, useWorkspaceActivity, fmtINR } from "@/lib/hooks/use-workspace-stats";
-import { DollarSign, FileText, CreditCard, Banknote, Plus, List, AlertCircle, TrendingUp } from "lucide-react";
+import { DollarSign, FileText, CreditCard, Banknote, Plus, List, AlertCircle, TrendingUp, FileSpreadsheet, ReceiptText } from "lucide-react";
 
 const config = WORKSPACE_CONFIGS.finance;
 
 const QUICK_ACTIONS = [
-  { label: "View Collections", icon: DollarSign,  href: "/collections",         description: "Browse collection entries" },
-  { label: "Record Collection", icon: Plus,       href: "/collections/new",     description: "Capture a new payment" },
-  { label: "View Invoices",   icon: FileText,     href: "/sales-invoices",      description: "Browse sales invoices" },
-  { label: "View Credit Notes", icon: CreditCard, href: "/credit-notes",        description: "Review issued credit notes" },
-  { label: "Review Credit",   icon: Banknote,     href: "/approvals/credit-limits", description: "Process credit limit approvals" },
-  { label: "View Insights",   icon: List,         href: "/insights/collections",description: "Review collections analytics" },
+  { label: "View Collections",    icon: DollarSign,       href: "/collections",              description: "Browse collection entries" },
+  { label: "Record Collection",   icon: Plus,             href: "/collections/new",          description: "Capture a new payment" },
+  { label: "View Invoices",       icon: FileText,         href: "/sales-invoices",           description: "Browse sales invoices" },
+  { label: "View Credit Notes",   icon: CreditCard,       href: "/credit-notes",             description: "Review issued credit notes" },
+  { label: "GSTR-1 Export",       icon: FileSpreadsheet,  href: "/compliance/gstr1",         description: "Generate & download GSTR-1" },
+  { label: "Supplier Debit Notes",icon: ReceiptText,      href: "/supplier-debit-notes",     description: "Manage supplier debit notes" },
+  { label: "Review Credit",       icon: Banknote,         href: "/approvals/credit-limits",  description: "Process credit limit approvals" },
+  { label: "View Insights",       icon: List,             href: "/insights/collections",     description: "Review collections analytics" },
 ];
 
 export default function FinancePage() {

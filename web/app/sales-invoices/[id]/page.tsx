@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Download, Ban, CheckCircle2, ExternalLink, FileCheck } from "lucide-react";
+import { Download, Ban, CheckCircle2, ExternalLink, FileCheck, Truck } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -71,8 +71,12 @@ interface InvoiceDetail {
   ack_number:        string | null;
   ack_datetime:      string | null;
   einvoice_qr_code:  string | null;
-  irn_generated_at:  string | null;
-  created_at:        string;
+  irn_generated_at:    string | null;
+  ewaybill_number:      string | null;
+  ewaybill_status:      string | null;
+  ewaybill_valid_upto:  string | null;
+  ewaybill_generated_at: string | null;
+  created_at:           string;
   customer:          { id: number; name: string; code: string; gstin: string | null };
   branch:            { id: number; name: string; code: string };
   sales_order:       { id: number; order_number: string } | null;
@@ -129,6 +133,16 @@ export default function SalesInvoiceDetailPage() {
   const [pdfLoading, setPdfLoading]         = useState(false);
   const [einvoiceLoading, setEinvoiceLoading] = useState(false);
   const [activeTab, setActiveTab]     = useState<"summary" | "lines" | "tax" | "activity" | "linked">("summary");
+
+  // e-Waybill state
+  const [ewayModal, setEwayModal]         = useState(false);
+  const [ewayVehicle, setEwayVehicle]     = useState("");
+  const [ewayTransporter, setEwayTransporter] = useState("");
+  const [ewayTransId, setEwayTransId]     = useState("");
+  const [ewayDistance, setEwayDistance]   = useState("");
+  const [ewayMode, setEwayMode]           = useState("1"); // 1=Road
+  const [ewayLoading, setEwayLoading]     = useState(false);
+  const [ewayError, setEwayError]         = useState<string | null>(null);
 
   const fetchInvoice = useCallback(async () => {
     if (!token || !orgId) return;
@@ -201,6 +215,37 @@ export default function SalesInvoiceDetailPage() {
     }
   };
 
+  const handleGenerateEwaybill = async () => {
+    if (!invoice || !token || !orgId) return;
+    setEwayLoading(true);
+    setEwayError(null);
+    try {
+      const res = await fetch(`/api/v1/sales_invoices/${invoice.id}/ewaybill`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-Organization-Id": orgId,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transport_mode:   ewayMode,
+          vehicle_number:   ewayVehicle,
+          transporter_name: ewayTransporter,
+          transporter_id:   ewayTransId,
+          distance_km:      ewayDistance ? Number(ewayDistance) : undefined,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.errors?.join(", ") || "E-Way Bill generation failed");
+      setInvoice(body.data);
+      setEwayModal(false);
+    } catch (e) {
+      setEwayError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setEwayLoading(false);
+    }
+  };
+
   const handleGenerateEinvoice = async () => {
     if (!invoice || !token || !orgId) return;
     setEinvoiceLoading(true);
@@ -248,7 +293,8 @@ export default function SalesInvoiceDetailPage() {
 
   const isVoidable     = invoice.status === "issued";
   const isDraft        = invoice.status === "draft";
-  const isEinvoiceable = invoice.status === "issued" && !invoice.irn;
+  const isEinvoiceable   = invoice.status === "issued" && !invoice.irn;
+  const isEwaybillable   = invoice.status === "issued" && !invoice.ewaybill_number;
 
   const headerActions = [
     {
@@ -265,6 +311,14 @@ export default function SalesInvoiceDetailPage() {
           variant:  "outline" as const,
           icon:     FileCheck,
           disabled: einvoiceLoading,
+        }]
+      : []),
+    ...(isEwaybillable
+      ? [{
+          label:   "Generate E-Way Bill",
+          onClick: () => setEwayModal(true),
+          variant: "outline" as const,
+          icon:    Truck,
         }]
       : []),
     ...(isVoidable
@@ -476,6 +530,53 @@ export default function SalesInvoiceDetailPage() {
             )}
           </div>)}
 
+          {/* e-Way Bill panel */}
+          {invoice.status === "issued" && (
+            <div className="rounded-lg border bg-card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  e-Way Bill
+                </h3>
+                {!invoice.ewaybill_number && (
+                  <Button size="sm" variant="outline" onClick={() => setEwayModal(true)}>
+                    <Truck className="h-3.5 w-3.5 mr-1.5" />
+                    Generate E-Way Bill
+                  </Button>
+                )}
+              </div>
+              {invoice.ewaybill_number ? (
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                  <div>
+                    <dt className="text-text-secondary">EWB Number</dt>
+                    <dd className="font-mono font-medium mt-0.5">{invoice.ewaybill_number}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-text-secondary">Status</dt>
+                    <dd className="mt-0.5">
+                      <Badge variant={invoice.ewaybill_status === "active" ? "success" : "secondary"}>
+                        {invoice.ewaybill_status ?? "—"}
+                      </Badge>
+                    </dd>
+                  </div>
+                  {invoice.ewaybill_valid_upto && (
+                    <div>
+                      <dt className="text-text-secondary">Valid Until</dt>
+                      <dd className="font-medium mt-0.5">{fmtDatetime(invoice.ewaybill_valid_upto)}</dd>
+                    </div>
+                  )}
+                  {invoice.ewaybill_generated_at && (
+                    <div>
+                      <dt className="text-text-secondary">Generated At</dt>
+                      <dd className="font-medium mt-0.5">{fmtDatetime(invoice.ewaybill_generated_at)}</dd>
+                    </div>
+                  )}
+                </dl>
+              ) : (
+                <p className="text-sm text-text-secondary">No e-Way Bill generated yet.</p>
+              )}
+            </div>
+          )}
+
           {/* ── Lines ── */}
           {activeTab === "lines" && (<div className="mt-4">
             <div className="rounded-lg border overflow-x-auto">
@@ -685,6 +786,72 @@ export default function SalesInvoiceDetailPage() {
             </div>
           </div>
         </Modal>
+      {/* ── E-Way Bill Modal ── */}
+      <Modal
+        open={ewayModal}
+        onClose={() => { setEwayModal(false); setEwayError(null); }}
+        title="Generate E-Way Bill"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Transport Mode</label>
+              <select
+                className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                value={ewayMode}
+                onChange={(e) => setEwayMode(e.target.value)}
+              >
+                <option value="1">Road</option>
+                <option value="2">Rail</option>
+                <option value="3">Air</option>
+                <option value="4">Ship</option>
+              </select>
+            </div>
+            <Input
+              label="Distance (km)"
+              type="number"
+              min={1}
+              placeholder="e.g. 150"
+              value={ewayDistance}
+              onChange={(e) => setEwayDistance(e.target.value)}
+            />
+            <Input
+              label="Vehicle Number"
+              placeholder="e.g. MH12AB1234"
+              value={ewayVehicle}
+              onChange={(e) => setEwayVehicle(e.target.value)}
+            />
+            <Input
+              label="Transporter Name"
+              placeholder="e.g. Fast Logistics"
+              value={ewayTransporter}
+              onChange={(e) => setEwayTransporter(e.target.value)}
+            />
+            <div className="col-span-2">
+              <Input
+                label="Transporter GSTIN / ID"
+                placeholder="e.g. 05BBBBB1111B1ZC"
+                value={ewayTransId}
+                onChange={(e) => setEwayTransId(e.target.value)}
+              />
+            </div>
+          </div>
+          {ewayError && <p className="text-sm text-destructive">{ewayError}</p>}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEwayModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={ewayLoading}
+              onClick={handleGenerateEwaybill}
+            >
+              <Truck className="h-3.5 w-3.5 mr-1.5" />
+              {ewayLoading ? "Generating…" : "Generate"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
       </div>
     </AppShell>
   );

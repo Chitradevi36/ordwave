@@ -16,6 +16,7 @@ module Gst
       :intra_state,
       :cgst_rate,   :sgst_rate,   :igst_rate,
       :cgst_amount, :sgst_amount, :igst_amount,
+      :cess_rate,   :cess_amount,
       :total_tax,
       keyword_init: true
     )
@@ -24,19 +25,28 @@ module Gst
     # @param customer       [Customer] buying customer (must respond to #gstin)
     # @param gst_rate       [Numeric]  combined GST rate (0/5/12/18/28)
     # @param taxable_value  [Numeric]  pre-tax line value in organisation currency
+    # @param cess_rate      [Numeric]  ad-valorem cess rate (default 0)
+    # @param cess_specific_amount [Numeric] per-unit specific cess (default 0)
+    # @param qty            [Numeric]  quantity (for specific cess calculation)
     # @return [Result]
-    def self.calculate(branch:, customer:, gst_rate:, taxable_value:)
+    def self.calculate(branch:, customer:, gst_rate:, taxable_value:,
+                       cess_rate: 0, cess_specific_amount: 0, qty: 1)
       new(branch: branch, customer: customer,
-          gst_rate: gst_rate, taxable_value: taxable_value).call
+          gst_rate: gst_rate, taxable_value: taxable_value,
+          cess_rate: cess_rate, cess_specific_amount: cess_specific_amount, qty: qty).call
     end
 
     private_class_method :new
 
-    def initialize(branch:, customer:, gst_rate:, taxable_value:)
+    def initialize(branch:, customer:, gst_rate:, taxable_value:,
+                   cess_rate: 0, cess_specific_amount: 0, qty: 1)
       @branch_state_code   = branch&.state_code.to_s.strip
       @customer_state_code = customer&.gstin.to_s.strip.first(2)
       @gst_rate            = BigDecimal(gst_rate.to_s)
       @taxable_value       = BigDecimal(taxable_value.to_s)
+      @cess_rate           = BigDecimal(cess_rate.to_s)
+      @cess_specific       = BigDecimal(cess_specific_amount.to_s)
+      @qty                 = BigDecimal(qty.to_s)
     end
 
     def call
@@ -55,6 +65,11 @@ module Gst
       sgst_amount = (@taxable_value * sgst_rate / 100).round(2)
       igst_amount = (@taxable_value * igst_rate / 100).round(2)
 
+      # Cess calculation (ad-valorem + specific)
+      cess_ad_valorem = (@taxable_value * @cess_rate / 100).round(2)
+      cess_specific   = (@qty * @cess_specific).round(2)
+      cess_amount     = (cess_ad_valorem + cess_specific).round(2)
+
       Result.new(
         intra_state:  intra_state?,
         cgst_rate:    cgst_rate,
@@ -63,7 +78,9 @@ module Gst
         cgst_amount:  cgst_amount,
         sgst_amount:  sgst_amount,
         igst_amount:  igst_amount,
-        total_tax:    (cgst_amount + sgst_amount + igst_amount).round(2)
+        cess_rate:    @cess_rate,
+        cess_amount:  cess_amount,
+        total_tax:    (cgst_amount + sgst_amount + igst_amount + cess_amount).round(2)
       )
     end
 

@@ -17,6 +17,7 @@ class TripStop < ApplicationRecord
 
   has_one    :proof,   class_name: 'DeliveryProof', dependent: :destroy
   has_many   :returns, class_name: 'ReturnRecord',  dependent: :destroy
+  has_many   :rejections, class_name: 'DeliveryRejection', dependent: :destroy
   has_many   :return_requests, ->(s) { where(source_type: 'delivery', source_id: s.id) }, class_name: 'ReturnRequest', primary_key: :id, foreign_key: :source_id
 
   # ── Validations ──────────────────────────────────────────────────────────

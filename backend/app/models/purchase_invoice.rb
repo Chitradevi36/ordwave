@@ -54,6 +54,20 @@ class PurchaseInvoice < ApplicationRecord
   def cancelled?; status == 'cancelled'; end
   def editable?;  draft?; end
 
+  # ── RCM helpers ──────────────────────────────────────────────────────────────
+  def reverse_charge?
+    is_reverse_charge == true
+  end
+
+  # Under RCM, the buyer (us) must pay GST to the government.
+  # The rcm_tax_amount represents the additional tax liability on the buyer.
+  def compute_rcm_tax!
+    return unless reverse_charge?
+
+    self.rcm_tax_amount = lines.sum(&:tax_amount).round(2)
+    save! if persisted?
+  end
+
   def soft_delete!
     update!(deleted_at: Time.current)
   end

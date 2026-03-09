@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -306,6 +306,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.index ["status"], name: "index_credit_limit_change_requests_on_status"
   end
 
+  create_table "credit_note_applications", force: :cascade do |t|
+    t.bigint "credit_note_id", null: false
+    t.bigint "sales_invoice_id", null: false
+    t.bigint "applied_by_id", null: false
+    t.decimal "amount", precision: 14, scale: 2, null: false
+    t.string "status", default: "active", null: false
+    t.datetime "reversed_at"
+    t.text "reversal_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applied_by_id"], name: "index_credit_note_applications_on_applied_by_id"
+    t.index ["credit_note_id", "sales_invoice_id"], name: "idx_cn_applications_cn_invoice"
+    t.index ["credit_note_id"], name: "index_credit_note_applications_on_credit_note_id"
+    t.index ["sales_invoice_id"], name: "index_credit_note_applications_on_sales_invoice_id"
+  end
+
   create_table "credit_note_lines", force: :cascade do |t|
     t.bigint "credit_note_id", null: false
     t.bigint "product_id", null: false
@@ -342,6 +358,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "applied_to_invoice_id"
+    t.decimal "unapplied_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "applied_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.string "adjustment_type", default: "manual"
+    t.index ["applied_to_invoice_id"], name: "index_credit_notes_on_applied_to_invoice_id"
     t.index ["branch_id"], name: "index_credit_notes_on_branch_id"
     t.index ["created_by_id"], name: "index_credit_notes_on_created_by_id"
     t.index ["customer_id", "status"], name: "index_credit_notes_on_customer_id_and_status"
@@ -457,6 +478,27 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.index ["trip_stop_id"], name: "index_delivery_proofs_on_trip_stop_id"
   end
 
+  create_table "delivery_rejections", force: :cascade do |t|
+    t.bigint "trip_stop_id", null: false
+    t.bigint "sales_order_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "rejected_by_id", null: false
+    t.decimal "qty_rejected", precision: 14, scale: 3, null: false
+    t.string "reason_code", null: false
+    t.string "condition", default: "unopened", null: false
+    t.text "notes"
+    t.boolean "auto_return", default: true, null: false
+    t.bigint "return_request_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_delivery_rejections_on_product_id"
+    t.index ["reason_code"], name: "index_delivery_rejections_on_reason_code"
+    t.index ["rejected_by_id"], name: "index_delivery_rejections_on_rejected_by_id"
+    t.index ["return_request_id"], name: "index_delivery_rejections_on_return_request_id"
+    t.index ["sales_order_id"], name: "index_delivery_rejections_on_sales_order_id"
+    t.index ["trip_stop_id"], name: "index_delivery_rejections_on_trip_stop_id"
+  end
+
   create_table "delivery_trips", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.bigint "branch_id", null: false
@@ -498,6 +540,37 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.index ["user_id"], name: "index_device_tokens_on_user_id"
   end
 
+  create_table "ewaybill_requests", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "sales_invoice_id"
+    t.string "requestable_type"
+    t.bigint "requestable_id"
+    t.string "ewaybill_number"
+    t.string "status", default: "pending", null: false
+    t.string "transport_mode", default: "road", null: false
+    t.string "vehicle_number"
+    t.string "transporter_id"
+    t.string "transporter_name"
+    t.decimal "distance_km", precision: 10, scale: 2
+    t.string "from_state"
+    t.string "to_state"
+    t.string "from_pincode"
+    t.string "to_pincode"
+    t.datetime "valid_from"
+    t.datetime "valid_until"
+    t.jsonb "response_json", default: {}
+    t.text "error_message"
+    t.datetime "generated_at"
+    t.datetime "cancelled_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ewaybill_number"], name: "index_ewaybill_requests_on_ewaybill_number", unique: true, where: "(ewaybill_number IS NOT NULL)"
+    t.index ["organization_id"], name: "index_ewaybill_requests_on_organization_id"
+    t.index ["requestable_type", "requestable_id"], name: "idx_ewaybill_requestable"
+    t.index ["sales_invoice_id"], name: "index_ewaybill_requests_on_sales_invoice_id"
+    t.index ["status"], name: "index_ewaybill_requests_on_status"
+  end
+
   create_table "exports", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.bigint "requested_by_id", null: false
@@ -530,6 +603,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.date "effective_to"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "cess_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.string "cess_type", default: "none", null: false
+    t.decimal "cess_specific_amount", precision: 14, scale: 2
     t.index ["code", "effective_from"], name: "idx_hsn_sac_codes_on_code_effective_from"
     t.index ["code"], name: "idx_hsn_sac_codes_current_active", where: "((active = true) AND (effective_to IS NULL))"
     t.index ["code_type"], name: "index_hsn_sac_codes_on_code_type"
@@ -847,6 +923,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "is_reverse_charge", default: false, null: false
+    t.decimal "rcm_tax_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.string "supplier_gstin"
+    t.string "place_of_supply"
     t.index ["branch_id"], name: "index_purchase_invoices_on_branch_id"
     t.index ["created_by_id"], name: "index_purchase_invoices_on_created_by_id"
     t.index ["deleted_at"], name: "index_purchase_invoices_on_deleted_at"
@@ -885,6 +965,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.string "hsn_code_snapshot"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "batch_number"
+    t.date "expiry_date"
+    t.date "manufacture_date"
     t.index ["product_id"], name: "index_return_lines_on_product_id"
     t.index ["return_request_id", "product_id"], name: "index_return_lines_on_return_request_id_and_product_id"
     t.index ["return_request_id"], name: "index_return_lines_on_return_request_id"
@@ -902,6 +985,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.datetime "qc_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "qty_discounted_resalable", precision: 14, scale: 3, default: "0.0", null: false
+    t.decimal "qty_return_to_supplier", precision: 14, scale: 3, default: "0.0", null: false
+    t.decimal "discount_pct", precision: 5, scale: 2
+    t.string "supplier_return_reason"
     t.index ["qc_by_id"], name: "index_return_qc_items_on_qc_by_id"
     t.index ["return_line_id"], name: "index_return_qc_items_on_return_line_id"
   end
@@ -998,6 +1085,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "cess_rate", precision: 5, scale: 2, default: "0.0"
+    t.decimal "cess_amount", precision: 14, scale: 2, default: "0.0"
     t.index ["product_id"], name: "idx_sil_product_id"
     t.index ["product_id"], name: "index_sales_invoice_lines_on_product_id"
     t.index ["sales_invoice_id"], name: "idx_sil_invoice_id"
@@ -1195,6 +1284,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "budget_amount", precision: 14, scale: 2
+    t.decimal "utilized_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.integer "budget_alert_pct", default: 80
     t.index ["branch_id"], name: "index_schemes_on_branch_id"
     t.index ["created_by_id"], name: "index_schemes_on_created_by_id"
     t.index ["organization_id", "code"], name: "index_schemes_on_organization_id_and_code", unique: true
@@ -1273,6 +1365,55 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
     t.index ["source_branch_id", "status"], name: "index_stock_transfers_on_source_branch_id_and_status"
     t.index ["source_branch_id"], name: "index_stock_transfers_on_source_branch_id"
     t.index ["status"], name: "index_stock_transfers_on_status"
+  end
+
+  create_table "supplier_debit_note_lines", force: :cascade do |t|
+    t.bigint "supplier_debit_note_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "return_line_id"
+    t.decimal "qty", precision: 14, scale: 3, null: false
+    t.decimal "unit_price", precision: 14, scale: 2, null: false
+    t.decimal "gst_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.decimal "tax_amount", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "line_total", precision: 14, scale: 2, default: "0.0", null: false
+    t.string "hsn_code"
+    t.string "batch_number"
+    t.date "expiry_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_supplier_debit_note_lines_on_product_id"
+    t.index ["return_line_id"], name: "index_supplier_debit_note_lines_on_return_line_id"
+    t.index ["supplier_debit_note_id"], name: "idx_sdnl_debit_note"
+  end
+
+  create_table "supplier_debit_notes", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "supplier_id", null: false
+    t.bigint "return_request_id"
+    t.bigint "created_by_id", null: false
+    t.string "debit_note_number", null: false
+    t.date "debit_note_date", null: false
+    t.string "status", default: "draft", null: false
+    t.string "reason", null: false
+    t.decimal "subtotal", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "tax_total", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "total", precision: 14, scale: 2, default: "0.0", null: false
+    t.text "notes"
+    t.datetime "issued_at"
+    t.datetime "voided_at"
+    t.text "void_reason"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_supplier_debit_notes_on_branch_id"
+    t.index ["created_by_id"], name: "index_supplier_debit_notes_on_created_by_id"
+    t.index ["deleted_at"], name: "index_supplier_debit_notes_on_deleted_at"
+    t.index ["organization_id", "debit_note_number"], name: "idx_sdn_org_number", unique: true
+    t.index ["organization_id"], name: "index_supplier_debit_notes_on_organization_id"
+    t.index ["return_request_id"], name: "index_supplier_debit_notes_on_return_request_id"
+    t.index ["status"], name: "index_supplier_debit_notes_on_status"
+    t.index ["supplier_id"], name: "index_supplier_debit_notes_on_supplier_id"
   end
 
   create_table "supplier_products", force: :cascade do |t|
@@ -1512,6 +1653,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
   add_foreign_key "credit_limit_change_requests", "credit_accounts"
   add_foreign_key "credit_limit_change_requests", "users", column: "decided_by_id"
   add_foreign_key "credit_limit_change_requests", "users", column: "requested_by_id"
+  add_foreign_key "credit_note_applications", "credit_notes"
+  add_foreign_key "credit_note_applications", "sales_invoices"
+  add_foreign_key "credit_note_applications", "users", column: "applied_by_id"
   add_foreign_key "credit_note_lines", "credit_notes"
   add_foreign_key "credit_note_lines", "products"
   add_foreign_key "credit_note_lines", "return_lines"
@@ -1519,6 +1663,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
   add_foreign_key "credit_notes", "customers"
   add_foreign_key "credit_notes", "organizations"
   add_foreign_key "credit_notes", "return_requests"
+  add_foreign_key "credit_notes", "sales_invoices", column: "applied_to_invoice_id"
   add_foreign_key "credit_notes", "sales_orders"
   add_foreign_key "credit_notes", "users", column: "created_by_id"
   add_foreign_key "credit_policies", "organizations"
@@ -1530,6 +1675,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
   add_foreign_key "customers", "users", column: "sales_rep_id"
   add_foreign_key "delivery_proofs", "trip_stops"
   add_foreign_key "delivery_proofs", "users", column: "overridden_by_id"
+  add_foreign_key "delivery_rejections", "products"
+  add_foreign_key "delivery_rejections", "sales_orders"
+  add_foreign_key "delivery_rejections", "trip_stops"
+  add_foreign_key "delivery_rejections", "users", column: "rejected_by_id"
   add_foreign_key "delivery_trips", "branches"
   add_foreign_key "delivery_trips", "organizations"
   add_foreign_key "delivery_trips", "routes"
@@ -1537,6 +1686,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
   add_foreign_key "delivery_trips", "vehicles"
   add_foreign_key "device_tokens", "organizations"
   add_foreign_key "device_tokens", "users"
+  add_foreign_key "ewaybill_requests", "organizations"
+  add_foreign_key "ewaybill_requests", "sales_invoices"
   add_foreign_key "exports", "organizations"
   add_foreign_key "exports", "users", column: "requested_by_id"
   add_foreign_key "inventory_levels", "branches"
@@ -1636,6 +1787,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_09_000001) do
   add_foreign_key "stock_transfers", "users", column: "created_by_id"
   add_foreign_key "stock_transfers", "users", column: "dispatched_by_id"
   add_foreign_key "stock_transfers", "users", column: "received_by_id"
+  add_foreign_key "supplier_debit_note_lines", "products"
+  add_foreign_key "supplier_debit_note_lines", "return_lines"
+  add_foreign_key "supplier_debit_note_lines", "supplier_debit_notes"
+  add_foreign_key "supplier_debit_notes", "branches"
+  add_foreign_key "supplier_debit_notes", "organizations"
+  add_foreign_key "supplier_debit_notes", "return_requests"
+  add_foreign_key "supplier_debit_notes", "suppliers"
+  add_foreign_key "supplier_debit_notes", "users", column: "created_by_id"
   add_foreign_key "supplier_products", "products"
   add_foreign_key "supplier_products", "suppliers"
   add_foreign_key "suppliers", "organizations"

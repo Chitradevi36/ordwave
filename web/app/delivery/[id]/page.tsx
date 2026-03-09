@@ -11,7 +11,7 @@ import { API_URL } from "@/lib/api/client";
 
 import {
   Truck, User, Package, CheckCircle,
-  XCircle, Clock, ChevronRight, ClipboardCheck,
+  XCircle, Clock, ChevronRight, ClipboardCheck, AlertOctagon,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 
@@ -23,6 +23,22 @@ const EXCEPTION_CODES = [
   { value: "payment_not_ready",      label: "Payment Not Ready" },
   { value: "vehicle_breakdown",      label: "Vehicle Breakdown" },
   { value: "other",                  label: "Other" },
+];
+
+const REJECTION_REASON_CODES = [
+  { value: "quality_issue",      label: "Quality Issue" },
+  { value: "expired_product",    label: "Expired Product" },
+  { value: "damaged_packaging",  label: "Damaged Packaging" },
+  { value: "wrong_product",      label: "Wrong Product Delivered" },
+  { value: "quantity_mismatch",  label: "Quantity Mismatch" },
+  { value: "refused_by_customer", label: "Refused by Customer" },
+  { value: "other",              label: "Other" },
+];
+
+const REJECTION_CONDITIONS = [
+  { value: "unopened", label: "Unopened / Sealed" },
+  { value: "opened",   label: "Opened" },
+  { value: "damaged",  label: "Damaged" },
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -110,6 +126,16 @@ export default function TripDetailPage() {
   const [stopNotes, setStopNotes]           = useState("");
   const [stopLoading, setStopLoading]       = useState(false);
   const [stopError, setStopError]           = useState("");
+
+  // Rejection modal
+  const [rejectingStop, setRejectingStop]   = useState<StopSummary | null>(null);
+  const [rejectReasonCode, setRejectReasonCode] = useState("");
+  const [rejectCondition, setRejectCondition]   = useState("unopened");
+  const [rejectQty, setRejectQty]               = useState("");
+  const [rejectAutoReturn, setRejectAutoReturn] = useState(true);
+  const [rejectNotes, setRejectNotes]           = useState("");
+  const [rejectLoading, setRejectLoading]       = useState(false);
+  const [rejectError, setRejectError]           = useState("");
 
   const authHeaders = {
     Authorization: `Bearer ${token}`,
@@ -217,6 +243,16 @@ export default function TripDetailPage() {
     setStopError("");
   }
 
+  function openRejectStop(stop: StopSummary) {
+    setRejectingStop(stop);
+    setRejectReasonCode("");
+    setRejectCondition("unopened");
+    setRejectQty("");
+    setRejectAutoReturn(true);
+    setRejectNotes("");
+    setRejectError("");
+  }
+
   async function handleCompleteStop() {
     if (!completingStop) return;
     if (stopProofType === "override" && !stopOverrideReason.trim()) {
@@ -256,6 +292,42 @@ export default function TripDetailPage() {
       }
     } finally {
       setStopLoading(false);
+    }
+  }
+
+  async function handleRecordRejection() {
+    if (!rejectingStop || !rejectReasonCode || !rejectQty) {
+      setRejectError("Reason code and quantity are required.");
+      return;
+    }
+    setRejectLoading(true);
+    setRejectError("");
+    try {
+      const res = await fetch(
+        `${API_URL}/api/v1/delivery_trips/${id}/trip_stops/${rejectingStop.id}/rejections`,
+        {
+          method:  "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            rejection: {
+              reason_code:  rejectReasonCode,
+              condition:    rejectCondition,
+              qty_rejected: Number(rejectQty),
+              auto_return:  rejectAutoReturn,
+              notes:        rejectNotes || undefined,
+            },
+          }),
+        }
+      );
+      const json = await res.json();
+      if (res.ok) {
+        setRejectingStop(null);
+        void fetchTrip();
+      } else {
+        setRejectError((json.errors ?? ["Unknown error"]).join(", "));
+      }
+    } finally {
+      setRejectLoading(false);
     }
   }
 
@@ -407,14 +479,36 @@ export default function TripDetailPage() {
                   <div className="shrink-0 flex items-center gap-1">
                     {STOP_ICON[stop.status]}
                     {trip.status === "dispatched" && stop.status === "pending" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="ml-2 text-xs h-7 px-2"
+                          onClick={() => openCompleteStop(stop)}
+                        >
+                          <ClipboardCheck className="h-3 w-3 mr-1" />
+                          Complete
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-7 px-2 text-destructive border-destructive/40 hover:bg-destructive/10"
+                          onClick={() => openRejectStop(stop)}
+                        >
+                          <AlertOctagon className="h-3 w-3 mr-1" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    {trip.status === "dispatched" && stop.status === "partial_delivery" && (
                       <Button
                         size="sm"
                         variant="outline"
-                        className="ml-2 text-xs h-7 px-2"
-                        onClick={() => openCompleteStop(stop)}
+                        className="ml-2 text-xs h-7 px-2 text-destructive border-destructive/40 hover:bg-destructive/10"
+                        onClick={() => openRejectStop(stop)}
                       >
-                        <ClipboardCheck className="h-3 w-3 mr-1" />
-                        Complete
+                        <AlertOctagon className="h-3 w-3 mr-1" />
+                        Record Rejection
                       </Button>
                     )}
                   </div>
@@ -597,6 +691,89 @@ export default function TripDetailPage() {
               <Button variant="outline" onClick={() => setCompletingStop(null)}>Cancel</Button>
               <Button onClick={handleCompleteStop} disabled={stopLoading}>
                 {stopLoading ? "Saving…" : "Mark Complete"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Rejection Modal */}
+      <Modal
+        open={!!rejectingStop}
+        onClose={() => setRejectingStop(null)}
+        title={`Record Rejection — Stop #${rejectingStop?.sequence ?? ""}`}
+      >
+        {rejectingStop && (
+          <div className="space-y-4">
+            <p className="text-sm text-text-secondary">
+              Customer: <span className="font-medium">{rejectingStop.sales_order.customer.name}</span>
+              {" · "}<span className="font-mono text-xs">{rejectingStop.sales_order.order_number}</span>
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Reason Code *</label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={rejectReasonCode}
+                  onChange={(e) => setRejectReasonCode(e.target.value)}
+                >
+                  <option value="">— Select reason —</option>
+                  {REJECTION_REASON_CODES.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Condition</label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={rejectCondition}
+                  onChange={(e) => setRejectCondition(e.target.value)}
+                >
+                  {REJECTION_CONDITIONS.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Qty Rejected *</label>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="e.g. 5"
+                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={rejectQty}
+                  onChange={(e) => setRejectQty(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5 flex flex-col justify-center">
+                <label className="text-sm font-medium">Auto-create Return</label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-border"
+                    checked={rejectAutoReturn}
+                    onChange={(e) => setRejectAutoReturn(e.target.checked)}
+                  />
+                  Automatically create a return order
+                </label>
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <label className="text-sm font-medium">Notes</label>
+                <textarea
+                  rows={2}
+                  placeholder="Optional details…"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={rejectNotes}
+                  onChange={(e) => setRejectNotes(e.target.value)}
+                />
+              </div>
+            </div>
+            {rejectError && <p className="text-sm text-red-600">{rejectError}</p>}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRejectingStop(null)}>Cancel</Button>
+              <Button variant="danger" onClick={handleRecordRejection} disabled={rejectLoading}>
+                {rejectLoading ? "Saving…" : "Record Rejection"}
               </Button>
             </div>
           </div>

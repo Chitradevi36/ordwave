@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Ban, RotateCcw } from "lucide-react";
+import { Ban, RotateCcw, CreditCard } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,7 +70,15 @@ const ACTION_LABEL: Record<string, string> = {
   credit_note_voided: "Credit Note Voided",
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
+interface OpenInvoice {
+  id:             number;
+  invoice_number: string;
+  grand_total:    number;
+  outstanding:    number;
+  invoice_date:   string;
+}
+
+
 
 export default function CreditNoteDetailPage() {
   const params  = useParams<{ id: string }>();
@@ -83,6 +92,14 @@ export default function CreditNoteDetailPage() {
   const [voidReason, setVoidReason] = useState("");
   const [saving, setSaving]     = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Apply to invoice state
+  const [applyModal, setApplyModal]       = useState(false);
+  const [openInvoices, setOpenInvoices]   = useState<OpenInvoice[]>([]);
+  const [selectedInvId, setSelectedInvId] = useState("");
+  const [applyAmount, setApplyAmount]     = useState("");
+  const [applying, setApplying]           = useState(false);
+  const [applyError, setApplyError]       = useState<string | null>(null);
 
   const fetchCn = useCallback(async () => {
     if (!token || !orgId) return;
@@ -103,6 +120,59 @@ export default function CreditNoteDetailPage() {
   }, [token, orgId, params.id]);
 
   useEffect(() => { fetchCn(); }, [fetchCn]);
+
+  const openApplyModal = async () => {
+    if (!cn || !token || !orgId) return;
+    setApplyError(null);
+    setApplyAmount("");
+    setSelectedInvId("");
+    try {
+      const res = await fetch(
+        `/api/v1/sales_invoices?status=issued&customer_id=${cn.customer.id}&per_page=50`,
+        { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
+      );
+      const body = await res.json();
+      setOpenInvoices(
+        (body.data ?? []).map((inv: any) => ({
+          id:             inv.id,
+          invoice_number: inv.invoice_number,
+          grand_total:    inv.grand_total,
+          outstanding:    inv.outstanding_amount ?? inv.grand_total,
+          invoice_date:   inv.invoice_date,
+        }))
+      );
+    } catch {
+      setOpenInvoices([]);
+    }
+    setApplyModal(true);
+  };
+
+  const handleApply = async () => {
+    if (!cn || !selectedInvId || !applyAmount) return;
+    setApplying(true);
+    setApplyError(null);
+    try {
+      const res = await fetch(`/api/v1/credit_notes/${cn.id}/apply`, {
+        method: "POST",
+        headers: {
+          Authorization:       `Bearer ${token}`,
+          "X-Organization-Id": orgId!,
+          "Content-Type":      "application/json",
+        },
+        body: JSON.stringify({
+          applications: [{ sales_invoice_id: Number(selectedInvId), amount: Number(applyAmount) }],
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.errors?.join(", ") || "Apply failed");
+      await fetchCn();
+      setApplyModal(false);
+    } catch (e) {
+      setApplyError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const handleVoid = async () => {
     if (!cn || !voidReason.trim()) return;
@@ -177,7 +247,10 @@ export default function CreditNoteDetailPage() {
           }
           actions={
             isVoidable
-              ? [{ label: "Void", onClick: () => setVoidModal(true), icon: <Ban className="w-4 h-4" />, variant: "danger" }]
+              ? [
+                  { label: "Apply to Invoice", onClick: openApplyModal, icon: <CreditCard className="w-4 h-4" />, variant: "default" as const },
+                  { label: "Void", onClick: () => setVoidModal(true), icon: <Ban className="w-4 h-4" />, variant: "danger" as const },
+                ]
               : undefined
           }
         />
@@ -380,6 +453,62 @@ export default function CreditNoteDetailPage() {
               disabled={saving || !voidReason.trim()}
             >
               {saving ? "Voiding…" : "Void Credit Note"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Apply to Invoice Modal ── */}
+      <Modal
+        open={applyModal}
+        onClose={() => { setApplyModal(false); setApplyError(null); }}
+        title="Apply Credit Note to Invoice"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Apply part or all of <span className="font-mono font-semibold">{cn.credit_note_number}</span> to an outstanding invoice for {cn.customer.name}.
+          </p>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium">Select Invoice</label>
+            <select
+              value={selectedInvId}
+              onChange={(e) => {
+                setSelectedInvId(e.target.value);
+                const inv = openInvoices.find(i => String(i.id) === e.target.value);
+                if (inv) setApplyAmount(String(Math.min(inv.outstanding, cn.total)));
+              }}
+              className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              <option value="">Choose an invoice…</option>
+              {openInvoices.map(inv => (
+                <option key={inv.id} value={String(inv.id)}>
+                  {inv.invoice_number} — ₹{Number(inv.outstanding).toLocaleString("en-IN", { minimumFractionDigits: 2 })} outstanding
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium">Amount to Apply</label>
+            <Input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={applyAmount}
+              onChange={(e) => setApplyAmount(e.target.value)}
+              placeholder="0.00"
+            />
+            <p className="text-xs text-text-secondary">
+              CN balance: ₹{fmt(cn.total)}
+            </p>
+          </div>
+          {applyError && <p className="text-sm text-danger">{applyError}</p>}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setApplyModal(false)} disabled={applying}>Cancel</Button>
+            <Button
+              onClick={handleApply}
+              disabled={applying || !selectedInvId || !applyAmount}
+            >
+              {applying ? "Applying…" : "Apply"}
             </Button>
           </div>
         </div>

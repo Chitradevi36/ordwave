@@ -1,6 +1,7 @@
 class HsnSacCode < ApplicationRecord
   VALID_RATES = [0, 5, 12, 18, 28].freeze
   CODE_TYPES  = %w[HSN SAC].freeze
+  CESS_TYPES  = %w[none ad_valorem specific both].freeze
 
   # ---------------------------------------------------------------------------
   # Callbacks
@@ -17,7 +18,11 @@ class HsnSacCode < ApplicationRecord
                              inclusion: { in: VALID_RATES,
                                           message: 'must be one of 0, 5, 12, 18, 28' }
   validates :effective_from, presence: true
+  validates :cess_type,      inclusion: { in: CESS_TYPES }, allow_nil: true
+  validates :cess_rate,      numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :cess_specific_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validate  :effective_to_after_effective_from, if: -> { effective_to.present? }
+  validate  :cess_consistency
 
   # ---------------------------------------------------------------------------
   # Scopes
@@ -46,7 +51,35 @@ class HsnSacCode < ApplicationRecord
 
   # Friendly label for display
   def display_label
-    "#{code} – #{description.presence || 'No description'} (#{gst_rate}%)"
+    label = "#{code} – #{description.presence || 'No description'} (#{gst_rate}%)"
+    label += " + Cess #{cess_rate}%" if cess_rate.to_d.positive?
+    label
+  end
+
+  # Returns true if this HSN has any cess configured
+  def has_cess?
+    cess_type.present? && cess_type != 'none'
+  end
+
+  # Calculate cess for a given taxable value and quantity
+  # @param taxable_value [Numeric] the taxable value for ad_valorem
+  # @param qty [Numeric] quantity for specific cess
+  # @return [BigDecimal] total cess amount
+  def compute_cess(taxable_value:, qty: 1)
+    return BigDecimal('0') unless has_cess?
+
+    ad_valorem_cess = BigDecimal('0')
+    specific_cess   = BigDecimal('0')
+
+    if %w[ad_valorem both].include?(cess_type)
+      ad_valorem_cess = (BigDecimal(taxable_value.to_s) * BigDecimal(cess_rate.to_s) / 100).round(2)
+    end
+
+    if %w[specific both].include?(cess_type)
+      specific_cess = (BigDecimal(qty.to_s) * BigDecimal(cess_specific_amount.to_s)).round(2)
+    end
+
+    (ad_valorem_cess + specific_cess).round(2)
   end
 
   # ---------------------------------------------------------------------------
@@ -74,5 +107,19 @@ class HsnSacCode < ApplicationRecord
     return unless effective_from.present?
 
     errors.add(:effective_to, 'must be after effective_from') if effective_to <= effective_from
+  end
+
+  # Validate cess_rate presence when cess_type is ad_valorem/both,
+  # and cess_specific_amount when cess_type is specific/both
+  def cess_consistency
+    return if cess_type.blank? || cess_type == 'none'
+
+    if %w[ad_valorem both].include?(cess_type) && cess_rate.to_d.zero?
+      errors.add(:cess_rate, 'must be > 0 for ad_valorem/both cess type')
+    end
+
+    if %w[specific both].include?(cess_type) && cess_specific_amount.to_d.zero?
+      errors.add(:cess_specific_amount, 'must be > 0 for specific/both cess type')
+    end
   end
 end
