@@ -2,7 +2,7 @@ module Api
   module V1
     class CreditNotesController < BaseController
       before_action :require_organization!
-      before_action :set_credit_note, only: %i[show void_note]
+      before_action :set_credit_note, only: %i[show void_note apply]
 
       # GET /api/v1/credit_notes
       def index
@@ -44,6 +44,44 @@ module Api
 
         if result.success?
           render_created(serialize_credit_note(result.credit_note, detailed: true))
+        else
+          render_errors(result.errors)
+        end
+      end
+
+      # POST /api/v1/credit_notes/:id/apply
+      # Body: { applications: [{ sales_invoice_id: 123, amount: 500.00 }, ...] }
+      def apply
+        authorize @credit_note, :apply?
+
+        result = CreditNotes::ApplyToInvoice.call(
+          actor:        current_user,
+          credit_note:  @credit_note,
+          applications: params[:applications]
+        )
+
+        if result.success?
+          @credit_note.reload
+          render_success(serialize_credit_note(@credit_note, detailed: true))
+        else
+          render_errors(result.errors)
+        end
+      end
+
+      # POST /api/v1/credit_notes/:id/apply
+      # Body: { applications: [{ sales_invoice_id: 123, amount: 500.00 }, ...] }
+      def apply
+        authorize @credit_note, :apply?
+
+        result = CreditNotes::ApplyToInvoice.call(
+          actor:        current_user,
+          credit_note:  @credit_note,
+          applications: params[:applications]
+        )
+
+        if result.success?
+          @credit_note.reload
+          render_success(serialize_credit_note(@credit_note, detailed: true))
         else
           render_errors(result.errors)
         end

@@ -26,6 +26,12 @@ class SalesInvoicePolicy < ApplicationPolicy
   # Generate IRN via NIC IRP → accounts + manager + owner, invoice must be issued
   def einvoice? = manager_above? && within_org? && record.issued?
 
+  # Generate e-waybill → accounts + manager + owner, invoice must be issued
+  def ewaybill? = manager_above? && within_org? && record.issued?
+
+  # Cancel e-waybill → owner/admin only
+  def cancel_ewaybill? = owner_or_admin? && within_org?
+
   # ── Scope ────────────────────────────────────────────────────────────────
 
   class Scope < ApplicationPolicy::Scope

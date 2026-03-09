@@ -129,6 +129,8 @@ export default function TripDetailPage() {
 
   // Rejection modal
   const [rejectingStop, setRejectingStop]   = useState<StopSummary | null>(null);
+  const [rejectProductId, setRejectProductId] = useState("");
+  const [rejectOrderLines, setRejectOrderLines] = useState<{ product_id: number; product_name: string; product_sku: string }[]>([]);
   const [rejectReasonCode, setRejectReasonCode] = useState("");
   const [rejectCondition, setRejectCondition]   = useState("unopened");
   const [rejectQty, setRejectQty]               = useState("");
@@ -245,12 +247,30 @@ export default function TripDetailPage() {
 
   function openRejectStop(stop: StopSummary) {
     setRejectingStop(stop);
+    setRejectProductId("");
+    setRejectOrderLines([]);
     setRejectReasonCode("");
     setRejectCondition("unopened");
     setRejectQty("");
     setRejectAutoReturn(true);
     setRejectNotes("");
     setRejectError("");
+    // Fetch the order's lines so we can show a product dropdown
+    if (stop.sales_order?.id && token && orgId) {
+      fetch(`${API_URL}/api/v1/sales_orders/${stop.sales_order.id}`, { headers: authHeaders })
+        .then((r) => r.json())
+        .then((body) => {
+          const lines: { product_id: number; product_name: string; product_sku: string }[] =
+            (body.data?.lines ?? []).map((l: { product_id: number; product_name: string; product_sku: string }) => ({
+              product_id:   l.product_id,
+              product_name: l.product_name,
+              product_sku:  l.product_sku,
+            }));
+          setRejectOrderLines(lines);
+          if (lines.length === 1) setRejectProductId(String(lines[0].product_id));
+        })
+        .catch(() => { /* silently ignore — user can type product_id manually */ });
+    }
   }
 
   async function handleCompleteStop() {
@@ -296,8 +316,8 @@ export default function TripDetailPage() {
   }
 
   async function handleRecordRejection() {
-    if (!rejectingStop || !rejectReasonCode || !rejectQty) {
-      setRejectError("Reason code and quantity are required.");
+    if (!rejectingStop || !rejectReasonCode || !rejectQty || !rejectProductId) {
+      setRejectError("Product, reason code and quantity are required.");
       return;
     }
     setRejectLoading(true);
@@ -310,6 +330,7 @@ export default function TripDetailPage() {
           headers: authHeaders,
           body: JSON.stringify({
             rejection: {
+              product_id:   rejectProductId ? Number(rejectProductId) : undefined,
               reason_code:  rejectReasonCode,
               condition:    rejectCondition,
               qty_rejected: Number(rejectQty),
@@ -709,6 +730,34 @@ export default function TripDetailPage() {
               Customer: <span className="font-medium">{rejectingStop.sales_order.customer.name}</span>
               {" · "}<span className="font-mono text-xs">{rejectingStop.sales_order.order_number}</span>
             </p>
+
+            {/* Product */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Product *</label>
+              {rejectOrderLines.length > 0 ? (
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={rejectProductId}
+                  onChange={(e) => setRejectProductId(e.target.value)}
+                >
+                  <option value="">— Select product —</option>
+                  {rejectOrderLines.map((l) => (
+                    <option key={l.product_id} value={l.product_id}>
+                      {l.product_name} ({l.product_sku})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  placeholder="Product ID"
+                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={rejectProductId}
+                  onChange={(e) => setRejectProductId(e.target.value)}
+                />
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Reason Code *</label>
@@ -772,7 +821,7 @@ export default function TripDetailPage() {
             {rejectError && <p className="text-sm text-red-600">{rejectError}</p>}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setRejectingStop(null)}>Cancel</Button>
-              <Button variant="danger" onClick={handleRecordRejection} disabled={rejectLoading}>
+              <Button variant="danger" onClick={handleRecordRejection} disabled={rejectLoading || !rejectProductId || !rejectQty || !rejectReasonCode}>
                 {rejectLoading ? "Saving…" : "Record Rejection"}
               </Button>
             </div>

@@ -257,6 +257,7 @@ Rails.application.routes.draw do
       resources :credit_notes, only: %i[index show] do
         member do
           post :void_note, path: 'void'
+          post :apply
         end
         collection do
           post 'from_return/:return_request_id/issue', action: :issue, as: :issue_from_return
@@ -270,6 +271,8 @@ Rails.application.routes.draw do
           post :void_invoice, path: 'void'
           get  :pdf
           post :einvoice
+          post :ewaybill
+          post :cancel_ewaybill
         end
         collection do
           post 'generate_from_order/:sales_order_id', action: :generate_from_order,       as: :generate_invoice_from_order
@@ -308,6 +311,7 @@ Rails.application.routes.draw do
           member do
             post :complete
           end
+          resources :rejections, only: %i[create], controller: 'stop_rejections'
         end
       end
 
@@ -336,6 +340,24 @@ Rails.application.routes.draw do
         get :credit_risk,       action: :credit_risk
         get :beat_performance,  action: :beat_performance
         get :inventory_health,  action: :inventory_health
+        get :returns,           action: :returns
+        get :schemes,           action: :schemes
+      end
+
+      # -- Supplier Debit Notes ------------------------------------------------
+      resources :supplier_debit_notes, only: %i[index show create update] do
+        member do
+          post :issue
+          post :void_note, path: 'void'
+        end
+      end
+
+      # -- Compliance / GST ---------------------------------------------------
+      namespace :compliance do
+        scope :gstr1, controller: :gstr1 do
+          get :preview
+          get :export
+        end
       end
 
       # -- Webhooks -----------------------------------------------------------
