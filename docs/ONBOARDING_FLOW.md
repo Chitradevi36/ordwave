@@ -1,4 +1,4 @@
-# OmniDist OMS - Enterprise Onboarding Flow
+# OrderLane Pro - Enterprise Onboarding Flow
 
 ## Overview
 
@@ -469,13 +469,13 @@ analytics.track('Onboarding Completed', {
 
 ## Support & Documentation
 
-- 📚 **Knowledge Base**: https://docs.omnidist.com/onboarding
+- 📚 **Knowledge Base**: https://docs.orderlanepro.com/onboarding
 - 💬 **Live Chat**: Available in-app (bottom-right)
-- 📧 **Email**: support@omnidist.com
+- 📧 **Email**: support@orderlanepro.com
 - 📞 **Phone**: +91-XXXX-XXXXXX (9 AM - 6 PM IST)
 
 ---
 
 **Last Updated**: March 3, 2026  
 **Version**: 1.0.0  
-**Maintained by**: OmniDist Product Team
+**Maintained by**: OrderLane Pro Product Team

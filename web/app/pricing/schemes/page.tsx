@@ -869,7 +869,7 @@ export default function SchemesPage() {
   ];
 
   return (
-    <AppShell>
+    <AppShell hideBreadcrumb>
       <PageHeader
         title="Schemes"
         subtitle="Trade promotions · Trade program management"

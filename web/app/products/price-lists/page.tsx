@@ -258,7 +258,7 @@ export default function PriceListsPage() {
   useEffect(() => { fetchPriceLists(); }, [fetchPriceLists]);
 
   return (
-    <AppShell>
+    <AppShell hideBreadcrumb>
       <PageHeader
         title="Price Lists"
         description={totalCount > 0 ? `${totalCount} lists` : undefined}

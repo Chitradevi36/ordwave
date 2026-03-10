@@ -122,7 +122,6 @@ export default function NewProductPage() {
   if (createdProductId) {
     return (
       <AppShell breadcrumbs={[
-        { label: "Catalog", href: "/catalog" },
         { label: "Products", href: "/products" },
         { label: "Add Product" },
       ]}>
@@ -195,7 +194,6 @@ export default function NewProductPage() {
   // ── Create form ────────────────────────────────────────────────────────────
   return (
     <AppShell breadcrumbs={[
-        { label: "Catalog", href: "/catalog" },
         { label: "Products", href: "/products" },
         { label: "Add Product" },
       ]}>

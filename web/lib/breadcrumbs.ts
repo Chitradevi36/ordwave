@@ -19,48 +19,49 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   // ── Sales workspace
   // "/orders":                      { label: "Orders",             parent: "/sales" },
   "/orders/new":                  { label: "New Order",          parent: "/orders" },
-  "/approvals":                   { label: "Approvals",          parent: "/sales" },
+  // "/approvals":                   { label: "Approvals",          parent: "/sales" },
   "/approvals/credit-limits":     { label: "Credit Limits",      parent: "/approvals" },
   "/schemes":                     { label: "Schemes",            parent: "/sales" },
 
   // ── Customers workspace (sub-pages)
-  "/routes":                      { label: "Routes",             parent: "/customers" },
-  "/beats":                       { label: "Beats",              parent: "/customers" },
+  // "/routes":                      { label: "Routes",             parent: "/customers" },
+  // "/beats":                       { label: "Beats",              parent: "/customers" },
   "/customers/new":               { label: "New Customer",       parent: "/customers" },
 
   // ── Catalog workspace
-  "/products":                    { label: "Products",           parent: "/catalog" },
+  // "/products":                    { label: "Products",           parent: "/catalog" },
   "/products/new":                { label: "New Product",        parent: "/products" },
   "/products/categories":         { label: "Categories",         parent: "/products" },
   "/products/uom":                { label: "Units of Measure",   parent: "/products" },
-  "/products/price-lists":        { label: "Price Lists",        parent: "/products" },
+  // "/products/price-lists":        { label: "Price Lists",        parent: "/products" },
   "/pricing":                     { label: "Pricing",            parent: "/catalog" },
   "/pricing/schemes":             { label: "Promotions",         parent: "/catalog" },
 
   // ── Operations workspace
-  "/delivery":                    { label: "Delivery Trips",     parent: "/operations" },
+  // "/delivery":                    { label: "Delivery Trips",     parent: "/operations" },
   "/delivery/new":                { label: "New Trip",           parent: "/delivery" },
   "/delivery/exceptions":         { label: "Exceptions",         parent: "/delivery" },
+  "/delivery/rejections":         { label: "Rejections",         parent: "/delivery" },
   "/returns":                     { label: "Returns",            parent: "/operations" },
   "/returns/new":                 { label: "New Return",         parent: "/returns" },
 
   // ── Inventory workspace
-  "/inventory/stock":             { label: "Stock",              parent: "/inventory" },
+  // "/inventory/stock":             { label: "Stock",              parent: "/inventory" },
   "/inventory/stock/new":         { label: "New Stock",          parent: "/inventory/stock" },
   "/inventory/adjustments":       { label: "Adjustments",        parent: "/inventory" },
   "/inventory/adjustments/new":   { label: "New Adjustment",     parent: "/inventory/adjustments" },
-  "/inventory/transfers":         { label: "Transfers",          parent: "/inventory" },
+  // "/inventory/transfers":         { label: "Transfers",          parent: "/inventory" },
   "/inventory/transfers/new":     { label: "New Transfer",       parent: "/inventory/transfers" },
-  "/purchases":                   { label: "Purchases",          parent: "/inventory" },
+  // "/purchases":                   { label: "Purchases",          parent: "/inventory" },
   "/purchases/invoices":          { label: "Purchases",          parent: "/inventory" },
   "/purchases/invoices/new":      { label: "New Purchase",       parent: "/purchases/invoices" },
-  "/suppliers":                   { label: "Suppliers",          parent: "/inventory" },
+  // "/suppliers":                   { label: "Suppliers",          parent: "/inventory" },
 
   // ── Finance workspace
-  "/collections":                 { label: "Collections",        parent: "/finance" },
+  // "/collections":                 { label: "Collections",        parent: "/finance" },
   "/collections/new":             { label: "New Collection",     parent: "/collections" },
-  "/sales-invoices":              { label: "Sales Invoices",     parent: "/finance" },
-  "/credit-notes":                { label: "Credit Notes",       parent: "/finance" },
+  // "/sales-invoices":              { label: "Sales Invoices",     parent: "/finance" },
+  // "/credit-notes":                { label: "Credit Notes",       parent: "/finance" },
   "/credit-notes/new":            { label: "New Credit Note",    parent: "/credit-notes" },
   "/advance-payments":            { label: "Advances",           parent: "/finance" },
 
@@ -74,9 +75,9 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   "/settings/profile":            { label: "Profile",            parent: "/settings" },
   "/settings/account":            { label: "Account",            parent: "/settings" },
   "/settings/credit-policy":      { label: "Credit Policy",      parent: "/settings" },
-  "/settings/fleet":              { label: "Fleet",              parent: "/settings" },
+  // "/settings/fleet":              { label: "Fleet",              parent: "/settings" },
   "/settings/prepayment-skus":    { label: "Prepayment SKUs",    parent: "/settings" },
-  "/users":                       { label: "Users",              parent: "/settings" },
+  // "/users":                       { label: "Users",              parent: "/settings" },
   "/invite":                      { label: "Invite Team",        parent: "/settings" },
 };
 

@@ -180,7 +180,10 @@ export default function SignupPage() {
         // Store auth token and user data
         localStorage.setItem('auth_token', data.data.token);
         localStorage.setItem('user', JSON.stringify(data.data.user));
-        
+
+        // Set the auth cookie so middleware allows access to protected routes
+        document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
+
         // Redirect to comprehensive onboarding wizard
         router.push('/onboarding');
       } else {
@@ -198,7 +201,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">OmniDist OMS</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">OrderLane Pro</h1>
           <p className="text-sm sm:text-base text-text-secondary">Create your account in seconds</p>
         </div>
 

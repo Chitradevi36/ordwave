@@ -18,12 +18,14 @@ module Analytics
                     .sum(:amount).to_d
 
       {
-        payments_today:        payments_today,
-        payments_mtd:          payments_mtd,
-        payments_period:       col_value,
-        unpaid_invoices_count: unpaid_invoices.count,
-        unpaid_invoices_value: unpaid_invoices.sum(:outstanding_amount).to_d,
-        collection_rate:       pct(col_value, inv_value),
+        payments_today:         payments_today,
+        payments_mtd:           payments_mtd,
+        payments_period:        col_value,
+        unpaid_invoices_count:  unpaid_invoices.count,
+        unpaid_invoices_value:  unpaid_invoices.sum(:outstanding_amount).to_d,
+        collection_rate:        pct(col_value, inv_value),
+        target_amount:          inv_value,
+        overdue_invoices_count: overdue_invoices.count,
       }
     end
 
@@ -71,6 +73,62 @@ module Analytics
         .order(outstanding_amount: :desc)
     end
 
+    # Collections broken down by payment mode (cash / cheque / upi / etc.)
+    def by_mode
+      payments_base
+        .where(received_date: date_from..date_to)
+        .group(:payment_mode)
+        .order(Arel.sql("COALESCE(SUM(amount), 0) DESC"))
+        .pluck(Arel.sql("payment_mode, COALESCE(SUM(amount), 0), COUNT(*)"))
+        .map { |mode, amount, count| { mode: mode.to_s.humanize, amount: amount.to_d, count: count.to_i } }
+    end
+
+    # Daily target (invoice due in period) vs actual (payment received) for the date range.
+    # Groups by day. Target = sum of grand_total invoices due on that day within range.
+    # Actual = sum of payments received on that day.
+    def target_vs_actual
+      due_by_day = SalesInvoice
+        .where(status: "issued", organization_id: org_id)
+        .then { |s| branch_id.present? ? s.where(branch_id: branch_id) : s }
+        .where(due_date: date_from..date_to)
+        .group(:due_date)
+        .sum(:grand_total)
+
+      actual_by_day = payments_base
+        .where(received_date: date_from..date_to)
+        .group(:received_date)
+        .sum(:amount)
+
+      all_days = (due_by_day.keys + actual_by_day.keys).uniq.sort
+      all_days.map do |day|
+        {
+          period: day,
+          target: due_by_day[day].to_d,
+          actual: actual_by_day[day].to_d,
+        }
+      end
+    end
+
+    # Overdue invoices bucketed by age: 1–30, 31–60, 61–90, 91–120, 120+ days
+    def overdue_by_age
+      today = TODAY.call
+      buckets = [
+        { label: "1–30 days",  min: 1,   max: 30  },
+        { label: "31–60 days", min: 31,  max: 60  },
+        { label: "61–90 days", min: 61,  max: 90  },
+        { label: "91–120 days",min: 91,  max: 120 },
+        { label: "120+ days",  min: 121, max: nil },
+      ]
+
+      buckets.map do |b|
+        max_date = today - b[:min].days
+        min_date = b[:max] ? today - b[:max].days : Date.new(1970, 1, 1)
+        value = overdue_invoices.where(due_date: min_date..max_date).sum(:outstanding_amount).to_d
+        count = overdue_invoices.where(due_date: min_date..max_date).count
+        { bucket: b[:label], count: count, value: value }
+      end
+    end
+
     private
 
     # ── Base scopes ───────────────────────────────────────────────────────────
@@ -99,6 +157,14 @@ module Analytics
     def unpaid_invoices
       scope = SalesInvoice.where(status: "issued", organization_id: org_id)
                           .where("outstanding_amount > ?", 0)
+      scope = scope.where(branch_id: branch_id) if branch_id.present?
+      scope
+    end
+
+    def overdue_invoices
+      scope = SalesInvoice.where(status: "issued", organization_id: org_id)
+                          .where("outstanding_amount > ?", 0)
+                          .where("due_date < ?", TODAY.call)
       scope = scope.where(branch_id: branch_id) if branch_id.present?
       scope
     end

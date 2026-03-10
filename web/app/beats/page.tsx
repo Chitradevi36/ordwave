@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreateBeatModal } from "@/components/beats/create-beat-modal";
-import { Plus, Search, X, CalendarCheck, CheckCircle2, MapPin } from "lucide-react";
+import { Plus, Search, X, CalendarCheck, CheckCircle2, MapPin, Download } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Beat {
@@ -71,6 +71,7 @@ export default function BeatsPage() {
   const [meta, setMeta]       = useState<PageMeta | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [exporting, setExporting]   = useState(false);
 
   // Stats (all-time, not filtered)
   const [totalCount,    setTotalCount]    = useState(0);
@@ -88,6 +89,40 @@ export default function BeatsPage() {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
   };
+
+  const handleExportCsv = useCallback(async () => {
+    if (!token || !orgId) return;
+    setExporting(true);
+    try {
+      const res  = await fetch(`/api/v1/beats?per_page=5000`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.errors?.[0] ?? "Export failed");
+      const rows: Beat[] = json.data ?? [];
+      const header = "Code,Name,Route,Status,Notes\n";
+      const csvRows = rows.map((b) =>
+        [
+          b.code,
+          `"${b.name.replace(/"/g, '""')}"`,
+          b.route_name ? `"${b.route_name.replace(/"/g, '""')}"` : "",
+          b.active ? "Active" : "Inactive",
+          b.notes ? `"${b.notes.replace(/"/g, '""')}"` : "",
+        ].join(",")
+      );
+      const blob = new Blob([header + csvRows.join("\n")], { type: "text/csv" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `beats_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      showToast("error", err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  }, [token, orgId]);
 
   const fetchBeats = useCallback(async () => {
     if (!token || !orgId) return;
@@ -207,8 +242,9 @@ export default function BeatsPage() {
 
       <PageHeader
         title="Beats"
-        description={meta ? `${meta.total_count} beat${meta.total_count !== 1 ? "s" : ""}` : "Manage beat plans and retailer visit schedules"}
+        description="Plan retail visits and manage field sales coverage. Optimize sales representative routes, monitor visit schedules, and track beat-wise performance."
         actions={[
+          { label: exporting ? "Exporting…" : "Export CSV", icon: Download, onClick: handleExportCsv, disabled: exporting, variant: "outline" },
           { label: "New Beat", icon: Plus, onClick: () => setShowCreate(true) },
         ]}
       />

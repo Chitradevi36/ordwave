@@ -304,7 +304,7 @@ export default function SchemesPage() {
   };
 
   return (
-    <AppShell>
+    <AppShell hideBreadcrumb>
       <PageHeader
         title="Schemes"
         description="Trade promotions and discount schemes applied at order time"

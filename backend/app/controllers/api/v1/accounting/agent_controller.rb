@@ -159,12 +159,49 @@ module Api
         end
 
         # POST /api/v1/accounting/agent/push_from_tally
-        # Reverse sync: receive data from Tally
-        # TODO: Phase 2.5 - implement reverse sync logic
+        # Reverse sync: receive a batch of Tally vouchers/balances and reconcile into OrderLane.
+        #
+        # Expected body:
+        #   {
+        #     records: [
+        #       {
+        #         voucher_type: "receipt_voucher",   # receipt_voucher | payment_voucher | closing_balance | ledger_entry
+        #         voucher_number: "Rcpt-42",
+        #         reference_number: "UTR123456",
+        #         party_name: "Sri Murugan Traders",
+        #         amount: "15000.00",
+        #         date: "20260309",                  # YYYYMMDD (Tally format)
+        #         narration: "Payment received"
+        #       },
+        #       ...
+        #     ]
+        #   }
         def push_from_tally
+          records_params = params.permit(records: [
+            :voucher_type, :voucher_number, :reference_number,
+            :party_name, :amount, :date, :narration, :closing_balance
+          ])[:records] || []
+
+          if records_params.blank?
+            return render json: { error: "No records provided" }, status: :unprocessable_entity
+          end
+
+          integration = @current_agent.accounting_integration
+          results     = ::Accounting::Sync::TallyPushHandlerService.new(integration, records_params).call
+
+          success_count = results.count { |r| r.status == "success" }
+          error_count   = results.count { |r| r.status == "error" }
+
           render json: {
-            message: "Reverse sync not yet implemented"
-          }, status: :not_implemented
+            received: records_params.size,
+            success:  success_count,
+            skipped:  results.count { |r| r.status == "skipped" },
+            errors:   error_count,
+            results:  results.map(&:to_h)
+          }, status: error_count.zero? ? :ok : :multi_status
+        rescue => e
+          Rails.logger.error("[AgentController#push_from_tally] #{e.class}: #{e.message}")
+          render json: { error: "Failed to process Tally push: #{e.message}" }, status: :internal_server_error
         end
 
         private

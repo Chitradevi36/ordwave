@@ -161,6 +161,68 @@ module Api
         end
       end
 
+      # ── POST /api/v1/sales_invoices/bulk_generate ─────────────────────────
+      # Body: { order_ids: [1, 2, 3], invoice_date: "2026-03-09" }
+      # Returns: { generated: N, skipped: N, errors: [] }
+      def bulk_generate
+        authorize SalesInvoice.new(organization: current_organization), :bulk_generate?
+
+        order_ids    = Array(params[:order_ids]).map(&:to_i).uniq
+        invoice_date = params[:invoice_date].presence&.then { |d| Date.parse(d) rescue Date.current } || Date.current
+
+        generated = 0
+        skipped   = 0
+        errors    = []
+
+        orders = current_organization.sales_orders
+                                     .where(id: order_ids)
+                                     .includes(:lines, :customer, :branch)
+
+        orders.each do |order|
+          delivered_lines = order.lines.map do |sol|
+            invoiceable_qty = sol.delivered_qty.to_d - sol.invoiced_qty.to_d
+            next if invoiceable_qty <= 0
+
+            {
+              product_id:          sol.product_id,
+              qty:                 invoiceable_qty,
+              sales_order_line_id: sol.id,
+              unit_price:          sol.unit_price,
+              discount_pct:        sol.discount_pct,
+              hsn_code:            sol.hsn_code,
+              gst_rate:            sol.gst_rate
+            }
+          end.compact
+
+          if delivered_lines.empty?
+            skipped += 1
+            next
+          end
+
+          result = Invoice::GenerateFromDeliveryService.call(
+            actor:             current_user,
+            branch:            order.branch,
+            customer:          order.customer,
+            sales_order:       order,
+            invoice_date:      invoice_date,
+            generation_source: "manual_from_order",
+            delivered_lines:   delivered_lines
+          )
+
+          if result.success?
+            generated += 1
+          else
+            skipped += 1
+            errors << { order_id: order.id, order_number: order.order_number, errors: result.errors }
+          end
+        rescue => e
+          skipped += 1
+          errors << { order_id: order.id, errors: [e.message] }
+        end
+
+        render_success({ generated: generated, skipped: skipped, errors: errors })
+      end
+
       # ── POST /api/v1/sales_invoices/:id/issue ──────────────────────────────
       def issue
         authorize @invoice, :issue?

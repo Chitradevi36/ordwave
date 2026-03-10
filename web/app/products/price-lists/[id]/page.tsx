@@ -734,7 +734,6 @@ export default function PriceListDetailPage() {
 
   return (
     <AppShell breadcrumbs={[
-        { label: "Catalog", href: "/catalog" },
         { label: "Price Lists", href: "/products/price-lists" },
         { label: pl.name },
       ]}>

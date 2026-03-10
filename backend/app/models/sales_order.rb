@@ -16,11 +16,15 @@ class SalesOrder < ApplicationRecord
 
   CREDIT_DECISIONS = %w[ok hold blocked].freeze
 
+  enum :pick_status, { pending_pick: 0, picked: 1, pick_confirmed: 2 }
+
   # ── Associations ──────────────────────────────────────────────────────────
   belongs_to :organization
   belongs_to :branch
   belongs_to :customer
-  belongs_to :created_by, class_name: 'User'
+  belongs_to :created_by,          class_name: 'User'
+  belongs_to :picked_by,           class_name: 'User', optional: true
+  belongs_to :pick_confirmed_by,   class_name: 'User', optional: true
 
   has_many :lines, class_name: 'SalesOrderLine', dependent: :destroy, inverse_of: :sales_order
   include Auditable

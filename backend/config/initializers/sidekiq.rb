@@ -8,6 +8,15 @@ SIDEKIQ_REDIS_CONFIG = {
 Sidekiq.configure_server do |config|
   config.redis = SIDEKIQ_REDIS_CONFIG
 
+  # ── Recurring jobs (sidekiq-cron) ──────────────────────────────────────────
+  config.on(:startup) do
+    schedule_file = Rails.root.join('config', 'sidekiq.yml')
+    if File.exist?(schedule_file)
+      cron_jobs = YAML.load_file(schedule_file).dig(':cron_jobs') || {}
+      Sidekiq::Cron::Job.load_from_hash(cron_jobs)
+    end
+  end
+
   # ── Error handler — forwards to Sentry when available ─────────────────────
   config.error_handlers << proc do |ex, ctx_hash|
     if defined?(Sentry)

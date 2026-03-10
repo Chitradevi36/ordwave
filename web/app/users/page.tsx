@@ -360,19 +360,7 @@ export default function UsersPage() {
   const columns = buildColumns(handleDeactivate, handleRevoke, currentUserId);
 
   return (
-    <AppShell title="Team">
-      {/* Breadcrumb */}
-      <nav className="mb-4 flex items-center gap-1.5 text-sm text-text-secondary">
-        <button
-          onClick={() => router.push("/settings")}
-          className="hover:text-text-primary transition-colors"
-        >
-          Settings
-        </button>
-        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-        <span className="font-medium text-text-primary">Members</span>
-      </nav>
-
+    <AppShell title="Team" hideBreadcrumb>
       <PageHeader
         title="Team Members"
         description={`${totalCount} member${totalCount !== 1 ? "s" : ""}${pendingCount > 0 ? ` · ${pendingCount} pending invitation${pendingCount !== 1 ? "s" : ""}` : ""}`}

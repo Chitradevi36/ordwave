@@ -5,7 +5,7 @@ class CreditNote < ApplicationRecord
   belongs_to :organization
   belongs_to :branch
   belongs_to :customer
-  belongs_to :return_request
+  belongs_to :return_request, optional: true
   belongs_to :sales_order, optional: true
   belongs_to :created_by, class_name: 'User'
 

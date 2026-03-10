@@ -11,6 +11,7 @@ class StockMovement < ApplicationRecord
     sale_delivered
     sale_cancelled
     return_received
+    return_received_discounted
     transfer_in
     transfer_out
     adjustment_in
@@ -25,7 +26,7 @@ class StockMovement < ApplicationRecord
   DIRECTIONS = %w[in out].freeze
 
   # Movement-type → balance impact maps (used by Inventory::PostMovement)
-  ON_HAND_IN_TYPES  = %w[purchase_posted return_received transfer_in adjustment_in purchase].freeze
+  ON_HAND_IN_TYPES  = %w[purchase_posted return_received return_received_discounted transfer_in adjustment_in purchase].freeze
   ON_HAND_OUT_TYPES = %w[purchase_cancelled sale_dispatched sale_delivered transfer_out adjustment_out reversal].freeze
   RESERVE_IN_TYPES  = %w[sale_reserved].freeze
   RESERVE_OUT_TYPES = %w[sale_unreserved sale_dispatched sale_delivered sale_cancelled].freeze

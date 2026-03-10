@@ -12,7 +12,8 @@ import { Tabs } from "@/components/ui/tabs";
 import {
   Phone, Mail, MapPin, User, CreditCard, Edit, Trash2,
   AlertTriangle, Tag, UserCheck, Ban, CheckCircle2, Flag, History,
-  TrendingUp, ExternalLink, ShoppingCart, ArrowRight,
+  TrendingUp, ExternalLink, ShoppingCart, ArrowRight, Clock,
+  BadgeAlert, Eye, Package, Receipt, Activity, GitMerge,
 } from "lucide-react";
 
 import { useOrgBranch } from "@/lib/org-branch-context";
@@ -40,6 +41,20 @@ interface LimitRequest {
   created_at: string; decision_note: string | null;
   counter_offer_limit: number | null;
 }
+interface RecentOrder {
+  id: number; order_number: string; status: string;
+  total_amount: number; created_at: string;
+}
+interface RecentPayment {
+  id: number; amount: number; mode: string | null;
+  reference_number: string | null; status: string; payment_date: string | null;
+}
+interface TimelineEvent {
+  id: number; action: string; auditable_type: string; auditable_id: number;
+  reason: string | null; changes_data: Record<string, unknown>;
+  actor: { id: number; name: string } | null;
+  created_at: string;
+}
 interface CustomerDetail {
   id: number; name: string; code: string; channel: string; tier: string; status: string;
   phone: string | null; email: string | null; gstin: string | null; pan: string | null;
@@ -55,6 +70,8 @@ interface CustomerDetail {
   credit_account: CreditAccount | null;
   addresses: Address[];
   contacts: Contact[];
+  recent_orders?: RecentOrder[];
+  recent_payments?: RecentPayment[];
 }
 
 const CHANNEL_LABEL: Record<string, string> = {
@@ -464,6 +481,21 @@ function CreditTab({ credit, editHref, creditDays, creditBlockRule, customerId }
             ? "bg-success/10 border-success/20 text-success"
             : "bg-danger/10 border-danger/20 text-danger"
         }`}>{toast.msg}</div>
+      )}
+
+      {/* ── Over-limit warning (LOW-01) ────────────────────────────────────── */}
+      {creditUsedN > creditLimitN && (
+        <div className="flex items-start gap-3 rounded-md bg-danger/10 border border-danger/20 px-4 py-3 text-sm text-danger">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium">Customer is over credit limit</p>
+            <p className="text-xs mt-0.5 text-danger/80">
+              Balance {fmt(creditUsedN)} exceeds limit of {fmt(creditLimitN)} by{" "}
+              <span className="font-semibold">{fmt(creditUsedN - creditLimitN)}</span>.
+              New orders will be blocked once the hard-block margin is exceeded.
+            </p>
+          </div>
+        </div>
       )}
 
       {/* ── Section A: Credit Overview ─────────────────────────────────────── */}
@@ -950,6 +982,253 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+// ─── Summary Banner ────────────────────────────────────────────────────────────
+function SummaryBanner({ customer }: { customer: CustomerDetail }) {
+  const ca       = customer.credit_account;
+  const lastOrder = customer.recent_orders?.[0];
+  const lastPay   = customer.recent_payments?.[0];
+  const fmt = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+  const fmtDate = (d: string | null | undefined) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : "—";
+
+  const items = [
+    {
+      label: "Outstanding",
+      value: ca ? fmt(ca.current_balance) : "—",
+      valueClass: ca && ca.current_balance > 0 ? "text-warning font-semibold" : "text-text-primary font-semibold",
+      icon: CreditCard,
+    },
+    {
+      label: ca && ca.overdue_days > 0 ? `Overdue (${ca.overdue_days}d)` : "Overdue",
+      value: ca ? fmt(ca.overdue_amount) : "—",
+      valueClass: ca && ca.overdue_amount > 0 ? "text-danger font-semibold" : "text-text-secondary",
+      icon: BadgeAlert,
+    },
+    {
+      label: `Last Payment${lastPay?.payment_date ? ` · ${fmtDate(lastPay.payment_date)}` : ""}`,
+      value: lastPay ? fmt(lastPay.amount) : "—",
+      valueClass: "text-text-primary",
+      icon: Receipt,
+    },
+    {
+      label: `Last Order${lastOrder ? ` · ${fmtDate(lastOrder.created_at)}` : ""}`,
+      value: lastOrder ? fmt(lastOrder.total_amount) : "—",
+      valueClass: "text-text-primary",
+      icon: Package,
+    },
+  ];
+
+  return (
+    <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <div key={item.label} className="rounded-lg border border-border bg-background-subtle px-3 py-2.5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Icon className="h-3 w-3 text-text-secondary" />
+              <p className="text-[10px] text-text-secondary leading-none truncate">{item.label}</p>
+            </div>
+            <p className={`text-sm tabular-nums ${item.valueClass}`}>{item.value}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Risk Flag Badges ───────────────────────────────────────────────────────
+function RiskFlagBadges({ customer }: { customer: CustomerDetail }) {
+  const ca = customer.credit_account;
+  const badges: { label: string; color: string }[] = [];
+  if (customer.status === "blocked")       badges.push({ label: "Blocked",            color: "bg-danger/10 text-danger border-danger/30" });
+  if (ca?.hold_required)                   badges.push({ label: "Hold Required",       color: "bg-danger/10 text-danger border-danger/30" });
+  if (ca?.collection_first)               badges.push({ label: "Collection First",    color: "bg-warning/10 text-warning border-warning/30" });
+  if (ca?.watchlist)                       badges.push({ label: "Watchlist",           color: "bg-warning/10 text-warning border-warning/30" });
+  if (!badges.length) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-3">
+      {badges.map((b) => (
+        <span key={b.label} className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${b.color}`}>
+          <BadgeAlert className="h-3 w-3" />{b.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── Payment History Tab ────────────────────────────────────────────────────
+function PaymentHistoryTab({ customer }: { customer: CustomerDetail }) {
+  const pays = customer.recent_payments ?? [];
+  const fmt  = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+  const fmtDate = (d: string | null | undefined) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+  if (!pays.length) return (
+    <div className="rounded-lg border border-dashed border-border p-8 text-center">
+      <Receipt className="h-8 w-8 mx-auto text-text-secondary mb-3" />
+      <p className="text-sm font-medium text-text-primary">No recent payments</p>
+      <p className="text-xs text-text-secondary mt-1">Payments will appear here once confirmed.</p>
+    </div>
+  );
+
+  const STATUS_COLOR: Record<string, string> = {
+    confirmed: "bg-success/10 text-success",
+    pending:   "bg-warning/10 text-warning",
+    reversed:  "bg-danger/10 text-danger",
+  };
+  const MODE_LABEL: Record<string, string> = {
+    cash: "Cash", upi: "UPI", cheque: "Cheque", bank_transfer: "Bank Transfer",
+    neft: "NEFT", rtgs: "RTGS", dd: "DD",
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        {pays.map((p) => (
+          <div key={p.id} className="flex items-center justify-between gap-4 border border-border rounded-lg px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/10">
+                <Receipt className="h-4 w-4 text-success" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-text-primary">{fmt(p.amount)}</p>
+                <p className="text-xs text-text-secondary">
+                  {p.mode ? MODE_LABEL[p.mode] ?? p.mode : "—"}
+                  {p.reference_number ? ` · Ref: ${p.reference_number}` : ""}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[p.status] ?? "bg-muted text-text-secondary"}`}>
+                {p.status}
+              </span>
+              <span className="text-xs text-text-secondary">{fmtDate(p.payment_date)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-text-secondary text-center pt-1">Showing last 5 payments. View all in Finance module.</p>
+    </div>
+  );
+}
+
+// ─── Activity Timeline Tab ──────────────────────────────────────────────────
+const ACTION_ICON: Record<string, React.ElementType> = {
+  order_created: ShoppingCart, order_submitted: ShoppingCart, order_approved: CheckCircle2,
+  order_on_hold: AlertTriangle, order_rejected: Ban, order_cancelled: Ban,
+  order_dispatched: ArrowRight, order_delivered: CheckCircle2,
+  payment_confirmed: Receipt, payment_created: Receipt, payment_reversed: TrendingUp,
+  credit_limit_changed: CreditCard, flag_changed: Flag,
+  visit_checked_in: MapPin, visit_checked_out: MapPin, visit_skipped: MapPin,
+  limit_request_created: CreditCard, limit_request_decided: CreditCard,
+};
+const ACTION_COLOR: Record<string, string> = {
+  order_approved: "text-success bg-success/10",
+  order_on_hold: "text-warning bg-warning/10",
+  order_rejected: "text-danger bg-danger/10",
+  order_cancelled: "text-danger bg-danger/10",
+  payment_confirmed: "text-success bg-success/10",
+  payment_reversed: "text-danger bg-danger/10",
+  credit_limit_changed: "text-accent bg-accent/10",
+};
+const ACTION_LABEL: Partial<Record<string, string>> = {
+  order_created: "Order Created", order_submitted: "Order Submitted",
+  order_approved: "Order Approved", order_on_hold: "Order On Hold",
+  order_rejected: "Order Rejected", order_cancelled: "Order Cancelled",
+  order_dispatched: "Order Dispatched", order_delivered: "Order Delivered",
+  payment_confirmed: "Payment Confirmed", payment_created: "Payment Created",
+  payment_reversed: "Payment Reversed",
+  credit_limit_changed: "Credit Limit Changed", flag_changed: "Flag Changed",
+  visit_checked_in: "Visit Check-In", visit_checked_out: "Visit Check-Out",
+  visit_skipped: "Visit Skipped",
+  limit_request_created: "Limit Request Created", limit_request_decided: "Limit Request Decided",
+};
+
+function ActivityTimelineTab({ customerId, token, orgId }: { customerId: string; token: string | null; orgId: string | null }) {
+  const [events, setEvents]   = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter]   = useState("");
+
+  useEffect(() => {
+    if (!token || !orgId) return;
+    setLoading(true);
+    const qs = filter ? `?event_type=${filter}` : "";
+    fetch(`${API_URL}/api/v1/customers/${customerId}/timeline${qs}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+    })
+      .then((r) => r.json())
+      .then((j) => { if (j.data) setEvents(j.data); })
+      .finally(() => setLoading(false));
+  }, [customerId, token, orgId, filter]);
+
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  const filterOptions = [
+    { value: "", label: "All Events" },
+    { value: "order_submitted", label: "Orders" },
+    { value: "payment_confirmed", label: "Payments" },
+    { value: "credit_limit_changed", label: "Credit" },
+    { value: "visit_checked_in", label: "Visits" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {filterOptions.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setFilter(opt.value)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              filter === opt.value
+                ? "border-primary bg-primary text-white"
+                : "border-border text-text-secondary hover:border-primary hover:text-primary"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        </div>
+      ) : events.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-8 text-center">
+          <Activity className="h-8 w-8 mx-auto text-text-secondary mb-3" />
+          <p className="text-sm font-medium text-text-primary">No activity yet</p>
+          <p className="text-xs text-text-secondary mt-1">Events will appear as orders, payments, and visits are recorded.</p>
+        </div>
+      ) : (
+        <div className="relative">
+          <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+          <div className="space-y-3 pl-10">
+            {events.map((evt) => {
+              const Icon  = ACTION_ICON[evt.action] ?? Activity;
+              const color = ACTION_COLOR[evt.action] ?? "text-text-secondary bg-muted";
+              const label = ACTION_LABEL[evt.action] ?? evt.action.replaceAll("_", " ");
+              return (
+                <div key={evt.id} className="relative">
+                  <div className={`absolute -left-6 flex h-5 w-5 items-center justify-center rounded-full ${color}`}>
+                    <Icon className="h-3 w-3" />
+                  </div>
+                  <div className="rounded-lg border border-border bg-white px-3 py-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-text-primary capitalize">{label}</p>
+                      <p className="text-xs text-text-secondary whitespace-nowrap">{fmtDate(evt.created_at)}</p>
+                    </div>
+                    {evt.actor && <p className="text-xs text-text-secondary mt-0.5">by {evt.actor.name}</p>}
+                    {evt.reason && <p className="text-xs text-text-secondary mt-0.5 italic">&ldquo;{evt.reason}&rdquo;</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function CustomerDetailPage() {
   const params     = useParams();
@@ -967,7 +1246,7 @@ export default function CustomerDetailPage() {
       if (!token || !orgId) return;
       setLoading(true);
       try {
-        const res  = await fetch(`${API_URL}/api/v1/customers/${customerId}`, {
+        const res  = await fetch(`${API_URL}/api/v1/customers/${customerId}?include=recent_orders,recent_payments`, {
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         });
         const json = await res.json();
@@ -1036,6 +1315,8 @@ export default function CustomerDetailPage() {
     { value: "contacts",  label: "Contacts",  content: <ContactsTab contacts={customer.contacts} editHref={editHref} /> },
     { value: "addresses", label: "Addresses", content: <AddressesTab addresses={customer.addresses} editHref={editHref} /> },
     { value: "credit",    label: "Credit",    content: <CreditTab credit={customer.credit_account} editHref={editHref} creditDays={customer.credit_days} creditBlockRule={customer.credit_block_rule} customerId={customerId} /> },
+    { value: "payments",  label: "Payments",  content: <PaymentHistoryTab customer={customer} /> },
+    { value: "timeline",  label: "Timeline",  content: <ActivityTimelineTab customerId={customerId} token={token} orgId={orgId} /> },
   ];
 
   return (
@@ -1048,7 +1329,8 @@ export default function CustomerDetailPage() {
         title={customer.name}
         description={`${customer.code} · ${CHANNEL_LABEL[customer.channel] ?? customer.channel}`}
         actions={[
-          { label: "Edit", onClick: () => router.push(`/customers/${customerId}/edit`), icon: Edit },
+          { label: "Create Order", onClick: () => router.push(`/orders/new?customer_id=${customerId}`), icon: ShoppingCart },
+          { label: "Edit", onClick: () => router.push(`/customers/${customerId}/edit`), icon: Edit, variant: "outline" as const },
           {
             label: blocking ? "…" : customer.status === "blocked" ? "Unblock" : "Block",
             onClick: handleBlockToggle,
@@ -1076,6 +1358,12 @@ export default function CustomerDetailPage() {
           </span>
         </div>
       )}
+
+      {/* Risk flag badges */}
+      <RiskFlagBadges customer={customer} />
+
+      {/* Outstanding summary banner */}
+      <SummaryBanner customer={customer} />
 
       <Tabs items={tabItems} />
     </AppShell>

@@ -221,7 +221,7 @@ export default function RoutesPage() {
 
       <PageHeader
         title="Routes"
-        description={meta ? `${meta.total_count} route${meta.total_count !== 1 ? "s" : ""}` : "Manage delivery and sales routes for your branches"}
+        description="Organize delivery, logistics, and sales routes for efficient distribution and order fulfillment. Manage vehicle assignments, route optimization, and delivery schedules."
         actions={[
           { label: "New Route", icon: Plus, onClick: () => setShowCreate(true) },
         ]}

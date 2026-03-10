@@ -15,14 +15,14 @@ function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 
 function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+    <div className={cn("flex flex-col space-y-1.5 p-4 sm:p-6", className)} {...props} />
   );
 }
 
 function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("text-lg font-semibold text-text-primary", className)}
+      className={cn("text-sm sm:text-lg font-semibold text-text-primary", className)}
       {...props}
     />
   );
@@ -35,13 +35,13 @@ function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphEl
 }
 
 function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-6 pt-0", className)} {...props} />;
+  return <div className={cn("p-4 sm:p-6 pt-0", className)} {...props} />;
 }
 
 function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex items-center p-6 pt-0", className)}
+      className={cn("flex items-center p-4 sm:p-6 pt-0", className)}
       {...props}
     />
   );

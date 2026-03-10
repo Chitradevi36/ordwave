@@ -30,7 +30,9 @@ module Api
           outcome:          stop_params[:outcome],
           delivered_lines:  stop_params[:delivered_lines] || [],
           returns:          stop_params[:returns]          || [],
+          rejections:       stop_params[:rejections]       || [],
           proof_type:       stop_params[:proof_type] || 'photo',
+          proof:            stop_params[:proof],
           photo:            stop_params[:photo],
           signature_image:  stop_params[:signature_image],
           otp_code:         stop_params[:otp_code],
@@ -39,7 +41,8 @@ module Api
           longitude:        stop_params[:longitude],
           device_id:        stop_params[:device_id],
           exception_code:   stop_params[:exception_code],
-          delivery_notes:   stop_params[:delivery_notes]
+          delivery_notes:   stop_params[:delivery_notes],
+          completed_at:     stop_params[:completed_at]
         )
 
         if result[:ok]
@@ -67,9 +70,11 @@ module Api
         p.permit(
           :outcome, :proof_type, :photo, :signature_image, :otp_code,
           :override_reason, :latitude, :longitude, :device_id,
-          :exception_code, :delivery_notes,
+          :exception_code, :delivery_notes, :completed_at,
+          proof: %i[type data],
           delivered_lines: %i[sales_order_line_id delivered_qty],
-          returns: %i[product_id qty_returned condition reason_code notes]
+          returns: %i[product_id qty_returned condition reason_code notes],
+          rejections: %i[product_id qty_rejected qty_returned condition reason_code notes]
         )
       end
 

@@ -44,12 +44,36 @@ module Payments
         )
       end
 
+      notify_on_reversal
       Result.new(success?: true, payment: @payment.reload, errors: [])
     rescue ActiveRecord::RecordInvalid => e
       failure([e.message])
     end
 
     private
+
+    def notify_on_reversal
+      org = @payment.organization
+      accountants = User.joins(:memberships)
+                        .where(memberships: { organization_id: org.id, deleted_at: nil, active: true })
+                        .joins(memberships: :role)
+                        .where(roles: { name: %w[accountant admin manager] })
+                        .distinct
+      recipients = ([@payment.created_by] + accountants.to_a).compact.uniq
+      Notifications::CreateService.call(
+        organization: org,
+        recipients:   recipients,
+        actor:        @actor,
+        notifiable:   @payment,
+        type:         'payment_reversed',
+        title:        "Payment #{@payment.reference_number} reversed",
+        body:         "Reason: #{@reason}. Amount: ₹#{@payment.amount}",
+        deep_link:    "/payments/#{@payment.id}",
+        severity:     'high'
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[ReversePaymentService] Notification failed: #{e.message}")
+    end
 
     def reverse_allocations
       @payment.allocations.active.each do |alloc|

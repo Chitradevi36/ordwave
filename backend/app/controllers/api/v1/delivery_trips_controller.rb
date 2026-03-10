@@ -2,7 +2,7 @@ module Api
   module V1
     class DeliveryTripsController < BaseController
       before_action :require_organization!
-      before_action :set_trip, only: %i[show update dispatch_trip cancel]
+      before_action :set_trip, only: %i[show update dispatch_trip cancel summary]
 
       TRIP_INCLUDES = [
         :vehicle, :driver, :branch,
@@ -147,6 +147,66 @@ module Api
         else
           render_errors(result[:errors])
         end
+      end
+
+      # GET /api/v1/delivery_trips/:id/summary
+      def summary
+        authorize @trip, :show?
+
+        stops  = @trip.stops.includes({ sales_order: %i[lines customer] }, :returns)
+        total_stops    = stops.size
+        delivered      = stops.count { |s| s.status == 'delivered' }
+        partial        = stops.count { |s| s.status == 'partial_delivery' }
+        failed         = stops.count { |s| s.status == 'failed' }
+        skipped        = stops.count { |s| s.status == 'skipped' }
+
+        total_order_value = stops.sum { |s| s.sales_order.total_amount.to_f }
+
+        delivered_value = stops
+          .select { |s| s.status.in?(%w[delivered partial_delivery]) }
+          .sum do |s|
+            s.sales_order.lines.sum { |l| (l.delivered_qty.to_i * l.unit_price.to_f) }
+          end
+
+        returns_value = stops.sum do |s|
+          s.returns.sum do |r|
+            order_line = s.sales_order.lines.find { |l| l.product_id == r.product_id }
+            r.qty_returned.to_i * order_line&.unit_price.to_f
+          end
+        end
+
+        # Cash collected: payments linked via invoices on this trip's orders
+        # (payments have no direct sales_order_id; path is order → invoice → payment_allocation → payment)
+        trip_order_ids  = stops.map(&:sales_order_id).compact
+        trip_invoice_ids = SalesInvoice.where(sales_order_id: trip_order_ids).pluck(:id)
+        cash_collected = if trip_invoice_ids.any?
+          PaymentAllocation
+            .joins(:payment)
+            .where(sales_invoice_id: trip_invoice_ids)
+            .where(payments: { payment_mode: 'cash' })
+            .sum(:amount_applied)
+        else
+          0
+        end
+
+        exceptions = stops
+          .select { |s| s.exception_code.present? }
+          .map { |s| { stop_id: s.id, customer_name: s.sales_order.customer.name, exception_code: s.exception_code } }
+
+        render_success({
+          trip_id:           @trip.id,
+          trip_number:       @trip.trip_number,
+          total_stops:       total_stops,
+          delivered:         delivered,
+          partial:           partial,
+          failed:            failed,
+          skipped:           skipped,
+          total_order_value: total_order_value.round(2),
+          delivered_value:   delivered_value.round(2),
+          returns_value:     returns_value.round(2),
+          cash_collected:    cash_collected.to_f.round(2),
+          exceptions:        exceptions
+        })
       end
 
       private

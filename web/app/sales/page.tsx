@@ -1,22 +1,22 @@
 ﻿"use client";
 
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { WorkspaceHeader } from "@/components/workspace/WorkspaceHeader";
-import { WorkspaceKpis, WorkspaceActions, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
+import { WorkspaceKpis, WorkspaceSections, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
 import { WORKSPACE_CONFIGS } from "@/components/workspace/workspace.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useOverviewStats, useSalesStats, useWorkspaceActivity, fmtINR } from "@/lib/hooks/use-workspace-stats";
-import { ShoppingCart, FileText, Users, CheckCircle2, Plus, BarChart2, ClipboardCheck, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, FileText, ClipboardCheck, DollarSign, Tag, Plus } from "lucide-react";
 
 const config = WORKSPACE_CONFIGS.sales;
 
-const QUICK_ACTIONS = [
-  { label: "View Orders", icon: FileText, href: "/orders", description: "Browse sales orders" },
-  { label: "Create Order", icon: Plus, href: "/orders/new", description: "Create a new sales order" },
-  { label: "View Customers", icon: Users, href: "/customers", description: "Browse customer accounts" },
-  { label: "Review Approvals", icon: ClipboardCheck, href: "/approvals", description: "Process pending approvals" },
-  { label: "Track Deliveries", icon: CheckCircle2, href: "/delivery", description: "Monitor dispatch progress" },
-  { label: "View Insights", icon: BarChart2, href: "/insights/sales", description: "Review sales analytics" },
+const SECTIONS = [
+  { label: "Orders",    description: "View and manage all sales orders",         href: "/orders",          icon: FileText },
+  { label: "Approvals", description: "Review orders pending approval",           href: "/approvals",       icon: ClipboardCheck },
+  { label: "Pricing",   description: "Manage price lists and customer pricing",  href: "/products/price-lists", icon: DollarSign },
+  { label: "Schemes",   description: "Configure discount and promotion schemes", href: "/pricing/schemes", icon: Tag },
 ];
 
 export default function SalesPage() {
@@ -56,15 +56,25 @@ export default function SalesPage() {
     },
   ];
 
+  const router = useRouter();
+
   return (
     <AppShell noPad hideBreadcrumb>
-      <WorkspaceHeader config={config} role={role} />
+      <WorkspaceHeader
+        config={config}
+        role={role}
+        actions={
+          <Button size="sm" onClick={() => router.push("/orders/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Order
+          </Button>
+        }
+      />
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 space-y-6">
         <WorkspaceKpis items={KPI_ITEMS} loading={loading} />
-
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <WorkspaceActions actions={QUICK_ACTIONS} />
+            <WorkspaceSections sections={SECTIONS} title="Sections" />
           </div>
           <div>
             <WorkspaceActivity items={activityItems} loading={activityLoading} />

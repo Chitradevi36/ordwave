@@ -548,12 +548,12 @@ export default function RouteDetailPage() {
       )}
 
       {/* Back nav */}
-      <button
+      {/* <button
         onClick={() => router.push("/routes")}
         className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary mb-4 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Routes
-      </button>
+      </button> */}
 
       {/* Route header card */}
       <Card className="mb-6">

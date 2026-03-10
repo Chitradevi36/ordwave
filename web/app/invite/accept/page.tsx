@@ -70,7 +70,7 @@ function AcceptInvitePageContent() {
             </div>
             <h1 className="mb-2 text-xl font-bold text-text-primary">You've been invited!</h1>
             <p className="mb-6 text-sm text-text-secondary">
-              Accept this invitation to join the organization on OmniDist.
+              Accept this invitation to join the organization on OrderLane Pro.
             </p>
             <Button className="w-full" onClick={handleAccept}>Accept Invitation</Button>
           </>

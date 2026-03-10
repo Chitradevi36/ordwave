@@ -52,6 +52,22 @@ class SalesOrderPolicy < ApplicationPolicy
     manager_above? || own_order?
   end
 
+  # Warehouse staff (and managers) can mark an approved order as picked
+  def pick?
+    return false unless member? && within_scope?
+    return false unless record.pending_pick?
+
+    warehouse_staff? || manager_above?
+  end
+
+  # Only managers and above can confirm a pick
+  def confirm_pick?
+    return false unless member? && within_scope?
+    return false unless record.picked?
+
+    manager_above?
+  end
+
   def from_mobile?
     member? && (manager_above? || sales_rep?)
   end
@@ -67,6 +83,10 @@ class SalesOrderPolicy < ApplicationPolicy
         base.where(branch_id: membership&.branch_id)
       elsif role_name == 'sales_rep'
         base.by_created_by(@user.id)
+      elsif role_name == 'warehouse_staff'
+        membership = @user.membership_for(@organization)
+        base.where(branch_id: membership&.branch_id)
+             .where.not(status: %w[draft cancelled rejected])
       else
         base.none
       end
@@ -87,6 +107,10 @@ class SalesOrderPolicy < ApplicationPolicy
 
   def sales_rep?
     role_name == 'sales_rep'
+  end
+
+  def warehouse_staff?
+    role_name == 'warehouse_staff'
   end
 
   def within_scope?

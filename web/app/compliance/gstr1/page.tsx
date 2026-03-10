@@ -128,11 +128,7 @@ export default function Gstr1Page() {
   const sel = "h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary";
 
   return (
-    <AppShell breadcrumbs={[
-      { label: "Finance",    href: "/finance" },
-      { label: "Compliance", href: "/compliance" },
-      { label: "GSTR-1" },
-    ]}>
+    <AppShell title="GSTR-1 Export" hideBreadcrumb>
       <PageHeader
         title="GSTR-1 Export"
         subtitle="Generate and download GST Return 1 data"

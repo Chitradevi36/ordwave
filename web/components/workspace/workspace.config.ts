@@ -37,8 +37,9 @@ export const WORKSPACE_CONFIGS: Record<string, WorkspaceConfig> = {
     iconColor: "text-blue-600",
     tabs: [
       { key: "orders",    label: "Orders",    href: "/orders" },
-      { key: "approvals", label: "Approvals", href: "/approvals",        rolesAllowed: ["owner","admin","manager"] },
-      { key: "schemes",   label: "Schemes",   href: "/pricing/schemes",  rolesAllowed: ["owner","admin","manager"] },
+      { key: "approvals", label: "Approvals", href: "/approvals",        rolesAllowed: ["owner", "admin", "manager"] },
+      { key: "pricing",   label: "Pricing",   href: "/products/price-lists", rolesAllowed: ["owner", "admin", "manager"] },
+      { key: "schemes",   label: "Schemes",   href: "/pricing/schemes",  rolesAllowed: ["owner", "admin", "manager"] },
     ],
   },
 
@@ -64,9 +65,10 @@ export const WORKSPACE_CONFIGS: Record<string, WorkspaceConfig> = {
     iconBg: "bg-purple-50",
     iconColor: "text-purple-600",
     tabs: [
-      // { key: "products",   label: "Products",   href: "/products" },
-      // { key: "pricing",    label: "Pricing",    href: "/pricing",          rolesAllowed: ["owner","admin","manager"] },
-      // { key: "promotions", label: "Promotions", href: "/pricing/schemes",  rolesAllowed: ["owner","admin","manager"] },
+      { key: "products",   label: "Products",   href: "/products" },
+      { key: "price-lists",label: "Pricing",    href: "/products/price-lists",  rolesAllowed: ["owner", "admin", "manager"] },
+      { key: "schemes",    label: "Schemes",    href: "/pricing/schemes",        rolesAllowed: ["owner", "admin", "manager"] },
+      { key: "categories", label: "Categories", href: "/products/categories" },
     ],
   },
 
@@ -78,9 +80,9 @@ export const WORKSPACE_CONFIGS: Record<string, WorkspaceConfig> = {
     iconBg: "bg-orange-50",
     iconColor: "text-orange-600",
     tabs: [
-      // { key: "delivery",   label: "Delivery Trips", href: "/delivery" },
-      // { key: "returns",    label: "Returns",        href: "/returns" },
-      // { key: "transfers",  label: "Transfers",      href: "/inventory/transfers", rolesAllowed: ["owner","admin","manager","warehouse"] },
+      { key: "delivery",   label: "Delivery Trips",  href: "/delivery" },
+      { key: "returns",    label: "Returns",          href: "/returns" },
+      { key: "exceptions", label: "Exceptions",       href: "/delivery/exceptions" },
     ],
   },
 
@@ -92,10 +94,10 @@ export const WORKSPACE_CONFIGS: Record<string, WorkspaceConfig> = {
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
     tabs: [
-      // { key: "stock",       label: "Stock",       href: "/inventory/stock" },
-      // { key: "purchases",   label: "Purchases",   href: "/purchases/invoices" },
-      // { key: "suppliers",   label: "Suppliers",   href: "/suppliers" },
-      // { key: "adjustments", label: "Adjustments", href: "/inventory/adjustments", rolesAllowed: ["owner","admin","manager","warehouse"] },
+      { key: "stock",       label: "Stock",        href: "/inventory/stock" },
+      { key: "transfers",   label: "Transfers",    href: "/inventory/transfers" },
+      { key: "purchases",   label: "Purchases",    href: "/purchases/invoices" },
+      { key: "suppliers",   label: "Suppliers",    href: "/suppliers",          rolesAllowed: ["owner", "admin", "manager"] },
     ],
   },
 
@@ -107,10 +109,10 @@ export const WORKSPACE_CONFIGS: Record<string, WorkspaceConfig> = {
     iconBg: "bg-primary-100",
     iconColor: "text-primary",
     tabs: [
-      // { key: "collections",      label: "Collections",      href: "/collections" },
-      // { key: "sales-invoices",   label: "Sales Invoices",   href: "/sales-invoices" },
-      // { key: "credit-notes",     label: "Credit Notes",     href: "/credit-notes" },
-      // { key: "advance-payments", label: "Advances",         href: "/advance-payments" },
+      { key: "collections",      label: "Collections",   href: "/collections" },
+      { key: "sales-invoices",   label: "Invoices",      href: "/sales-invoices" },
+      { key: "credit-notes",     label: "Credit Notes",  href: "/credit-notes" },
+      { key: "gst",              label: "GST Export",    href: "/compliance/gstr1", rolesAllowed: ["owner", "admin", "accountant"] },
     ],
   },
 

@@ -49,12 +49,34 @@ module Delivery
         )
 
         { ok: true, trip: @trip.reload, errors: [] }
+      end.tap do |result|
+        notify_driver_on_dispatch if result[:ok]
       end
     rescue ActiveRecord::RecordInvalid => e
       { ok: false, trip: @trip, errors: [e.message] }
     end
 
     private
+
+    def notify_driver_on_dispatch
+      driver = @trip.driver
+      return unless driver
+
+      stop_count = @trip.stops.not_deleted.count
+      Notifications::CreateService.call(
+        organization: @trip.organization,
+        recipients:   [driver],
+        actor:        @actor,
+        notifiable:   @trip,
+        type:         'trip_dispatched',
+        title:        "Trip #{@trip.trip_number} dispatched — #{stop_count} stop#{'s' if stop_count != 1}",
+        body:         "Your delivery trip is ready. Tap to view your stops.",
+        deep_link:    "/trips/#{@trip.id}",
+        severity:     'high'
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[TripDispatchService] Notification failed: #{e.message}")
+    end
 
     def validate
       errs = []

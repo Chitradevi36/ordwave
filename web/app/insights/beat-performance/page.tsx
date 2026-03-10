@@ -6,6 +6,11 @@ import { DataTable, Column } from "@/components/ui/data-table";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
 import { RefreshCw, MapPin, CheckCircle, ShoppingCart, Wallet } from "lucide-react";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend, RadarChart, Radar,
+  PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+} from "recharts";
 
 function fmt(n: number | undefined | null) {
   if (n == null) return "—";
@@ -190,17 +195,79 @@ export default function InsightsBeatPerformancePage() {
         })}
       </div>
 
-      {/* Per-rep and per-beat tables */}
+      {/* Per-rep and per-beat charts + tables */}
+      <div className="grid grid-cols-1 gap-5 px-6 pb-6 lg:grid-cols-2">
+        {/* Sales Rep stacked bar chart */}
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <p className="mb-3 text-sm font-semibold text-text-primary">By Sales Rep — Visits</p>
+          {(data?.reps_table?.length ?? 0) > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                data={data?.reps_table?.slice(0, 10) ?? []}
+                margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--text-secondary))" }}
+                  interval={0}
+                  angle={-30}
+                  textAnchor="end"
+                  height={50}
+                />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "hsl(var(--text-secondary))" }} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="completed" name="Completed" stackId="v" fill="hsl(var(--success))" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="skipped"   name="Skipped"   stackId="v" fill="hsl(var(--warning))" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <DataTable columns={repColumns} data={(data?.reps_table ?? []).map((r) => ({ ...r, id: r.rep_id }))} />
+          )}
+        </div>
+
+        {/* Beat radar chart */}
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <p className="mb-3 text-sm font-semibold text-text-primary">By Beat — Completion Rate</p>
+          {(data?.beats_table?.length ?? 0) > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <RadarChart data={(data?.beats_table ?? []).slice(0, 8).map((b) => ({ ...b, subject: b.beat_name.slice(0, 12) }))}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "hsl(var(--text-secondary))" }} />
+                <PolarRadiusAxis
+                  angle={30}
+                  domain={[0, 100]}
+                  tick={{ fontSize: 9, fill: "hsl(var(--text-secondary))" }}
+                />
+                <Radar name="Completion %" dataKey="completion_rate" stroke="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.25} strokeWidth={2} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
+                  formatter={(v: number) => [`${v.toFixed(1)}%`, "Completion"]}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          ) : (
+            <DataTable columns={beatColumns} data={(data?.beats_table ?? []).map((b) => ({ ...b, id: b.beat_id }))} />
+          )}
+        </div>
+      </div>
+
+      {/* Raw tables for detail */}
       <div className="grid grid-cols-1 gap-5 px-6 pb-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-background-subtle">
-            <span className="text-sm font-medium text-text-primary">By Sales Rep</span>
+            <span className="text-sm font-medium text-text-primary">Sales Rep Detail</span>
           </div>
           <DataTable columns={repColumns} data={(data?.reps_table ?? []).map((r) => ({ ...r, id: r.rep_id }))} />
         </div>
         <div className="rounded-lg border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-background-subtle">
-            <span className="text-sm font-medium text-text-primary">By Beat</span>
+            <span className="text-sm font-medium text-text-primary">Beat Detail</span>
           </div>
           <DataTable columns={beatColumns} data={(data?.beats_table ?? []).map((b) => ({ ...b, id: b.beat_id }))} />
         </div>

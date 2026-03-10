@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Download, Ban, CheckCircle2, ExternalLink, FileCheck, Truck } from "lucide-react";
+import { Download, Ban, CheckCircle2, ExternalLink, FileCheck, Truck, Eye } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,6 +132,8 @@ export default function SalesInvoiceDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading]         = useState(false);
   const [einvoiceLoading, setEinvoiceLoading] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [previewUrl, setPreviewUrl]         = useState<string | null>(null);
   const [activeTab, setActiveTab]     = useState<"summary" | "lines" | "tax" | "activity" | "linked">("summary");
 
   // e-Waybill state
@@ -180,6 +182,34 @@ export default function SalesInvoiceDetailPage() {
       if (body.data?.download_url) {
         window.open(body.data.download_url, "_blank");
         // Refresh to show updated pdf_generated_at
+        fetchInvoice();
+      }
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handlePreviewPdf = async () => {
+    if (!invoice || !token || !orgId) return;
+    // Use already-fetched pdf_url if available; otherwise fetch it
+    if (invoice.pdf_url) {
+      setPreviewUrl(invoice.pdf_url);
+      setShowPdfPreview(true);
+      return;
+    }
+    setPdfLoading(true);
+    setActionError(null);
+    try {
+      const res  = await fetch(`/api/v1/sales_invoices/${invoice.id}/pdf`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.errors?.join(", ") || "PDF generation failed");
+      if (body.data?.download_url) {
+        setPreviewUrl(body.data.download_url);
+        setShowPdfPreview(true);
         fetchInvoice();
       }
     } catch (e) {
@@ -297,6 +327,13 @@ export default function SalesInvoiceDetailPage() {
   const isEwaybillable   = invoice.status === "issued" && !invoice.ewaybill_number;
 
   const headerActions = [
+    {
+      label:    pdfLoading ? "Loading…" : "Preview PDF",
+      onClick:  handlePreviewPdf,
+      variant:  "outline" as const,
+      icon:     Eye,
+      disabled: pdfLoading || isDraft,
+    },
     {
       label:    pdfLoading ? "Generating…" : invoice.pdf_generated_at ? "Download PDF" : "Generate PDF",
       onClick:  handleDownloadPdf,
@@ -852,6 +889,41 @@ export default function SalesInvoiceDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {/* ── PDF Preview Modal ── */}
+      {showPdfPreview && previewUrl && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/60">
+          <div className="flex items-center justify-between px-4 py-3 bg-card border-b shadow-sm">
+            <h2 className="text-sm font-semibold">
+              Invoice Preview — {invoice.invoice_number}
+            </h2>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => window.open(previewUrl, "_blank")}
+              >
+                <Download className="h-4 w-4 mr-1.5" />
+                Download
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setShowPdfPreview(false); setPreviewUrl(null); }}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <iframe
+              src={previewUrl}
+              className="w-full h-full border-0"
+              title={`Invoice ${invoice.invoice_number} Preview`}
+            />
+          </div>
+        </div>
+      )}
       </div>
     </AppShell>
   );
