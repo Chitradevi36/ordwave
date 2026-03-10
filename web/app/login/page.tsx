@@ -36,7 +36,9 @@ export default function LoginPage() {
         localStorage.removeItem('organization_id');          // clear stale value so context auto-selects
         localStorage.removeItem('orderlane_profile_cache'); // clear stale role cache from previous user
         localStorage.setItem('user', JSON.stringify(data.data.user));
-        
+        // Set a lightweight cookie so middleware.ts can guard server-side routing
+        document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
+
         router.push('/dashboard');
       } else {
         setError(data.errors?.[0] || 'Login failed');
@@ -52,7 +54,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background-subtle px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">OmniDist OMS</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">OrderLane Pro</h1>
           <p className="text-sm sm:text-base text-text-secondary mt-2">Sign in to your account</p>
         </div>
 

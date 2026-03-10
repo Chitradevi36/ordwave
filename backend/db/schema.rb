@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_10_000021) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -195,7 +195,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   create_table "beat_retailers", force: :cascade do |t|
     t.bigint "beat_schedule_id", null: false
     t.bigint "customer_id", null: false
-    t.integer "sequence_number", default: 0, null: false
+    t.integer "sequence_number", default: 1, null: false
     t.string "visit_override", default: "default", null: false
     t.text "notes"
     t.datetime "created_at", null: false
@@ -261,6 +261,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.index ["organization_id"], name: "index_branches_on_organization_id"
     t.index ["settings"], name: "index_branches_on_settings", using: :gin
     t.index ["state_code"], name: "index_branches_on_state_code"
+  end
+
+  create_table "collection_schedules", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "customer_id", null: false
+    t.bigint "assigned_to_id", null: false
+    t.date "scheduled_date", null: false
+    t.decimal "amount_expected", precision: 12, scale: 2, default: "0.0", null: false
+    t.string "status", default: "planned", null: false
+    t.text "notes"
+    t.bigint "completed_payment_id"
+    t.date "rescheduled_to"
+    t.string "skip_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assigned_to_id", "scheduled_date", "status"], name: "idx_collection_schedules_assigned_date_status"
+    t.index ["assigned_to_id"], name: "index_collection_schedules_on_assigned_to_id"
+    t.index ["branch_id"], name: "index_collection_schedules_on_branch_id"
+    t.index ["completed_payment_id"], name: "index_collection_schedules_on_completed_payment_id"
+    t.index ["customer_id", "scheduled_date"], name: "idx_collection_schedules_customer_date"
+    t.index ["customer_id"], name: "index_collection_schedules_on_customer_id"
+    t.index ["organization_id", "branch_id", "scheduled_date"], name: "idx_collection_schedules_org_branch_date"
+    t.index ["organization_id"], name: "index_collection_schedules_on_organization_id"
   end
 
   create_table "credit_accounts", force: :cascade do |t|
@@ -343,7 +367,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.bigint "organization_id", null: false
     t.bigint "branch_id", null: false
     t.bigint "customer_id", null: false
-    t.bigint "return_request_id", null: false
+    t.bigint "return_request_id"
     t.bigint "sales_order_id"
     t.bigint "created_by_id", null: false
     t.string "credit_note_number", null: false
@@ -448,6 +472,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.bigint "sales_rep_id"
     t.datetime "last_visited_at"
     t.date "next_due_on"
+    t.string "tally_ledger_name"
+    t.decimal "tally_closing_balance", precision: 15, scale: 2
+    t.date "tally_balance_as_of_date"
     t.index ["branch_id"], name: "index_customers_on_branch_id"
     t.index ["channel"], name: "index_customers_on_channel"
     t.index ["customer_type"], name: "index_customers_on_customer_type"
@@ -462,6 +489,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.index ["sales_rep_id"], name: "index_customers_on_sales_rep_id"
     t.index ["status"], name: "index_customers_on_status"
     t.index ["tag_list"], name: "index_customers_on_tag_list", using: :gin
+    t.index ["tally_ledger_name"], name: "index_customers_on_tally_ledger_name", where: "(tally_ledger_name IS NOT NULL)"
     t.index ["tier"], name: "index_customers_on_tier"
   end
 
@@ -693,6 +721,29 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.index ["user_id"], name: "index_memberships_on_user_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "actor_id"
+    t.string "notifiable_type"
+    t.bigint "notifiable_id"
+    t.string "notification_type", null: false
+    t.string "title", null: false
+    t.text "body"
+    t.string "deep_link_url"
+    t.string "severity", default: "medium", null: false
+    t.datetime "read_at"
+    t.datetime "dismissed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["notifiable_type", "notifiable_id"], name: "idx_notifications_notifiable"
+    t.index ["organization_id"], name: "index_notifications_on_organization_id"
+    t.index ["user_id", "organization_id", "created_at"], name: "idx_notifications_user_org_created"
+    t.index ["user_id", "read_at"], name: "idx_unread_notifications", where: "(read_at IS NULL)"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
   create_table "onboarding_progresses", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.bigint "user_id", null: false
@@ -764,17 +815,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "idempotency_key"
+    t.string "tally_voucher_number"
+    t.datetime "tally_sync_at"
     t.index ["branch_id"], name: "index_payments_on_branch_id"
     t.index ["created_by_id"], name: "index_payments_on_created_by_id"
     t.index ["customer_id", "received_date"], name: "idx_payments_customer_payment_date"
     t.index ["customer_id", "status"], name: "idx_payments_customer_status"
     t.index ["customer_id"], name: "index_payments_on_customer_id"
+    t.index ["idempotency_key"], name: "index_payments_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["metadata"], name: "idx_payments_metadata", using: :gin
     t.index ["organization_id", "payment_number"], name: "idx_payments_org_number", unique: true
     t.index ["organization_id", "status"], name: "idx_payments_org_status"
     t.index ["organization_id"], name: "index_payments_on_organization_id"
     t.index ["payment_mode"], name: "idx_payments_mode"
     t.index ["received_date"], name: "idx_payments_received_date"
+    t.index ["tally_voucher_number"], name: "index_payments_on_tally_voucher_number", where: "(tally_voucher_number IS NOT NULL)"
     t.check_constraint "amount > 0::numeric", name: "chk_payments_amount_positive"
   end
 
@@ -792,6 +848,39 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.index ["email"], name: "index_pending_registrations_on_email", unique: true
     t.index ["expires_at"], name: "index_pending_registrations_on_expires_at"
     t.index ["otp_code"], name: "index_pending_registrations_on_otp_code"
+  end
+
+  create_table "pick_list_items", force: :cascade do |t|
+    t.bigint "pick_list_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "qty_requested", precision: 14, scale: 3, null: false
+    t.decimal "qty_picked", precision: 14, scale: 3, default: "0.0", null: false
+    t.string "bin_location"
+    t.datetime "picked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pick_list_id", "product_id"], name: "index_pick_list_items_on_pick_list_id_and_product_id", unique: true
+    t.index ["pick_list_id"], name: "index_pick_list_items_on_pick_list_id"
+    t.index ["product_id"], name: "index_pick_list_items_on_product_id"
+  end
+
+  create_table "pick_lists", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id", null: false
+    t.bigint "sales_order_id", null: false
+    t.bigint "picker_id"
+    t.string "status", default: "pending", null: false
+    t.string "pick_number", null: false
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_pick_lists_on_branch_id"
+    t.index ["organization_id", "pick_number"], name: "index_pick_lists_on_organization_id_and_pick_number", unique: true
+    t.index ["organization_id", "status"], name: "index_pick_lists_on_organization_id_and_status"
+    t.index ["organization_id"], name: "index_pick_lists_on_organization_id"
+    t.index ["picker_id"], name: "index_pick_lists_on_picker_id"
+    t.index ["sales_order_id"], name: "index_pick_lists_on_sales_order_id"
   end
 
   create_table "prepayment_skus", force: :cascade do |t|
@@ -1002,9 +1091,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "return_request_id"
+    t.datetime "deprecated_at", comment: "Set to migration time to mark deprecation. Null = pre-deprecation row."
     t.index ["condition"], name: "index_return_records_on_condition"
     t.index ["product_id"], name: "index_return_records_on_product_id"
     t.index ["reason_code"], name: "index_return_records_on_reason_code"
+    t.index ["return_request_id"], name: "index_return_records_on_return_request_id"
     t.index ["trip_stop_id"], name: "index_return_records_on_trip_stop_id"
   end
 
@@ -1209,6 +1301,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.datetime "delivered_at"
     t.text "delivery_failure_reason"
     t.jsonb "scheme_snapshot", default: {}
+    t.integer "pick_status", default: 0, null: false
+    t.bigint "picked_by_id"
+    t.datetime "picked_at"
+    t.bigint "pick_confirmed_by_id"
+    t.datetime "pick_confirmed_at"
     t.index ["branch_id", "created_at"], name: "idx_sales_orders_branch_created_at"
     t.index ["branch_id"], name: "index_sales_orders_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_orders_on_created_by_id"
@@ -1219,6 +1316,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.index ["organization_id", "created_at"], name: "idx_sales_orders_active_status", order: { created_at: :desc }, where: "((status)::text = ANY ((ARRAY['draft'::character varying, 'submitted'::character varying, 'on_hold'::character varying, 'approved'::character varying, 'dispatched'::character varying])::text[]))"
     t.index ["organization_id", "order_number"], name: "index_sales_orders_on_organization_id_and_order_number", unique: true
     t.index ["organization_id"], name: "index_sales_orders_on_organization_id"
+    t.index ["pick_status"], name: "index_sales_orders_on_pick_status"
     t.index ["status"], name: "index_sales_orders_on_status"
     t.check_constraint "total_amount >= 0::numeric", name: "chk_sales_orders_total_non_negative"
   end
@@ -1458,6 +1556,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
     t.index ["organization_id"], name: "index_suppliers_on_organization_id"
   end
 
+  create_table "sync_operations", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "user_id", null: false
+    t.string "idempotency_key", null: false
+    t.string "entity_type", null: false
+    t.string "operation", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.string "status", default: "pending", null: false
+    t.integer "server_id"
+    t.text "error_message"
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["idempotency_key"], name: "index_sync_operations_on_idempotency_key", unique: true
+    t.index ["organization_id", "entity_type"], name: "index_sync_operations_on_organization_id_and_entity_type"
+    t.index ["organization_id", "status"], name: "index_sync_operations_on_organization_id_and_status"
+    t.index ["organization_id"], name: "index_sync_operations_on_organization_id"
+    t.index ["user_id"], name: "index_sync_operations_on_user_id"
+  end
+
   create_table "tier_price_list_assignments", force: :cascade do |t|
     t.bigint "branch_id", null: false
     t.bigint "price_list_id", null: false
@@ -1647,6 +1765,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   add_foreign_key "beats", "routes"
   add_foreign_key "beats", "users", column: "created_by_id"
   add_foreign_key "branches", "organizations"
+  add_foreign_key "collection_schedules", "branches"
+  add_foreign_key "collection_schedules", "customers"
+  add_foreign_key "collection_schedules", "organizations"
+  add_foreign_key "collection_schedules", "payments", column: "completed_payment_id"
+  add_foreign_key "collection_schedules", "users", column: "assigned_to_id"
   add_foreign_key "credit_accounts", "branches"
   add_foreign_key "credit_accounts", "customers"
   add_foreign_key "credit_accounts", "organizations"
@@ -1705,6 +1828,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   add_foreign_key "memberships", "organizations"
   add_foreign_key "memberships", "roles"
   add_foreign_key "memberships", "users"
+  add_foreign_key "notifications", "organizations"
+  add_foreign_key "notifications", "users"
+  add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "onboarding_progresses", "organizations"
   add_foreign_key "onboarding_progresses", "users"
   add_foreign_key "payment_allocations", "payments"
@@ -1713,6 +1839,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   add_foreign_key "payments", "customers"
   add_foreign_key "payments", "organizations"
   add_foreign_key "payments", "users", column: "created_by_id"
+  add_foreign_key "pick_list_items", "pick_lists"
+  add_foreign_key "pick_list_items", "products"
+  add_foreign_key "pick_lists", "branches"
+  add_foreign_key "pick_lists", "organizations"
+  add_foreign_key "pick_lists", "sales_orders"
+  add_foreign_key "pick_lists", "users", column: "picker_id"
   add_foreign_key "prepayment_skus", "branches"
   add_foreign_key "prepayment_skus", "organizations"
   add_foreign_key "prepayment_skus", "products"
@@ -1741,6 +1873,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   add_foreign_key "return_qc_items", "return_lines"
   add_foreign_key "return_qc_items", "users", column: "qc_by_id"
   add_foreign_key "return_records", "products"
+  add_foreign_key "return_records", "return_requests"
   add_foreign_key "return_records", "trip_stops"
   add_foreign_key "return_requests", "branches"
   add_foreign_key "return_requests", "customers"
@@ -1766,6 +1899,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   add_foreign_key "sales_orders", "customers"
   add_foreign_key "sales_orders", "organizations"
   add_foreign_key "sales_orders", "users", column: "created_by_id"
+  add_foreign_key "sales_orders", "users", column: "pick_confirmed_by_id"
+  add_foreign_key "sales_orders", "users", column: "picked_by_id"
   add_foreign_key "scheme_applications", "organizations"
   add_foreign_key "scheme_applications", "sales_orders"
   add_foreign_key "scheme_applications", "schemes"
@@ -1798,6 +1933,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000011) do
   add_foreign_key "supplier_products", "products"
   add_foreign_key "supplier_products", "suppliers"
   add_foreign_key "suppliers", "organizations"
+  add_foreign_key "sync_operations", "organizations"
+  add_foreign_key "sync_operations", "users"
   add_foreign_key "tier_price_list_assignments", "branches"
   add_foreign_key "tier_price_list_assignments", "price_lists"
   add_foreign_key "trip_stops", "delivery_trips"

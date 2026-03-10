@@ -1,4 +1,4 @@
-# OmniDist OMS – Backend Conventions
+# OrderLane Pro – Backend Conventions
 
 ## Overview
 
@@ -81,7 +81,7 @@ Tokens are issued by `POST /api/v1/auth/login`:
 
 ```
 JWT_SECRET=<strong_random_secret>
-DATABASE_URL=postgresql://localhost/omnidist_development
+DATABASE_URL=postgresql://localhost/orderlane_development
 REDIS_URL=redis://localhost:6379/0
 ```
 

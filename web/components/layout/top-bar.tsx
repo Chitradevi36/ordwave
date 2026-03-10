@@ -233,6 +233,8 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user");
       localStorage.removeItem("organization_id");
+      // Clear auth presence cookie used by middleware
+      document.cookie = 'auth_present=; path=/; max-age=0; SameSite=Lax';
       router.push("/login");
     }
   }, [router]);
@@ -295,7 +297,7 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
           <CreateDropdown />
 
           {/* Notifications */}
-          <NotificationsPanel role={role} />
+          <NotificationsPanel />
 
           {/* User menu */}
           <UserMenu onLogout={handleLogout} />

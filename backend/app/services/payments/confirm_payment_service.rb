@@ -64,12 +64,23 @@ module Payments
           }
         )
 
-        return Result.new(
+        notify_accountants
+
+        result = Result.new(
           success?:        true,
           payment:         @payment,
           advance_payment: advance,
           errors:          []
         )
+
+        # Fire webhook after commit guard
+        WebhookEvents.fire(
+          organization: @payment.organization,
+          event:        'payment.received',
+          payload:      WebhookEvents.payment_payload(@payment)
+        )
+
+        return result
       end
     rescue ActiveRecord::RecordInvalid => e
       failure([e.message])
@@ -124,15 +135,13 @@ module Payments
 
         new_paid        = (invoice.paid_amount.to_d + allocated).round(2)
         new_outstanding = (invoice.outstanding_amount.to_d - allocated).round(2)
+        # When fully paid always use 'issued'; partial payment uses 'partially_paid'.
         new_status      = new_outstanding <= 0 ? 'issued' : 'partially_paid'
-        # When fully paid, keep status as 'issued' (outstanding = 0 distinguishes it)
-        # so existing void rules still work. Partially paid shows as 'partially_paid'.
-        final_status = new_outstanding <= 0 ? invoice.status : 'partially_paid'
 
         invoice.update_columns(
           paid_amount:        new_paid,
           outstanding_amount: [new_outstanding, 0].max,
-          status:             new_outstanding <= 0 ? invoice.status.presence || 'issued' : 'partially_paid'
+          status:             new_status
         )
 
         Credit::AuditLogger.log(
@@ -173,6 +182,32 @@ module Payments
       )
 
       advance
+    end
+
+    def notify_accountants
+      accountants = User.joins(:memberships)
+                        .where(memberships: {
+                          organization_id: @payment.organization_id,
+                          deleted_at:      nil,
+                          active:          true
+                        })
+                        .joins(memberships: :role)
+                        .where(roles: { name: %w[owner admin accountant] })
+                        .distinct
+
+      Notifications::CreateService.call(
+        organization: @payment.organization,
+        recipients:   accountants,
+        actor:        @actor,
+        notifiable:   @payment,
+        type:         'payment_confirmed',
+        title:        "Payment confirmed \u2014 \u20b9#{@payment.amount.to_i.to_s(:delimited)}",
+        body:         "From #{@payment.customer&.name} via #{@payment.payment_mode&.humanize}",
+        deep_link:    '/finance',
+        severity:     'medium'
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[ConfirmPaymentService] Notification failed: #{e.message}")
     end
 
     def failure(errors)

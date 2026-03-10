@@ -23,6 +23,9 @@ class SalesInvoicePolicy < ApplicationPolicy
   def generate_from_order? = manager_above? && within_org?
   def generate_from_stop?  = manager_above? && within_org?
 
+  # Bulk generate invoices for multiple orders → manager + owner
+  def bulk_generate? = manager_above? && within_org?
+
   # Generate IRN via NIC IRP → accounts + manager + owner, invoice must be issued
   def einvoice? = manager_above? && within_org? && record.issued?
 

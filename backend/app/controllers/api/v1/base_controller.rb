@@ -88,6 +88,10 @@ module Api
         @current_membership ||= current_user&.membership_for(current_organization)
       end
 
+      def current_branch
+        @current_branch ||= current_membership&.branch
+      end
+
       def current_role
         current_membership&.role
       end

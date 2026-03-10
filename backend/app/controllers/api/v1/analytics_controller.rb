@@ -46,9 +46,12 @@ module Api
         grouping = params.fetch(:grouping, "day")
         data = cached("collections/#{grouping}") do
           {
-            summary:        collections_query.summary,
-            timeseries:     collections_query.timeseries(grouping: grouping),
-            top_collectors: collections_query.top_collectors,
+            summary:         collections_query.summary,
+            timeseries:      collections_query.timeseries(grouping: grouping),
+            target_vs_actual: collections_query.target_vs_actual,
+            by_mode:         collections_query.by_mode,
+            overdue_by_age:  collections_query.overdue_by_age,
+            top_collectors:  collections_query.top_collectors,
           }
         end
 

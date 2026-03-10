@@ -27,6 +27,22 @@ module Orders
       ActiveRecord::Base.transaction do
         @order.transition_to!('cancelled', reason: @reason)
 
+        # Release any inventory reservations held for this order
+        unreserve_result = Inventory::UnreserveForOrder.call(
+          sales_order: @order,
+          actor:       @actor,
+          reason:      @reason
+        )
+        unless unreserve_result.success?
+          Rails.logger.warn("[CancelOrderService] Unreservation failed for order #{@order.id}: #{unreserve_result.errors.join(', ')}")
+        end
+
+        # Reset pick_status so warehouse staff don't act on a cancelled order
+        if @order.class.column_names.include?('pick_status')
+          @order.update_columns(pick_status: 0, picked_by_id: nil, picked_at: nil,
+                                pick_confirmed_by_id: nil, pick_confirmed_at: nil)
+        end
+
         Credit::AuditLogger.log(
           actor:        @actor,
           organization: @order.organization,

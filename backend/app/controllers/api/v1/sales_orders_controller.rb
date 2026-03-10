@@ -2,7 +2,7 @@ module Api
   module V1
     class SalesOrdersController < BaseController
       before_action :require_organization!
-      before_action :set_order, only: %i[show update submit approve hold cancel refresh_price lifecycle]
+      before_action :set_order, only: %i[show update submit approve hold cancel refresh_price lifecycle pick confirm_pick]
 
       # recent_for_customer uses policy_scope (not authorize) — skip the
       # verify_authorized after_action that BaseController enforces on all
@@ -318,6 +318,48 @@ module Api
         end
       end
 
+      # POST /api/v1/sales_orders/:id/pick
+      def pick
+        authorize @order, :pick?
+
+        unless @order.pending_pick?
+          return render json: { errors: ['Order must be in pending_pick status to mark as picked'] }, status: :unprocessable_entity
+        end
+
+        @order.update!(
+          pick_status:     :picked,
+          picked_by:       current_user,
+          picked_at:       Time.current
+        )
+        @order.audit_logs.create!(
+          action:       'order_picked',
+          actor:        current_user,
+          organization: current_organization
+        )
+        render_success(serialize_order(@order, detailed: true))
+      end
+
+      # POST /api/v1/sales_orders/:id/confirm_pick
+      def confirm_pick
+        authorize @order, :confirm_pick?
+
+        unless @order.picked?
+          return render json: { errors: ['Order must be in picked status to confirm pick'] }, status: :unprocessable_entity
+        end
+
+        @order.update!(
+          pick_status:          :pick_confirmed,
+          pick_confirmed_by:    current_user,
+          pick_confirmed_at:    Time.current
+        )
+        @order.audit_logs.create!(
+          action:       'order_pick_confirmed',
+          actor:        current_user,
+          organization: current_organization
+        )
+        render_success(serialize_order(@order, detailed: true))
+      end
+
       # GET /api/v1/sales_orders/recent_for_customer?customer_id=X
       def recent_for_customer
         return render_errors(["customer_id is required"]) if params[:customer_id].blank?
@@ -373,7 +415,27 @@ module Api
           )
 
           if submit_result[:ok]
-            render_created(serialize_order(submit_result[:order], detailed: true))
+            order  = submit_result[:order]
+            serial = serialize_order(order, detailed: true)
+
+            # B3.6 — Expose credit decision and scheme details explicitly for mobile
+            serial[:credit_check] = {
+              decision:         order.credit_decision,
+              reasons:          Array(order.credit_reasons),
+              metrics:          (order.credit_snapshot || {}).slice('outstanding', 'overdue_amount', 'overdue_days', 'available_credit', 'credit_limit').transform_keys(&:to_s),
+              actions_required: (order.credit_snapshot || {}).fetch('actions_required', {})
+            }
+            serial[:schemes_applied] = (order.scheme_snapshot || []).map do |snap|
+              {
+                scheme_id:    snap['scheme_id'],
+                scheme_name:  snap['scheme_name'],
+                scheme_type:  snap['scheme_type'],
+                discount_pct: snap['discount_pct'],
+                freebies:     snap['freebies'] || []
+              }
+            end
+
+            render_created(serial)
           else
             render_errors(submit_result[:errors])
             raise ActiveRecord::Rollback
@@ -436,6 +498,11 @@ module Api
           approved_at:     order.approved_at,
           cancelled_at:    order.cancelled_at,
           cancellation_reason: order.cancellation_reason,
+          pick_status:         order.pick_status,
+          picked_by_id:        order.picked_by_id,
+          picked_at:           order.picked_at,
+          pick_confirmed_by_id: order.pick_confirmed_by_id,
+          pick_confirmed_at:   order.pick_confirmed_at,
           created_at:      order.created_at,
           updated_at:      order.updated_at,
           customer: {

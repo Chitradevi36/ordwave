@@ -1,24 +1,22 @@
 ﻿"use client";
 
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { WorkspaceHeader } from "@/components/workspace/WorkspaceHeader";
-import { WorkspaceKpis, WorkspaceActions, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
+import { WorkspaceKpis, WorkspaceSections, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
 import { WORKSPACE_CONFIGS } from "@/components/workspace/workspace.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useOverviewStats, useWorkspaceActivity, fmtINR } from "@/lib/hooks/use-workspace-stats";
-import { DollarSign, FileText, CreditCard, Banknote, Plus, List, AlertCircle, TrendingUp, FileSpreadsheet, ReceiptText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, FileText, CreditCard, AlertCircle, TrendingUp, FileSpreadsheet, Plus } from "lucide-react";
 
 const config = WORKSPACE_CONFIGS.finance;
 
-const QUICK_ACTIONS = [
-  { label: "View Collections",    icon: DollarSign,       href: "/collections",              description: "Browse collection entries" },
-  { label: "Record Collection",   icon: Plus,             href: "/collections/new",          description: "Capture a new payment" },
-  { label: "View Invoices",       icon: FileText,         href: "/sales-invoices",           description: "Browse sales invoices" },
-  { label: "View Credit Notes",   icon: CreditCard,       href: "/credit-notes",             description: "Review issued credit notes" },
-  { label: "GSTR-1 Export",       icon: FileSpreadsheet,  href: "/compliance/gstr1",         description: "Generate & download GSTR-1" },
-  { label: "Supplier Debit Notes",icon: ReceiptText,      href: "/supplier-debit-notes",     description: "Manage supplier debit notes" },
-  { label: "Review Credit",       icon: Banknote,         href: "/approvals/credit-limits",  description: "Process credit limit approvals" },
-  { label: "View Insights",       icon: List,             href: "/insights/collections",     description: "Review collections analytics" },
+const SECTIONS = [
+  { label: "Collections",   description: "Record and track customer payments",       href: "/collections",      icon: DollarSign },
+  { label: "Invoices",      description: "View and manage sales invoices",            href: "/sales-invoices",   icon: FileText },
+  { label: "Credit Notes",  description: "Issue and track credit adjustments",        href: "/credit-notes",     icon: CreditCard },
+  { label: "GST Export",    description: "Generate GSTR-1 and compliance reports",    href: "/compliance/gstr1", icon: FileSpreadsheet },
 ];
 
 export default function FinancePage() {
@@ -57,14 +55,25 @@ export default function FinancePage() {
     },
   ];
 
+  const router = useRouter();
+
   return (
     <AppShell noPad hideBreadcrumb>
-      <WorkspaceHeader config={config} role={role} />
+      <WorkspaceHeader
+        config={config}
+        role={role}
+        actions={
+          <Button size="sm" onClick={() => router.push("/collections/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Record Collection
+          </Button>
+        }
+      />
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 space-y-6">
         <WorkspaceKpis items={KPI_ITEMS} loading={loading} />
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <WorkspaceActions actions={QUICK_ACTIONS} />
+            <WorkspaceSections sections={SECTIONS} title="Sections" />
           </div>
           <div>
             <WorkspaceActivity items={activityItems} loading={activityLoading} />

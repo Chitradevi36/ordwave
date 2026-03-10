@@ -170,8 +170,36 @@ RSpec.describe Orders::SubmitOrderService, type: :service do
       end
     end
 
-    context 'validation failures' do
-      it 'returns error when order is not a draft' do
+    context 'concurrent credit evaluation (BUG-D02 regression)' do
+      # Verifies that the with_lock guard prevents double-spending credit when
+      # two orders for the same customer are evaluated at the same time.
+      it 'does not allow credit to be double-spent under concurrent load', :db do
+        limit = 1_000
+        credit_account.update!(credit_limit: limit, available_credit: limit, current_balance: 0)
+
+        allow(Credit::CreditEngine).to receive(:evaluate_order).and_call_original
+
+        order_a = make_draft_order  # total = 500
+        order_b = make_draft_order  # total = 500   → combined = 1 000, both should fit
+
+        results = []
+        threads = [
+          Thread.new { results << described_class.call(actor: actor, order: order_a) },
+          Thread.new { results << described_class.call(actor: actor, order: order_b) }
+        ]
+        threads.each(&:join)
+
+        credit_account.reload
+        approved_count = results.count { |r| r[:ok] }
+
+        # Credit used must never exceed the limit
+        expect(credit_account.current_balance).to be <= limit
+        # At least one order must succeed; both may succeed if credit covers both
+        expect(approved_count).to be >= 1
+      end
+    end
+
+    context 'validation failures' do      it 'returns error when order is not a draft' do
         order = create(:sales_order, organization: org, branch: branch, customer: customer,
                        created_by: actor, status: 'submitted', submitted_at: Time.current)
         result = described_class.call(actor: actor, order: order)

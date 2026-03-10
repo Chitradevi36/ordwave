@@ -20,6 +20,7 @@ import { SalesRepView } from "@/components/dashboard/SalesRepView";
 import { AccountantView } from "@/components/dashboard/AccountantView";
 import { WarehouseView } from "@/components/dashboard/WarehouseView";
 import { DriverView } from "@/components/dashboard/DriverView";
+import { ManagerView } from "@/components/dashboard/ManagerView";
 
 // â”€â”€ Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -99,6 +100,25 @@ function AlertRibbon({ alerts }: { alerts: DashboardAlert[] }) {
 }
 
 // â”€â”€ Order pipeline mini-donut (SVG progress rings) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Dashboard fetch-error banner ────────────────────────────────────────────
+function DashboardErrorBanner({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="mb-5 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 shrink-0" />
+        <span>Unable to load dashboard data. Check your connection and try again.</span>
+      </div>
+      <button
+        onClick={onRetry}
+        className="ml-4 shrink-0 rounded-lg border border-red-300 bg-white px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-50 transition-colors"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+// ── Order pipeline mini-donut (SVG progress rings)
 function PipelineRing({ label, count, color, icon: Icon }: { label: string; count: number; color: string; icon: React.ElementType }) {
   return (
     <div className="flex flex-col items-center gap-1">
@@ -156,7 +176,7 @@ export default function DashboardPage() {
   const isReady = useOnboardingGuard();
   const router  = useRouter();
 
-  const { data, isLoading, isError } = useDashboardData();
+  const { data, isLoading, isError, refetch } = useDashboardData();
   const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 3, sort: "created_at_desc" });
   const { role, loading: roleLoading } = useCurrentRoleWithLoading();
 
@@ -180,7 +200,7 @@ export default function DashboardPage() {
               {data ? greeting(data.greeting_name) : "Welcome back"}
             </h1>
           )}
-          <p className="text-sm text-text-secondary">{today()}</p>
+          <p className="text-sm text-text-secondary"> Today: {(data?.orders.today ?? 0)} Order{(data?.orders.today ?? 0) !== 1 ? "s" : ""} • {fmt(data?.collections.today, true)} Collected {((data?.orders.pending ?? 0) + (data?.orders.on_hold ?? 0)) > 0 && ` • ${(data?.orders.pending ?? 0) + (data?.orders.on_hold ?? 0)} Approval${((data?.orders.pending ?? 0) + (data?.orders.on_hold ?? 0)) !== 1 ? "s" : ""} Pending`}</p>
         </div>
         {(!role || role === "owner" || role === "admin" || role === "manager" || role === "sales_rep") && (
           <div className="flex gap-2 mt-3 sm:mt-0">
@@ -211,6 +231,8 @@ export default function DashboardPage() {
         </div>
       ) : role === "sales_rep" ? (
         <SalesRepView data={data} isLoading={isLoading} isError={isError} />
+      ) : role === "manager" ? (
+        <ManagerView data={data} isLoading={isLoading} isError={isError} />
       ) : role === "accountant" ? (
         <AccountantView data={data} isLoading={isLoading} isError={isError} />
       ) : role === "warehouse_staff" ? (
@@ -220,6 +242,7 @@ export default function DashboardPage() {
       ) : (
         <>
           {!isLoading && data?.alerts && <AlertRibbon alerts={data.alerts} />}
+          {isError && !isLoading && <DashboardErrorBanner onRetry={refetch} />}
 
       {/* â”€â”€ Primary KPI row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 mb-5">

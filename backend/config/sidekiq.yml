@@ -18,3 +18,18 @@
 
 # Log level (debug | info | warn | error)
 :log_level: info
+
+# ── Recurring jobs (sidekiq-cron) ────────────────────────────────────────────
+:cron_jobs:
+  accounting_agent_heartbeat:\n    cron: '*/5 * * * *'         # every 5 minutes\n    class: 'AccountingAgentHeartbeatJob'\n    queue: default\n    description: 'Mark accounting agents offline when heartbeat is stale'\n\n  credit_limit_sla_breach:
+    cron: '*/30 * * * *'        # every 30 minutes
+    class: 'CreditLimitSlaBreachJob'
+    queue: default
+    description: 'Stamp sla_breached_at on overdue credit-limit change requests'
+
+  check_low_stock:
+    cron: '0 2 * * *'           # 2 AM daily
+    class: 'CheckLowStockJob'
+    queue: low
+    args: []                    # nil = all organisations
+    description: 'Notify warehouse staff when stock falls below min_qty_threshold'

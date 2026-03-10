@@ -106,16 +106,16 @@ export default function PurchaseInvoicesPage() {
   useEffect(() => { setPage(1); }, [search, status, supplierId, dateFrom, dateTo]);
 
   const columns: Column<PurchaseInvoice>[] = [
-    {
-      key:    "invoice_number",
-      header: "Invoice #",
-      render: (_: unknown, row: PurchaseInvoice) => (
-        <div>
-          <p className="font-medium text-text-primary font-mono">{row.invoice_number}</p>
-          <p className="text-xs text-text-secondary">{fmtDate(row.invoice_date)}</p>
-        </div>
-      ),
-    },
+    // {
+    //   key:    "invoice_number",
+    //   header: "Invoice #",
+    //   render: (_: unknown, row: PurchaseInvoice) => (
+    //     <div>
+    //       <p className="font-medium text-text-primary font-mono">{row.invoice_number}</p>
+    //       <p className="text-xs text-text-secondary">{fmtDate(row.invoice_date)}</p>
+    //     </div>
+    //   ),
+    // },
     {
       key:    "supplier",
       header: "Supplier",
@@ -166,7 +166,7 @@ export default function PurchaseInvoicesPage() {
   const hasFilters = !!(search || status || supplierId || dateFrom || dateTo);
 
   return (
-    <AppShell title="Purchase Invoices">
+    <AppShell title="Purchase Invoices" hideBreadcrumb>
       <PageHeader
         title="Purchase Invoices"
         description={`${totalCount} invoice${totalCount !== 1 ? "s" : ""} found`}

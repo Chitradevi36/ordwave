@@ -3,6 +3,13 @@ Rails.application.routes.draw do
   # API mode has no session middleware — add it directly to Sidekiq::Web
   Sidekiq::Web.use ActionDispatch::Cookies
   Sidekiq::Web.use ActionDispatch::Session::CookieStore, key: '_orderlane_sidekiq'
+  # Protect the Sidekiq dashboard with HTTP Basic Auth
+  Sidekiq::Web.use Rack::Auth::Basic do |username, password|
+    username == ENV.fetch('SIDEKIQ_USER', 'admin') &&
+      ActiveSupport::SecurityUtils.secure_compare(
+        password, ENV.fetch('SIDEKIQ_PASSWORD', 'changeme')
+      )
+  end
   mount Sidekiq::Web => '/sidekiq'
 
   # Devise routes (web sessions)
@@ -93,6 +100,7 @@ Rails.application.routes.draw do
           post :unblock
           post :deactivate
           get  :credit_usage
+          get  :timeline
         end
       end
       # Supplier Master
@@ -129,6 +137,7 @@ Rails.application.routes.draw do
         resources :balances,    only: %i[index show]
         resources :movements,   only: %i[index]
         resources :adjustments, only: %i[create]
+        post 'check_low_stock', to: 'inventory/alerts#check_low_stock'
       end
 
       resources :routes,          only: %i[index show create update destroy]
@@ -240,8 +249,25 @@ Rails.application.routes.draw do
           post :hold
           post :cancel
           post :refresh_price
+          post :pick
+          post :confirm_pick
           get  :lifecycle
         end
+      end
+
+      # Pick Lists (warehouse fulfillment)
+      resources :pick_lists, only: %i[index show] do
+        member do
+          post :start
+          post :complete
+          patch 'items/:item_id', to: 'pick_lists#update_item', as: :update_item
+        end
+      end
+
+      # Delta Sync + Offline Push
+      namespace :sync do
+        get  :delta
+        post :push
       end
 
       # Returns Engine
@@ -277,6 +303,7 @@ Rails.application.routes.draw do
         collection do
           post 'generate_from_order/:sales_order_id', action: :generate_from_order,       as: :generate_invoice_from_order
           post 'generate_from_delivery_stop/:stop_id', action: :generate_from_delivery_stop, as: :generate_invoice_from_stop
+          post :bulk_generate
         end
       end
 
@@ -296,6 +323,15 @@ Rails.application.routes.draw do
         end
       end
 
+      # Collection Schedules
+      resources :collection_schedules, only: %i[index show create update] do
+        member do
+          post :complete
+          post :skip
+          post :reschedule
+        end
+      end
+
       # Delivery
       resources :vehicles, only: %i[index show create update destroy]
 
@@ -306,6 +342,7 @@ Rails.application.routes.draw do
         member do
           post :dispatch_trip, path: 'dispatch'
           post :cancel
+          get  :summary
         end
         resources :trip_stops, only: %i[index show] do
           member do
@@ -316,6 +353,7 @@ Rails.application.routes.draw do
       end
 
       resources :delivery_exceptions, only: %i[index]
+      resources :delivery_rejections, only: %i[index]
 
       # -- Trade Promotions / Scheme Engine ------------------------------------
       resources :schemes, only: %i[index show create update destroy] do
@@ -327,6 +365,22 @@ Rails.application.routes.draw do
 
       # -- Order Pricing (price preview with schemes) -------------------------
       post 'order_pricing/preview', to: 'order_pricing#preview'
+
+      # -- Notifications -------------------------------------------------------
+      resources :notifications, only: %i[index destroy] do
+        collection do
+          post :read_all
+        end
+        member do
+          patch :read
+        end
+      end
+
+      # -- Approvals Inbox ---------------------------------------------------
+      resources :approvals, only: %i[index]
+
+      # -- Audit Logs -------------------------------------------------------
+      resources :audit_logs, only: %i[index]
 
       # -- Owner Dashboard -------------------------------------------------------
       get 'dashboard', to: 'dashboard#show'
@@ -342,6 +396,17 @@ Rails.application.routes.draw do
         get :inventory_health,  action: :inventory_health
         get :returns,           action: :returns
         get :schemes,           action: :schemes
+      end
+
+      # -- Reports (downloadable) --------------------------------------------
+      scope :reports, controller: :reports do
+        get :sales_summary
+        get :collection_summary
+        get :product_performance
+        get :customer_outstanding
+        get :sales_rep_performance
+        get :delivery_performance
+        get :ageing_report
       end
 
       # -- Supplier Debit Notes ------------------------------------------------

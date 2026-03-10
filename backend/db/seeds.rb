@@ -103,7 +103,7 @@ if Rails.env.development?
   puts ''
   puts '== Seeding development data...'
 
-  admin = User.find_or_initialize_by(email: 'admin@riceoms.dev')
+  admin = User.find_or_initialize_by(email: 'admin@orderlanepro.dev')
   admin.assign_attributes(
     first_name: 'Admin',
     last_name:  'User',
@@ -302,9 +302,9 @@ if Rails.env.development?
   driver_role = Role.find_by!(name: 'driver')
 
   driver_defs = [
-    { email: 'driver1@riceoms.dev', first_name: 'Ravi',   last_name: 'Kumar' },
-    { email: 'driver2@riceoms.dev', first_name: 'Suresh', last_name: 'Yadav' },
-    { email: 'driver3@riceoms.dev', first_name: 'Mohan',  last_name: 'Das'   },
+    { email: 'driver1@orderlanepro.dev', first_name: 'Ravi',   last_name: 'Kumar' },
+    { email: 'driver2@orderlanepro.dev', first_name: 'Suresh', last_name: 'Yadav' },
+    { email: 'driver3@orderlanepro.dev', first_name: 'Mohan',  last_name: 'Das'   },
   ]
 
   drivers = driver_defs.map do |attrs|
@@ -350,11 +350,11 @@ if Rails.env.development?
   puts '  == Seeding additional role users...'
 
   role_user_defs = [
-    { email: 'admin2@riceoms.dev',      first_name: 'Rakesh',  last_name: 'Verma',  role: 'admin'           },
-    { email: 'manager@riceoms.dev',     first_name: 'Priya',   last_name: 'Sharma', role: 'manager'         },
-    { email: 'salesrep@riceoms.dev',    first_name: 'Arjun',   last_name: 'Reddy',  role: 'sales_rep'       },
-    { email: 'accountant@riceoms.dev',  first_name: 'Kavitha', last_name: 'Nair',   role: 'accountant'      },
-    { email: 'warehouse@riceoms.dev',   first_name: 'Ganesh',  last_name: 'Pillai', role: 'warehouse_staff' },
+    { email: 'admin2@orderlanepro.dev',      first_name: 'Rakesh',  last_name: 'Verma',  role: 'admin'           },
+    { email: 'manager@orderlanepro.dev',     first_name: 'Priya',   last_name: 'Sharma', role: 'manager'         },
+    { email: 'salesrep@orderlanepro.dev',    first_name: 'Arjun',   last_name: 'Reddy',  role: 'sales_rep'       },
+    { email: 'accountant@orderlanepro.dev',  first_name: 'Kavitha', last_name: 'Nair',   role: 'accountant'      },
+    { email: 'warehouse@orderlanepro.dev',   first_name: 'Ganesh',  last_name: 'Pillai', role: 'warehouse_staff' },
   ]
 
   role_user_defs.each do |attrs|
@@ -1570,14 +1570,14 @@ if Rails.env.development?
   puts '  ┌─ Dev login credentials ─────────────────────────────────────────────────'
   puts "  │  POST /api/v1/auth/login   (header: X-Organization-Id: #{org.id})"
   puts '  │'
-  puts '  │  admin@riceoms.dev        Password@123   owner'
-  puts '  │  admin2@riceoms.dev       Password@123   admin'
-  puts '  │  manager@riceoms.dev      Password@123   manager'
-  puts '  │  salesrep@riceoms.dev     Password@123   sales_rep'
-  puts '  │  accountant@riceoms.dev   Password@123   accountant'
-  puts '  │  warehouse@riceoms.dev    Password@123   warehouse_staff'
-  puts '  │  driver1@riceoms.dev      Password@123   driver'
-  puts '  │  driver2@riceoms.dev      Password@123   driver'
-  puts '  │  driver3@riceoms.dev      Password@123   driver'
+  puts '  │  admin@orderlanepro.dev        Password@123   owner'
+  puts '  │  admin2@orderlanepro.dev       Password@123   admin'
+  puts '  │  manager@orderlanepro.dev      Password@123   manager'
+  puts '  │  salesrep@orderlanepro.dev     Password@123   sales_rep'
+  puts '  │  accountant@orderlanepro.dev   Password@123   accountant'
+  puts '  │  warehouse@orderlanepro.dev    Password@123   warehouse_staff'
+  puts '  │  driver1@orderlanepro.dev      Password@123   driver'
+  puts '  │  driver2@orderlanepro.dev      Password@123   driver'
+  puts '  │  driver3@orderlanepro.dev      Password@123   driver'
   puts '  └─────────────────────────────────────────────────────────────────────────'
 end

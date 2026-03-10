@@ -13,7 +13,7 @@ import {
   Plus, Search, X, SlidersHorizontal, ClipboardList,
   MoreHorizontal, CheckSquare, Square, TrendingUp,
   Clock, AlertTriangle, ArrowLeft,
-  Download, Zap,
+  Download, Zap, LayoutList, LayoutDashboard,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
@@ -30,6 +30,7 @@ interface OrderSummary {
   delivery_date: string | null;
   submitted_at: string | null;
   created_at: string;
+  cancellation_reason: string | null;
   customer: { id: number; name: string; code: string };
   branch: { id: number; name: string };
   created_by: { id: number; name: string };
@@ -133,6 +134,104 @@ function StatCard({
   );
 }
 
+// ─── Kanban Board ─────────────────────────────────────────────────────────────
+const BOARD_COLUMNS: { key: string; label: string; accent: string; header: string }[] = [
+  { key: "draft",     label: "Draft",     accent: "bg-background-subtle",  header: "border-text-secondary" },
+  { key: "submitted", label: "Submitted", accent: "bg-primary/5",          header: "border-primary" },
+  { key: "on_hold",   label: "On Hold",   accent: "bg-warning/5",          header: "border-warning" },
+  { key: "approved",  label: "Approved",  accent: "bg-success/5",          header: "border-success" },
+  { key: "rejected",  label: "Rejected",  accent: "bg-danger/5",           header: "border-danger" },
+  { key: "cancelled", label: "Cancelled", accent: "bg-background-subtle",  header: "border-border" },
+];
+
+function KanbanBoard({
+  orders,
+  loading,
+  onNavigate,
+}: {
+  orders: OrderSummary[];
+  loading: boolean;
+  onNavigate: (id: number) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-text-secondary text-sm">
+        Loading board…
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-4 mt-1">
+      {BOARD_COLUMNS.map((col) => {
+        const cards = orders.filter((o) => o.status === col.key);
+        return (
+          <div
+            key={col.key}
+            className={`flex-shrink-0 w-64 rounded-xl border border-border flex flex-col ${col.accent}`}
+          >
+            {/* Column header */}
+            <div className={`flex items-center justify-between px-3 py-2.5 border-b-2 ${col.header}`}>
+              <span className="text-xs font-semibold uppercase tracking-wide text-text-primary">
+                {col.label}
+              </span>
+              <span className="inline-flex items-center justify-center rounded-full min-w-[20px] px-1.5 py-0.5 text-[11px] font-bold bg-white/60 text-text-secondary border border-border/50">
+                {cards.length}
+              </span>
+            </div>
+
+            {/* Cards */}
+            <div className="flex flex-col gap-2 p-2 overflow-y-auto h-[calc(100vh-380px)] min-h-[240px]">
+              {cards.length === 0 && (
+                <p className="text-center text-xs text-text-secondary mt-6 italic">
+                  No orders
+                </p>
+              )}
+              {cards.map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => onNavigate(o.id)}
+                  className="w-full text-left rounded-lg border border-border bg-white px-3 py-2.5 shadow-sm hover:shadow hover:border-primary/30 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-1 mb-1.5">
+                    <span className="font-mono text-[11px] font-semibold text-primary">
+                      {o.order_number}
+                    </span>
+                    {o.credit_decision && o.credit_decision !== "ok" && (
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full mt-1 shrink-0 ${
+                          o.credit_decision === "blocked" ? "bg-danger" : "bg-warning"
+                        }`}
+                        title={`Credit ${o.credit_decision}`}
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs font-medium text-text-primary truncate">{o.customer.name}</p>
+                  <p className="text-[10px] text-text-secondary truncate">{o.customer.code} · {o.branch.name}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs font-bold text-text-primary">{fmtINR(o.total_amount)}</span>
+                    <span className="text-[10px] text-text-secondary">{relativeTime(o.created_at)}</span>
+                  </div>
+                  {o.delivery_date && (() => {
+                    const today   = new Date(); today.setHours(0, 0, 0, 0);
+                    const delDate = new Date(o.delivery_date); delDate.setHours(0, 0, 0, 0);
+                    const terminal = ["cancelled", "rejected", "delivered"].includes(o.status);
+                    if (!terminal && delDate < today)
+                      return <p className="text-[10px] text-danger font-medium mt-0.5">⏱ Overdue</p>;
+                    if (!terminal && delDate.getTime() === today.getTime())
+                      return <p className="text-[10px] text-warning font-medium mt-0.5">⏱ Due today</p>;
+                    return null;
+                  })()}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 function OrdersPageContent() {
   const router = useRouter();
@@ -156,6 +255,9 @@ function OrdersPageContent() {
   const [showFilters,      setShowFilters]      = useState(false);
   const [page,             setPage]             = useState(1);
   const [activeChip,       setActiveChip]       = useState<string | null>(null);
+
+  // View mode
+  const [viewMode, setViewMode] = useState<"list" | "board">("list");
 
   // Sorting
   const [sortBy,  setSortBy]  = useState("created_at");
@@ -234,7 +336,7 @@ function OrdersPageContent() {
       qp.set("sort_by",  sortBy);
       qp.set("sort_dir", sortDir);
       qp.set("page",     String(page));
-      qp.set("per_page", "25");
+      qp.set("per_page", viewMode === "board" ? "200" : "10");
 
       const res  = await fetch(`${API_URL}/api/v1/sales_orders?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
@@ -249,7 +351,7 @@ function OrdersPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [token, orgId, tab, search, branchFilter, minValue, maxValue, dateFrom, dateTo, createdByFilter, deliveryOverdue, sortBy, sortDir, page]);
+  }, [token, orgId, tab, search, branchFilter, minValue, maxValue, dateFrom, dateTo, createdByFilter, deliveryOverdue, sortBy, sortDir, page, viewMode]);
 
   useEffect(() => { void fetchOrders(); }, [fetchOrders]);
 
@@ -329,6 +431,38 @@ function OrdersPageContent() {
   const handleBulkCancel = async () => {
     await Promise.all(Array.from(selectedIds).map(id => handleCancel(id)));
     setSelectedIds(new Set());
+  };
+
+  const [bulkInvoiceLoading, setBulkInvoiceLoading] = useState(false);
+
+  const handleBulkGenerateInvoices = async () => {
+    if (!token || !orgId || selectedIds.size === 0) return;
+    setBulkInvoiceLoading(true);
+    try {
+      const res  = await fetch("/api/v1/sales_invoices/bulk_generate", {
+        method:  "POST",
+        headers: {
+          Authorization:       `Bearer ${token}`,
+          "X-Organization-Id": orgId,
+          "Content-Type":      "application/json",
+        },
+        body: JSON.stringify({ order_ids: Array.from(selectedIds) }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        const { generated, skipped, errors: errs } = json.data ?? {};
+        const msg = `Generated: ${generated}, Skipped: ${skipped}${(errs ?? []).length > 0 ? ` (${errs.length} error(s))` : ""}`;
+        showToast("success", msg);
+        setSelectedIds(new Set());
+        fetchOrders();
+      } else {
+        showToast("error", json.errors?.[0] ?? "Bulk invoice generation failed");
+      }
+    } catch (e) {
+      showToast("error", e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setBulkInvoiceLoading(false);
+    }
   };
 
   // ─── Sort ───────────────────────────────────────────────────────────────────
@@ -466,6 +600,14 @@ function OrdersPageContent() {
             {isStale && (
               <span className={`text-[10px] font-medium ${pendingDays >= 3 ? "text-danger" : "text-warning"}`}>
                 ⏱ {pendingDays}d pending
+              </span>
+            )}
+            {o.status === "rejected" && o.cancellation_reason && (
+              <span
+                className="text-[10px] text-danger italic max-w-[140px] truncate"
+                title={o.cancellation_reason}
+              >
+                {o.cancellation_reason}
               </span>
             )}
           </div>
@@ -644,7 +786,7 @@ function OrdersPageContent() {
 
       <PageHeader
         title="Sales Orders"
-        description={meta ? `${meta.total_count} order${meta.total_count !== 1 ? "s" : ""}` : undefined}
+        description="Create, manage, and track sales orders. Review pending approvals, handle credit decisions, and monitor order fulfillment across all branches."
         actions={[
           // { label: "Sales Control Center", icon: ArrowLeft, variant: "outline", onClick: () => router.push("/sales") },
           { label: "Export CSV", icon: Download, variant: "outline" as const, onClick: exportCsv },
@@ -652,39 +794,68 @@ function OrdersPageContent() {
         ]}
       />
 
+      {/* Quick filters + View mode toggle — single row */}
+      <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-text-secondary">Quick:</span>
+          {([
+            { key: "mine",    label: "My Orders" },
+            { key: "attn",    label: "Needs Attention" },
+            { key: "overdue", label: "Overdue Delivery" },
+            { key: "high",    label: "High Value >\u20b950k" },
+          ] as const).map(chip => (
+            <button
+              key={chip.key}
+              onClick={() => applyChip(chip.key)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                activeChip === chip.key
+                  ? "bg-primary text-white border-primary"
+                  : "bg-white text-text-secondary border-border hover:border-primary/40 hover:text-text-primary"
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+          {activeChip && (
+            <button onClick={clearAll} className="text-xs text-text-secondary hover:text-danger">
+              × Clear
+            </button>
+          )}
+        </div>
+
+        <div className="inline-flex rounded-lg border border-border overflow-hidden shrink-0">
+          <button
+            onClick={() => setViewMode("list")}
+            title="List view"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+              viewMode === "list"
+                ? "bg-primary text-white"
+                : "bg-white text-text-secondary hover:bg-background-subtle"
+            }`}
+          >
+            <LayoutList className="h-3.5 w-3.5" />
+            List
+          </button>
+          <button
+            onClick={() => { setViewMode("board"); setPage(1); }}
+            title="Kanban board"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-l border-border transition-colors ${
+              viewMode === "board"
+                ? "bg-primary text-white"
+                : "bg-white text-text-secondary hover:bg-background-subtle"
+            }`}
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            Board
+          </button>
+        </div>
+      </div>
+
       {scopedLabel && (
-        <div className="mb-4">
+        <div className="mb-2">
           <Badge variant="outline">{scopedLabel}</Badge>
         </div>
       )}
-
-      {/* Quick filter chips */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <span className="text-xs text-text-secondary">Quick:</span>
-        {([
-          { key: "mine",    label: "My Orders" },
-          { key: "attn",    label: "Needs Attention" },
-          { key: "overdue", label: "Overdue Delivery" },
-          { key: "high",    label: "High Value >\u20b950k" },
-        ] as const).map(chip => (
-          <button
-            key={chip.key}
-            onClick={() => applyChip(chip.key)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-              activeChip === chip.key
-                ? "bg-primary text-white border-primary"
-                : "bg-white text-text-secondary border-border hover:border-primary/40 hover:text-text-primary"
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
-        {activeChip && (
-          <button onClick={clearAll} className="text-xs text-text-secondary hover:text-danger">
-            × Clear
-          </button>
-        )}
-      </div>
 
       {/* Summary bar */}
       {metrics && (
@@ -861,6 +1032,14 @@ function OrdersPageContent() {
           <Button size="sm" variant="outline" onClick={handleBulkCancel}>Cancel selected</Button>
           <Button
             size="sm"
+            variant="outline"
+            disabled={bulkInvoiceLoading}
+            onClick={handleBulkGenerateInvoices}
+          >
+            {bulkInvoiceLoading ? "Generating…" : "Generate Invoices"}
+          </Button>
+          <Button
+            size="sm"
             variant="ghost"
             className="text-text-secondary ml-auto"
             onClick={() => setSelectedIds(new Set())}
@@ -886,8 +1065,10 @@ function OrdersPageContent() {
         </div>
       )}
 
-      {/* Table or empty state */}
-      {!loading && orders.length === 0 ? (
+      {/* Table, Board, or empty state */}
+      {viewMode === "board" ? (
+        <KanbanBoard orders={orders} loading={loading} onNavigate={(id) => router.push(`/orders/${id}`)} />
+      ) : !loading && orders.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title={tab ? `No ${tab.replace("_", " ")} orders` : "No orders yet"}
@@ -925,28 +1106,70 @@ function OrdersPageContent() {
         />
       )}
 
-      {/* Pagination */}
-      {meta && meta.total_pages > 1 && orders.length > 0 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-text-secondary">
-          <span>
-            Page {meta.current_page} of {meta.total_pages} · {meta.total_count} orders
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline" size="sm"
-              disabled={meta.current_page <= 1}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline" size="sm"
-              disabled={meta.current_page >= meta.total_pages}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
+      {/* Pagination — list view only */}
+      {viewMode === "list" && meta && meta.total_pages >= 1 && orders.length > 0 && (
+        <div className="mt-6 flex items-center justify-center gap-1">
+          {/* Previous arrow */}
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={meta.current_page <= 1}
+            className="flex h-8 w-8 items-center justify-center rounded border border-border text-text-secondary hover:bg-background-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+
+          {/* Page numbers */}
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: meta.total_pages }, (_, i) => i + 1)
+              .filter((p) => {
+                // Show current page ± 2 pages, always show first & last
+                const delta = Math.abs(p - meta.current_page);
+                return delta <= 2 || p === 1 || p === meta.total_pages;
+              })
+              .reduce((acc: (number | string)[], p) => {
+                // Add ellipsis if there's a gap
+                if (acc.length > 0 && typeof acc[acc.length - 1] === 'number') {
+                  const last = acc[acc.length - 1] as number;
+                  if (p - last > 1) acc.push('...');
+                }
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) => (
+                p === '...' ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 text-text-secondary">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p as number)}
+                    className={`flex h-8 min-w-8 items-center justify-center rounded border text-sm font-medium transition-colors ${
+                      meta.current_page === p
+                        ? 'bg-primary text-white border-primary'
+                        : 'border-border text-text-secondary hover:bg-background-subtle'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              ))
+            }
           </div>
+
+          {/* Next arrow */}
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={meta.current_page >= meta.total_pages}
+            className="flex h-8 w-8 items-center justify-center rounded border border-border text-text-secondary hover:bg-background-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
+          >
+            <ArrowLeft className="h-4 w-4 rotate-180" />
+          </button>
+
+          {/* Info text */}
+          <span className="ml-4 text-xs text-text-secondary">
+            {meta.total_count} orders
+          </span>
         </div>
       )}
     </AppShell>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Download } from "lucide-react";
 import CreatePaymentModal from "@/components/payments/create-payment-modal";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -76,6 +76,7 @@ export default function CollectionsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [counts, setCounts]         = useState<Record<string, number>>({});
   const [showCreate, setShowCreate] = useState(false);
+  const [exporting, setExporting]   = useState(false);
 
   const fetchPayments = useCallback(async () => {
     if (!token || !orgId) return;
@@ -101,6 +102,37 @@ export default function CollectionsPage() {
       setLoading(false);
     }
   }, [token, orgId, page, activeTab, search]);
+
+  const handleExportCsv = useCallback(async () => {
+    if (!token || !orgId || exporting) return;
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({ per_page: "5000" });
+      if (activeTab) params.set("status", activeTab);
+      if (search)    params.set("q", search);
+      const res  = await fetch(`/api/v1/payments?${params}`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      if (!res.ok) return;
+      const body = await res.json();
+      const rows: PaymentSummary[] = body.data ?? [];
+      const header = ["Payment #", "Customer", "Date", "Mode", "Amount", "Allocated", "Unallocated", "Status", "Ref #"].join(",");
+      const lines  = rows.map((p) =>
+        [p.payment_number, `"${p.customer.name}"`, p.received_date, p.payment_mode,
+         p.amount, p.allocated_amount, p.unallocated_amount, p.status, p.reference_number ?? ""].join(",")
+      );
+      const csv  = [header, ...lines].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `payments_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }, [token, orgId, activeTab, search, exporting]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
@@ -161,7 +193,10 @@ export default function CollectionsPage() {
     <AppShell>
       <PageHeader
         title="Payments & Collections"
-        actions={[{ label: "Record Payment", onClick: () => setShowCreate(true), icon: Plus }]}
+        actions={[
+          { label: exporting ? "Exporting…" : "Export CSV", onClick: handleExportCsv, icon: Download, variant: "outline" as const, disabled: exporting },
+          { label: "Record Payment", onClick: () => setShowCreate(true), icon: Plus },
+        ]}
       />
 
       {/* Status Tabs */}

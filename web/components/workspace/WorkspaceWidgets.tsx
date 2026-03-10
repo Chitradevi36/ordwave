@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronRight } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface KpiItem {
@@ -159,7 +159,66 @@ export function WorkspaceActions({ actions, title = "Quick actions", className =
   );
 }
 
-// ── WorkspaceActivity ─────────────────────────────────────────────────────────
+// ── WorkspaceSections ─────────────────────────────────────────────────────────
+export interface SectionLink {
+  label: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: string | number;
+  badgeVariant?: "default" | "warning" | "danger";
+}
+
+interface WorkspaceSectionsProps {
+  sections: SectionLink[];
+  title?: string;
+  className?: string;
+}
+
+export function WorkspaceSections({ sections, title, className = "" }: WorkspaceSectionsProps) {
+  if (sections.length === 0) return null;
+  const badgeCls = (v?: SectionLink["badgeVariant"]) =>
+    v === "danger"
+      ? "bg-red-100 text-red-700"
+      : v === "warning"
+      ? "bg-amber-100 text-amber-700"
+      : "bg-primary-100 text-primary";
+
+  return (
+    <div className={className}>
+      {title && (
+        <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-3">{title}</h2>
+      )}
+      <div className="bg-background rounded-xl border border-border overflow-hidden divide-y divide-border">
+        {sections.map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <Link
+              key={i}
+              href={s.href}
+              className="flex items-center gap-3 px-4 py-3.5 hover:bg-surface-secondary transition-colors group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center shrink-0 group-hover:bg-primary-100 transition-colors">
+                <Icon size={16} className="text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text-primary">{s.label}</p>
+                <p className="text-xs text-text-secondary truncate mt-0.5">{s.description}</p>
+              </div>
+              {s.badge != null && (
+                <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${badgeCls(s.badgeVariant)}`}>
+                  {s.badge}
+                </span>
+              )}
+              <ChevronRight size={14} className="text-text-tertiary shrink-0 group-hover:text-text-secondary transition-colors" />
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface WorkspaceActivityProps {
   items: ActivityItem[];
   title?: string;

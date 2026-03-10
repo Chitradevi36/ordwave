@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AppShell, PageHeader } from "@/components/layout";
-import { Button } from "@/components/ui/button";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
 import { RefreshCw, TrendingUp, FileText, AlertCircle } from "lucide-react";
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, BarChart, Bar, Legend,
+} from "recharts";
 
 function fmt(n: number | undefined | null, prefix = "") {
   if (n == null) return "—";
@@ -139,54 +142,128 @@ export default function InsightsSalesPage() {
         })}
       </div>
 
-      {/* Trend sparkline — simple bar table */}
+      {/* Trend Chart */}
       {(data?.timeseries?.length ?? 0) > 0 && (
         <div className="px-6 mb-6">
-          <div className="rounded-lg border border-border overflow-hidden">
-            <div className="px-4 py-3 border-b border-border bg-background-subtle">
-              <span className="text-sm font-medium text-text-primary">Trend</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-text-secondary bg-background-subtle">Period</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-text-secondary bg-background-subtle">Orders</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-text-secondary bg-background-subtle">Order Value</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-text-secondary bg-background-subtle">Invoices</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-text-secondary bg-background-subtle">Invoice Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data?.timeseries?.map((row) => (
-                    <tr key={String(row.period)} className="border-b border-border last:border-0 hover:bg-surface">
-                      <td className="px-4 py-2 font-medium">{String(row.period).slice(0, 10)}</td>
-                      <td className="px-4 py-2 text-right">{fmt(row.orders_count)}</td>
-                      <td className="px-4 py-2 text-right">{fmt(row.orders_value, "₹")}</td>
-                      <td className="px-4 py-2 text-right">{fmt(row.invoices_count)}</td>
-                      <td className="px-4 py-2 text-right">{fmt(row.invoices_value, "₹")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="rounded-lg border border-border bg-surface p-4">
+            <p className="mb-3 text-sm font-semibold text-text-primary">Orders &amp; Invoices Trend</p>
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={data?.timeseries ?? []} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="hsl(var(--accent))" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradInvoices" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="hsl(var(--success))" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="period"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--text-secondary))" }}
+                  tickFormatter={(v) => String(v).slice(0, 10)}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--text-secondary))" }}
+                  tickFormatter={(v) => `₹${Number(v).toLocaleString("en-IN")}`}
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
+                  formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, ""]}
+                  labelFormatter={(l) => String(l).slice(0, 10)}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Area type="monotone" dataKey="orders_value"   name="Order Value"   stroke="hsl(var(--accent))"   fill="url(#gradOrders)"   strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="invoices_value" name="Invoice Value" stroke="hsl(var(--success))"  fill="url(#gradInvoices)" strokeWidth={2} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}
 
       {/* Top Retailers + Top Products */}
       <div className="grid grid-cols-1 gap-5 px-6 pb-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border overflow-hidden">
-          <div className="px-4 py-3 border-b border-border bg-background-subtle">
-            <span className="text-sm font-medium text-text-primary">Top Retailers</span>
-          </div>
-          <DataTable columns={retailerColumns} data={data?.top_retailers ?? []} />
+        {/* Top Retailers bar chart */}
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <p className="mb-3 text-sm font-semibold text-text-primary">Top Retailers by Value</p>
+          {(data?.top_retailers?.length ?? 0) > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                data={data?.top_retailers?.slice(0, 8) ?? []}
+                layout="vertical"
+                margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <XAxis
+                  type="number"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--text-secondary))" }}
+                  tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--text-secondary))" }}
+                  width={90}
+                />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
+                  formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Value"]}
+                />
+                <Bar dataKey="total_value" name="Total Value" fill="hsl(var(--accent))" radius={[0, 3, 3, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <DataTable columns={retailerColumns} data={data?.top_retailers ?? []} />
+          )}
         </div>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <div className="px-4 py-3 border-b border-border bg-background-subtle">
-            <span className="text-sm font-medium text-text-primary">Top Products</span>
-          </div>
-          <DataTable columns={productColumns} data={data?.top_products ?? []} />
+
+        {/* Top Products bar chart */}
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <p className="mb-3 text-sm font-semibold text-text-primary">Top Products by Revenue</p>
+          {(data?.top_products?.length ?? 0) > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                data={data?.top_products?.slice(0, 8) ?? []}
+                layout="vertical"
+                margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <XAxis
+                  type="number"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--text-secondary))" }}
+                  tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--text-secondary))" }}
+                  width={90}
+                />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
+                  formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Revenue"]}
+                />
+                <Bar dataKey="total_value" name="Revenue" fill="hsl(var(--success))" radius={[0, 3, 3, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <DataTable columns={productColumns} data={data?.top_products ?? []} />
+          )}
         </div>
       </div>
     </AppShell>

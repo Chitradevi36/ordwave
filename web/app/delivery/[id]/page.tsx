@@ -12,6 +12,7 @@ import { API_URL } from "@/lib/api/client";
 import {
   Truck, User, Package, CheckCircle,
   XCircle, Clock, ChevronRight, ClipboardCheck, AlertOctagon,
+  BarChart2, AlertCircle, ChevronDown, IndianRupee,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 
@@ -64,12 +65,26 @@ interface StopSummary {
   exception_code: string | null;
   delivered_at: string | null;
   delivery_notes: string | null;
+  delivered_value?: number | null;
   sales_order: {
     id: number;
     order_number: string;
     total_amount: number;
     customer: { id: number; name: string; address?: string };
   };
+}
+
+interface TripSummary {
+  total_stops: number;
+  delivered: number;
+  partial: number;
+  failed: number;
+  skipped: number;
+  total_order_value: number;
+  delivered_value: number;
+  returns_value: number;
+  cash_collected: number;
+  exceptions: { stop_id: number; customer_name: string; exception_code: string }[];
 }
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "warning" | "success" | "danger" | "outline"> = {
@@ -100,6 +115,11 @@ export default function TripDetailPage() {
 
   const [trip, setTrip]       = useState<TripDetail | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [tripSummary,        setTripSummary]        = useState<TripSummary | null>(null);
+  const [summaryLoading,     setSummaryLoading]     = useState(false);
+  const [showExceptions,     setShowExceptions]     = useState(false);
+  const [completingTrip,     setCompletingTrip]     = useState(false);
 
   // Cancel modal
   const [showCancel, setShowCancel]     = useState(false);
@@ -158,7 +178,28 @@ export default function TripDetailPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, orgId, id]);
 
+  const fetchSummary = useCallback(async () => {
+    if (!token || !orgId) return;
+    setSummaryLoading(true);
+    try {
+      const res  = await fetch(`${API_URL}/api/v1/delivery_trips/${id}/summary`, { headers: authHeaders });
+      const json = await res.json();
+      if (res.ok) setTripSummary(json.data);
+    } finally {
+      setSummaryLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, orgId, id]);
+
   useEffect(() => { void fetchTrip(); }, [fetchTrip]);
+
+  // Fetch summary when trip is known to be dispatched or completed
+  useEffect(() => {
+    if (trip && ["dispatched", "completed"].includes(trip.status)) {
+      void fetchSummary();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id, trip?.status]);
 
   async function handleDispatch() {
     setActionError("");
@@ -168,6 +209,21 @@ export default function TripDetailPage() {
     const json = await res.json();
     if (res.ok) void fetchTrip();
     else setActionError((json.errors ?? []).join(", "));
+  }
+
+  async function handleCompleteTrip() {
+    setCompletingTrip(true);
+    setActionError("");
+    try {
+      const res  = await fetch(`${API_URL}/api/v1/delivery_trips/${id}/complete`, {
+        method: "POST", headers: authHeaders,
+      });
+      const json = await res.json();
+      if (res.ok) void fetchTrip();
+      else setActionError((json.errors ?? ["Complete failed"]).join(", "));
+    } finally {
+      setCompletingTrip(false);
+    }
   }
 
   async function handleCancel() {
@@ -368,6 +424,16 @@ export default function TripDetailPage() {
     ["delivered", "partial_delivery", "failed", "skipped"].includes(s.status)
   ).length;
 
+  const allResolved = trip.stops.length > 0 && trip.stops.every(
+    (s) => ["delivered", "partial_delivery", "failed", "skipped"].includes(s.status)
+  );
+
+  const exceptionStops = trip.stops.filter((s) => s.exception_code);
+
+  function fmtRupees(n: number) {
+    return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  }
+
   return (
     <AppShell breadcrumbs={[
       { label: "Operations",     href: "/operations" },
@@ -383,8 +449,9 @@ export default function TripDetailPage() {
             : []),
           ...(["draft", "planned"].includes(trip.status)
             ? [{ label: "Dispatch", onClick: handleDispatch }]
-            : []),
-          ...(["draft", "planned", "dispatched"].includes(trip.status)
+            : []),          ...(trip.status === "dispatched" && allResolved
+            ? [{ label: completingTrip ? "Completing…" : "Complete Trip", onClick: handleCompleteTrip }]
+            : []),          ...(["draft", "planned", "dispatched"].includes(trip.status)
             ? [{ label: "Cancel Trip", onClick: () => { setShowCancel(true); setCancelReason(""); }, variant: "outline" as const }]
             : []),
         ]}
@@ -443,17 +510,51 @@ export default function TripDetailPage() {
         </Card>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress bar + status breakdown */}
       <div className="mb-6">
         <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
           <span>{completedCount} of {trip.stops.length} stops done</span>
           <span>{trip.stops.length > 0 ? Math.round((completedCount / trip.stops.length) * 100) : 0}%</span>
         </div>
-        <div className="h-2 bg-background-subtle rounded-full overflow-hidden">
-          <div
-            className="h-full bg-accent/100 rounded-full transition-all"
-            style={{ width: trip.stops.length > 0 ? `${(completedCount / trip.stops.length) * 100}%` : "0%" }}
-          />
+        {/* Segmented progress bar */}
+        <div className="h-3 rounded-full overflow-hidden flex bg-background-subtle">
+          {trip.stops.length > 0 && (
+            <>
+              {(() => {
+                const d  = trip.stops.filter((s) => s.status === "delivered").length;
+                const p  = trip.stops.filter((s) => s.status === "partial_delivery").length;
+                const f  = trip.stops.filter((s) => s.status === "failed").length;
+                const sk = trip.stops.filter((s) => s.status === "skipped").length;
+                const total = trip.stops.length;
+                return (
+                  <>
+                    {d  > 0 && <div className="h-full bg-green-500  transition-all" style={{ width: `${(d  / total) * 100}%` }} title={`${d} delivered`}  />}
+                    {p  > 0 && <div className="h-full bg-amber-500  transition-all" style={{ width: `${(p  / total) * 100}%` }} title={`${p} partial`}    />}
+                    {f  > 0 && <div className="h-full bg-red-500    transition-all" style={{ width: `${(f  / total) * 100}%` }} title={`${f} failed`}     />}
+                    {sk > 0 && <div className="h-full bg-gray-400   transition-all" style={{ width: `${(sk / total) * 100}%` }} title={`${sk} skipped`}   />}
+                  </>
+                );
+              })()}
+            </>
+          )}
+        </div>
+        <div className="flex gap-4 mt-1.5">
+          {[
+            { key: "delivered",        label: "Delivered",       color: "bg-green-500" },
+            { key: "partial_delivery", label: "Partial",         color: "bg-amber-500" },
+            { key: "failed",           label: "Failed",          color: "bg-red-500" },
+            { key: "skipped",          label: "Skipped",         color: "bg-gray-400" },
+            { key: "pending",          label: "Pending",         color: "bg-background-subtle border border-border" },
+          ].map(({ key, label, color }) => {
+            const cnt = trip.stops.filter((s) => s.status === key).length;
+            if (!cnt) return null;
+            return (
+              <span key={key} className="flex items-center gap-1 text-xs text-text-secondary">
+                <span className={`inline-block h-2 w-2 rounded-full ${color}`} />
+                {cnt} {label}
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -543,6 +644,67 @@ export default function TripDetailPage() {
       {trip.notes && (
         <div className="mt-6 rounded-md bg-background-subtle border border-border p-3 text-sm text-text-secondary">
           <span className="font-medium">Notes: </span>{trip.notes}
+        </div>
+      )}
+
+      {/* Exception Panel */}
+      {exceptionStops.length > 0 && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowExceptions((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-red-200 bg-red-50 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {exceptionStops.length} stop{exceptionStops.length > 1 ? "s" : ""} with exceptions
+            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${showExceptions ? "rotate-180" : ""}`} />
+          </button>
+          {showExceptions && (
+            <div className="mt-2 rounded-lg border border-red-200 bg-white divide-y">
+              {exceptionStops.map((s) => (
+                <div key={s.id} className="px-4 py-3 flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium">Stop #{s.sequence} — {s.sales_order.customer.name}</span>
+                    <p className="text-xs text-text-secondary font-mono">{s.sales_order.order_number}</p>
+                  </div>
+                  <Badge variant="danger" className="text-xs">{s.exception_code?.replace(/_/g, " ")}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Trip Summary */}
+      {(trip.status === "dispatched" || trip.status === "completed") && (
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+            <BarChart2 className="h-4 w-4" />
+            Trip Summary
+          </h3>
+          {summaryLoading ? (
+            <p className="text-xs text-text-secondary">Loading summary…</p>
+          ) : tripSummary ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Total Value",      value: fmtRupees(tripSummary.total_order_value), icon: IndianRupee, color: "text-text-primary" },
+                { label: "Delivered Value",  value: fmtRupees(tripSummary.delivered_value),   icon: CheckCircle, color: "text-green-600"   },
+                { label: "Returns Value",    value: fmtRupees(tripSummary.returns_value),     icon: Package,     color: "text-amber-600"   },
+                { label: "Cash Collected",   value: fmtRupees(tripSummary.cash_collected),    icon: IndianRupee, color: "text-violet-600"  },
+              ].map(({ label, value, icon: Icon, color }) => (
+                <Card key={label} className="border border-border shadow-none">
+                  <CardContent className="p-3">
+                    <div className={`flex items-center gap-1.5 mb-1 ${color}`}>
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">{label}</span>
+                    </div>
+                    <p className="text-sm font-semibold text-text-primary">{value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
 

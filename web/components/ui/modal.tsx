@@ -36,30 +36,30 @@ export function Modal({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
         <Dialog.Content
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-background p-6 shadow-xl",
+            "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] sm:w-full -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-background p-4 sm:p-6 shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto",
             sizeClasses[size],
             className
           )}
         >
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-2">
             {title && (
-              <Dialog.Title className="text-lg font-semibold text-text-primary">
+              <Dialog.Title className="text-base sm:text-lg font-semibold text-text-primary">
                 {title}
               </Dialog.Title>
             )}
             <Dialog.Close
               onClick={onClose}
-              className="ml-auto rounded-sm opacity-70 hover:opacity-100"
+              className="ml-auto rounded-sm opacity-70 hover:opacity-100 shrink-0"
             >
               <X className="h-4 w-4" />
             </Dialog.Close>
           </div>
           {description && (
-            <Dialog.Description className="mt-1 text-sm text-text-secondary">
+            <Dialog.Description className="mt-1 text-xs sm:text-sm text-text-secondary">
               {description}
             </Dialog.Description>
           )}
-          <div className="mt-4">{children}</div>
+          <div className="mt-3 sm:mt-4">{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

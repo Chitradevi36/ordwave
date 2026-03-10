@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, GitBranch, Users, ChevronRight, Plus, UserCircle, Receipt, Upload, CreditCard, Truck } from "lucide-react";
+import { Building2, GitBranch, Users, ChevronRight, Plus, UserCircle, Receipt, Upload, CreditCard, Truck, Bell, FileDown, FileText, Shield } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { AddBranchModal } from "@/components/add-branch-modal";
 import { AddOrganizationModal } from "@/components/add-organization-modal";
@@ -139,12 +139,78 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-1 p-0 pb-3">
             <button
-              onClick={() => router.push("/users")}
+              onClick={() => router.push("/settings/team")}
               className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
             >
               <div>
-                <p className="text-sm font-medium text-text-primary">Team Members</p>
+                <p className="text-sm font-medium text-text-primary">Team Members &amp; Invitations</p>
                 <p className="text-xs text-text-secondary">Manage users, roles, and invitations</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+          </CardContent>
+        </Card>
+
+        {/* Invoices */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <FileText className="h-4 w-4 text-accent" />
+              Invoices
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 p-0 pb-3">
+            <button
+              onClick={() => router.push("/settings/invoices")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Invoice Settings</p>
+                <p className="text-xs text-text-secondary">Prefix, numbering format, payment terms, auto-generate</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+          </CardContent>
+        </Card>
+
+        {/* Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Bell className="h-4 w-4 text-accent" />
+              Notifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 p-0 pb-3">
+            <button
+              onClick={() => router.push("/settings/notifications")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Notification Preferences</p>
+                <p className="text-xs text-text-secondary">Email, push, and in-app alert preferences per event</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+          </CardContent>
+        </Card>
+
+        {/* Exports */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <FileDown className="h-4 w-4 text-accent" />
+              Exports
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 p-0 pb-3">
+            <button
+              onClick={() => router.push("/settings/exports")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Export History</p>
+                <p className="text-xs text-text-secondary">Download CSV exports of orders, payments, customers and more</p>
               </div>
               <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
             </button>
@@ -231,6 +297,28 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm font-medium text-text-primary">Prepayment SKUs</p>
                 <p className="text-xs text-text-secondary">Products that require advance payment</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+          </CardContent>
+        </Card>
+
+        {/* Audit Log */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Shield className="h-4 w-4 text-accent" />
+              Audit &amp; Security
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 p-0 pb-3">
+            <button
+              onClick={() => router.push("/settings/audit")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Audit Log</p>
+                <p className="text-xs text-text-secondary">Track all actions by actors across orders, payments, credit, and more</p>
               </div>
               <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
             </button>

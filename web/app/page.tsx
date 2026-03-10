@@ -5,9 +5,9 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-background-subtle">
       <div className="text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-          <span className="text-2xl font-bold text-white">OD</span>
+          <span className="text-2xl font-bold text-white">OL</span>
         </div>
-        <h1 className="text-4xl font-bold text-text-primary">OmniDist OMS</h1>
+        <h1 className="text-4xl font-bold text-text-primary">OrderLane Pro</h1>
         <p className="mt-2 text-lg text-text-secondary">
           Offline-first, Credit-first OMS for FMCG Distributors
         </p>

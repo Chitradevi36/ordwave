@@ -157,7 +157,7 @@ export default function TransfersPage() {
   ];
 
   return (
-    <AppShell>
+    <AppShell hideBreadcrumb>
 
       <PageHeader
         title="Stock Transfers"

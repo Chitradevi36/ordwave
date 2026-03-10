@@ -229,10 +229,7 @@ export default function FleetPage() {
   ];
 
   return (
-    <AppShell breadcrumbs={[
-        { label: "Settings", href: "/settings" },
-        { label: "Fleet" },
-      ]}>
+    <AppShell hideBreadcrumb title="Fleet Management">
       <PageHeader
         title="Fleet Management"
         subtitle="Manage vehicles used for deliveries"
