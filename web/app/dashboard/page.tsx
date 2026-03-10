@@ -200,7 +200,7 @@ export default function DashboardPage() {
               {data ? greeting(data.greeting_name) : "Welcome back"}
             </h1>
           )}
-          <p className="text-sm text-text-secondary">{today()}</p>
+          <p className="text-sm text-text-secondary"> Today: {(data?.orders.today ?? 0)} Order{(data?.orders.today ?? 0) !== 1 ? "s" : ""} • {fmt(data?.collections.today, true)} Collected {((data?.orders.pending ?? 0) + (data?.orders.on_hold ?? 0)) > 0 && ` • ${(data?.orders.pending ?? 0) + (data?.orders.on_hold ?? 0)} Approval${((data?.orders.pending ?? 0) + (data?.orders.on_hold ?? 0)) !== 1 ? "s" : ""} Pending`}</p>
         </div>
         {(!role || role === "owner" || role === "admin" || role === "manager" || role === "sales_rep") && (
           <div className="flex gap-2 mt-3 sm:mt-0">
