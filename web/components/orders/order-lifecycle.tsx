@@ -67,12 +67,12 @@ export function OrderLifecycle({
   const isFailed = ["rejected", "cancelled"].includes(status);
 
   return (
-    <div className="rounded-lg border border-border bg-white p-6 mb-6">
-      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">
+    <div className="rounded-lg border border-border bg-white p-4 sm:p-6 mb-6">
+      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3 sm:mb-4">
         Order Lifecycle
       </p>
 
-      <div className="flex items-start gap-1 overflow-x-auto pb-2">
+      <div className="flex items-start gap-0.5 sm:gap-1 overflow-x-auto pb-2">
         {stages.map((stage, idx) => {
           const done = idx < currentIdx;
           const active = idx === currentIdx;
@@ -82,7 +82,7 @@ export function OrderLifecycle({
             <div key={stage.key} className="flex flex-col items-center shrink-0 min-w-max">
               {/* Stage circle */}
               <div
-                className={`h-8 w-8 rounded-full border-2 flex items-center justify-center transition-colors ${
+                className={`h-6 sm:h-8 w-6 sm:w-8 rounded-full border-2 flex items-center justify-center transition-colors ${
                   failed
                     ? "border-danger bg-danger/10 text-danger"
                     : done
@@ -94,24 +94,24 @@ export function OrderLifecycle({
                 title={stage.ts ? fmtDate(stage.ts) : ""}
               >
                 {done ? (
-                  <CheckCircle2 className="h-4 w-4" />
+                  <CheckCircle2 className="h-3 sm:h-4 w-3 sm:w-4" />
                 ) : failed ? (
-                  <XCircle className="h-4 w-4" />
+                  <XCircle className="h-3 sm:h-4 w-3 sm:w-4" />
                 ) : active ? (
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-3 sm:h-4 w-3 sm:w-4" />
                 ) : (
-                  <span className="text-[10px] font-bold">{idx + 1}</span>
+                  <span className="text-[8px] sm:text-[10px] font-bold">{idx + 1}</span>
                 )}
               </div>
 
               {/* Label */}
-              <p className="text-[10px] font-medium text-text-primary mt-1 text-center w-12 leading-tight">
+              <p className="text-[8px] sm:text-[10px] font-medium text-text-primary mt-1 text-center w-10 sm:w-12 leading-tight">
                 {stage.label}
               </p>
 
               {/* Timestamp */}
               {stage.ts && (
-                <p className="text-[8px] text-text-secondary text-center mt-0.5">
+                <p className="text-[7px] sm:text-[8px] text-text-secondary text-center mt-0.5">
                   {fmtDate(stage.ts)}
                 </p>
               )}
@@ -121,7 +121,7 @@ export function OrderLifecycle({
       </div>
 
       {isFailed && (
-        <div className="mt-3 p-3 rounded-md border border-danger/30 bg-danger/5">
+        <div className="mt-3 p-2 sm:p-3 rounded-md border border-danger/30 bg-danger/5">
           <p className="text-xs text-danger font-medium">
             Order {status.replace("_", " ")}
             {cancellationReason ? ` — ${cancellationReason}` : ""}

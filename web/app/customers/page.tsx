@@ -478,7 +478,7 @@ export default function CustomersPage() {
     <AppShell title="Customers">
       <PageHeader
         title="Customers"
-        description={`${totalCount} total customers`}
+        description="Manage retailers, channel partners, credit limits, and customer profiles. Track credit usage and customer information across your distribution network."
         actions={[
           {
             label: "Import CSV",

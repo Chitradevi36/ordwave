@@ -53,32 +53,32 @@ export function OrderLinesTable({
         {lines.length === 0 ? (
           <p className="text-sm text-text-secondary italic">No items in this order.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-3 py-2 font-medium text-text-secondary">
+                  <th className="text-left px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary">
                     Product
                   </th>
-                  <th className="text-left px-3 py-2 font-medium text-text-secondary text-xs">
+                  <th className="text-left px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary text-xs">
                     HSN
                   </th>
-                  <th className="text-right px-3 py-2 font-medium text-text-secondary">
+                  <th className="text-right px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary">
                     Qty
                   </th>
-                  <th className="text-right px-3 py-2 font-medium text-text-secondary">
+                  <th className="text-right px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary">
                     Unit Price
                   </th>
-                  <th className="text-right px-3 py-2 font-medium text-text-secondary">
+                  <th className="text-right px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary">
                     Discount
                   </th>
-                  <th className="text-right px-3 py-2 font-medium text-text-secondary">
+                  <th className="text-right px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary">
                     GST
                   </th>
-                  <th className="text-right px-3 py-2 font-medium text-text-secondary">
+                  <th className="text-right px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary">
                     Line Total
                   </th>
-                  <th className="text-center px-3 py-2 font-medium text-text-secondary">
+                  <th className="text-center px-2 sm:px-3 py-1 sm:py-2 font-medium text-text-secondary">
                     Actions
                   </th>
                 </tr>
@@ -86,29 +86,29 @@ export function OrderLinesTable({
               <tbody>
                 {lines.map((line) => (
                   <tr key={line.id} className="border-b border-border hover:bg-background-subtle">
-                    <td className="px-3 py-2">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2">
                       <div>
-                        <p className="font-medium text-text-primary">{line.product_name}</p>
+                        <p className="font-medium text-text-primary text-xs sm:text-sm">{line.product_name}</p>
                         <p className="text-xs text-text-secondary">{line.product_sku}</p>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-xs text-text-secondary">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-xs text-text-secondary">
                       {line.hsn_code ?? "—"}
                     </td>
-                    <td className="px-3 py-2 text-right font-medium">{line.qty}</td>
-                    <td className="px-3 py-2 text-right text-text-secondary">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-right font-medium">{line.qty}</td>
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-right text-text-secondary">
                       {fmtINR(line.unit_price)}
                     </td>
-                    <td className="px-3 py-2 text-right text-text-secondary">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-right text-text-secondary">
                       {line.discount_pct > 0 ? `${line.discount_pct}%` : "—"}
                     </td>
-                    <td className="px-3 py-2 text-right text-text-secondary">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-right text-text-secondary">
                       {line.gst_rate}%
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold text-text-primary">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-right font-semibold text-text-primary">
                       {fmtINR(line.line_total)}
                     </td>
-                    <td className="px-3 py-2 text-center">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-center">
                       <div className="flex justify-center gap-1">
                         {onViewProduct && (
                           <Button
@@ -137,30 +137,30 @@ export function OrderLinesTable({
               </tbody>
               <tfoot>
                 <tr className="border-t border-border font-semibold">
-                  <td colSpan={6} className="px-3 py-3 text-right text-text-primary">
+                  <td colSpan={6} className="px-2 sm:px-3 py-2 sm:py-3 text-right text-text-primary">
                     Subtotal
                   </td>
-                  <td className="px-3 py-3 text-right text-text-primary">
+                  <td className="px-2 sm:px-3 py-2 sm:py-3 text-right text-text-primary">
                     {fmtINR(subtotal)}
                   </td>
                   <td />
                 </tr>
                 {totalDiscount > 0 && (
                   <tr className="text-danger">
-                    <td colSpan={6} className="px-3 py-2 text-right text-text-secondary">
+                    <td colSpan={6} className="px-2 sm:px-3 py-1 sm:py-2 text-right text-text-secondary">
                       Discount
                     </td>
-                    <td className="px-3 py-2 text-right font-medium">
+                    <td className="px-2 sm:px-3 py-1 sm:py-2 text-right font-medium">
                       −{fmtINR(totalDiscount)}
                     </td>
                     <td />
                   </tr>
                 )}
                 <tr>
-                  <td colSpan={6} className="px-3 py-2 text-right text-text-secondary">
+                  <td colSpan={6} className="px-2 sm:px-3 py-1 sm:py-2 text-right text-text-secondary">
                     GST
                   </td>
-                  <td className="px-3 py-2 text-right font-medium">
+                  <td className="px-2 sm:px-3 py-1 sm:py-2 text-right font-medium">
                     {fmtINR(totalGst)}
                   </td>
                   <td />

@@ -105,19 +105,19 @@ export function NextActionBanner({
         : "text-primary";
 
   return (
-    <div className={`rounded-lg border ${bgColor} p-4 mb-6 flex items-start gap-3`}>
+    <div className={`rounded-lg border ${bgColor} p-3 sm:p-4 mb-6 flex flex-col sm:flex-row items-start gap-2 sm:gap-3 sm:items-center`}>
       <div className={`shrink-0 mt-0.5 ${textColor}`}>{action.icon}</div>
 
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-text-primary">{action.title}</p>
-        <p className="text-sm text-text-secondary mt-0.5">{action.description}</p>
+      <div className="flex-1 min-w-0 flex-col flex">
+        <p className="font-semibold text-sm sm:text-base text-text-primary">{action.title}</p>
+        <p className="text-xs sm:text-sm text-text-secondary mt-0.5">{action.description}</p>
       </div>
 
       {action.buttonLabel && action.buttonAction && (
         <Button
           size="sm"
           onClick={() => onAction?.(action.buttonAction!)}
-          className="shrink-0"
+          className="shrink-0 text-xs sm:text-sm whitespace-nowrap"
         >
           {action.buttonLabel}
         </Button>

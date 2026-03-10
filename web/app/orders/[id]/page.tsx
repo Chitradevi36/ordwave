@@ -425,7 +425,7 @@ export default function OrderDetailPage() {
       value: "overview",
       label: "Overview",
       content: (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
           <OperationalSnapshot
             orderedAt={order.created_at}
             expectedDelivery={order.delivery_date}
@@ -650,17 +650,17 @@ export default function OrderDetailPage() {
         onClose={() => setApproveModal(false)}
         title="Review Order"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-text-secondary">
+        <div className="space-y-3 sm:space-y-4">
+          <p className="text-xs sm:text-sm text-text-secondary">
             {order.status === "on_hold"
               ? `Order ${order.order_number} is on hold pending credit review. Approve or reject to proceed.`
               : `Order ${order.order_number} is submitted and awaiting approval. Approve or reject to proceed.`}
           </p>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={() => setDecision("approved")}
-              className={`flex-1 rounded-md border py-2 text-sm font-medium transition-colors ${
+              className={`flex-1 rounded-md border py-2 text-xs sm:text-sm font-medium transition-colors ${
                 decision === "approved"
                   ? "border-success bg-success/10 text-success"
                   : "border-border text-text-secondary hover:bg-muted"
@@ -681,24 +681,24 @@ export default function OrderDetailPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">
+            <label className="text-xs sm:text-sm font-medium mb-1 block">
               Reason {decision === "rejected" ? "*" : "(optional)"}
             </label>
             <textarea
               value={decisionReason}
               onChange={e => setDecisionReason(e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border border-border px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder={decision === "approved" ? "Optional note…" : "Reason for rejection…"}
             />
           </div>
 
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setApproveModal(false)}>Cancel</Button>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+            <Button variant="outline" onClick={() => setApproveModal(false)} className="text-xs sm:text-sm">Cancel</Button>
             <Button
               onClick={handleApproveSubmit}
               disabled={acting || (decision === "rejected" && !decisionReason.trim())}
-              className={decision === "rejected" ? "bg-danger hover:bg-danger/90" : ""}
+              className={`text-xs sm:text-sm ${decision === "rejected" ? "bg-danger hover:bg-danger/90" : ""}`}
             >
               Confirm {decision === "approved" ? "Approval" : "Rejection"}
             </Button>
@@ -712,25 +712,25 @@ export default function OrderDetailPage() {
         onClose={() => setCancelModal(false)}
         title="Cancel Order"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-text-secondary">
+        <div className="space-y-3 sm:space-y-4">
+          <p className="text-xs sm:text-sm text-text-secondary">
             Are you sure you want to cancel order <strong>{order.order_number}</strong>?
             This cannot be undone.
           </p>
           <div>
-            <label className="text-sm font-medium mb-1 block">Reason *</label>
+            <label className="text-xs sm:text-sm font-medium mb-1 block">Reason *</label>
             <textarea
               value={cancelReason}
               onChange={e => setCancelReason(e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border border-border px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Reason for cancellation…"
             />
           </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setCancelModal(false)}>Back</Button>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+            <Button variant="outline" onClick={() => setCancelModal(false)} className="text-xs sm:text-sm">Back</Button>
             <Button
-              className="bg-danger hover:bg-danger/90"
+              className="bg-danger hover:bg-danger/90 text-xs sm:text-sm"
               disabled={acting || !cancelReason.trim()}
               onClick={handleCancelSubmit}
             >
@@ -747,23 +747,24 @@ export default function OrderDetailPage() {
         title="Put Order on Hold"
         description="The order will move to on-hold status. A manager will need to approve or reject it before it proceeds."
       >
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <label className="text-sm font-medium mb-1 block">Reason *</label>
+            <label className="text-xs sm:text-sm font-medium mb-1 block">Reason *</label>
             <textarea
               value={holdReason}
               onChange={e => setHoldReason(e.target.value)}
               rows={3}
               autoFocus
-              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border border-border px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="e.g. Awaiting stock confirmation, customer query…"
             />
           </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setHoldModal(false)}>Cancel</Button>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+            <Button variant="outline" onClick={() => setHoldModal(false)} className="text-xs sm:text-sm">Cancel</Button>
             <Button
               disabled={acting || !holdReason.trim()}
               onClick={handleHoldSubmit}
+              className="text-xs sm:text-sm"
             >
               Confirm Hold
             </Button>
@@ -788,29 +789,29 @@ export default function OrderDetailPage() {
         title="Edit Logistics"
         description="Update delivery date and notes. Lines and pricing cannot be changed after submission."
       >
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <label className="text-sm font-medium mb-1 block">Delivery Date</label>
+            <label className="text-xs sm:text-sm font-medium mb-1 block">Delivery Date</label>
             <input
               type="date"
               value={editDate}
               onChange={e => setEditDate(e.target.value)}
-              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border border-border px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1 block">Notes</label>
+            <label className="text-xs sm:text-sm font-medium mb-1 block">Notes</label>
             <textarea
               rows={3}
               value={editNotes}
               onChange={e => setEditNotes(e.target.value)}
-              className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full rounded-md border border-border px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               placeholder="Optional notes…"
             />
           </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setEditModal(false)}>Cancel</Button>
-            <Button onClick={handleLimitedEditSubmit} disabled={acting}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+            <Button variant="outline" onClick={() => setEditModal(false)} className="text-xs sm:text-sm">Cancel</Button>
+            <Button onClick={handleLimitedEditSubmit} disabled={acting} className="text-xs sm:text-sm">
               Save Changes
             </Button>
           </div>

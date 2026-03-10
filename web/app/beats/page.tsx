@@ -242,9 +242,9 @@ export default function BeatsPage() {
 
       <PageHeader
         title="Beats"
-        description={meta ? `${meta.total_count} beat${meta.total_count !== 1 ? "s" : ""}` : "Manage beat plans and retailer visit schedules"}
+        description="Plan retail visits and manage field sales coverage. Optimize sales representative routes, monitor visit schedules, and track beat-wise performance."
         actions={[
-          { label: exporting ? "Exporting…" : "Export CSV", icon: Download, onClick: handleExportCsv, disabled: exporting },
+          { label: exporting ? "Exporting…" : "Export CSV", icon: Download, onClick: handleExportCsv, disabled: exporting, variant: "outline" },
           { label: "New Beat", icon: Plus, onClick: () => setShowCreate(true) },
         ]}
       />

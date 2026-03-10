@@ -48,20 +48,20 @@ export function DocumentsPanel({
         <CardTitle className="text-sm">Documents ({documents.length})</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {documents.map((doc) => {
             const config = DOCUMENT_TYPE_CONFIG[doc.type];
             return (
               <div
                 key={doc.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-background-subtle transition-colors"
+                className="flex items-center justify-between p-2 sm:p-3 rounded-lg border border-border hover:bg-background-subtle transition-colors gap-2"
               >
-                <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
                   <div className="text-text-secondary shrink-0 mt-0.5">
                     {config?.icon}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-text-primary">
+                    <p className="text-xs sm:text-sm font-medium text-text-primary">
                       {config?.label || doc.type.replace("_", " ")}
                     </p>
                     <p className="text-xs text-text-secondary truncate">

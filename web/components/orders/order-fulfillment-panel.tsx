@@ -32,9 +32,9 @@ function Row({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 py-2">
-      <span className="text-sm text-text-secondary">{label}</span>
-      <span className="text-sm text-text-primary font-medium">{value}</span>
+    <div className="flex items-start justify-between gap-2 sm:gap-3 py-2">
+      <span className="text-xs sm:text-sm text-text-secondary">{label}</span>
+      <span className="text-xs sm:text-sm text-text-primary font-medium">{value}</span>
     </div>
   );
 }

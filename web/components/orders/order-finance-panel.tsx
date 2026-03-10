@@ -19,13 +19,13 @@ function Row({
   highlight?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 py-2">
+    <div className="flex items-start justify-between gap-2 sm:gap-3 py-2">
       <span
-        className={`text-sm ${highlight ? "font-medium text-text-primary" : "text-text-secondary"}`}
+        className={`text-xs sm:text-sm ${highlight ? "font-medium text-text-primary" : "text-text-secondary"}`}
       >
         {label}
       </span>
-      <span className={`text-sm text-right ${highlight ? "font-semibold" : ""}`}>
+      <span className={`text-xs sm:text-sm text-right ${highlight ? "font-semibold" : ""}`}>
         {value}
       </span>
     </div>

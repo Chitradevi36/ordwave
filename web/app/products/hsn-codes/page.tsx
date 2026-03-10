@@ -86,7 +86,7 @@ export default function HsnCodesPage() {
   const gstOptions = [0, 5, 12, 18, 28];
 
   return (
-    <AppShell title="HSN / SAC Codes">
+    <AppShell title="HSN / SAC Codes" hideBreadcrumb>
       <PageHeader
         title="HSN / SAC Codes"
         description="Harmonised System of Nomenclature and Service Accounting Codes used in GST invoicing"
@@ -95,7 +95,7 @@ export default function HsnCodesPage() {
         ]}
       />
 
-      <ProductsSubNav />
+      {/* <ProductsSubNav /> */}
 
       {/* Filters */}
       <div className="mb-4 flex flex-wrap gap-3 items-center">

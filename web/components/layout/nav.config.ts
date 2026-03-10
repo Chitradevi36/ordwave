@@ -193,7 +193,7 @@ export const GROUPED_NAV: NavGroup[] = [
     key: "sales",
     label: "Sales",
     icon: ShoppingCart,
-    matchers: ["/orders", "/approvals", "/products/price-lists", "/pricing/schemes"],
+    matchers: ["/orders", "/products/price-lists", "/pricing/schemes"],
     rolesAllowed: ["owner", "admin", "manager", "sales_rep"],
     children: [
       {
@@ -202,14 +202,14 @@ export const GROUPED_NAV: NavGroup[] = [
         href: "/orders",
         matchers: ["/orders"],
       },
-      {
-        key: "approvals",
-        label: "Approvals",
-        href: "/approvals",
-        matchers: ["/approvals"],
-        rolesAllowed: ["owner", "admin", "manager"],
-        badgeKey: "pendingApprovals",
-      },
+      // {
+      //   key: "approvals",
+      //   label: "Approvals",
+      //   href: "/approvals",
+      //   matchers: ["/approvals"],
+      //   rolesAllowed: ["owner", "admin", "manager"],
+      //   badgeKey: "pendingApprovals",
+      // },
       {
         key: "price-lists",
         label: "Price Lists",
@@ -268,7 +268,7 @@ export const GROUPED_NAV: NavGroup[] = [
         key: "stock-position",
         label: "Stock Position",
         href: "/inventory/stock",
-        matchers: ["/inventory/stock", "/inventory"],
+        matchers: ["/inventory/stock"],
       },
       {
         key: "stock-transfers",
@@ -313,13 +313,13 @@ export const GROUPED_NAV: NavGroup[] = [
         matchers: ["/operations"],
         rolesAllowed: ["owner", "admin", "manager", "warehouse_staff"],
       },
-      {
-        key: "exceptions",
-        label: "Exceptions",
-        href: "/delivery/exceptions",
-        matchers: ["/delivery/exceptions"],
-        badgeKey: "deliveryExceptions",
-      },
+      // {
+      //   key: "exceptions",
+      //   label: "Exceptions",
+      //   href: "/delivery/exceptions",
+      //   matchers: ["/delivery/exceptions"],
+      //   badgeKey: "deliveryExceptions",
+      // },
       {
         key: "returns",
         label: "Returns",
@@ -404,10 +404,10 @@ export const GROUPED_NAV: NavGroup[] = [
       "/products",
       "/products/hsn-codes",
       "/settings",
-      "/settings/users",
+      "/users",
       "/settings/branches",
       "/settings/organization",
-      "/settings/vehicles",
+      "/settings/fleet",
     ],
     rolesAllowed: ["owner", "admin"],
     children: [
@@ -432,14 +432,14 @@ export const GROUPED_NAV: NavGroup[] = [
       {
         key: "users",
         label: "Users",
-        href: "/settings/users",
-        matchers: ["/settings/users"],
+        href: "/users",
+        matchers: ["/users"],
       },
       {
         key: "vehicles",
         label: "Vehicles",
-        href: "/settings/vehicles",
-        matchers: ["/settings/vehicles"],
+        href: "/settings/fleet",
+        matchers: ["/settings/fleet"],
       },
       {
         key: "organization",

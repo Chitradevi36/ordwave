@@ -47,31 +47,31 @@ export function OrderHero({
   actions,
 }: OrderHeroProps) {
   return (
-    <div className="rounded-lg border border-border bg-white p-6 mb-6">
-      <div className="flex items-start justify-between gap-4 mb-4">
+    <div className="rounded-lg border border-border bg-white p-4 sm:p-6 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-1">{orderNumber}</h1>
-          <p className="text-sm text-text-secondary">
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-1">{orderNumber}</h1>
+          <p className="text-xs sm:text-sm text-text-secondary">
             {customerName} • {branch}
           </p>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-start sm:items-end gap-1">
           <div className="text-right">
-            <p className="text-2xl font-bold text-text-primary">{fmtINR(totalAmount)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-text-primary">{fmtINR(totalAmount)}</p>
             <p className="text-xs text-text-secondary">Order Total</p>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <Badge variant={STATUS_VARIANT[status] ?? "secondary"}>
             {status.replace("_", " ")}
           </Badge>
 
           {creditDecision && (
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-background-subtle">
+            <div className="flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full border border-border bg-background-subtle">
               {CREDIT_ICON[creditDecision]}
               <span className="text-xs font-medium text-text-secondary">
                 Credit:{" "}
@@ -85,13 +85,14 @@ export function OrderHero({
           )}
         </div>
 
-        <div className="flex gap-2 flex-wrap justify-end">
+        <div className="flex gap-2 flex-wrap justify-start sm:justify-end">
           {actions.map((action, idx) => (
             <Button
               key={idx}
               size="sm"
               variant={action.variant || "default"}
               onClick={action.onClick}
+              className="text-xs sm:text-sm"
             >
               {action.label}
             </Button>

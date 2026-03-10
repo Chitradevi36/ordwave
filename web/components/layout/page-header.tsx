@@ -25,7 +25,7 @@ export interface PageHeaderProps {
 export function PageHeader({ title, description, subtitle, actions, className }: PageHeaderProps) {
   const subText = description ?? subtitle;
   return (
-    <div className={cn("mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between", className)}>
+    <div className={cn("mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between", className)}>
       <div className="min-w-0">
         <h1 className="text-2xl font-bold text-text-primary">{title}</h1>
         {subText && (
@@ -33,7 +33,7 @@ export function PageHeader({ title, description, subtitle, actions, className }:
         )}
       </div>
       {actions && actions.length > 0 && (
-        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
+        <div className="flex flex-col w-full gap-2 sm:flex-row sm:w-auto sm:gap-2 md:gap-3">
           {actions.map((action) => {
             const icon = action.icon;
             // Support both a Lucide component ref and a pre-rendered ReactNode
@@ -48,7 +48,8 @@ export function PageHeader({ title, description, subtitle, actions, className }:
                 variant={action.variant ?? "default"}
                 onClick={action.onClick}
                 disabled={action.disabled}
-                className="w-full sm:w-auto"
+                size="sm"
+                className="text-xs sm:text-sm w-full sm:w-auto"
               >
                 {iconNode}
                 {action.label}
