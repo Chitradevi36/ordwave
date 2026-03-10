@@ -25,8 +25,7 @@ module Signup
       # Generate and "send" OTP (in real app, send via email/SMS)
       pending.generate_otp!
 
-      # TODO: Send OTP via email
-      # SignupMailer.send_otp(pending).deliver_later
+      SignupMailer.send_otp(pending).deliver_later
 
       Result.new(success?: true, pending_registration: pending, errors: [])
     rescue ActiveRecord::RecordInvalid => e
