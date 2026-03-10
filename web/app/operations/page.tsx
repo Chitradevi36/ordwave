@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { WorkspaceHeader } from "@/components/workspace/WorkspaceHeader";
-import { WorkspaceKpis, WorkspaceActions, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
+import { WorkspaceKpis, WorkspaceSections, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
 import { WORKSPACE_CONFIGS } from "@/components/workspace/workspace.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useOperationsStats, useWorkspaceActivity } from "@/lib/hooks/use-workspace-stats";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Truck, Plus, RotateCcw, MapPin, CheckCircle, Package, ClipboardList,
@@ -19,14 +20,11 @@ import { cn } from "@/lib/utils";
 
 const config = WORKSPACE_CONFIGS.operations;
 
-const QUICK_ACTIONS = [
-  { label: "View Trips",     icon: Truck,         href: "/delivery",                description: "Track active delivery trips" },
-  { label: "Create Trip",    icon: Plus,          href: "/delivery/new",            description: "Plan a new delivery trip" },
-  { label: "Pick Lists",     icon: ClipboardList, href: "/operations/pick-lists",   description: "Warehouse picking tasks" },
-  { label: "View Returns",   icon: RotateCcw,     href: "/returns",                 description: "Review return requests" },
-  { label: "Create Return",  icon: Plus,          href: "/returns/new",             description: "Log a new return request" },
-  { label: "Manage Zones",   icon: MapPin,        href: "/settings/fleet",          description: "Configure delivery zones" },
-  { label: "View Purchases", icon: Package,       href: "/purchases/invoices",      description: "Browse inbound purchase invoices" },
+const SECTIONS = [
+  { label: "Delivery Trips", description: "Plan, dispatch, and track delivery trips",  href: "/delivery",               icon: Truck },
+  { label: "Returns",        description: "Review and process customer returns",        href: "/returns",                icon: RotateCcw },
+  { label: "Exceptions",     description: "Resolve failed or flagged deliveries",      href: "/delivery/exceptions",   icon: AlertTriangle },
+  { label: "Pick Lists",     description: "Warehouse order-picking tasks",             href: "/operations/pick-lists", icon: ClipboardList },
 ];
 
 // ─── WarehouseView section ────────────────────────────────────────────────────
@@ -157,6 +155,7 @@ function WarehouseView({ stats, loading }: { stats: WarehouseStats | null; loadi
 }
 
 export default function OperationsPage() {
+  const router = useRouter();
   const role = useCurrentRole();
   const { data, loading } = useOperationsStats();
   const { items: activityItems, loading: activityLoading } = useWorkspaceActivity("operations");
@@ -207,13 +206,22 @@ export default function OperationsPage() {
 
   return (
     <AppShell noPad hideBreadcrumb>
-      <WorkspaceHeader config={config} role={role} />
+      <WorkspaceHeader
+        config={config}
+        role={role}
+        actions={
+          <Button size="sm" onClick={() => router.push("/delivery/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Trip
+          </Button>
+        }
+      />
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 space-y-6">
         <WorkspaceKpis items={KPI_ITEMS} loading={loading} />
         <WarehouseView stats={warehouseStats} loading={warehouseStatsLoading} />
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <WorkspaceActions actions={QUICK_ACTIONS} />
+            <WorkspaceSections sections={SECTIONS} title="Sections" />
           </div>
           <div>
             <WorkspaceActivity items={activityItems} loading={activityLoading} />

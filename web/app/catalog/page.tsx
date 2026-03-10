@@ -1,23 +1,23 @@
 ﻿"use client";
 
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { WorkspaceHeader } from "@/components/workspace/WorkspaceHeader";
-import { WorkspaceKpis, WorkspaceActions, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
+import { WorkspaceKpis, WorkspaceSections, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
 import { WORKSPACE_CONFIGS } from "@/components/workspace/workspace.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useCatalogStats, useWorkspaceActivity } from "@/lib/hooks/use-workspace-stats";
-import { BookOpen, Plus, Tag, List, Package, Archive, BarChart2, CheckCircle, Hash } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Package, List, Tag, BookOpen, Hash, Archive, Plus } from "lucide-react";
 
 const config = WORKSPACE_CONFIGS.catalog;
 
-const QUICK_ACTIONS = [
-  { label: "View Products",    icon: Package,  href: "/products",                       description: "Browse product catalog" },
-  { label: "Create Product",   icon: Plus,     href: "/products/new",                   description: "Add a new product" },
-  { label: "View Price Lists", icon: List,     href: "/products/price-lists",           description: "Manage price list versions" },
-  { label: "Compare Prices",   icon: BarChart2,href: "/products/price-lists/compare",  description: "Compare two price lists side by side" },
-  { label: "View Schemes",     icon: Tag,      href: "/pricing/schemes",                description: "Manage discount schemes" },
-  { label: "View Categories",  icon: BookOpen, href: "/products/categories",           description: "Browse product categories" },
-  { label: "HSN / SAC Codes",  icon: Hash,     href: "/products/hsn-codes",            description: "Manage HSN/SAC and GST codes" },
+const SECTIONS = [
+  { label: "Products",    description: "Browse and manage your product catalog",     href: "/products",              icon: Package },
+  { label: "Price Lists", description: "Manage price list versions and assignments",  href: "/products/price-lists",  icon: List },
+  { label: "Schemes",     description: "Configure discount and promotion schemes",    href: "/pricing/schemes",        icon: Tag },
+  { label: "Categories",  description: "Organise products into categories",           href: "/products/categories",   icon: BookOpen },
+  { label: "HSN / SAC",   description: "Manage tax classification codes",             href: "/products/hsn-codes",    icon: Hash },
 ];
 
 export default function CatalogPage() {
@@ -52,14 +52,25 @@ export default function CatalogPage() {
     },
   ];
 
+  const router = useRouter();
+
   return (
     <AppShell noPad hideBreadcrumb>
-      <WorkspaceHeader config={config} role={role} />
+      <WorkspaceHeader
+        config={config}
+        role={role}
+        actions={
+          <Button size="sm" onClick={() => router.push("/products/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Product
+          </Button>
+        }
+      />
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 space-y-6">
         <WorkspaceKpis items={KPI_ITEMS} loading={loading} />
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <WorkspaceActions actions={QUICK_ACTIONS} />
+            <WorkspaceSections sections={SECTIONS} title="Sections" />
           </div>
           <div>
             <WorkspaceActivity items={activityItems} loading={activityLoading} />

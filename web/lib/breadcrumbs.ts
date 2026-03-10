@@ -19,7 +19,7 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   // ── Sales workspace
   // "/orders":                      { label: "Orders",             parent: "/sales" },
   "/orders/new":                  { label: "New Order",          parent: "/orders" },
-  "/approvals":                   { label: "Approvals",          parent: "/sales" },
+  // "/approvals":                   { label: "Approvals",          parent: "/sales" },
   "/approvals/credit-limits":     { label: "Credit Limits",      parent: "/approvals" },
   "/schemes":                     { label: "Schemes",            parent: "/sales" },
 
@@ -29,11 +29,11 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   "/customers/new":               { label: "New Customer",       parent: "/customers" },
 
   // ── Catalog workspace
-  "/products":                    { label: "Products",           parent: "/catalog" },
+  // "/products":                    { label: "Products",           parent: "/catalog" },
   "/products/new":                { label: "New Product",        parent: "/products" },
   "/products/categories":         { label: "Categories",         parent: "/products" },
   "/products/uom":                { label: "Units of Measure",   parent: "/products" },
-  "/products/price-lists":        { label: "Price Lists",        parent: "/products" },
+  // "/products/price-lists":        { label: "Price Lists",        parent: "/products" },
   "/pricing":                     { label: "Pricing",            parent: "/catalog" },
   "/pricing/schemes":             { label: "Promotions",         parent: "/catalog" },
 

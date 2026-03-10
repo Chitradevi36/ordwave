@@ -1,22 +1,22 @@
 ﻿"use client";
 
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { WorkspaceHeader } from "@/components/workspace/WorkspaceHeader";
-import { WorkspaceKpis, WorkspaceActions, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
+import { WorkspaceKpis, WorkspaceSections, WorkspaceActivity } from "@/components/workspace/WorkspaceWidgets";
 import { WORKSPACE_CONFIGS } from "@/components/workspace/workspace.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useOverviewStats, useWorkspaceActivity } from "@/lib/hooks/use-workspace-stats";
-import { Layers, Plus, ArrowLeftRight, ShoppingBag, AlertTriangle, Package, BarChart2, Archive } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Layers, AlertTriangle, Package, Archive, ArrowLeftRight, ShoppingBag, Users2, Plus } from "lucide-react";
 
 const config = WORKSPACE_CONFIGS.inventory;
 
-const QUICK_ACTIONS = [
-  { label: "View Stock",        icon: Package,       href: "/inventory",                description: "Browse current stock levels" },
-  { label: "Create Transfer",   icon: ArrowLeftRight,href: "/inventory/transfers/new",  description: "Move stock between branches" },
-  { label: "View Transfers",    icon: ArrowLeftRight,href: "/inventory/transfers",      description: "Browse stock transfers" },
-  { label: "View Purchases",    icon: ShoppingBag,   href: "/purchases/invoices",       description: "Browse purchase invoices" },
-  { label: "Create Purchase",   icon: Plus,          href: "/purchases/invoices/new",   description: "Create a purchase invoice" },
-  { label: "View Insights",     icon: BarChart2,     href: "/insights/inventory",       description: "Review inventory analytics" },
+const SECTIONS = [
+  { label: "Stock",      description: "Current stock levels across all products",  href: "/inventory/stock",    icon: Package },
+  { label: "Transfers",  description: "Move stock between branches",               href: "/inventory/transfers", icon: ArrowLeftRight },
+  { label: "Purchases",  description: "Purchase invoices and goods received",      href: "/purchases/invoices", icon: ShoppingBag },
+  { label: "Suppliers",  description: "Manage vendors and supplier details",       href: "/suppliers",          icon: Users2 },
 ];
 
 export default function InventoryPage() {
@@ -52,14 +52,25 @@ export default function InventoryPage() {
     },
   ];
 
+  const router = useRouter();
+
   return (
     <AppShell noPad hideBreadcrumb>
-      <WorkspaceHeader config={config} role={role} />
+      <WorkspaceHeader
+        config={config}
+        role={role}
+        actions={
+          <Button size="sm" onClick={() => router.push("/inventory/transfers/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Transfer
+          </Button>
+        }
+      />
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 space-y-6">
         <WorkspaceKpis items={KPI_ITEMS} loading={loading} />
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <WorkspaceActions actions={QUICK_ACTIONS} />
+            <WorkspaceSections sections={SECTIONS} title="Sections" />
           </div>
           <div>
             <WorkspaceActivity items={activityItems} loading={activityLoading} />

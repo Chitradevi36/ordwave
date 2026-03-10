@@ -8,6 +8,7 @@ import {
   DollarSign,
   BarChart2,
   BookMarked,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -158,3 +159,321 @@ export type { WorkspaceNavItem as PrimaryNavItem };
 export const PRIMARY_NAV = WORKSPACE_NAV;
 export const isActiveRoute = isActiveWorkspace;
 export const filterNavForRole = filterWorkspacesForRole;
+
+// ── Grouped sidebar nav ───────────────────────────────────────────────────────
+export interface NavChild {
+  key: string;
+  label: string;
+  href: string;
+  matchers: string[];
+  rolesAllowed?: UserRole[];
+}
+
+export interface NavGroup {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  /** Set href to make the group itself a direct link (no accordion). */
+  href?: string;
+  matchers: string[];
+  rolesAllowed?: UserRole[];
+  children?: NavChild[];
+}
+
+export const GROUPED_NAV: NavGroup[] = [
+  {
+    key: "home",
+    label: "Home",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    matchers: ["/dashboard"],
+  },
+
+  {
+    key: "sales",
+    label: "Sales",
+    icon: ShoppingCart,
+    matchers: ["/orders", "/approvals", "/products/price-lists", "/pricing/schemes"],
+    rolesAllowed: ["owner", "admin", "manager", "sales_rep"],
+    children: [
+      {
+        key: "orders",
+        label: "Orders",
+        href: "/orders",
+        matchers: ["/orders"],
+      },
+      {
+        key: "approvals",
+        label: "Approvals",
+        href: "/approvals",
+        matchers: ["/approvals"],
+        rolesAllowed: ["owner", "admin", "manager"],
+        badgeKey: "pendingApprovals",
+      },
+      {
+        key: "price-lists",
+        label: "Price Lists",
+        href: "/products/price-lists",
+        matchers: ["/products/price-lists"],
+        rolesAllowed: ["owner", "admin", "manager"],
+      },
+      {
+        key: "schemes",
+        label: "Schemes",
+        href: "/pricing/schemes",
+        matchers: ["/pricing/schemes"],
+        rolesAllowed: ["owner", "admin", "manager"],
+      },
+    ],
+  },
+
+  {
+    key: "retailers",
+    label: "Retailers",
+    icon: Users,
+    matchers: ["/customers", "/routes", "/beats"],
+    rolesAllowed: ["owner", "admin", "manager", "sales_rep", "driver"],
+    children: [
+      {
+        key: "retailers-list",
+        label: "Retailers",
+        href: "/customers",
+        matchers: ["/customers"],
+      },
+      {
+        key: "routes",
+        label: "Routes",
+        href: "/routes",
+        matchers: ["/routes"],
+        rolesAllowed: ["owner", "admin", "manager"],
+      },
+      {
+        key: "beat-plans",
+        label: "Beat Plans",
+        href: "/beats",
+        matchers: ["/beats"],
+        rolesAllowed: ["owner", "admin", "manager"],
+      },
+    ],
+  },
+
+  {
+    key: "inventory",
+    label: "Inventory",
+    icon: Layers,
+    matchers: ["/inventory", "/inventory/transfers", "/purchases", "/suppliers"],
+    rolesAllowed: ["owner", "admin", "manager", "warehouse_staff"],
+    children: [
+      {
+        key: "stock-position",
+        label: "Stock Position",
+        href: "/inventory/stock",
+        matchers: ["/inventory/stock", "/inventory"],
+      },
+      {
+        key: "stock-transfers",
+        label: "Transfers",
+        href: "/inventory/transfers",
+        matchers: ["/inventory/transfers"],
+      },
+      {
+        key: "purchases",
+        label: "Purchases",
+        href: "/purchases/invoices",
+        matchers: ["/purchases"],
+      },
+      {
+        key: "suppliers",
+        label: "Suppliers",
+        href: "/suppliers",
+        matchers: ["/suppliers"],
+        rolesAllowed: ["owner", "admin", "manager"],
+      },
+    ],
+  },
+
+  {
+    key: "dispatch",
+    label: "Dispatch",
+    icon: Truck,
+    matchers: ["/delivery", "/operations", "/returns", "/delivery/exceptions"],
+    rolesAllowed: ["owner", "admin", "manager", "driver", "warehouse_staff"],
+    children: [
+      {
+        key: "trips",
+        label: "Trips",
+        href: "/delivery",
+        matchers: ["/delivery"],
+        badgeKey: "activeTrips",
+      },
+      {
+        key: "operations",
+        label: "Operations",
+        href: "/operations",
+        matchers: ["/operations"],
+        rolesAllowed: ["owner", "admin", "manager", "warehouse_staff"],
+      },
+      {
+        key: "exceptions",
+        label: "Exceptions",
+        href: "/delivery/exceptions",
+        matchers: ["/delivery/exceptions"],
+        badgeKey: "deliveryExceptions",
+      },
+      {
+        key: "returns",
+        label: "Returns",
+        href: "/returns",
+        matchers: ["/returns"],
+        badgeKey: "pendingReturns",
+      },
+    ],
+  },
+
+  {
+    key: "finance",
+    label: "Finance",
+    icon: DollarSign,
+    matchers: [
+      "/collections",
+      "/sales-invoices",
+      "/credit-notes",
+      "/advance-payments",
+      "/approvals/credit-limits",
+      "/compliance",
+    ],
+    rolesAllowed: ["owner", "admin", "manager", "accountant"],
+    children: [
+      {
+        key: "collections",
+        label: "Collections",
+        href: "/collections",
+        matchers: ["/collections"],
+        badgeKey: "overdueCollections",
+      },
+      {
+        key: "invoices",
+        label: "Invoices",
+        href: "/sales-invoices",
+        matchers: ["/sales-invoices"],
+      },
+      {
+        key: "credit-limits",
+        label: "Credit Control",
+        href: "/approvals/credit-limits",
+        matchers: ["/approvals/credit-limits"],
+        rolesAllowed: ["owner", "admin", "manager"],
+        badgeKey: "creditLimitRequests",
+      },
+      {
+        key: "credit-notes",
+        label: "Credit Notes",
+        href: "/credit-notes",
+        matchers: ["/credit-notes"],
+      },
+      {
+        key: "advance-payments",
+        label: "Advances",
+        href: "/advance-payments",
+        matchers: ["/advance-payments"],
+      },
+      {
+        key: "compliance",
+        label: "Compliance",
+        href: "/compliance/gstr1",
+        matchers: ["/compliance"],
+        rolesAllowed: ["owner", "admin", "accountant"],
+      },
+    ],
+  },
+
+  {
+    key: "insights",
+    label: "Insights",
+    href: "/insights",
+    icon: BarChart2,
+    matchers: ["/insights", "/reports", "/accounting"],
+    rolesAllowed: ["owner", "admin", "manager", "accountant"],
+  },
+
+  {
+    key: "setup",
+    label: "Setup",
+    icon: Settings,
+    matchers: [
+      "/products",
+      "/products/hsn-codes",
+      "/settings",
+      "/settings/users",
+      "/settings/branches",
+      "/settings/organization",
+      "/settings/vehicles",
+    ],
+    rolesAllowed: ["owner", "admin"],
+    children: [
+      {
+        key: "products",
+        label: "Products",
+        href: "/products",
+        matchers: ["/products"],
+      },
+      {
+        key: "hsn-sac",
+        label: "HSN / SAC",
+        href: "/products/hsn-codes",
+        matchers: ["/products/hsn-codes"],
+      },
+      {
+        key: "branches",
+        label: "Branches",
+        href: "/settings/branches",
+        matchers: ["/settings/branches"],
+      },
+      {
+        key: "users",
+        label: "Users",
+        href: "/settings/users",
+        matchers: ["/settings/users"],
+      },
+      {
+        key: "vehicles",
+        label: "Vehicles",
+        href: "/settings/vehicles",
+        matchers: ["/settings/vehicles"],
+      },
+      {
+        key: "organization",
+        label: "Organization",
+        href: "/settings/organization",
+        matchers: ["/settings/organization"],
+      },
+      {
+        key: "preferences",
+        label: "Preferences",
+        href: "/settings",
+        matchers: ["/settings"],
+      },
+    ],
+  },
+];
+
+export function isActiveGroup(pathname: string, group: NavGroup): boolean {
+  return group.matchers.some((m) => pathname === m || pathname.startsWith(m + "/"));
+}
+
+export function isActiveChild(pathname: string, child: NavChild): boolean {
+  return child.matchers.some((m) => pathname === m || pathname.startsWith(m + "/"));
+}
+
+export function filterGroupedNavForRole(role: UserRole | undefined): NavGroup[] {
+  const groups = !role || role === "owner" || role === "admin"
+    ? GROUPED_NAV
+    : GROUPED_NAV.filter((g) => !g.rolesAllowed || g.rolesAllowed.includes(role));
+
+  return groups.map((g) => ({
+    ...g,
+    children: g.children?.filter(
+      (c) => !c.rolesAllowed || !role || role === "owner" || role === "admin" || c.rolesAllowed.includes(role)
+    ),
+  }));
+}

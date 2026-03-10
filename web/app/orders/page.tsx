@@ -336,7 +336,7 @@ function OrdersPageContent() {
       qp.set("sort_by",  sortBy);
       qp.set("sort_dir", sortDir);
       qp.set("page",     String(page));
-      qp.set("per_page", viewMode === "board" ? "200" : "25");
+      qp.set("per_page", viewMode === "board" ? "200" : "10");
 
       const res  = await fetch(`${API_URL}/api/v1/sales_orders?${qp}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
@@ -786,7 +786,7 @@ function OrdersPageContent() {
 
       <PageHeader
         title="Sales Orders"
-        description={meta ? `${meta.total_count} order${meta.total_count !== 1 ? "s" : ""}` : undefined}
+        description="Create, manage, and track sales orders. Review pending approvals, handle credit decisions, and monitor order fulfillment across all branches."
         actions={[
           // { label: "Sales Control Center", icon: ArrowLeft, variant: "outline", onClick: () => router.push("/sales") },
           { label: "Export CSV", icon: Download, variant: "outline" as const, onClick: exportCsv },
@@ -794,9 +794,36 @@ function OrdersPageContent() {
         ]}
       />
 
-      {/* View mode toggle */}
-      <div className="flex items-center justify-end mb-2 -mt-2">
-        <div className="inline-flex rounded-lg border border-border overflow-hidden">
+      {/* Quick filters + View mode toggle — single row */}
+      <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-text-secondary">Quick:</span>
+          {([
+            { key: "mine",    label: "My Orders" },
+            { key: "attn",    label: "Needs Attention" },
+            { key: "overdue", label: "Overdue Delivery" },
+            { key: "high",    label: "High Value >\u20b950k" },
+          ] as const).map(chip => (
+            <button
+              key={chip.key}
+              onClick={() => applyChip(chip.key)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                activeChip === chip.key
+                  ? "bg-primary text-white border-primary"
+                  : "bg-white text-text-secondary border-border hover:border-primary/40 hover:text-text-primary"
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+          {activeChip && (
+            <button onClick={clearAll} className="text-xs text-text-secondary hover:text-danger">
+              × Clear
+            </button>
+          )}
+        </div>
+
+        <div className="inline-flex rounded-lg border border-border overflow-hidden shrink-0">
           <button
             onClick={() => setViewMode("list")}
             title="List view"
@@ -825,38 +852,10 @@ function OrdersPageContent() {
       </div>
 
       {scopedLabel && (
-        <div className="mb-4">
+        <div className="mb-2">
           <Badge variant="outline">{scopedLabel}</Badge>
         </div>
       )}
-
-      {/* Quick filter chips */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <span className="text-xs text-text-secondary">Quick:</span>
-        {([
-          { key: "mine",    label: "My Orders" },
-          { key: "attn",    label: "Needs Attention" },
-          { key: "overdue", label: "Overdue Delivery" },
-          { key: "high",    label: "High Value >\u20b950k" },
-        ] as const).map(chip => (
-          <button
-            key={chip.key}
-            onClick={() => applyChip(chip.key)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-              activeChip === chip.key
-                ? "bg-primary text-white border-primary"
-                : "bg-white text-text-secondary border-border hover:border-primary/40 hover:text-text-primary"
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
-        {activeChip && (
-          <button onClick={clearAll} className="text-xs text-text-secondary hover:text-danger">
-            × Clear
-          </button>
-        )}
-      </div>
 
       {/* Summary bar */}
       {metrics && (
@@ -1108,27 +1107,69 @@ function OrdersPageContent() {
       )}
 
       {/* Pagination — list view only */}
-      {viewMode === "list" && meta && meta.total_pages > 1 && orders.length > 0 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-text-secondary">
-          <span>
-            Page {meta.current_page} of {meta.total_pages} · {meta.total_count} orders
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline" size="sm"
-              disabled={meta.current_page <= 1}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline" size="sm"
-              disabled={meta.current_page >= meta.total_pages}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
+      {viewMode === "list" && meta && meta.total_pages >= 1 && orders.length > 0 && (
+        <div className="mt-6 flex items-center justify-center gap-1">
+          {/* Previous arrow */}
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={meta.current_page <= 1}
+            className="flex h-8 w-8 items-center justify-center rounded border border-border text-text-secondary hover:bg-background-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+
+          {/* Page numbers */}
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: meta.total_pages }, (_, i) => i + 1)
+              .filter((p) => {
+                // Show current page ± 2 pages, always show first & last
+                const delta = Math.abs(p - meta.current_page);
+                return delta <= 2 || p === 1 || p === meta.total_pages;
+              })
+              .reduce((acc: (number | string)[], p) => {
+                // Add ellipsis if there's a gap
+                if (acc.length > 0 && typeof acc[acc.length - 1] === 'number') {
+                  const last = acc[acc.length - 1] as number;
+                  if (p - last > 1) acc.push('...');
+                }
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) => (
+                p === '...' ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 text-text-secondary">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p as number)}
+                    className={`flex h-8 min-w-8 items-center justify-center rounded border text-sm font-medium transition-colors ${
+                      meta.current_page === p
+                        ? 'bg-primary text-white border-primary'
+                        : 'border-border text-text-secondary hover:bg-background-subtle'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              ))
+            }
           </div>
+
+          {/* Next arrow */}
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={meta.current_page >= meta.total_pages}
+            className="flex h-8 w-8 items-center justify-center rounded border border-border text-text-secondary hover:bg-background-subtle disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
+          >
+            <ArrowLeft className="h-4 w-4 rotate-180" />
+          </button>
+
+          {/* Info text */}
+          <span className="ml-4 text-xs text-text-secondary">
+            {meta.total_count} orders
+          </span>
         </div>
       )}
     </AppShell>

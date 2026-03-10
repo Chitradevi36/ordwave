@@ -2,24 +2,25 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AppShell, PageHeader } from "@/components/layout";
+import { AppShell } from "@/components/layout";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import { Modal } from "@/components/ui/modal";
-import {
-  CheckCircle2, XCircle, Ban, RefreshCw, Send, AlertTriangle,
-  ShieldCheck, ShieldX, ShieldAlert, Pencil, CalendarDays, PauseCircle,
-  Truck, FileText, Tag, PackageCheck, ClipboardCheck,
-} from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
-import { Alert } from "@/components/ui/alert";
 import { API_URL } from "@/lib/api/client";
 import { LifecycleTab } from "@/components/orders/lifecycle-tab";
+import { OrderHero } from "@/components/orders/order-hero";
+import { OrderLifecycle } from "@/components/orders/order-lifecycle";
+import { NextActionBanner } from "@/components/orders/next-action-banner";
+import { OperationalSnapshot, CommercialContext, AmountBreakdown } from "@/components/orders/order-overview-cards";
+import { OrderLinesTable } from "@/components/orders/order-lines-table";
+import { FulfillmentPanel } from "@/components/orders/order-fulfillment-panel";
+import { CreditFinancePanel } from "@/components/orders/order-finance-panel";
+import { DocumentsPanel } from "@/components/orders/order-documents-panel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OrderLine {
@@ -62,6 +63,30 @@ interface SchemeSnap {
   freebies: FreebieSnap[];
 }
 
+interface TripInfo {
+  id: number;
+  trip_number: string;
+  driver_name?: string;
+  vehicle_number?: string;
+  dispatch_time?: string;
+  delivered_time?: string;
+  pod_url?: string;
+}
+
+interface InvoiceInfo {
+  id: number;
+  invoice_number: string;
+  created_at: string;
+  total_amount: number;
+  url?: string;
+}
+
+interface PaymentInfo {
+  id: number;
+  amount: number;
+  created_at: string;
+}
+
 interface OrderDetail {
   id: number;
   order_number: string;
@@ -92,48 +117,7 @@ interface OrderDetail {
   scheme_snapshot?: SchemeSnap[];
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "warning" | "success" | "danger" | "outline"> = {
-  draft:     "secondary",
-  submitted: "default",
-  on_hold:   "warning",
-  approved:  "success",
-  rejected:  "danger",
-  cancelled: "outline",
-};
-
-const CREDIT_ICON: Record<string, React.ReactNode> = {
-  ok:      <ShieldCheck className="h-4 w-4 text-success" />,
-  hold:    <ShieldAlert className="h-4 w-4 text-warning" />,
-  blocked: <ShieldX className="h-4 w-4 text-danger" />,
-};
-
-const ACTION_LABEL: Record<string, string> = {
-  order_created:       "Order Created",
-  order_updated:       "Order Updated",
-  order_submitted:     "Submitted",
-  order_credit_checked: "Credit Checked",
-  order_on_hold:       "Placed On Hold",
-  order_approved:      "Approved",
-  order_rejected:      "Rejected",
-  order_cancelled:     "Cancelled",
-  order_price_refreshed: "Prices Refreshed",
-};
-
-const PICK_STATUS_CONFIG = {
-  pending_pick:   { label: "Awaiting Pick",  className: "bg-gray-100 text-gray-600" },
-  picked:         { label: "Picked",          className: "bg-amber-100 text-amber-800" },
-  pick_confirmed: { label: "Pick Confirmed",  className: "bg-green-100 text-green-800" },
-} as const;
-
-function PickStatusBadge({ status }: { status: OrderDetail["pick_status"] }) {
-  const cfg = PICK_STATUS_CONFIG[status];
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}>
-      {cfg.label}
-    </span>
-  );
-}
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 function fmtINR(n: number | string) {
   return `₹${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -152,461 +136,6 @@ function fmtDateTime(d: string | null | undefined) {
   });
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function OverviewTab({ order }: { order: OrderDetail }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Order Info</CardTitle></CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <Row label="Order #"       value={<span className="font-mono">{order.order_number}</span>} />
-          <Row label="Status"        value={<Badge variant={STATUS_VARIANT[order.status]}>{order.status.replace("_", " ")}</Badge>} />
-          <Row label="Delivery Date" value={fmtDate(order.delivery_date)} />
-          <Row label="Notes"         value={order.notes ?? "—"} />
-          <Row label="Created"       value={fmtDateTime(order.created_at)} />
-          <Row label="Submitted"     value={fmtDateTime(order.submitted_at)} />
-          {order.approved_at && <Row label="Approved"  value={fmtDateTime(order.approved_at)} />}
-          {order.cancelled_at && <>
-            <Row label="Cancelled" value={fmtDateTime(order.cancelled_at)} />
-            <Row label="Reason"    value={order.cancellation_reason ?? "—"} />
-          </>}
-          {(order.status === "approved" || order.pick_status !== "pending_pick") && (
-            <Row label="Pick Status" value={<PickStatusBadge status={order.pick_status} />} />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Parties</CardTitle></CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <Row label="Customer"   value={`${order.customer.name} (${order.customer.code})`} />
-          <Row label="Branch"     value={order.branch.name} />
-          <Row label="Created By" value={order.created_by?.name ?? "—"} />
-        </CardContent>
-      </Card>
-
-      <Card className="md:col-span-2">
-        <CardHeader><CardTitle className="text-sm">Financials</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-text-secondary mb-1">Gross Total</p>
-            <p className="text-lg font-semibold">{fmtINR(Number(order.total_amount) + Number(order.discount_amount))}</p>
-          </div>
-          {order.discount_amount > 0 && (
-            <div>
-              <p className="text-text-secondary mb-1">Discount</p>
-              <p className="text-lg font-semibold text-danger">−{fmtINR(Number(order.discount_amount))}</p>
-            </div>
-          )}
-          <div>
-            <p className="text-text-secondary mb-1">Net Total</p>
-            <p className="text-lg font-bold">{fmtINR(Number(order.total_amount))}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-2">
-      <span className="w-32 text-text-secondary shrink-0">{label}</span>
-      <span className="flex-1">{value}</span>
-    </div>
-  );
-}
-
-// ─── Status Timeline ──────────────────────────────────────────────────────────
-function StatusTimeline({ order }: { order: OrderDetail }) {
-  const STAGES: { key: string; label: string; ts: string | null }[] = [
-    { key: "draft",     label: "Draft",     ts: order.created_at },
-    { key: "submitted", label: "Submitted", ts: order.submitted_at },
-    { key: "approved",  label: "Approved",  ts: order.approved_at },
-    { key: "delivered", label: "Delivered", ts: null },
-  ];
-
-  const STAGE_IDX: Record<string, number> = {
-    draft: 0, submitted: 1, on_hold: 1, approved: 2, delivered: 3,
-    rejected: 1, cancelled: 0,
-  };
-
-  const currentIdx = STAGE_IDX[order.status] ?? 0;
-  const isFailed   = ["rejected", "cancelled"].includes(order.status);
-
-  const elements: React.ReactNode[] = [];
-  STAGES.forEach((stage, idx) => {
-    const done   = idx < currentIdx;
-    const active = idx === currentIdx;
-    const failed = active && isFailed;
-
-    elements.push(
-      <div key={`step-${idx}`} className="flex flex-col items-center shrink-0">
-        <div
-          className={`h-8 w-8 rounded-full border-2 flex items-center justify-center ${
-            failed ? "border-danger bg-danger/10 text-danger" :
-            done   ? "border-success bg-success text-white" :
-            active ? "border-primary bg-primary/10 text-primary" :
-                     "border-border bg-background-subtle text-text-secondary"
-          }`}
-        >
-          {done   ? <CheckCircle2 className="h-4 w-4" /> :
-           failed ? <XCircle       className="h-4 w-4" /> :
-           <span className="text-[10px] font-bold">{idx + 1}</span>}
-        </div>
-        <p className="text-[10px] font-semibold mt-1 text-center leading-tight text-text-primary">
-          {stage.label}
-        </p>
-        <p className="text-[9px] text-text-secondary text-center h-3">
-          {stage.ts ? fmtDate(stage.ts) : ""}
-        </p>
-      </div>,
-    );
-    if (idx < STAGES.length - 1) {
-      elements.push(
-        <div
-          key={`conn-${idx}`}
-          className={`flex-1 h-0.5 self-start mt-4 ${done ? "bg-success" : "bg-border"}`}
-        />,
-      );
-    }
-  });
-
-  return (
-    <div className="rounded-xl border border-border bg-white px-6 py-4 mb-4">
-      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-        Order Progress
-      </p>
-      <div className="flex items-start">{elements}</div>
-      {isFailed && (
-        <p className="mt-2 text-xs text-center text-danger font-medium">
-          Order {order.status}
-          {order.cancellation_reason ? ` — ${order.cancellation_reason}` : ""}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── Schemes Tab ─────────────────────────────────────────────────────────────
-function SchemesTab({ schemes }: { schemes: SchemeSnap[] }) {
-  if (schemes.length === 0)
-    return <p className="text-sm text-text-secondary italic">No schemes applied to this order.</p>;
-
-  return (
-    <div className="space-y-4">
-      {schemes.map((s) => (
-        <div key={s.scheme_id} className="rounded-xl border border-border overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-success/5 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-success" />
-              <span className="font-semibold text-sm text-text-primary">{s.scheme_name}</span>
-              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
-                {s.scheme_type.replace(/_/g, " ")}
-              </span>
-            </div>
-            {s.discount_pct > 0 && (
-              <span className="text-sm font-bold text-success">−{s.discount_pct}%</span>
-            )}
-          </div>
-          {s.freebies && s.freebies.length > 0 && (
-            <div className="px-4 py-3">
-              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-                Free Items
-              </p>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-text-secondary border-b border-border">
-                    <th className="pb-1.5 font-medium">Product</th>
-                    <th className="pb-1.5 font-medium text-right">Qty</th>
-                    <th className="pb-1.5 font-medium text-right">Unit</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {s.freebies.map((f) => (
-                    <tr key={f.product_id}>
-                      <td className="py-1.5 text-text-primary">{f.product_name}</td>
-                      <td className="py-1.5 text-right font-mono">{f.qty}</td>
-                      <td className="py-1.5 text-right text-text-secondary">{f.unit}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {(!s.freebies || s.freebies.length === 0) && s.discount_pct > 0 && (
-            <div className="px-4 py-3">
-              <p className="text-sm text-text-secondary">
-                Flat {s.discount_pct}% discount applied on eligible lines.
-              </p>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function LinesTab({ lines }: { lines: OrderLine[] }) {
-  const PRICE_SOURCE_COLOR: Record<string, string> = {
-    retailer_specific: "text-success",
-    tier_specific:     "text-success",
-    promo:             "text-accent",
-    standard:          "text-text-secondary",
-    manual:            "text-primary",
-    missing:           "text-danger",
-  };
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-text-secondary">
-            <th className="pb-2 pr-3">SKU</th>
-            <th className="pb-2 pr-3">Product</th>
-            <th className="pb-2 pr-3 text-right">Qty</th>
-            <th className="pb-2 pr-3 text-right">Unit Price</th>
-            <th className="pb-2 pr-3 text-right">Disc %</th>
-            <th className="pb-2 pr-3 text-right">GST %</th>
-            <th className="pb-2 pr-3 text-right">Line Total</th>
-            <th className="pb-2 text-left">Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map(l => (
-            <tr key={l.id} className="border-b border-border/40 hover:bg-muted/30">
-              <td className="py-2 pr-3 font-mono text-xs">{l.product_sku}</td>
-              <td className="py-2 pr-3">{l.product_name}</td>
-              <td className="py-2 pr-3 text-right">{l.qty}</td>
-              <td className="py-2 pr-3 text-right">{fmtINR(l.unit_price)}</td>
-              <td className="py-2 pr-3 text-right">
-                {l.discount_pct}%
-                {(l.scheme_discount_pct ?? 0) > 0 && (
-                  <span className="ml-1 text-xs text-green-600 font-medium" title="Scheme discount">
-                    +{l.scheme_discount_pct}%
-                  </span>
-                )}
-              </td>
-              <td className="py-2 pr-3 text-right">{l.gst_rate}%</td>
-              <td className="py-2 pr-3 text-right font-medium">{fmtINR(l.line_total)}</td>
-              <td className={`py-2 text-xs font-medium ${PRICE_SOURCE_COLOR[l.price_source] ?? ""}`}>
-                {l.price_source?.replace("_", " ") ?? "—"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={6} className="pt-3 text-right pr-3 text-text-secondary font-medium">Total</td>
-            <td className="pt-3 text-right pr-3 font-bold text-base">
-              {fmtINR(lines.reduce((s, l) => s + Number(l.line_total), 0))}
-            </td>
-            <td />
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  );
-}
-
-function CreditTab({ order }: { order: OrderDetail }) {
-  if (!order.credit_decision) {
-    return <p className="text-sm text-text-secondary">Credit check not yet run (order not submitted).</p>;
-  }
-
-  const iconMap: Record<string, React.ReactNode> = {
-    ok:      <ShieldCheck className="h-8 w-8 text-success" />,
-    hold:    <ShieldAlert className="h-8 w-8 text-warning" />,
-    blocked: <ShieldX className="h-8 w-8 text-danger" />,
-  };
-  const labelMap: Record<string, string> = {
-    ok:      "Credit OK — order can proceed",
-    hold:    "On Hold — manual approval required",
-    blocked: "Blocked — hard credit limit breached",
-  };
-
-  const snap = order.credit_snapshot as Record<string, number | string | undefined>;
-
-  return (
-    <div className="space-y-4">
-      {/* Decision banner */}
-      <Card className={
-        order.credit_decision === "ok"      ? "border-success bg-success/5"
-        : order.credit_decision === "hold"  ? "border-warning bg-warning/5"
-        : "border-danger bg-danger/5"
-      }>
-        <CardContent className="flex items-center gap-4 py-4">
-          {iconMap[order.credit_decision]}
-          <div>
-            <p className="font-semibold">{labelMap[order.credit_decision]}</p>
-            {order.credit_reasons?.length > 0 && (
-              <ul className="mt-1 list-disc list-inside text-sm text-text-secondary">
-                {order.credit_reasons.map((r, i) => <li key={i}>{r}</li>)}
-              </ul>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Metrics */}
-      {Object.keys(snap).length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Credit Metrics (at Submit)</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-            {Object.entries(snap).map(([k, v]) => (
-              <div key={k} className="bg-muted/30 rounded-md p-3">
-                <p className="text-text-secondary text-xs mb-1">{k.replace(/_/g, " ")}</p>
-                <p className="font-semibold">
-                  {typeof v === "number" && k.includes("amount") ? fmtINR(v) : String(v ?? "—")}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-function TimelineTab({ timeline }: { timeline: AuditEntry[] }) {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
-
-  if (!timeline.length) return <p className="text-sm text-text-secondary">No activity yet.</p>;
-
-  // Colour dot by action category
-  function dotColor(action: string): string {
-    if (action.includes("approved"))               return "bg-success";
-    if (action.includes("rejected") || action.includes("cancelled")) return "bg-danger";
-    if (action.includes("hold"))                   return "bg-warning";
-    if (action.includes("submitted"))              return "bg-blue-500";
-    if (action.includes("invoice"))                return "bg-purple-500";
-    if (action.includes("payment") || action.includes("collection")) return "bg-emerald-500";
-    if (action.includes("deliver") || action.includes("trip") || action.includes("dispatch")) return "bg-amber-500";
-    return "bg-primary/40";
-  }
-
-  // Group by calendar day
-  const groups: { bucket: string; entries: AuditEntry[] }[] = [];
-  for (const entry of timeline) {
-    const date  = new Date(entry.created_at);
-    const today = new Date();
-    const diff  = Math.floor(
-      (new Date(today.setHours(0,0,0,0)).getTime() - new Date(date).setHours(0,0,0,0)) / 86_400_000
-    );
-    const bucket = diff === 0 ? "Today"
-      : diff === 1 ? "Yesterday"
-      : date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-
-    const last = groups[groups.length - 1];
-    if (last?.bucket === bucket) last.entries.push(entry);
-    else groups.push({ bucket, entries: [entry] });
-  }
-
-  const toggleExpanded = (id: number) =>
-    setExpanded(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-  return (
-    <div className="space-y-6">
-      {groups.map((group, gi) => (
-        <div key={gi}>
-          {/* Day separator */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
-              {group.bucket}
-            </span>
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-[11px] text-text-secondary">{group.entries.length} event{group.entries.length !== 1 ? "s" : ""}</span>
-          </div>
-
-          <div className="relative pl-6 space-y-2">
-            <div className="absolute left-2.5 top-0 bottom-0 w-px bg-border" />
-
-            {group.entries.map(entry => {
-              const hasChanges = entry.changes && Object.keys(entry.changes).length > 0;
-              const isOpen     = expanded.has(entry.id);
-
-              return (
-                <div key={entry.id} className="relative group">
-                  {/* Semantic dot */}
-                  <div
-                    className={`absolute -left-[15px] top-3 h-3 w-3 rounded-full ring-2 ring-white ${
-                      dotColor(entry.action)
-                    }`}
-                  />
-
-                  <div className="rounded-md border border-border/60 bg-bg p-3 text-sm hover:border-border transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <span className="font-medium text-text-primary">
-                          {ACTION_LABEL[entry.action] ?? entry.action.replace(/_/g, " ")}
-                        </span>
-                        <div className="flex flex-wrap items-center gap-x-3 mt-0.5">
-                          {entry.actor_name && (
-                            <span className="text-xs text-text-secondary">by {entry.actor_name}</span>
-                          )}
-                          {entry.reason && (
-                            <span className="text-xs text-text-secondary italic">"{entry.reason}"</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 flex items-center gap-2">
-                        {hasChanges && (
-                          <button
-                            onClick={() => toggleExpanded(entry.id)}
-                            className="text-[10px] font-medium text-text-secondary border border-border/60
-                              rounded px-1.5 py-0.5 hover:border-primary/50 hover:text-primary transition-colors"
-                          >
-                            {isOpen ? "Hide" : "Changes"}
-                          </button>
-                        )}
-                        <time className="text-[11px] text-text-secondary tabular-nums whitespace-nowrap">
-                          {fmtDateTime(entry.created_at)}
-                        </time>
-                      </div>
-                    </div>
-
-                    {/* Changes delta — shown on demand */}
-                    {hasChanges && isOpen && (
-                      <div className="mt-2 pt-2 border-t border-border/50">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-text-secondary">
-                              <th className="text-left font-medium pb-1 pr-4 w-1/3">Field</th>
-                              <th className="text-left font-medium pb-1">Value</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border/40">
-                            {Object.entries(entry.changes).map(([k, v]) => (
-                              <tr key={k}>
-                                <td className="py-1 pr-4 text-text-secondary font-medium align-top">
-                                  {k.replace(/_/g, " ")}
-                                </td>
-                                <td className="py-1 text-text-primary font-mono break-all">
-                                  {typeof v === "object" ? JSON.stringify(v) : String(v ?? "—")}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
@@ -615,6 +144,9 @@ export default function OrderDetailPage() {
   const role = useCurrentRole();
 
   const [order, setOrder]     = useState<OrderDetail | null>(null);
+  const [trip, setTrip]       = useState<TripInfo | null>(null);
+  const [invoice, setInvoice] = useState<InvoiceInfo | null>(null);
+  const [payment, setPayment] = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Modals
@@ -650,12 +182,57 @@ export default function OrderDetailPage() {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
     try {
-      const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}`, {
-        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
-      });
-      const json = await res.json();
-      if (res.ok) setOrder(json.data);
-      else        showToast("error", json.errors?.[0] ?? "Failed to load order");
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "X-Organization-Id": orgId,
+      };
+
+      // Fetch order data
+      const orderRes = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}`, { headers });
+      const orderJson = await orderRes.json();
+      
+      if (!orderRes.ok) {
+        showToast("error", orderJson.errors?.[0] ?? "Failed to load order");
+        return;
+      }
+
+      const orderData = orderJson.data as OrderDetail;
+      setOrder(orderData);
+
+      // Fetch related data in parallel (trip, invoice, payment)
+      // These may fail gracefully if not available
+      const [tripRes, invoiceRes] = await Promise.all([
+        // Try to fetch trip if order is approved or later
+        orderData.status !== "draft" && orderData.status !== "submitted" && orderData.status !== "on_hold" && orderData.status !== "rejected"
+          ? fetch(`${API_URL}/api/v1/delivery_trips?order_id=${params.id}`, { headers })
+          : Promise.resolve(null),
+        // Try to fetch invoice if order is delivered or invoiced
+        orderData.status === "delivered" || orderData.status === "invoiced" || orderData.status === "paid"
+          ? fetch(`${API_URL}/api/v1/sales_invoices?order_id=${params.id}`, { headers })
+          : Promise.resolve(null),
+      ]);
+
+      if (tripRes) {
+        const tripJson = await tripRes.json();
+        if (tripRes.ok && tripJson.data && Array.isArray(tripJson.data) && tripJson.data.length > 0) {
+          setTrip(tripJson.data[0]);
+        }
+      }
+
+      if (invoiceRes) {
+        const invoiceJson = await invoiceRes.json();
+        if (invoiceRes.ok && invoiceJson.data && Array.isArray(invoiceJson.data) && invoiceJson.data.length > 0) {
+          const inv = invoiceJson.data[0];
+          setInvoice(inv);
+          
+          // If invoice exists, try to fetch payment
+          const paymentRes = await fetch(`${API_URL}/api/v1/payments?invoice_id=${inv.id}`, { headers });
+          const paymentJson = await paymentRes.json();
+          if (paymentRes.ok && paymentJson.data && Array.isArray(paymentJson.data) && paymentJson.data.length > 0) {
+            setPayment(paymentJson.data[0]);
+          }
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -679,6 +256,8 @@ export default function OrderDetailPage() {
       if (res.ok) {
         setOrder(json.data);
         showToast("success", "Done");
+        // Refresh related data after action
+        setTimeout(() => fetch_(), 300);
         return true;
       } else {
         showToast("error", json.errors?.[0] ?? "Action failed");
@@ -737,6 +316,8 @@ export default function OrderDetailPage() {
       const json = await res.json();
       if (res.ok) {
         showToast("success", `Invoice ${json.data?.invoice_number ?? ""} generated`);
+        // Refresh invoice data after generation
+        await fetch_();
       } else {
         showToast("error", json.errors?.[0] ?? "Invoice generation failed");
       }
@@ -795,7 +376,11 @@ export default function OrderDetailPage() {
         setApproveModal(false);
         setDecisionReason("");
         setDecision("approved");
+        
+        // Refresh data to capture trip if auto-created
         if (decision === "approved") {
+          setTimeout(() => fetch_(), 500);
+          
           const at = json.data?.auto_trip;
           if (at?.ok && at.action === "new_trip_created") {
             showToast("success", `Order approved · Trip ${at.trip_number} created`);
@@ -836,20 +421,116 @@ export default function OrderDetailPage() {
   if (!order) return null;
 
   const tabItems = [
-    { value: "overview",  label: "Overview",               content: <OverviewTab order={order} /> },
-    { value: "lines",     label: `Lines (${order.lines.length})`, content: <LinesTab lines={order.lines} /> },
-    { value: "credit",   label: "Credit Check",            content: <CreditTab order={order} /> },
-    ...(order.scheme_snapshot && order.scheme_snapshot.length > 0 ? [{
-      value: "schemes", label: `Schemes (${order.scheme_snapshot.length})`,
-      content: <SchemesTab schemes={order.scheme_snapshot} />,
-    }] : []),
-    { value: "journey",  label: "Journey",                 content: <LifecycleTab orderId={order.id} token={token!} orgId={orgId!} /> },
-    { value: "activity", label: "Activity",                content: <TimelineTab timeline={order.timeline} /> },
+    {
+      value: "overview",
+      label: "Overview",
+      content: (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <OperationalSnapshot
+            orderedAt={order.created_at}
+            expectedDelivery={order.delivery_date}
+            dispatchTrip={trip?.trip_number}
+            sourceChannel={undefined}
+            salesRep={order.created_by?.name}
+          />
+          <CommercialContext
+            retailer={order.customer.name}
+            billingParty={order.customer.code}
+            shippingAddress={undefined}
+            route={undefined}
+            pricingPolicy={undefined}
+            creditResult={order.credit_decision ?? undefined}
+          />
+          <div className="md:col-span-2">
+            <AmountBreakdown
+              subtotal={Number(order.total_amount) + Number(order.discount_amount)}
+              discount={order.discount_amount}
+              grandTotal={order.total_amount}
+              invoiceAmount={invoice?.total_amount}
+              paidAmount={payment?.amount}
+              outstandingAmount={invoice ? Number(invoice.total_amount) - (payment?.amount ?? 0) : undefined}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      value: "lines",
+      label: `Lines (${order.lines.length})`,
+      content: (
+        <OrderLinesTable
+          lines={order.lines}
+          onViewProduct={(id) => router.push(`/products/${id}`)}
+          onEditLine={(id) => {}}
+          editable={order.status === "draft"}
+        />
+      ),
+    },
+    {
+      value: "fulfillment",
+      label: "Fulfillment",
+      content: (
+        <FulfillmentPanel
+          pickStatus={order.pick_status}
+          pickedAt={order.picked_at}
+          pickedByName={undefined}
+          pickConfirmedAt={order.pick_confirmed_at}
+          pickConfirmedByName={undefined}
+          tripId={trip?.trip_number}
+          driverName={trip?.driver_name}
+          vehicleNumber={trip?.vehicle_number}
+          dispatchTime={trip?.dispatch_time}
+          deliveredTime={trip?.delivered_time}
+          deliveryPodUrl={trip?.pod_url}
+          onViewTrip={(tripId) => router.push(`/delivery/${tripId}`)}
+          onDownloadPod={() => trip?.pod_url && window.open(trip.pod_url, "_blank")}
+        />
+      ),
+    },
+    {
+      value: "credit",
+      label: "Credit & Finance",
+      content: (
+        <CreditFinancePanel
+          creditDecision={order.credit_decision}
+          creditReasons={order.credit_reasons}
+          creditLimit={undefined}
+          outstandingAtOrder={undefined}
+          creditSnapshot={order.credit_snapshot as Record<string, string | number>}
+          invoiceAmount={invoice?.total_amount}
+          paidAmount={payment?.amount}
+          outstandingAmount={invoice ? Number(invoice.total_amount) - (payment?.amount ?? 0) : undefined}
+          onGenerateInvoice={handleGenerateInvoice}
+          onRecordPayment={() => {}}
+          onCreateCreditNote={() => {}}
+          onViewInvoice={() => invoice && router.push(`/sales-invoices/${invoice.id}`)}
+        />
+      ),
+    },
+    {
+      value: "timeline",
+      label: "Timeline",
+      content: <LifecycleTab orderId={order.id} token={token!} orgId={orgId!} />,
+    },
+    {
+      value: "documents",
+      label: "Documents",
+      content: (
+        <DocumentsPanel
+          documents={[
+            { id: String(order.id), type: "order" as const, name: `${order.order_number}.pdf` },
+            ...(invoice ? [{ id: String(invoice.id), type: "invoice" as const, name: `INV-${invoice.invoice_number}.pdf`, createdAt: invoice.created_at }] : []),
+            ...(trip?.pod_url ? [{ id: String(trip.id), type: "pod" as const, name: `POD-${trip.trip_number}.pdf` }] : []),
+          ]}
+          onDownload={(id) => {}}
+          onPreview={(id) => {}}
+        />
+      ),
+    },
   ];
 
   return (
     <AppShell breadcrumbs={[
-        { label: "Sales", href: "/sales" },
         { label: "Orders", href: "/orders" },
         { label: order.order_number },
       ]}>
@@ -861,75 +542,69 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      <PageHeader
-        title={order.order_number}
-        description={`${order.customer.name} · ${order.branch.name}`}
+      <OrderHero
+        orderNumber={order.order_number}
+        customerName={order.customer.name}
+        branch={order.branch.name}
+        status={order.status}
+        creditDecision={order.credit_decision}
+        totalAmount={order.total_amount}
         actions={[
           // Edit (draft only — full edit)
           ...(order.status === "draft" ? [{
             label: "Edit Order",
-            icon: Pencil,
             onClick: () => router.push(`/orders/${order.id}/edit`),
             variant: "outline" as const,
           }] : []),
           // Edit logistics (submitted/on_hold — delivery_date + notes only)
           ...(["submitted", "on_hold"].includes(order.status) ? [{
             label: "Edit Logistics",
-            icon: CalendarDays,
             onClick: openLimitedEdit,
             variant: "outline" as const,
           }] : []),
           // Submit (draft only)
           ...(order.status === "draft" ? [{
             label: "Submit",
-            icon: Send,
             onClick: handleSubmit,
           }] : []),
           // Refresh prices (draft only)
           ...(order.status === "draft" ? [{
             label: "Refresh Prices",
-            icon: RefreshCw,
             onClick: handleRefreshPrice,
             variant: "outline" as const,
           }] : []),
           // Approve/Reject (submitted or on_hold — managers+)
           ...(["submitted", "on_hold"].includes(order.status) ? [{
             label: "Review",
-            icon: CheckCircle2,
             onClick: () => { setDecision("approved"); setDecisionReason(""); setApproveModal(true); },
           }] : []),
           // Put on Hold (submitted only — managers+)
           ...(order.status === "submitted" ? [{
             label: "Put on Hold",
-            icon: PauseCircle,
             onClick: () => { setHoldReason(""); setHoldModal(true); },
             variant: "outline" as const,
           }] : []),
           // Cancel
           ...(!["rejected", "cancelled"].includes(order.status) ? [{
             label: "Cancel Order",
-            icon: Ban,
             onClick: () => { setCancelReason(""); setCancelModal(true); },
             variant: "outline" as const,
           }] : []),
           // Create Delivery Trip (approved)
           ...(order.status === "approved" ? [{
             label: "Create Delivery Trip",
-            icon: Truck,
             onClick: () => router.push(`/delivery/new?order_id=${order.id}`),
             variant: "outline" as const,
           }] : []),
           // Generate Invoice (delivered)
           ...(order.status === "delivered" ? [{
             label: "Generate Invoice",
-            icon: FileText,
             onClick: handleGenerateInvoice,
           }] : []),
           // Mark as Picked (approved + pending_pick — warehouse staff or manager)
           ...(order.status === "approved" && order.pick_status === "pending_pick" &&
               (role === "warehouse_staff" || ["owner","admin","manager"].includes(role ?? "")) ? [{
             label: "Mark as Picked",
-            icon: PackageCheck,
             onClick: handlePick,
             variant: "outline" as const,
           }] : []),
@@ -937,74 +612,35 @@ export default function OrderDetailPage() {
           ...(order.status === "approved" && order.pick_status === "picked" &&
               ["owner","admin","manager"].includes(role ?? "") ? [{
             label: "Confirm Pick",
-            icon: ClipboardCheck,
             onClick: handleConfirmPick,
           }] : []),
         ]}
       />
 
-      {/* Status + credit badges + total */}
-      <div className="flex items-center gap-2 mb-4 -mt-2">
-        <Badge variant={STATUS_VARIANT[order.status]}>
-          {order.status.replace("_", " ")}
-        </Badge>
-        {order.credit_decision && (
-          <div className="flex items-center gap-1">
-            {CREDIT_ICON[order.credit_decision]}
-            <span className="text-xs text-text-secondary capitalize">
-              Credit {order.credit_decision}
-            </span>
-          </div>
-        )}
-        <span className="text-lg font-bold ml-auto">{fmtINR(order.total_amount)}</span>
-      </div>
+      <OrderLifecycle
+        status={order.status}
+        createdAt={order.created_at}
+        submittedAt={order.submitted_at}
+        approvedAt={order.approved_at}
+        cancelledAt={order.cancelled_at}
+        rejectedAt={null}
+        cancellationReason={order.cancellation_reason}
+      />
 
-      {/* On-hold banner */}
-      {order.status === "on_hold" && (
-        <Alert variant="warning" title="Order on hold — pending credit approval" className="mb-4">
-          {order.credit_reasons?.length > 0 && (
-            <ul className="mt-1 list-disc list-inside">
-              {order.credit_reasons.map((r, i) => <li key={i}>{r}</li>)}
-            </ul>
-          )}
-          <p className="mt-2 text-xs">A branch manager or owner must approve this order before it proceeds.</p>
-        </Alert>
-      )}
-
-      {/* Submitted banner — credit ok, awaiting manager sign-off */}
-      {order.status === "submitted" && (
-        <Alert variant="default" title="Order submitted — awaiting approval" className="mb-4">
-          <p className="text-xs">A manager can approve, reject, or put this order on hold using the buttons above.</p>
-        </Alert>
-      )}
-
-      {/* Blocked banner — order stays in draft after a failed credit check */}
-      {order.credit_decision === "blocked" && order.status === "draft" && (
-        <Alert variant="danger" title="Order blocked by credit policy" className="mb-4">
-          {order.credit_reasons?.length > 0 && (
-            <ul className="mt-1 list-disc list-inside">
-              {order.credit_reasons.map((r, i) => <li key={i}>{r}</li>)}
-            </ul>
-          )}
-          <button
-            type="button"
-            className="mt-2 text-sm underline text-danger hover:text-danger/80"
-            onClick={() => {
-              setCreditResult({
-                decision:         "blocked",
-                reasons:          order.credit_reasons ?? [],
-                metrics:          order.credit_snapshot as CreditResult["metrics"],
-                actions_required: {},
-              });
-              setCreditModal(true);
-            }}
-          >
-            View details &amp; required actions
-          </button>
-        </Alert>
-      )}
-
-      <StatusTimeline order={order} />
+      <NextActionBanner
+        status={order.status}
+        creditDecision={order.credit_decision}
+        creditReasons={order.credit_reasons}
+        invoicedAt={null}
+        paidAt={null}
+        deliveredAt={null}
+        onAction={(action) => {
+          if (action === "submit") handleSubmit();
+          else if (action === "approve") { setDecision("approved"); setApproveModal(true); }
+          else if (action === "invoice") handleGenerateInvoice();
+          else if (action === "payment") { /* setPaymentModal(true) */ }
+        }}
+      />
 
       <Tabs items={tabItems} defaultValue="overview" />
 
