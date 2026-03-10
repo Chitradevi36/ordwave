@@ -6,17 +6,18 @@ import { WorkspaceKpis, WorkspaceActions, WorkspaceActivity } from "@/components
 import { WORKSPACE_CONFIGS } from "@/components/workspace/workspace.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useCatalogStats, useWorkspaceActivity } from "@/lib/hooks/use-workspace-stats";
-import { BookOpen, Plus, Tag, List, Package, Archive, BarChart2, CheckCircle } from "lucide-react";
+import { BookOpen, Plus, Tag, List, Package, Archive, BarChart2, CheckCircle, Hash } from "lucide-react";
 
 const config = WORKSPACE_CONFIGS.catalog;
 
 const QUICK_ACTIONS = [
-  { label: "View Products",    icon: Package,  href: "/products",              description: "Browse product catalog" },
-  { label: "Create Product",   icon: Plus,     href: "/products/new",          description: "Add a new product" },
-  { label: "View Price Lists", icon: List,     href: "/products/price-lists",  description: "Manage price list versions" },
-  { label: "View Schemes",     icon: Tag,      href: "/pricing/schemes",       description: "Manage discount schemes" },
-  { label: "View Categories",  icon: BookOpen, href: "/products/categories",   description: "Browse product categories" },
-  { label: "View Insights",    icon: BarChart2,href: "/insights/inventory",    description: "Review catalog-related analytics" },
+  { label: "View Products",    icon: Package,  href: "/products",                       description: "Browse product catalog" },
+  { label: "Create Product",   icon: Plus,     href: "/products/new",                   description: "Add a new product" },
+  { label: "View Price Lists", icon: List,     href: "/products/price-lists",           description: "Manage price list versions" },
+  { label: "Compare Prices",   icon: BarChart2,href: "/products/price-lists/compare",  description: "Compare two price lists side by side" },
+  { label: "View Schemes",     icon: Tag,      href: "/pricing/schemes",                description: "Manage discount schemes" },
+  { label: "View Categories",  icon: BookOpen, href: "/products/categories",           description: "Browse product categories" },
+  { label: "HSN / SAC Codes",  icon: Hash,     href: "/products/hsn-codes",            description: "Manage HSN/SAC and GST codes" },
 ];
 
 export default function CatalogPage() {

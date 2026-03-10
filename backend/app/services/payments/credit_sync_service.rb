@@ -37,10 +37,19 @@ module Payments
 
       new_balance = [invoice_total - payment_total - credit_note_total, 0].max.round(2)
 
-      account.update_columns(
+      updates = {
         current_balance:  new_balance,
         available_credit: [account.credit_limit - new_balance, 0].max.round(2)
-      )
+      }
+
+      # HIGH-05: Auto-clear collection_first and hold_required when balance reaches
+      # zero so subsequent orders no longer go on hold without manual intervention.
+      if new_balance.zero?
+        updates[:collection_first] = false if account.collection_first?
+        updates[:hold_required]    = false if account.hold_required?
+      end
+
+      account.update_columns(**updates)
 
       account
     end

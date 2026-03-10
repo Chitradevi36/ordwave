@@ -7,7 +7,8 @@ import { AppShell, PageHeader } from "@/components/layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Warehouse, ArrowLeft, TrendingUp, TrendingDown, Package, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Warehouse, ArrowLeft, TrendingUp, TrendingDown, Package, Plus, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { cn } from "@/lib/utils";
@@ -38,10 +39,14 @@ interface StockMovement {
   on_hand_delta: number;
   reference_type: string | null;
   reference_id: number | null;
+  reference_number: string | null;
   notes: string | null;
   occurred_at: string;
   created_by_name: string | null;
+  branch_name: string | null;
 }
+
+interface Branch { id: number; name: string; }
 
 interface Reservation {
   id: number;
@@ -99,6 +104,23 @@ export default function ProductStockDetailPage() {
   const [mvTotalPages, setMvTotalPages] = useState(1);
   const [loading,      setLoading]      = useState(false);
 
+  // Movement filters
+  const [mvType,     setMvType]     = useState("");
+  const [mvFromDate, setMvFromDate] = useState("");
+  const [mvToDate,   setMvToDate]   = useState("");
+  const [mvBranchId, setMvBranchId] = useState(branchId);
+  const [branches,   setBranches]   = useState<Branch[]>([]);
+
+  // Pre-load branch list for the filter
+  useEffect(() => {
+    if (!token || !orgId) return;
+    fetch(`${API_URL}/api/v1/branches?per_page=200`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+    })
+      .then((r) => r.json())
+      .then((j) => setBranches(j.data ?? []));
+  }, [token, orgId]);
+
   // Fetch balance
   useEffect(() => {
     if (!token || !orgId || !productId) return;
@@ -119,7 +141,10 @@ export default function ProductStockDetailPage() {
         product_id: productId,
         page: String(mvPage),
         per_page: "20",
-        ...(branchId && { branch_id: branchId }),
+        ...(mvBranchId && { branch_id: mvBranchId }),
+        ...(mvType     && { movement_type: mvType }),
+        ...(mvFromDate && { from_date: mvFromDate }),
+        ...(mvToDate   && { to_date: mvToDate }),
       });
       const res = await fetch(
         `${API_URL}/api/v1/inventory/movements?${p}`,
@@ -131,9 +156,24 @@ export default function ProductStockDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, orgId, productId, branchId, mvPage]);
+  }, [token, orgId, productId, mvBranchId, mvPage, mvType, mvFromDate, mvToDate]);
 
   useEffect(() => { if (activeTab === "movements") fetchMovements(); }, [activeTab, fetchMovements]);
+  // Reset to page 1 whenever filter values change
+  useEffect(() => { setMvPage(1); }, [mvType, mvFromDate, mvToDate, mvBranchId]);
+
+  // Route helper: maps reference_type → source document URL
+  function referenceHref(m: StockMovement): string | null {
+    if (!m.reference_type || !m.reference_id) return null;
+    switch (m.reference_type.toLowerCase().replace(/_/g, "")) {
+      case "salesorder":      return `/orders/${m.reference_id}`;
+      case "stocktransfer":   return `/inventory/transfers/${m.reference_id}`;
+      case "stockadjustment": return `/inventory/adjustments/${m.reference_id}`;
+      case "purchaseinvoice": return `/purchases/invoices/${m.reference_id}`;
+      case "returnrequest":   return `/returns/${m.reference_id}`;
+      default: return null;
+    }
+  }
 
   // Movement columns
   const mvColumns: Column<StockMovement>[] = [
@@ -164,14 +204,30 @@ export default function ProductStockDetailPage() {
       ),
     },
     {
+      key: "branch_name",
+      header: "Branch",
+      render: (_: unknown, m: StockMovement) => <span className="text-xs text-text-secondary">{m.branch_name ?? "—"}</span>,
+    },
+    {
       key: "reference",
       header: "Reference",
-      render: (_: unknown, m: StockMovement) =>
-        m.reference_type ? (
-          <span className="text-xs text-text-secondary">
-            {m.reference_type} #{m.reference_id}
-          </span>
-        ) : null,
+      render: (_: unknown, m: StockMovement) => {
+        const href  = referenceHref(m);
+        const label = m.reference_number
+          ?? (m.reference_type ? `${m.reference_type.replace(/_/g, " ")} #${m.reference_id}` : null);
+        if (!label) return null;
+        return href ? (
+          <Link
+            href={href}
+            onClick={(e) => e.stopPropagation()}
+            className="text-xs text-primary hover:underline flex items-center gap-1"
+          >
+            {label} <ExternalLink className="h-3 w-3" />
+          </Link>
+        ) : (
+          <span className="text-xs text-text-secondary">{label}</span>
+        );
+      },
     },
     {
       key: "actor",
@@ -248,6 +304,45 @@ export default function ProductStockDetailPage() {
       {/* ── Movements Tab ── */}
       {activeTab === "movements" && (
         <>
+          {/* Filter bar */}
+          <div className="flex flex-wrap gap-3 mb-4">
+            <select
+              value={mvBranchId}
+              onChange={(e) => setMvBranchId(e.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">All branches</option>
+              {branches.map((b) => (
+                <option key={b.id} value={String(b.id)}>{b.name}</option>
+              ))}
+            </select>
+            <select
+              value={mvType}
+              onChange={(e) => setMvType(e.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">All types</option>
+              {Object.entries(MOVE_TYPE_LABEL).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-text-secondary whitespace-nowrap">From</label>
+              <Input type="date" className="h-9 w-36 text-sm" value={mvFromDate}
+                onChange={(e) => setMvFromDate(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-text-secondary whitespace-nowrap">To</label>
+              <Input type="date" className="h-9 w-36 text-sm" value={mvToDate}
+                onChange={(e) => setMvToDate(e.target.value)} />
+            </div>
+            {(mvType || mvFromDate || mvToDate || mvBranchId !== branchId) && (
+              <Button variant="outline" size="sm" onClick={() => {
+                setMvType(""); setMvFromDate(""); setMvToDate(""); setMvBranchId(branchId);
+              }}>Clear</Button>
+            )}
+          </div>
+
           <DataTable
             columns={mvColumns}
             data={movements}

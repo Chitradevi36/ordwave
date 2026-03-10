@@ -16,8 +16,28 @@ module Api
         products = products.by_status(params[:status])        if params[:status].present?
         paginated = paginate(products)
 
+        include_stock = params[:include].to_s.include?('stock')
+        stock_map = {}
+        if include_stock
+          branch_id = params[:branch_id].presence || current_organization.branches.order(:id).first&.id
+          if branch_id
+            inv_levels = InventoryLevel.where(
+              organization: current_organization,
+              branch_id:    branch_id,
+              product_id:   paginated.map(&:id)
+            )
+            stock_map = inv_levels.each_with_object({}) do |il, h|
+              h[il.product_id] = {
+                stock_on_hand:   il.qty_on_hand,
+                stock_reserved:  il.qty_reserved,
+                stock_available: [il.qty_on_hand - il.qty_reserved, 0].max
+              }
+            end
+          end
+        end
+
         render_success(
-          paginated.map { |p| serialize_product(p) },
+          paginated.map { |p| serialize_product(p, stock: stock_map[p.id]) },
           meta: pagination_meta(paginated)
         )
       end
@@ -25,7 +45,62 @@ module Api
       # GET /api/v1/products/:id
       def show
         authorize @product
-        render_success(serialize_product(@product, detailed: true))
+
+        stock_by_branch = InventoryLevel.where(
+          organization: current_organization,
+          product:      @product
+        ).includes(:branch).map do |il|
+          {
+            branch_id:       il.branch_id,
+            branch_name:     il.branch&.name,
+            on_hand:         il.qty_on_hand,
+            reserved:        il.qty_reserved,
+            available:       [il.qty_on_hand - il.qty_reserved, 0].max,
+            threshold:       il.min_qty_threshold
+          }
+        end
+
+        recent_order_lines = SalesOrderLine.joins(:sales_order)
+                               .where(product_id: @product.id, sales_orders: { organization_id: current_organization.id })
+                               .order('sales_orders.created_at DESC')
+                               .limit(10)
+                               .includes(sales_order: :customer)
+                               .map do |line|
+                                 order = line.sales_order
+                                 {
+                                   order_id:      order.id,
+                                   order_number:  order.order_number,
+                                   customer_name: order.customer&.name,
+                                   qty:           line.qty,
+                                   unit_price:    line.unit_price,
+                                   status:        order.status,
+                                   ordered_at:    order.created_at
+                                 }
+                               end
+
+        price_list_entries = PriceListItem.joins(:price_list)
+                               .where(product_id: @product.id, price_lists: { organization_id: current_organization.id, status: 'active' })
+                               .includes(:price_list)
+                               .map do |item|
+                                 {
+                                   price_list_id:   item.price_list_id,
+                                   price_list_name: item.price_list&.name,
+                                   list_type:       item.price_list&.list_type,
+                                   unit_price:      item.unit_price,
+                                   min_qty:         item.min_qty,
+                                   discount_pct:    item.discount_pct,
+                                   valid_from:      item.price_list&.valid_from,
+                                   valid_to:        item.price_list&.valid_to
+                                 }
+                               end
+
+        render_success(
+          serialize_product(@product, detailed: true).merge(
+            stock_by_branch:   stock_by_branch,
+            recent_orders:     recent_order_lines,
+            price_list_entries: price_list_entries
+          )
+        )
       end
 
       # POST /api/v1/products
@@ -227,7 +302,7 @@ module Api
         )
       end
 
-      def serialize_product(product, detailed: false)
+      def serialize_product(product, detailed: false, stock: nil)
         data = {
           id:            product.id,
           sku:           product.sku,
@@ -258,6 +333,13 @@ module Api
           created_at: product.created_at,
           updated_at: product.updated_at
         }
+
+        # Inline stock info when batch-loaded in index
+        if stock
+          data[:stock_available] = stock[:stock_available]
+          data[:stock_on_hand]   = stock[:stock_on_hand]
+          data[:stock_reserved]  = stock[:stock_reserved]
+        end
 
         if detailed
           # Only show purchase_price to owner/admin roles

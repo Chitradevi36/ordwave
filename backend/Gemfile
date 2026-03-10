@@ -44,6 +44,7 @@ gem 'pundit', '~> 2.3'
 
 # Background jobs
 gem 'sidekiq', '~> 7.2'
+gem 'sidekiq-cron', '~> 1.12'       # recurring job scheduling
 # PDF generation
 gem 'prawn', '~> 2.5'
 gem 'prawn-table', '~> 0.2'

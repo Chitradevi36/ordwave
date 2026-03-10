@@ -21,3 +21,13 @@ export { CreditDecisionModal } from "./credit-decision-modal";
 export type { CreditDecisionModalProps, CreditResult, CreditMetrics, CreditActionsRequired } from "./credit-decision-modal";
 export { Textarea } from "./textarea";
 export type { TextareaProps } from "./textarea";
+export {
+  Skeleton,
+  KpiCardSkeleton,
+  TableSkeleton,
+  CardSkeleton,
+  ChartSkeleton,
+  FormSkeleton,
+  ListSkeleton,
+  DashboardSkeleton,
+} from "./skeleton";

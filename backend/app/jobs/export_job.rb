@@ -20,6 +20,8 @@ class ExportJob < ApplicationJob
 
     file_content, content_type, filename = if export.format == "xlsx"
       [build_xlsx(headers, data), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "#{export.export_type}_export_#{Date.current}.xlsx"]
+    elsif export.format == "pdf"
+      [build_pdf(export.export_type, headers, data), "application/pdf", "#{export.export_type}_export_#{Date.current}.pdf"]
     else
       [build_csv(headers, data), "text/csv", "#{export.export_type}_export_#{Date.current}.csv"]
     end
@@ -126,5 +128,28 @@ class ExportJob < ApplicationJob
       rows.each { |row| sheet.add_row(row) }
     end
     package.to_stream.read
+  end
+
+  def build_pdf(export_type, headers, rows)
+    require "prawn"
+    require "prawn/table"
+    pdf = Prawn::Document.new(page_layout: :landscape, margin: 24)
+
+    # Title
+    pdf.font_size(14) { pdf.text export_type.capitalize + " Export — " + Date.current.to_s, style: :bold }
+    pdf.move_down 8
+
+    # Table
+    table_data = [headers.map(&:humanize)] + rows.map { |r| r.map { |v| v.nil? ? "—" : v.to_s } }
+    pdf.table(table_data,
+      header:      true,
+      row_colors:  ["FFFFFF", "F5F5F5"],
+      cell_style:  { size: 8, padding: [4, 6] }) do
+      row(0).font_style = :bold
+      row(0).background_color = "1B4332"
+      row(0).text_color = "FFFFFF"
+    end
+
+    pdf.render
   end
 end

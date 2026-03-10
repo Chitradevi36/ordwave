@@ -8,6 +8,7 @@ import { TopBar } from "./top-bar";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { buildBreadcrumbs } from "@/lib/breadcrumbs";
 import type { BreadcrumbItem } from "@/components/ui/breadcrumb";
+import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -28,6 +29,9 @@ export type { BreadcrumbItem };
 export function AppShell({ children, title, breadcrumbs, hideBreadcrumb, noPad }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+
+  // Register global keyboard shortcuts (Ctrl+K, Ctrl+N, Escape)
+  useKeyboardShortcuts();
 
   // Auto-generate breadcrumbs from route (unless custom or suppressed)
   const autoCrumbs = buildBreadcrumbs(pathname);

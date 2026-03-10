@@ -41,6 +41,7 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   "/delivery":                    { label: "Delivery Trips",     parent: "/operations" },
   "/delivery/new":                { label: "New Trip",           parent: "/delivery" },
   "/delivery/exceptions":         { label: "Exceptions",         parent: "/delivery" },
+  "/delivery/rejections":         { label: "Rejections",         parent: "/delivery" },
   "/returns":                     { label: "Returns",            parent: "/operations" },
   "/returns/new":                 { label: "New Return",         parent: "/returns" },
 

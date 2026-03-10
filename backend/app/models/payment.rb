@@ -1,5 +1,5 @@
 class Payment < ApplicationRecord
-  PAYMENT_MODES = %w[cash bank_transfer upi cheque neft rtgs adjustment].freeze
+  PAYMENT_MODES = %w[cash bank_transfer upi cheque neft rtgs adjustment tally_sync].freeze
   STATUSES      = %w[draft confirmed reversed].freeze
 
   # ── Associations ─────────────────────────────────────────────────────────────

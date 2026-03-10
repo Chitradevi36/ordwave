@@ -3,6 +3,10 @@ module Api
     class VisitsController < BaseController
       before_action :require_organization!
 
+      # today, checkin, skip_new are open to any authenticated org member —
+      # skip Pundit's verify_authorized check (no policy decision required).
+      skip_after_action :verify_authorized, only: %i[today checkin skip_new]
+
       # GET /api/v1/visits/today
       def today
         branch = current_organization.branches.find_by(id: params[:branch_id]) ||

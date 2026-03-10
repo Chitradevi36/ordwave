@@ -33,6 +33,12 @@ class Customer < ApplicationRecord
   accepts_nested_attributes_for :addresses, allow_destroy: true
   accepts_nested_attributes_for :contacts,  allow_destroy: true
 
+  # ── Credit limit (denormalized) ──────────────────────────────────────────
+  # DEPRECATED: This column duplicates CreditAccount#credit_limit and can drift.
+  # Authoritative credit data lives in the associated CreditAccount record.
+  # Use customer.credit_account.credit_limit for all credit enforcement logic.
+  # This field is kept for historical API compatibility only.
+  #
   # Validations
   validates :name,   presence: true, length: { maximum: 150 }
   validates :code,   presence: true,
@@ -96,6 +102,11 @@ class Customer < ApplicationRecord
 
   def block!
     update!(status: 'blocked')
+    WebhookEvents.fire(
+      organization: organization,
+      event:        'customer.credit_blocked',
+      payload:      WebhookEvents.customer_payload(self)
+    )
   end
 
   def unblock!

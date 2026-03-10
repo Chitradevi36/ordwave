@@ -13,16 +13,19 @@ import {
   type PrimaryNavItem,
 } from "./nav.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
+import { useApprovals } from "@/lib/api/hooks/useApprovals";
 
 // ── NavItem ───────────────────────────────────────────────────────────────────
 function NavItem({
   item,
   collapsed,
   onClick,
+  badgeCount,
 }: {
   item: PrimaryNavItem;
   collapsed: boolean;
   onClick?: () => void;
+  badgeCount?: number;
 }) {
   const pathname = usePathname();
   const active = isActiveRoute(pathname, item);
@@ -59,7 +62,12 @@ function NavItem({
         aria-hidden="true"
       />
       {!collapsed && (
-        <span className="truncate leading-none">{item.label}</span>
+        <span className="flex-1 truncate leading-none">{item.label}</span>
+      )}
+      {!collapsed && badgeCount != null && badgeCount > 0 && (
+        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          {badgeCount > 99 ? "99+" : badgeCount}
+        </span>
       )}
     </Link>
   );
@@ -197,6 +205,11 @@ function SidebarBody({
   const navItems = filterNavForRole(role);
   const isCollapsed = collapsed && !isMobile;
 
+  // Approvals badge — only for manager/owner/admin roles
+  const isApprover = role != null && ["manager", "owner", "admin"].includes(role);
+  const { data: approvalsData } = useApprovals({ enabled: isApprover });
+  const approvalsBadge = isApprover ? (approvalsData?.total_count ?? 0) : 0;
+
   return (
     <div
       className={[
@@ -255,6 +268,7 @@ function SidebarBody({
                 item={item}
                 collapsed={isCollapsed}
                 onClick={isMobile ? onMobileClose : undefined}
+                badgeCount={item.key === "sales" ? approvalsBadge : undefined}
               />
             </li>
           ))}
@@ -297,6 +311,8 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
     localStorage.removeItem("user");
     localStorage.removeItem("organization_id");
     localStorage.removeItem("orderlane_profile_cache");
+    // Clear auth presence cookie used by middleware
+    document.cookie = 'auth_present=; path=/; max-age=0; SameSite=Lax';
     window.location.href = "/login";
   };
 

@@ -12,8 +12,10 @@ import { Modal } from "@/components/ui/modal";
 import {
   CheckCircle2, XCircle, Ban, RefreshCw, Send, AlertTriangle,
   ShieldCheck, ShieldX, ShieldAlert, Pencil, CalendarDays, PauseCircle,
+  Truck, FileText, Tag, PackageCheck, ClipboardCheck,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
 import { Alert } from "@/components/ui/alert";
 import { API_URL } from "@/lib/api/client";
@@ -45,6 +47,21 @@ interface AuditEntry {
   created_at: string;
 }
 
+interface FreebieSnap {
+  product_id: number;
+  product_name: string;
+  qty: number;
+  unit: string;
+}
+
+interface SchemeSnap {
+  scheme_id: number;
+  scheme_name: string;
+  scheme_type: string;
+  discount_pct: number;
+  freebies: FreebieSnap[];
+}
+
 interface OrderDetail {
   id: number;
   order_number: string;
@@ -60,6 +77,11 @@ interface OrderDetail {
   approved_at: string | null;
   cancelled_at: string | null;
   cancellation_reason: string | null;
+  pick_status: "pending_pick" | "picked" | "pick_confirmed";
+  picked_by_id: number | null;
+  picked_at: string | null;
+  pick_confirmed_by_id: number | null;
+  pick_confirmed_at: string | null;
   created_at: string;
   updated_at: string;
   customer: { id: number; name: string; code: string };
@@ -67,6 +89,7 @@ interface OrderDetail {
   created_by: { id: number; name: string };
   lines: OrderLine[];
   timeline: AuditEntry[];
+  scheme_snapshot?: SchemeSnap[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -96,6 +119,21 @@ const ACTION_LABEL: Record<string, string> = {
   order_cancelled:     "Cancelled",
   order_price_refreshed: "Prices Refreshed",
 };
+
+const PICK_STATUS_CONFIG = {
+  pending_pick:   { label: "Awaiting Pick",  className: "bg-gray-100 text-gray-600" },
+  picked:         { label: "Picked",          className: "bg-amber-100 text-amber-800" },
+  pick_confirmed: { label: "Pick Confirmed",  className: "bg-green-100 text-green-800" },
+} as const;
+
+function PickStatusBadge({ status }: { status: OrderDetail["pick_status"] }) {
+  const cfg = PICK_STATUS_CONFIG[status];
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}>
+      {cfg.label}
+    </span>
+  );
+}
 
 function fmtINR(n: number | string) {
   return `₹${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -133,6 +171,9 @@ function OverviewTab({ order }: { order: OrderDetail }) {
             <Row label="Cancelled" value={fmtDateTime(order.cancelled_at)} />
             <Row label="Reason"    value={order.cancellation_reason ?? "—"} />
           </>}
+          {(order.status === "approved" || order.pick_status !== "pending_pick") && (
+            <Row label="Pick Status" value={<PickStatusBadge status={order.pick_status} />} />
+          )}
         </CardContent>
       </Card>
 
@@ -173,6 +214,136 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex items-start gap-2">
       <span className="w-32 text-text-secondary shrink-0">{label}</span>
       <span className="flex-1">{value}</span>
+    </div>
+  );
+}
+
+// ─── Status Timeline ──────────────────────────────────────────────────────────
+function StatusTimeline({ order }: { order: OrderDetail }) {
+  const STAGES: { key: string; label: string; ts: string | null }[] = [
+    { key: "draft",     label: "Draft",     ts: order.created_at },
+    { key: "submitted", label: "Submitted", ts: order.submitted_at },
+    { key: "approved",  label: "Approved",  ts: order.approved_at },
+    { key: "delivered", label: "Delivered", ts: null },
+  ];
+
+  const STAGE_IDX: Record<string, number> = {
+    draft: 0, submitted: 1, on_hold: 1, approved: 2, delivered: 3,
+    rejected: 1, cancelled: 0,
+  };
+
+  const currentIdx = STAGE_IDX[order.status] ?? 0;
+  const isFailed   = ["rejected", "cancelled"].includes(order.status);
+
+  const elements: React.ReactNode[] = [];
+  STAGES.forEach((stage, idx) => {
+    const done   = idx < currentIdx;
+    const active = idx === currentIdx;
+    const failed = active && isFailed;
+
+    elements.push(
+      <div key={`step-${idx}`} className="flex flex-col items-center shrink-0">
+        <div
+          className={`h-8 w-8 rounded-full border-2 flex items-center justify-center ${
+            failed ? "border-danger bg-danger/10 text-danger" :
+            done   ? "border-success bg-success text-white" :
+            active ? "border-primary bg-primary/10 text-primary" :
+                     "border-border bg-background-subtle text-text-secondary"
+          }`}
+        >
+          {done   ? <CheckCircle2 className="h-4 w-4" /> :
+           failed ? <XCircle       className="h-4 w-4" /> :
+           <span className="text-[10px] font-bold">{idx + 1}</span>}
+        </div>
+        <p className="text-[10px] font-semibold mt-1 text-center leading-tight text-text-primary">
+          {stage.label}
+        </p>
+        <p className="text-[9px] text-text-secondary text-center h-3">
+          {stage.ts ? fmtDate(stage.ts) : ""}
+        </p>
+      </div>,
+    );
+    if (idx < STAGES.length - 1) {
+      elements.push(
+        <div
+          key={`conn-${idx}`}
+          className={`flex-1 h-0.5 self-start mt-4 ${done ? "bg-success" : "bg-border"}`}
+        />,
+      );
+    }
+  });
+
+  return (
+    <div className="rounded-xl border border-border bg-white px-6 py-4 mb-4">
+      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
+        Order Progress
+      </p>
+      <div className="flex items-start">{elements}</div>
+      {isFailed && (
+        <p className="mt-2 text-xs text-center text-danger font-medium">
+          Order {order.status}
+          {order.cancellation_reason ? ` — ${order.cancellation_reason}` : ""}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Schemes Tab ─────────────────────────────────────────────────────────────
+function SchemesTab({ schemes }: { schemes: SchemeSnap[] }) {
+  if (schemes.length === 0)
+    return <p className="text-sm text-text-secondary italic">No schemes applied to this order.</p>;
+
+  return (
+    <div className="space-y-4">
+      {schemes.map((s) => (
+        <div key={s.scheme_id} className="rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 bg-success/5 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-success" />
+              <span className="font-semibold text-sm text-text-primary">{s.scheme_name}</span>
+              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+                {s.scheme_type.replace(/_/g, " ")}
+              </span>
+            </div>
+            {s.discount_pct > 0 && (
+              <span className="text-sm font-bold text-success">−{s.discount_pct}%</span>
+            )}
+          </div>
+          {s.freebies && s.freebies.length > 0 && (
+            <div className="px-4 py-3">
+              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
+                Free Items
+              </p>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-text-secondary border-b border-border">
+                    <th className="pb-1.5 font-medium">Product</th>
+                    <th className="pb-1.5 font-medium text-right">Qty</th>
+                    <th className="pb-1.5 font-medium text-right">Unit</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {s.freebies.map((f) => (
+                    <tr key={f.product_id}>
+                      <td className="py-1.5 text-text-primary">{f.product_name}</td>
+                      <td className="py-1.5 text-right font-mono">{f.qty}</td>
+                      <td className="py-1.5 text-right text-text-secondary">{f.unit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {(!s.freebies || s.freebies.length === 0) && s.discount_pct > 0 && (
+            <div className="px-4 py-3">
+              <p className="text-sm text-text-secondary">
+                Flat {s.discount_pct}% discount applied on eligible lines.
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -441,6 +612,7 @@ export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { token, orgId } = useOrgBranch();
+  const role = useCurrentRole();
 
   const [order, setOrder]     = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -465,6 +637,9 @@ export default function OrderDetailPage() {
   const [editNotes,  setEditNotes]  = useState("");
 
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  const handlePick         = () => postAction("pick",         {});
+  const handleConfirmPick  = () => postAction("confirm_pick", {});
 
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
@@ -546,6 +721,29 @@ export default function OrderDetailPage() {
     }
   };
   const handleRefreshPrice = () => postAction("refresh_price", {});
+
+  const handleGenerateInvoice = async () => {
+    setActing(true);
+    try {
+      const res  = await fetch(`${API_URL}/api/v1/sales_invoices/generate_from_order`, {
+        method:  "POST",
+        headers: {
+          Authorization:       `Bearer ${token}`,
+          "X-Organization-Id": orgId!,
+          "Content-Type":      "application/json",
+        },
+        body: JSON.stringify({ order_id: params.id }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        showToast("success", `Invoice ${json.data?.invoice_number ?? ""} generated`);
+      } else {
+        showToast("error", json.errors?.[0] ?? "Invoice generation failed");
+      }
+    } finally {
+      setActing(false);
+    }
+  };
 
   const openLimitedEdit = () => {
     if (!order) return;
@@ -641,6 +839,10 @@ export default function OrderDetailPage() {
     { value: "overview",  label: "Overview",               content: <OverviewTab order={order} /> },
     { value: "lines",     label: `Lines (${order.lines.length})`, content: <LinesTab lines={order.lines} /> },
     { value: "credit",   label: "Credit Check",            content: <CreditTab order={order} /> },
+    ...(order.scheme_snapshot && order.scheme_snapshot.length > 0 ? [{
+      value: "schemes", label: `Schemes (${order.scheme_snapshot.length})`,
+      content: <SchemesTab schemes={order.scheme_snapshot} />,
+    }] : []),
     { value: "journey",  label: "Journey",                 content: <LifecycleTab orderId={order.id} token={token!} orgId={orgId!} /> },
     { value: "activity", label: "Activity",                content: <TimelineTab timeline={order.timeline} /> },
   ];
@@ -710,6 +912,34 @@ export default function OrderDetailPage() {
             onClick: () => { setCancelReason(""); setCancelModal(true); },
             variant: "outline" as const,
           }] : []),
+          // Create Delivery Trip (approved)
+          ...(order.status === "approved" ? [{
+            label: "Create Delivery Trip",
+            icon: Truck,
+            onClick: () => router.push(`/delivery/new?order_id=${order.id}`),
+            variant: "outline" as const,
+          }] : []),
+          // Generate Invoice (delivered)
+          ...(order.status === "delivered" ? [{
+            label: "Generate Invoice",
+            icon: FileText,
+            onClick: handleGenerateInvoice,
+          }] : []),
+          // Mark as Picked (approved + pending_pick — warehouse staff or manager)
+          ...(order.status === "approved" && order.pick_status === "pending_pick" &&
+              (role === "warehouse_staff" || ["owner","admin","manager"].includes(role ?? "")) ? [{
+            label: "Mark as Picked",
+            icon: PackageCheck,
+            onClick: handlePick,
+            variant: "outline" as const,
+          }] : []),
+          // Confirm Pick (approved + picked — managers only)
+          ...(order.status === "approved" && order.pick_status === "picked" &&
+              ["owner","admin","manager"].includes(role ?? "") ? [{
+            label: "Confirm Pick",
+            icon: ClipboardCheck,
+            onClick: handleConfirmPick,
+          }] : []),
         ]}
       />
 
@@ -773,6 +1003,8 @@ export default function OrderDetailPage() {
           </button>
         </Alert>
       )}
+
+      <StatusTimeline order={order} />
 
       <Tabs items={tabItems} defaultValue="overview" />
 

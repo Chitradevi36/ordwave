@@ -30,27 +30,46 @@ module Delivery
       new(**kwargs).call
     end
 
+    # `rejections` is an alias for `returns` (mobile-friendly naming)
+    # `completed_at` is the device-local timestamp for offline-first audit trails
+    # `proof` compact hash: { type: 'photo'|'signature'|'otp'|'override', data: base64_or_digest }
     def initialize(actor:, stop:, idempotency_key:, outcome:,
-                   delivered_lines: [], returns: [], proof_type: 'photo',
+                   delivered_lines: [], returns: [], rejections: nil,
+                   proof_type: 'photo', proof: nil,
                    photo: nil, signature_image: nil, otp_code: nil,
                    override_reason: nil, latitude: nil, longitude: nil,
-                   device_id: nil, exception_code: nil, delivery_notes: nil)
+                   device_id: nil, exception_code: nil, delivery_notes: nil,
+                   completed_at: nil)
       @actor           = actor
       @stop            = stop
       @idempotency_key = idempotency_key
       @outcome         = outcome
       @delivered_lines = Array(delivered_lines)
-      @returns         = Array(returns)
-      @proof_type      = proof_type
-      @photo           = photo
-      @signature_image = signature_image
-      @otp_code        = otp_code
-      @override_reason = override_reason
+      # Accept either `rejections:` or `returns:` (mobile sends rejections)
+      @returns         = Array(rejections.presence || returns)
+      # Accept compact `proof: { type:, data: }` hash OR individual params
+      if proof.present?
+        @proof_type      = proof[:type].presence || proof_type
+        data             = proof[:data]
+        case @proof_type
+        when 'photo'     then @photo           = data
+        when 'signature' then @signature_image = data
+        when 'otp'       then @otp_code        = data
+        when 'override'  then @override_reason = data
+        end
+      else
+        @proof_type      = proof_type
+        @photo           = photo
+        @signature_image = signature_image
+        @otp_code        = otp_code
+        @override_reason = override_reason
+      end
       @latitude        = latitude
       @longitude       = longitude
       @device_id       = device_id
       @exception_code  = exception_code
       @delivery_notes  = delivery_notes
+      @completed_at    = completed_at
     end
 
     def call
@@ -64,14 +83,16 @@ module Delivery
 
       ActiveRecord::Base.transaction do
         # 1. Update stop
+        # `completed_at` from device is used for audit-trail accuracy (offline submissions)
+        delivery_timestamp = @completed_at.present? ? Time.zone.parse(@completed_at.to_s) : Time.current
         @stop.update!(
-          status:         @outcome,
-          delivered_at:   Time.current,
-          latitude:       @latitude,
-          longitude:      @longitude,
-          device_id:      @device_id,
-          exception_code: @exception_code,
-          delivery_notes: @delivery_notes,
+          status:          @outcome,
+          delivered_at:    delivery_timestamp,
+          latitude:        @latitude,
+          longitude:       @longitude,
+          device_id:       @device_id,
+          exception_code:  @exception_code,
+          delivery_notes:  @delivery_notes,
           idempotency_key: @idempotency_key
         )
 
@@ -93,17 +114,11 @@ module Delivery
           line.update!(delivered_qty: line_data[:delivered_qty].to_i)
         end
 
-        # 4. Create return records
+        # 4. Update returned_qty on matching order lines.
+        # ReturnRecord writes are intentionally removed — ReturnRequest is the
+        # authoritative record and is created post-commit by AutoCreateReturnService.
+        # Writing to the deprecated return_records table caused dual-write inconsistency.
         @returns.each do |ret|
-          ReturnRecord.create!(
-            trip_stop:   @stop,
-            product_id:  ret[:product_id],
-            qty_returned: ret[:qty_returned].to_i,
-            condition:   ret.fetch(:condition, 'good'),
-            reason_code: ret[:reason_code],
-            notes:       ret[:notes]
-          )
-          # Increment returned_qty on the matching line
           line = @stop.sales_order.lines.find_by(product_id: ret[:product_id])
           line&.update!(returned_qty: (line.returned_qty || 0) + ret[:qty_returned].to_i)
         end
@@ -135,9 +150,16 @@ module Delivery
 
         { ok: true, stop: @stop.reload, errors: [] }
       end.tap do |result|
-        # Auto-invoice trigger: enqueue asynchronously after transaction commits
-        if result[:ok] && auto_invoice_enabled?
-          Invoice::GenerateFromDeliveryJob.perform_later(@stop.id)
+        if result[:ok]
+          # Auto-invoice trigger: enqueue asynchronously after transaction commits
+          Invoice::GenerateFromDeliveryJob.perform_later(@stop.id) if auto_invoice_enabled?
+
+          # B4.2: Auto-create ReturnRequest from delivery rejections (partial delivery)
+          if @outcome == 'partial_delivery' && @returns.any?
+            Delivery::AutoCreateReturnService.call(stop: @stop.reload, actor: @actor)
+          end
+
+          notify_on_stop_completion
         end
       end
     rescue ActiveRecord::RecordInvalid => e
@@ -145,6 +167,46 @@ module Delivery
     end
 
     private
+
+    def notify_on_stop_completion
+      org   = @stop.delivery_trip.organization
+      order = @stop.sales_order
+
+      if @outcome.in?(%w[delivered partial_delivery])
+        recipients = [order.created_by].compact
+        Notifications::CreateService.call(
+          organization: org,
+          recipients:   recipients,
+          actor:        @actor,
+          notifiable:   @stop,
+          type:         'delivery_completed',
+          title:        "Order #{order.order_number} #{@outcome == 'delivered' ? 'delivered' : 'partially delivered'}",
+          body:         "Delivery confirmed for #{order.customer&.name}.",
+          deep_link:    "/orders/#{order.id}",
+          severity:     'medium'
+        )
+      elsif @outcome == 'failed'
+        managers = User.joins(:memberships)
+                       .where(memberships: { organization_id: org.id, deleted_at: nil, active: true })
+                       .joins(memberships: :role)
+                       .where(roles: { name: %w[manager admin] })
+                       .distinct
+        recipients = ([order.created_by] + managers.to_a).compact.uniq
+        Notifications::CreateService.call(
+          organization: org,
+          recipients:   recipients,
+          actor:        @actor,
+          notifiable:   @stop,
+          type:         'delivery_failed',
+          title:        "Delivery failed — Order #{order.order_number}",
+          body:         "Exception: #{@exception_code}. #{@delivery_notes}".strip,
+          deep_link:    "/orders/#{order.id}",
+          severity:     'high'
+        )
+      end
+    rescue StandardError => e
+      Rails.logger.warn("[CompleteStopService] Notification failed: #{e.message}")
+    end
 
     def validate
       errs = []
@@ -165,13 +227,21 @@ module Delivery
     def auto_invoice_enabled?
       return false unless @outcome.in?(%w[delivered partial_delivery])
       org     = @stop.delivery_trip.organization
-      trigger = org.settings&.dig('auto_invoice_trigger').to_s
-      # Default to on_delivery when setting is absent
+      # Read trigger from CreditPolicy (single source of truth);
+      # fall back to org.settings for backward compatibility.
+      policy  = org.credit_policy
+      trigger = policy&.auto_invoice_trigger.to_s
+      trigger = org.settings&.dig('auto_invoice_trigger').to_s if trigger.blank?
       trigger.blank? || trigger == 'on_delivery'
     end
 
     def check_and_complete_trip!
-      trip = @stop.delivery_trip.reload
+      # Use a row-level lock to prevent race condition when two drivers complete
+      # their final stops concurrently — only one transaction will win the lock
+      # and perform the transition; the other will see trip already completed.
+      trip = @stop.delivery_trip.lock!.reload
+      return if trip.completed?
+
       all_complete = trip.stops.not_deleted.all?(&:completed?)
       return unless all_complete
 

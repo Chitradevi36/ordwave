@@ -38,7 +38,60 @@ module Api
                            .find(params[:id])
         authorize customer
 
-        render_success(serialize_customer(customer, detailed: true))
+        includes_param = params[:include].to_s.split(',').map(&:strip)
+        extras = {}
+        if includes_param.include?('recent_orders')
+          extras[:recent_orders] = customer.sales_orders
+                                           .order(created_at: :desc)
+                                           .limit(5)
+                                           .map { |o| { id: o.id, order_number: o.order_number, status: o.status, total_amount: o.total_amount, created_at: o.created_at } }
+        end
+
+        if includes_param.include?('recent_payments')
+          extras[:recent_payments] = customer.payments
+                                             .order(created_at: :desc)
+                                             .limit(5)
+                                             .map { |p| { id: p.id, amount: p.amount, mode: p.payment_mode, reference_number: p.reference_number, status: p.status, payment_date: p.received_date } }
+        end
+
+        render_success(serialize_customer(customer, detailed: true).merge(extras))
+      end
+
+      # GET /api/v1/customers/:id/timeline
+      def timeline
+        customer = find_customer
+        authorize customer, :show?
+
+        order_ids  = customer.sales_orders.pluck(:id)
+        pay_ids    = customer.payments.pluck(:id)
+        visit_ids  = customer.visit_logs.pluck(:id)
+        ca_id      = customer.credit_account&.id
+
+        scope = AuditLog.where(organization: current_organization)
+                        .includes(:actor)
+                        .order(created_at: :desc)
+
+        # Build polymorphic OR condition
+        conditions = []
+        conditions << "(auditable_type = 'SalesOrder' AND auditable_id IN (#{order_ids.join(',')}))" if order_ids.any?
+        conditions << "(auditable_type = 'Payment' AND auditable_id IN (#{pay_ids.join(',')}))" if pay_ids.any?
+        conditions << "(auditable_type = 'VisitLog' AND auditable_id IN (#{visit_ids.join(',')}))" if visit_ids.any?
+        conditions << "(auditable_type = 'CreditAccount' AND auditable_id = #{ca_id})" if ca_id
+
+        if conditions.empty?
+          render_success([], meta: { total: 0 })
+          return
+        end
+
+        logs = scope.where(conditions.join(' OR ')).limit(50)
+
+        filter_action = params[:event_type]
+        logs = logs.for_action(filter_action) if filter_action.present?
+
+        render_success(
+          logs.map { |l| serialize_timeline_event(l) },
+          meta: { total: logs.size }
+        )
       end
 
       def create
@@ -241,6 +294,7 @@ module Api
         case params[:credit_status]
         when 'overdue'     then scope.overdue_customers
         when 'near_limit'  then scope.near_credit_limit
+        when 'hold'        then scope.joins(:credit_account).where(credit_accounts: { hold_required: true })
         else scope
         end
       end
@@ -311,12 +365,16 @@ module Api
 
       def serialize_credit_account(ca)
         {
-          id:              ca.id,
-          credit_limit:    ca.credit_limit,
-          current_balance: ca.current_balance,
+          id:               ca.id,
+          credit_limit:     ca.credit_limit,
+          current_balance:  ca.current_balance,
           available_credit: ca.available_credit,
-          overdue_amount:  ca.overdue_amount,
-          overdue_days:    ca.overdue_days
+          overdue_amount:   ca.overdue_amount,
+          overdue_days:     ca.overdue_days,
+          collection_first: ca.collection_first,
+          hold_required:    ca.hold_required,
+          watchlist:        ca.watchlist,
+          overdue_bucket:   ca.overdue_bucket
         }
       end
 
@@ -343,6 +401,19 @@ module Api
           email:       contact.email,
           designation: contact.designation,
           is_primary:  contact.is_primary
+        }
+      end
+
+      def serialize_timeline_event(log)
+        {
+          id:             log.id,
+          action:         log.action,
+          auditable_type: log.auditable_type,
+          auditable_id:   log.auditable_id,
+          reason:         log.reason,
+          changes_data:   log.changes_data,
+          actor: log.actor ? { id: log.actor.id, name: log.actor.full_name } : nil,
+          created_at:     log.created_at
         }
       end
     end

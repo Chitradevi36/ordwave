@@ -1,6 +1,6 @@
 class Export < ApplicationRecord
   EXPORT_TYPES = %w[orders invoices payments customers inventory beats].freeze
-  FORMATS      = %w[csv xlsx].freeze
+  FORMATS      = %w[csv xlsx pdf].freeze
   STATUSES     = %w[pending processing ready failed].freeze
 
   # ── Associations ────────────────────────────────────────────────────────────

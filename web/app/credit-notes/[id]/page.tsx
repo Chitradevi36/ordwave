@@ -32,6 +32,17 @@ interface AuditEntry {
   created_at: string;
 }
 
+interface CreditNoteApplication {
+  id:             number;
+  amount:         number;
+  status:         string;
+  reversed_at:    string | null;
+  reversal_reason: string | null;
+  created_at:     string;
+  sales_invoice:  { id: number; invoice_number: string; grand_total: number };
+  applied_by:     { id: number; name: string } | null;
+}
+
 interface CreditNoteDetail {
   id:                 number;
   credit_note_number: string;
@@ -39,6 +50,8 @@ interface CreditNoteDetail {
   subtotal:           number;
   tax_total:          number;
   total:              number;
+  applied_amount:     number;
+  unapplied_amount:   number;
   notes:              string | null;
   issued_at:          string | null;
   voided_at:          string | null;
@@ -48,6 +61,7 @@ interface CreditNoteDetail {
   branch:             { id: number; name: string };
   return_request:     { id: number; return_number: string };
   lines:              CreditNoteLine[];
+  applications:       CreditNoteApplication[];
   audit_trail:        AuditEntry[];
 }
 
@@ -322,6 +336,18 @@ export default function CreditNoteDetailPage() {
               <span>Total Credit</span>
               <span className="text-success">₹ {fmt(cn.total)}</span>
             </div>
+            {cn.applied_amount > 0 && (
+              <div className="flex justify-between text-text-secondary">
+                <span>Applied</span>
+                <span className="text-amber-600">− ₹ {fmt(cn.applied_amount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+              <span>Unapplied Balance</span>
+              <span className={cn.unapplied_amount > 0 ? "text-primary" : "text-text-secondary"}>
+                ₹ {fmt(cn.unapplied_amount ?? cn.total)}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -375,6 +401,67 @@ export default function CreditNoteDetailPage() {
               </tfoot>
             </table>
           </div>
+        </div>
+
+        {/* ── Application History ── */}
+        <div className="rounded-lg border bg-white overflow-hidden">
+          <div className="px-5 py-3 border-b bg-background-subtle flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+              Application History
+            </h3>
+            <span className="text-xs text-text-secondary">
+              {(cn.applications ?? []).filter(a => a.status === "active").length} active application(s)
+            </span>
+          </div>
+          {(cn.applications ?? []).length === 0 ? (
+            <div className="px-5 py-6 text-center text-sm text-text-secondary">
+              No applications yet. Use "Apply to Invoice" to allocate this credit note.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-background-subtle text-text-secondary border-b">
+                <tr>
+                  <th className="px-4 py-2.5 text-left font-medium">Invoice #</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Applied Amount</th>
+                  <th className="px-4 py-2.5 text-left font-medium">Status</th>
+                  <th className="px-4 py-2.5 text-left font-medium">Applied By</th>
+                  <th className="px-4 py-2.5 text-left font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {(cn.applications ?? []).map((app) => (
+                  <tr key={app.id} className={`hover:bg-background-subtle/50 ${app.status === "reversed" ? "opacity-60" : ""}`}>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => router.push(`/sales-invoices/${app.sales_invoice.id}`)}
+                        className="font-mono text-sm text-primary hover:underline"
+                      >
+                        {app.sales_invoice.invoice_number}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold">₹ {fmt(app.amount)}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={app.status === "active" ? "success" : "secondary"}>
+                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                      </Badge>
+                      {app.reversal_reason && (
+                        <p className="text-xs text-text-secondary italic mt-0.5">{app.reversal_reason}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-text-secondary text-xs">
+                      {app.applied_by?.name ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-text-secondary text-xs">
+                      {fmtDate(app.created_at)}
+                      {app.reversed_at && (
+                        <span className="ml-1 text-danger">(reversed {fmtDate(app.reversed_at)})</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* ── Audit Trail ── */}

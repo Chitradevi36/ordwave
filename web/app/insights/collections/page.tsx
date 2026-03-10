@@ -1,13 +1,18 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
+import {
+  BarChart, Bar, AreaChart, Area,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
 import { AppShell, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
-import { RefreshCw, Download, Wallet, AlertCircle } from "lucide-react";
+import { RefreshCw, Download, Wallet, AlertCircle, TrendingDown } from "lucide-react";
 
 function fmt(n: number | undefined | null, prefix = "") {
   if (n == null) return "—";
@@ -17,6 +22,9 @@ function fmtPct(n: number | undefined | null) {
   if (n == null) return "—";
   return `${Number(n).toFixed(1)}%`;
 }
+function shortDate(d: string) { return d ? String(d).slice(5, 10) : d; }
+
+const PIE_COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#14b8a6", "#a855f7", "#f97316"];
 
 interface Collector { id: number; name: string; total_collected: number; payment_count: number }
 interface UnpaidInvoice {
@@ -37,8 +45,13 @@ interface CollectionsData {
     unpaid_invoices_count?: number;
     unpaid_invoices_value?: number;
     collection_rate?: number;
+    target_amount?: number;
+    overdue_invoices_count?: number;
   };
   timeseries?: Array<{ period: string; amount: number; count: number }>;
+  target_vs_actual?: Array<{ period: string; target: number; actual: number }>;
+  by_mode?: Array<{ mode: string; amount: number; count: number }>;
+  overdue_by_age?: Array<{ bucket: string; count: number; value: number }>;
   top_collectors?: Collector[];
   unpaid_invoices?: UnpaidInvoice[];
 }
@@ -114,12 +127,14 @@ export default function InsightsCollectionsPage() {
 
   const s = data?.summary;
   const statCards = [
-    { label: "Collected Today",     value: fmt(s?.payments_today, "₹"),         icon: Wallet,       color: "text-primary" },
-    { label: "MTD Collections",     value: fmt(s?.payments_mtd, "₹"),            icon: Wallet,       color: "text-secondary" },
-    { label: "Period Collections",  value: fmt(s?.payments_period, "₹"),         icon: Wallet,       color: "text-accent" },
-    { label: "Collection Rate",     value: fmtPct(s?.collection_rate),           icon: Wallet,       color: "text-success" },
-    { label: "Unpaid Count",        value: fmt(s?.unpaid_invoices_count),        icon: AlertCircle,  color: "text-warning" },
-    { label: "Unpaid Value",        value: fmt(s?.unpaid_invoices_value, "₹"),   icon: AlertCircle,  color: "text-error" },
+    { label: "Collected Today",   value: fmt(s?.payments_today, "₹"),       icon: Wallet,        color: "text-primary" },
+    { label: "MTD Collections",   value: fmt(s?.payments_mtd, "₹"),          icon: Wallet,        color: "text-secondary" },
+    { label: "Period Collections",value: fmt(s?.payments_period, "₹"),       icon: Wallet,        color: "text-accent" },
+    { label: "Collection Rate",   value: fmtPct(s?.collection_rate),         icon: Wallet,        color: "text-success" },
+    { label: "Unpaid Count",      value: fmt(s?.unpaid_invoices_count),      icon: AlertCircle,   color: "text-warning" },
+    { label: "Unpaid Value",      value: fmt(s?.unpaid_invoices_value, "₹"), icon: AlertCircle,   color: "text-error" },
+    { label: "Overdue Invoices",  value: fmt(s?.overdue_invoices_count),     icon: TrendingDown,  color: "text-error" },
+    { label: "Collection Target", value: fmt(s?.target_amount, "₹"),         icon: Wallet,        color: "text-text-secondary" },
   ];
 
   return (
@@ -156,7 +171,7 @@ export default function InsightsCollectionsPage() {
       )}
 
       {/* Stat Strip */}
-      <div className="grid grid-cols-2 gap-3 px-6 mb-6 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 px-6 mb-6 sm:grid-cols-4 lg:grid-cols-8">
         {statCards.map((s) => {
           const Icon = s.icon;
           return (
@@ -167,47 +182,130 @@ export default function InsightsCollectionsPage() {
               </div>
               {loading
                 ? <span className="block h-4 w-16 animate-pulse rounded bg-border" />
-                : <p className="text-lg font-bold text-text-primary">{s.value}</p>}
+                : <p className="text-base font-bold text-text-primary">{s.value}</p>}
             </div>
           );
         })}
       </div>
 
-      {/* Top Collectors + Trend */}
+      {/* Row 1: Daily Collection Trend (area) + Target vs Actual (bar) */}
       <div className="grid grid-cols-1 gap-5 px-6 mb-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="px-4 py-3 border-b border-border bg-background-subtle">
+            <span className="text-sm font-medium text-text-primary">Daily Collection Trend</span>
+          </div>
+          <div className="p-4" style={{ height: 260 }}>
+            {(data?.timeseries?.length ?? 0) === 0 ? (
+              <div className="flex items-center justify-center h-full text-xs text-text-secondary">No data</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data!.timeseries} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="collGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="period" tickFormatter={shortDate} tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} width={52} />
+                  <Tooltip formatter={(v: number) => [`₹${Number(v).toLocaleString("en-IN")}`, "Amount"]} labelFormatter={shortDate} />
+                  <Area type="monotone" dataKey="amount" stroke="#6366f1" fill="url(#collGrad)" strokeWidth={2} dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="px-4 py-3 border-b border-border bg-background-subtle">
+            <span className="text-sm font-medium text-text-primary">Target vs Actual</span>
+          </div>
+          <div className="p-4" style={{ height: 260 }}>
+            {(data?.target_vs_actual?.length ?? 0) === 0 ? (
+              <div className="flex items-center justify-center h-full text-xs text-text-secondary">No target data available</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data!.target_vs_actual} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                  <XAxis dataKey="period" tickFormatter={shortDate} tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} width={52} />
+                  <Tooltip formatter={(v: number) => `₹${Number(v).toLocaleString("en-IN")}`} labelFormatter={shortDate} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="target" fill="#e2e8f0" name="Target" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="actual" fill="#6366f1" name="Actual" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: Collections by Mode (pie) + Overdue Age Breakdown (bar) */}
+      <div className="grid grid-cols-1 gap-5 px-6 mb-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="px-4 py-3 border-b border-border bg-background-subtle">
+            <span className="text-sm font-medium text-text-primary">Collections by Payment Mode</span>
+          </div>
+          <div className="p-4 flex items-center justify-center" style={{ height: 280 }}>
+            {(data?.by_mode?.length ?? 0) === 0 ? (
+              <span className="text-xs text-text-secondary">No mode data available</span>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data!.by_mode}
+                    dataKey="amount"
+                    nameKey="mode"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label={({ name, percent }: { name: string; percent: number }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
+                    labelLine={false}
+                  >
+                    {data!.by_mode!.map((entry, i) => (
+                      <Cell key={entry.mode} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => `₹${Number(v).toLocaleString("en-IN")}`} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="px-4 py-3 border-b border-border bg-background-subtle">
+            <span className="text-sm font-medium text-text-primary">Overdue Invoices by Age</span>
+          </div>
+          <div className="p-4" style={{ height: 280 }}>
+            {(data?.overdue_by_age?.length ?? 0) === 0 ? (
+              <div className="flex items-center justify-center h-full text-xs text-text-secondary">No overdue data</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data!.overdue_by_age} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="bucket" tick={{ fontSize: 11 }} width={72} />
+                  <Tooltip formatter={(v: number) => `₹${Number(v).toLocaleString("en-IN")}`} />
+                  <Bar dataKey="value" fill="#ef4444" name="Outstanding Value" radius={[0, 3, 3, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: Top Collectors */}
+      <div className="px-6 mb-6">
         <div className="rounded-lg border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-background-subtle">
             <span className="text-sm font-medium text-text-primary">Top Collectors</span>
           </div>
           <DataTable columns={collectorColumns} data={data?.top_collectors ?? []} />
-        </div>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <div className="px-4 py-3 border-b border-border bg-background-subtle">
-            <span className="text-sm font-medium text-text-primary">Daily Trend</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-text-secondary bg-background-subtle">Date</th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-text-secondary bg-background-subtle">Payments</th>
-                  <th className="px-4 py-2.5 text-right text-xs font-semibold text-text-secondary bg-background-subtle">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data?.timeseries ?? []).map((row) => (
-                  <tr key={String(row.period)} className="border-b border-border last:border-0 hover:bg-surface">
-                    <td className="px-4 py-2 font-medium">{String(row.period).slice(0, 10)}</td>
-                    <td className="px-4 py-2 text-right">{fmt(row.count)}</td>
-                    <td className="px-4 py-2 text-right">{fmt(row.amount, "₹")}</td>
-                  </tr>
-                ))}
-                {!data?.timeseries?.length && (
-                  <tr><td colSpan={3} className="text-center text-text-secondary text-xs py-6">No data</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
 

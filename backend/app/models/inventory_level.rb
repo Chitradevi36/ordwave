@@ -27,20 +27,27 @@ class InventoryLevel < ApplicationRecord
   # ── Class helpers ─────────────────────────────────────────────────────────────
   # Backward-compat: apply a signed on_hand delta. New code should prefer apply_movement_delta.
   def self.apply_delta(organization:, branch:, product:, delta:)
-    level = find_or_initialize_by(organization: organization, branch: branch, product: product)
-    level.qty_on_hand = (level.qty_on_hand || 0) + delta
-    level.save!
+    # Ensure row exists before locking (find_or_create is idempotent due to unique index)
+    level = find_or_create_by!(organization: organization, branch: branch, product: product)
+    level.with_lock do
+      level.qty_on_hand = (level.qty_on_hand || 0) + delta
+      level.save!
+    end
     level
   end
 
   # Apply both on_hand and reserved deltas atomically (used by Inventory::PostMovement).
+  # LOW-27: uses a row-level lock to prevent lost-update races under concurrent movements.
   def self.apply_movement_delta(organization:, branch:, product:, on_hand_delta: 0, reserved_delta: 0)
-    level = find_or_initialize_by(organization: organization, branch: branch, product: product)
-    level.qty_on_hand  = (level.qty_on_hand  || 0) + on_hand_delta
-    level.qty_reserved = (level.qty_reserved || 0) + reserved_delta
-    # Guard: reserved can never go below 0
-    level.qty_reserved = 0 if level.qty_reserved < 0
-    level.save!
+    # Ensure row exists before locking
+    level = find_or_create_by!(organization: organization, branch: branch, product: product)
+    level.with_lock do
+      level.qty_on_hand  = (level.qty_on_hand  || 0) + on_hand_delta
+      level.qty_reserved = (level.qty_reserved || 0) + reserved_delta
+      # Guard: reserved can never go below 0
+      level.qty_reserved = 0 if level.qty_reserved < 0
+      level.save!
+    end
     level
   end
 

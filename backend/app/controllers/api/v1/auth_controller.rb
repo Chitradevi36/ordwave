@@ -36,8 +36,42 @@ module Api
       end
 
       def refresh
-        # TODO: Implement refresh token logic
-        render json: { errors: ['Refresh not yet implemented'] }, status: :not_implemented
+        token = extract_token
+        unless token
+          return render json: { errors: ['Authorization token required'] }, status: :unauthorized
+        end
+
+        # Decode without verifying expiry so we can re-issue for recently-expired tokens
+        decoded = JWT.decode(token, jwt_secret, true, algorithm: 'HS256', verify_expiration: false).first
+
+        # Reject if denylisted
+        if decoded['jti'] && JwtDenylist.exists?(jti: decoded['jti'])
+          return render json: { errors: ['Token has been revoked'] }, status: :unauthorized
+        end
+
+        # Enforce a 7-day re-issue window (token must have expired within last 7 days)
+        exp = decoded['exp'].to_i
+        if exp < 7.days.ago.to_i
+          return render json: { errors: ['Token too old to refresh — please log in again'] }, status: :unauthorized
+        end
+
+        user = User.active.find_by(id: decoded['sub'])
+        unless user
+          return render json: { errors: ['User not found'] }, status: :unauthorized
+        end
+
+        # Denylist the old token and issue a fresh one
+        JwtDenylist.create!(jti: decoded['jti'], exp: Time.at(exp)) if decoded['jti']
+        new_token = generate_jwt(user)
+
+        render json: {
+          data: {
+            token: new_token,
+            user:  serialize_user(user)
+          }
+        }, status: :ok
+      rescue JWT::DecodeError
+        render json: { errors: ['Invalid token'] }, status: :unauthorized
       end
 
       private

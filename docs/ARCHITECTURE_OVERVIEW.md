@@ -1,8 +1,8 @@
-# OmniDist OMS – Architecture Overview
+# OrderLane Pro – Architecture Overview
 
 ## Product
 
-**OmniDist OMS** is an offline-first, credit-first Order Management System designed for B2B distributors across FMCG categories (packaged foods, beverages, pharma, household goods, and more).
+**OrderLane Pro** is an offline-first, credit-first Order Management System designed for B2B distributors across FMCG categories (packaged foods, beverages, pharma, household goods, and more).
 
 ---
 

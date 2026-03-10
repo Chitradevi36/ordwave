@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Tabs } from "@/components/ui/tabs";
 import { Modal } from "@/components/ui/modal";
-import { ArrowLeftRight, Pencil, Truck, PackageCheck, XCircle, TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { ArrowLeftRight, Pencil, Truck, PackageCheck, XCircle, TrendingUp, TrendingDown, Clock, CheckCircle } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/api/client";
@@ -308,7 +308,29 @@ export default function TransferDetailPage() {
     );
   }
 
-  // ── Lines columns ──────────────────────────────────────────────────────────
+  // Receive-single-line (inline) ─────────────────────────────────────────────
+  const [receivingLineId, setReceivingLineId] = useState<number | null>(null);
+
+  const handleReceiveLine = async (lineId: number, qtyReceived: number, qtyDamaged = 0) => {
+    setReceivingLineId(lineId);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/stock_transfers/${params.id}/receive`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Organization-Id": orgId ?? "",
+        },
+        body: JSON.stringify({
+          lines: [{ line_id: lineId, qty_received: qtyReceived, qty_damaged: qtyDamaged }],
+        }),
+      });
+      if (res.ok) await fetchTransfer();
+    } finally {
+      setReceivingLineId(null);
+    }
+  };
+  const canReceiveInline = transfer.status === "dispatched" || transfer.status === "partially_received";
   const lineColumns: Column<TransferLine>[] = [
     { key: "product_sku",   header: "SKU",
       render: (_: unknown, r: TransferLine) => <span className="font-mono text-sm">{r.product_sku}</span> },
@@ -339,7 +361,28 @@ export default function TransferDetailPage() {
           : r.qty_dispatched > 0
             ? <Badge variant="warning">In Transit</Badge>
             : <Badge variant="secondary">Pending</Badge> },
+    ...(canReceiveInline ? [{
+      key: "_actions" as keyof TransferLine,
+      header: "",
+      render: (_: unknown, r: TransferLine) =>
+        r.fully_accounted || r.qty_in_transit <= 0 ? null : (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs h-7 px-2"
+            disabled={receivingLineId === r.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleReceiveLine(r.id, r.qty_in_transit);
+            }}
+          >
+            <PackageCheck className="h-3 w-3 mr-1" />
+            {receivingLineId === r.id ? "…" : "Receive"}
+          </Button>
+        ),
+    }] : []),
   ];
+
 
   // ── Movement columns ───────────────────────────────────────────────────────
   const moveCols: Column<StockMovement>[] = [
@@ -475,6 +518,13 @@ export default function TransferDetailPage() {
     },
   ];
 
+  // Status timeline stages
+  const timelineStages = [
+    { key: "created",    label: "Created",    date: transfer.created_at,    done: true },
+    { key: "dispatched", label: "Dispatched",  date: transfer.dispatched_at, done: !!transfer.dispatched_at },
+    { key: "received",   label: "Received",   date: transfer.received_at,   done: !!transfer.received_at },
+  ];
+
   return (
     <AppShell breadcrumbs={[
         { label: "Operations", href: "/operations" },
@@ -501,10 +551,52 @@ export default function TransferDetailPage() {
             { label: "Cancel", onClick: () => setCancelOpen(true), variant: "danger" as const, icon: XCircle },
           ] : []),
           ...(transfer.status === "dispatched" || transfer.status === "partially_received" ? [
-            { label: "Receive / GRN", onClick: () => setReceiveOpen(true), icon: PackageCheck },
+            { label: "Receive All", onClick: () => {
+                setReceiveRows(
+                  transfer.lines
+                    .filter((l) => l.qty_in_transit > 0)
+                    .map((l) => ({ ...{
+                      line_id: l.id, product_sku: l.product_sku ?? "",
+                      product_name: l.product_name ?? "", qty_dispatched: l.qty_dispatched,
+                      qty_received: String(l.qty_in_transit), qty_damaged: "0", reason_code: "",
+                    } }))
+                );
+                setReceiveOpen(true);
+              }, icon: PackageCheck },
           ] : []),
         ]}
       />
+
+      {/* Visual status timeline */}
+      <div className="flex items-center gap-0 mb-6">
+        {timelineStages.map((stage, idx) => (
+          <div key={stage.key} className="flex items-center gap-0 flex-1 last:flex-none">
+            <div className="flex flex-col items-center min-w-[80px]">
+              <div className={cn(
+                "h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors",
+                stage.done && !transfer.cancellation_reason
+                  ? "bg-green-500 border-green-500 text-white"
+                  : "bg-white border-border text-text-secondary"
+              )}>
+                {stage.done && !transfer.cancellation_reason
+                  ? <CheckCircle className="h-4 w-4" />
+                  : <span>{idx + 1}</span>}
+              </div>
+              <p className={cn("text-xs mt-1 font-medium", stage.done ? "text-text-primary" : "text-text-secondary")}>
+                {stage.label}
+              </p>
+              {stage.date && (
+                <p className="text-[10px] text-text-secondary">{fmtDate(stage.date)}</p>
+              )}
+            </div>
+            {idx < timelineStages.length - 1 && (
+              <div className={cn("flex-1 h-0.5 self-start mt-3.5",
+                stage.done ? "bg-green-400" : "bg-border"
+              )} />
+            )}
+          </div>
+        ))}
+      </div>
 
       {apiErrors.length > 0 && (
         <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">

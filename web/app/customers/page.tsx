@@ -275,6 +275,7 @@ export default function CustomersPage() {
   const [channel,       setChannel]       = useState("");
   const [tier,          setTier]          = useState("");
   const [status,        setStatus]        = useState("");
+  const [creditStatus,  setCreditStatus]  = useState("");
   const [savedView,     setSavedView]     = useState<SavedView>("all");
   const [page,          setPage]          = useState(1);
   const [totalPages,    setTotalPages]    = useState(1);
@@ -284,7 +285,7 @@ export default function CustomersPage() {
 
   const handleViewChange = (view: SavedView) => {
     setSavedView(view);
-    setSearch(""); setChannel(""); setTier(""); setStatus("");
+    setSearch(""); setChannel(""); setTier(""); setStatus(""); setCreditStatus("");
     setPage(1);
   };
 
@@ -419,10 +420,11 @@ export default function CustomersPage() {
     setLoading(true);
     try {
       const qs = new URLSearchParams({ page: String(page), per_page: "20", include_credit_usage: "true" });
-      if (search)  qs.set("q", search);
-      if (channel) qs.set("channel", channel);
-      if (tier)    qs.set("tier", tier);
-      if (status)  qs.set("status", status);
+      if (search)       qs.set("q",             search);
+      if (channel)      qs.set("channel",        channel);
+      if (tier)         qs.set("tier",           tier);
+      if (status)       qs.set("status",         status);
+      if (creditStatus) qs.set("credit_status",  creditStatus);
       Object.entries(VIEW_PARAMS[savedView]).forEach(([k, v]) => qs.set(k, v));
 
       const res  = await fetch(`${API_URL}/api/v1/customers?${qs}`, {
@@ -437,15 +439,15 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, orgId, page, search, channel, tier, status, savedView]);
+  }, [token, orgId, page, search, channel, tier, status, creditStatus, savedView]);
 
   useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
 
   const clearFilters = () => {
-    setSearch(""); setChannel(""); setTier(""); setStatus(""); setPage(1);
+    setSearch(""); setChannel(""); setTier(""); setStatus(""); setCreditStatus(""); setPage(1);
   };
 
-  const hasFilters = search || channel || tier || status;
+  const hasFilters = search || channel || tier || status || creditStatus;
 
   const handleExportCsv = useCallback(async () => {
     if (!token || !orgId || exporting) return;
@@ -563,6 +565,17 @@ export default function CustomersPage() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="blocked">Blocked</option>
+        </select>
+
+        <select
+          className="h-9 rounded-md border border-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+          value={creditStatus}
+          onChange={(e) => { setCreditStatus(e.target.value); setSavedView("all"); setPage(1); }}
+        >
+          <option value="">Credit Status</option>
+          <option value="overdue">Overdue</option>
+          <option value="hold">On Hold</option>
+          <option value="near_limit">Near Limit</option>
         </select>
 
         {hasFilters && (

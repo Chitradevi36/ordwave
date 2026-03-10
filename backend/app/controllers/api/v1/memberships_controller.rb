@@ -13,6 +13,7 @@ module Api
 
       def create
         authorize Membership.new(organization: current_organization)
+        plan_limits.enforce_user_limit!   # LOW-28: enforce plan seat cap
 
         user   = User.active.find(params.dig(:membership, :user_id))
         branch = current_organization.branches.active.find(params.dig(:membership, :branch_id))

@@ -24,8 +24,8 @@ class Rack::Attack
   end
 
   # ── Throttle: Login endpoint (per IP) ─────────────────────────────────────
-  # 10 attempts per minute per IP
-  throttle("logins/ip", limit: 10, period: 1.minute) do |req|
+  # 5 attempts per 30 seconds per IP
+  throttle("logins/ip", limit: 5, period: 30.seconds) do |req|
     req.ip if req.path == "/api/v1/auth/login" && req.post?
   end
 
@@ -54,6 +54,52 @@ class Rack::Attack
   # 20 attempts per hour per IP
   throttle("signup/ip", limit: 20, period: 1.hour) do |req|
     req.ip if req.path.start_with?("/api/v1/signup/") && req.post?
+  end
+
+  # ── Throttle: API per authenticated user ──────────────────────────────────
+  # 100 requests per minute per user (identified by JWT sub claim)
+  throttle("api/user", limit: 100, period: 1.minute) do |req|
+    if req.path.start_with?("/api/") && (auth = req.get_header("HTTP_AUTHORIZATION"))
+      token = auth.split(" ").last
+      begin
+        payload = JWT.decode(token, nil, false).first
+        payload["sub"]
+      rescue
+        nil
+      end
+    end
+  end
+
+  # ── Throttle: Sync push per user ──────────────────────────────────────────
+  # 10 sync-push requests per minute per user
+  throttle("sync/push/user", limit: 10, period: 1.minute) do |req|
+    if req.path.start_with?("/api/v1/sync/push") && req.post?
+      if (auth = req.get_header("HTTP_AUTHORIZATION"))
+        token = auth.split(" ").last
+        begin
+          payload = JWT.decode(token, nil, false).first
+          payload["sub"]
+        rescue
+          nil
+        end
+      end
+    end
+  end
+
+  # ── Throttle: Exports per user ────────────────────────────────────────────
+  # 5 export requests per hour per user
+  throttle("exports/user", limit: 5, period: 1.hour) do |req|
+    if req.path.start_with?("/api/v1/exports") && req.post?
+      if (auth = req.get_header("HTTP_AUTHORIZATION"))
+        token = auth.split(" ").last
+        begin
+          payload = JWT.decode(token, nil, false).first
+          payload["sub"]
+        rescue
+          nil
+        end
+      end
+    end
   end
 
   # ── Blocklist: Repeated forbidden requests ────────────────────────────────

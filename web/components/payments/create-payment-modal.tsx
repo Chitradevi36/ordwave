@@ -46,19 +46,23 @@ const PAYMENT_MODES = [
 
 interface Props {
   onClose:   () => void;
-  onCreated: () => void;
+  /** Called with the newly-created payment's ID on success */
+  onCreated: (paymentId?: number) => void;
   /** Pre-fill customer when opened from a customer context */
   prefilledCustomer?: { id: number; name: string };
+  /** Pre-fill amount (e.g. from a collection schedule's expected amount) */
+  defaultAmount?: number;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function CreatePaymentModal({ onClose, onCreated, prefilledCustomer }: Props) {
+export default function CreatePaymentModal({ onClose, onCreated, prefilledCustomer, defaultAmount }: Props) {
   const { token, orgId } = useOrgBranch();
 
   const [form, setForm]         = useState<Form>({
     ...BLANK,
     customer_id: prefilledCustomer ? String(prefilledCustomer.id) : "",
+    amount:      defaultAmount    ? String(defaultAmount)           : "",
   });
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [branches, setBranches]   = useState<Branch[]>([]);
@@ -115,7 +119,7 @@ export default function CreatePaymentModal({ onClose, onCreated, prefilledCustom
       });
       const json = await res.json();
       if (res.ok) {
-        onCreated();
+        onCreated(json.data?.id);
       } else {
         setError(json.errors?.join(", ") ?? "Failed to create payment");
       }

@@ -69,6 +69,7 @@ export default function SalesInvoicesPage() {
   const [page, setPage]             = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [counts, setCounts]         = useState<Record<string, number>>({});
+  const [exporting, setExporting]   = useState(false);
 
   const fetchInvoices = useCallback(async () => {
     if (!token || !orgId) return;
@@ -114,6 +115,37 @@ export default function SalesInvoicesPage() {
       }
     }
   };
+
+  const handleExportCsv = useCallback(async () => {
+    if (!token || !orgId || exporting) return;
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({ per_page: "5000" });
+      if (activeTab) params.set("status", activeTab);
+      if (search)    params.set("q", search);
+      const res = await fetch(`/api/v1/sales_invoices?${params}`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      if (!res.ok) return;
+      const body = await res.json();
+      const rows: InvoiceSummary[] = body.data ?? [];
+      const header = ["Invoice #", "Customer", "Date", "Due Date", "Status", "Grand Total", "Tax", "Branch"].join(",");
+      const lines  = rows.map((r) =>
+        [r.invoice_number, `"${r.customer.name}"`, r.invoice_date, r.due_date ?? "", r.status,
+         r.grand_total, r.tax_total, `"${r.branch.name}"`].join(",")
+      );
+      const csv  = [header, ...lines].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `invoices_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }, [token, orgId, activeTab, search, exporting]);
 
   const columns: Column<InvoiceSummary>[] = [
     {
@@ -204,7 +236,10 @@ export default function SalesInvoicesPage() {
         <PageHeader
           title="Sales Invoices"
           subtitle={`${totalCount} invoice${totalCount !== 1 ? "s" : ""} total`}
-          actions={[{ label: "New Invoice", onClick: () => setShowCreate(true), icon: Plus }]}
+          actions={[
+            { label: exporting ? "Exporting…" : "Export CSV", onClick: handleExportCsv, icon: Download, variant: "outline" as const, disabled: exporting },
+            { label: "New Invoice", onClick: () => setShowCreate(true), icon: Plus }
+          ]}
         />
 
         {/* Tabs */}

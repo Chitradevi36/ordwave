@@ -79,13 +79,57 @@ module Orders
         # 8. Audit: state transition
         log_submission(credit_result)
 
-        { ok: true, order: @order.reload, errors: [], credit: credit_result }
+        # 9. Notify branch managers
+        notify_on_submission(new_status)
+
+        reloaded = @order.reload
+        { ok: true, order: reloaded, errors: [], credit: credit_result }
+      end.tap do |result|
+        if result[:ok]
+          WebhookEvents.fire(
+            organization: result[:order].organization,
+            event:        'order.created',
+            payload:      WebhookEvents.order_payload(result[:order])
+          )
+        end
       end
     rescue ActiveRecord::RecordInvalid => e
       { ok: false, order: @order, errors: [e.message], credit: nil }
     end
 
     private
+
+    def notify_on_submission(new_status)
+      managers = User.joins(:memberships)
+                     .where(memberships: {
+                       organization_id: @order.organization_id,
+                       deleted_at:      nil,
+                       active:          true
+                     })
+                     .joins(memberships: :role)
+                     .where(roles: { name: %w[owner admin manager] })
+                     .distinct
+
+      type   = new_status == 'on_hold' ? 'order_held'      : 'order_submitted'
+      title  = new_status == 'on_hold' ? 'Order on hold — approval needed' : 'New order submitted'
+      body   = "#{@order.customer&.name} — #{@order.order_number} (₹#{@order.total_amount&.to_i&.to_s(:delimited)})"
+      link   = "/approvals"
+      sev    = new_status == 'on_hold' ? 'high' : 'medium'
+
+      Notifications::CreateService.call(
+        organization: @order.organization,
+        recipients:   managers,
+        actor:        @actor,
+        notifiable:   @order,
+        type:         type,
+        title:        title,
+        body:         body,
+        deep_link:    link,
+        severity:     sev
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[SubmitOrderService] Notification failed: #{e.message}")
+    end
 
     def freeze_line_prices!
       @order.lines.each do |line|
@@ -114,28 +158,30 @@ module Orders
         return { decision: 'ok', reasons: [], metrics: {}, actions_required: {} }
       end
 
-      result = Credit::CreditEngine.evaluate_order(
-        credit_account: credit_account,
-        product_ids:    @order.lines.map(&:product_id),
-        order_total:    @order.total_amount.to_f,
-        on_date:        Date.current
-      )
+      credit_account.with_lock do
+        result = Credit::CreditEngine.evaluate_order(
+          credit_account: credit_account,
+          product_ids:    @order.lines.map(&:product_id),
+          order_total:    @order.total_amount.to_f,
+          on_date:        Date.current
+        )
 
-      # Enrich metrics with order-exposure breakdown so the UI can explain the
-      # decision with full context (invoice outstanding + pipeline exposure).
-      usage = Credit::RetailerCreditUsageService.call(
-        retailer: @order.customer,
-        branch:   @order.branch
-      )
-      result[:metrics] = result[:metrics].merge(
-        order_exposure:      usage[:order_exposure],
-        invoice_outstanding: usage[:invoice_outstanding],
-        available_credit:    usage[:available_credit],
-        credit_used_total:   usage[:credit_used_total],
-        hold_exposure:       usage[:hold_exposure]
-      )
+        # Enrich metrics with order-exposure breakdown so the UI can explain the
+        # decision with full context (invoice outstanding + pipeline exposure).
+        usage = Credit::RetailerCreditUsageService.call(
+          retailer: @order.customer,
+          branch:   @order.branch
+        )
+        result[:metrics] = result[:metrics].merge(
+          order_exposure:      usage[:order_exposure],
+          invoice_outstanding: usage[:invoice_outstanding],
+          available_credit:    usage[:available_credit],
+          credit_used_total:   usage[:credit_used_total],
+          hold_exposure:       usage[:hold_exposure]
+        )
 
-      result
+        result
+      end
     end
 
     def map_credit_decision(decision)

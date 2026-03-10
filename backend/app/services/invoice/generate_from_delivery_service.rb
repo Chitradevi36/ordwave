@@ -264,6 +264,12 @@ module Invoice
         action:       'invoice_issued',
         changes: { issued_at: invoice.issued_at }
       )
+
+      WebhookEvents.fire(
+        organization: invoice.organization,
+        event:        'invoice.generated',
+        payload:      WebhookEvents.invoice_payload(invoice)
+      )
     end
   end
 end
