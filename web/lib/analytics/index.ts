@@ -1,5 +1,5 @@
 // ───────────────────────────────────────────────────────────────────────────
-// OrderLane Pro – Analytics Public API
+// OrdWave – Analytics Public API
 //
 // Import everything you need from "@/lib/analytics"
 // ───────────────────────────────────────────────────────────────────────────

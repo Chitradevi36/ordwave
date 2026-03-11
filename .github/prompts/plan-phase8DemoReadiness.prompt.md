@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 8: Demo-Readiness + Production-Hardening
+# OrdWave — Phase 8: Demo-Readiness + Production-Hardening
 
 ## Goal
 Product is demo-ready with seed data, error-proof, performant, and visually polished. Quick wins for wow-factor.
@@ -178,7 +178,7 @@ For each role dashboard, ensure:
 - Pull-to-refresh: Branded refresh indicator with logo
 
 ### M8.3 — App Icon + Splash Screen
-- Design app icon: OrderLane Pro logo (green) on white background
+- Design app icon: OrdWave logo (green) on white background
 - Generate adaptive icon for Android
 - Generate iOS app icon
 - Native splash screen: Brand color (#1B4332) background + white logo

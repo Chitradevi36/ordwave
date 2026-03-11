@@ -32,9 +32,9 @@ class DeliverWebhookJob < ApplicationJob
 
     request = Net::HTTP::Post.new(uri.path.presence || "/")
     request["Content-Type"]     = "application/json"
-    request["X-OrderLane-Event"]     = delivery.event
-    request["X-OrderLane-Signature"] = "sha256=#{signature}"
-    request["X-OrderLane-Delivery"]  = delivery.id.to_s
+    request["X-OrdWave-Event"]     = delivery.event
+    request["X-OrdWave-Signature"] = "sha256=#{signature}"
+    request["X-OrdWave-Delivery"]  = delivery.id.to_s
     request.body = payload_json
 
     response = http.request(request)

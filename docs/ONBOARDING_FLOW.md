@@ -1,4 +1,4 @@
-# OrderLane Pro - Enterprise Onboarding Flow
+# OrdWave - Enterprise Onboarding Flow
 
 ## Overview
 
@@ -478,4 +478,4 @@ analytics.track('Onboarding Completed', {
 
 **Last Updated**: March 3, 2026  
 **Version**: 1.0.0  
-**Maintained by**: OrderLane Pro Product Team
+**Maintained by**: OrdWave Product Team

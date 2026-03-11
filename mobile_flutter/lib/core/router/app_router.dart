@@ -338,7 +338,7 @@ class _SplashPlaceholder extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                'OrderLane Pro',
+                'OrdWave',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,

@@ -1,6 +1,6 @@
 {
-  "name": "OrderLane Pro",
-  "short_name": "OrderLane",
+  "name": "OrdWave",
+  "short_name": "OrdWave",
   "description": "Offline-first OMS for FMCG distributors",
   "start_url": "/dashboard",
   "display": "standalone",

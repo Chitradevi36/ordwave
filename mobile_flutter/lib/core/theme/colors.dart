@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// OrderLane Pro design tokens — mirrors the web Tailwind config.
+/// OrdWave design tokens — mirrors the web Tailwind config.
 /// Primary brand: deep forest green (#1B4332)
 class OlColors {
   OlColors._();

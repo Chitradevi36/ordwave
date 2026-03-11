@@ -6,7 +6,7 @@ class SignupMailer < ApplicationMailer
 
     mail(
       to: @email,
-      subject: "Your OrderLane Pro verification code: #{@otp}",
+      subject: "Your OrdWave verification code: #{@otp}",
       message_stream: 'outbound'
     )
   end

@@ -41,13 +41,13 @@ export function DriverView({ data, isLoading, isError }: Props) {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold text-blue-800">
             <Smartphone className="h-4 w-4" />
-            Use the OrderLane Mobile App
+            Use the OrdWave Mobile App
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-blue-700">
             Your trips, stops, delivery confirmations, and customer check-ins are all managed from the
-            <strong> OrderLane mobile app</strong>. Open it on your phone to start today&apos;s deliveries.
+            <strong> OrdWave mobile app</strong>. Open it on your phone to start today&apos;s deliveries.
           </p>
         </CardContent>
       </Card>

@@ -1,8 +1,8 @@
-# OrderLane Pro — Executive Summary & Gap Analysis
+# OrdWave — Executive Summary & Gap Analysis
 
 ## 1. Executive Summary
 
-**OrderLane Pro** (also referred to as OmniDist OMS) is a B2B distribution SaaS targeting Indian FMCG distributors. The repo is a monorepo with three layers: a **Rails 7.1 API backend** (surprisingly complete — 73 models, 54 controllers, 155+ services, 51 policies, 53 DB tables), a **Next.js 14 web app** (95 pages, role-based nav, workspace-hub architecture), and **two mobile apps** — a React Native/Expo app (~25% complete, 8 screens, no offline) and a Flutter skeleton (0% implementation, only dependency resolution done).
+**OrdWave** (also referred to as OmniDist OMS) is a B2B distribution SaaS targeting Indian FMCG distributors. The repo is a monorepo with three layers: a **Rails 7.1 API backend** (surprisingly complete — 73 models, 54 controllers, 155+ services, 51 policies, 53 DB tables), a **Next.js 14 web app** (95 pages, role-based nav, workspace-hub architecture), and **two mobile apps** — a React Native/Expo app (~25% complete, 8 screens, no offline) and a Flutter skeleton (0% implementation, only dependency resolution done).
 
 **What's strong:** The backend domain model is remarkably comprehensive — sales orders, credit engine, GST compliance, returns with QC, FIFO payment allocation, inventory ledger with immutable stock movements, schemes engine, beat/SFA, accounting integration (Tally), e-invoicing, and webhook infrastructure all exist. The web app has 95 pages with role-based dashboards and a workspace-hub navigation pattern.
 
@@ -71,7 +71,7 @@
 
 | Issue | Details |
 |---|---|
-| **Product naming** | Repo: `orderlane_pro`, docs: "OmniDist OMS", seeds: `@riceoms.dev`, sidebar: "OrderLane" |
+| **Product naming** | Repo: `orderlane_pro`, docs: "OmniDist OMS", seeds: `@riceoms.dev`, sidebar: "OrdWave" |
 | **Role names** | Backend: `accountant`, `warehouse_staff`. Frontend nav config: `accountant`, `warehouse_staff` (correct). But some seed/prompt docs reference `accounts`, `warehouse` |
 | **API call patterns in web** | Some pages use React Query hooks (`useDashboardData`, `useOrders`), most use raw `fetch()` with `useState` — inconsistent data fetching |
 | **Base URL inconsistency in RN app** | LoginScreen uses `localhost:3000`, other screens use `localhost:3001` |

@@ -1,4 +1,4 @@
-# OrderLane Pro — UI/UX Revamp: Interaction Design, Role Matrix & Execution Plan
+# OrdWave — UI/UX Revamp: Interaction Design, Role Matrix & Execution Plan
 
 ---
 
@@ -297,4 +297,4 @@ Every implementation MUST be reviewed against these 5 principles:
 
 ---
 
-*Generated as part of OrderLane Pro UI/UX Revamp initiative. This document should be used alongside `plan-designSystem.prompt.md`, `plan-roleBasedArchitecture.prompt.md`, and `plan-webRevamp.prompt.md` for complete implementation context.*
+*Generated as part of OrdWave UI/UX Revamp initiative. This document should be used alongside `plan-designSystem.prompt.md`, `plan-roleBasedArchitecture.prompt.md`, and `plan-webRevamp.prompt.md` for complete implementation context.*

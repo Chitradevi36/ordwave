@@ -333,7 +333,7 @@ function SidebarBody({
       >
         {!isCollapsed && (
           <Link href="/dashboard" className="text-base font-bold tracking-tight text-white hover:opacity-90 transition-opacity">
-            OrderLane
+            OrdWave
           </Link>
         )}
         {isMobile ? (

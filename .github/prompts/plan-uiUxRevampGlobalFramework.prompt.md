@@ -1,4 +1,4 @@
-# OrderLane Pro — Enterprise UI/UX Revamp: Global Framework
+# OrdWave — Enterprise UI/UX Revamp: Global Framework
 
 > Transform a functional admin panel into a clear, action-first, role-aware enterprise OMS that communicates operational meaning at a glance.
 

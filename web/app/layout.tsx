@@ -6,31 +6,31 @@ import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 
 export const metadata: Metadata = {
   title: {
-    default: "OrderLane Pro",
-    template: "%s | OrderLane Pro",
+    default: "OrdWave",
+    template: "%s | OrdWave",
   },
   description:
     "Offline-first, credit-first order management system for FMCG distributors. Manage orders, deliveries, collections and insights — all in one place.",
   keywords: ["FMCG", "OMS", "order management", "distributor", "sales rep", "delivery"],
-  authors: [{ name: "OrderLane Pro" }],
+  authors: [{ name: "OrdWave" }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://app.orderlanepro.dev"),
   openGraph: {
     type:        "website",
-    siteName:    "OrderLane Pro",
-    title:       "OrderLane Pro — FMCG Distribution Made Simple",
+    siteName:    "OrdWave",
+    title:       "OrdWave — FMCG Distribution Made Simple",
     description: "Offline-first OMS for FMCG distributors. Orders, credit, delivery and collections in one platform.",
     images: [
       {
         url:    "/og-image.png",
         width:  1200,
         height: 630,
-        alt:    "OrderLane Pro",
+        alt:    "OrdWave",
       },
     ],
   },
   twitter: {
     card:        "summary_large_image",
-    title:       "OrderLane Pro",
+    title:       "OrdWave",
     description: "Offline-first OMS for FMCG distributors.",
     images:      ["/og-image.png"],
   },

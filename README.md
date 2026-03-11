@@ -1,8 +1,8 @@
-# OrderLane Pro
+# OrdWave
 
 > **Offline-first, Credit-first OMS for FMCG Distributors**
 
-OrderLane Pro is a multi-tenant Order Management System for B2B distributors across all FMCG categories — packaged foods, beverages, pharma, household goods, and more.
+OrdWave is a multi-tenant Order Management System for B2B distributors across all FMCG categories — packaged foods, beverages, pharma, household goods, and more.
 
 ---
 

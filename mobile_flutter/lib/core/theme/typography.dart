@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// OrderLane Pro text styles using the Inter font family.
+/// OrdWave text styles using the Inter font family.
 class OlTextTheme {
   OlTextTheme._();
 

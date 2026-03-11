@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement a bi-directional, near-realtime synchronization system between OrderLane and Tally using a lightweight Windows/Linux agent that bridges OrderLane's cloud backend with on-premise Tally installations.
+Implement a bi-directional, near-realtime synchronization system between OrdWave and Tally using a lightweight Windows/Linux agent that bridges OrdWave's cloud backend with on-premise Tally installations.
 
 **Current State:** Batch Export (XML file) mode is production-ready with comprehensive voucher/master XML builders.
 
@@ -14,7 +14,7 @@ Implement a bi-directional, near-realtime synchronization system between OrderLa
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    OrderLane Cloud (Rails)                       │
+│                    OrdWave Cloud (Rails)                       │
 │  ┌────────────────┐      ┌──────────────┐     ┌──────────────┐ │
 │  │ Accounting     │─────>│ Sync Queue   │────>│ Agent API    │ │
 │  │ Router         │      │ (PostgreSQL) │     │ (REST/WS)    │ │
@@ -26,7 +26,7 @@ Implement a bi-directional, near-realtime synchronization system between OrderLa
 ┌────────────────────────────────────────────────────────┼─────────┐
 │                    Customer Premise (Windows/Linux)    │         │
 │                                                  ┌─────▼──────┐  │
-│  ┌─────────────┐      ┌──────────────┐         │ OrderLane  │  │
+│  ┌─────────────┐      ┌──────────────┐         │ OrdWave  │  │
 │  │   Tally     │<────>│  Tally ODBC  │<───────>│   Agent    │  │
 │  │   Prime     │      │  Port 9000   │  HTTP   │ (Electron) │  │
 │  └─────────────┘      └──────────────┘         └────────────┘  │
@@ -48,7 +48,7 @@ POST   /api/v1/accounting/agent/heartbeat     # Keepalive (every 30s)
 GET    /api/v1/accounting/agent/poll          # Long-polling for pending sync records
 POST   /api/v1/accounting/agent/ack/:id       # Acknowledge successful sync
 POST   /api/v1/accounting/agent/fail/:id      # Report failure with error details
-POST   /api/v1/accounting/agent/push_from_tally # Reverse sync (Tally → OrderLane)
+POST   /api/v1/accounting/agent/push_from_tally # Reverse sync (Tally → OrdWave)
 ```
 
 **Key Features:**
@@ -139,7 +139,7 @@ class ReverseSync {
     const response = await TallyConnector.postXML(exportXml);
     const entities = this.parseExportResponse(response);
     
-    // Push to OrderLane
+    // Push to OrdWave
     await api.post('/api/v1/accounting/agent/push_from_tally', { entities });
   }
 }
@@ -147,7 +147,7 @@ class ReverseSync {
 
 **UI Features:**
 - System tray icon with green/red status indicator
-- Settings window: Tally host/port, OrderLane API key, auto-start toggle
+- Settings window: Tally host/port, OrdWave API key, auto-start toggle
 - Activity log viewer showing last 100 sync operations
 - Manual "Test Connection" and "Force Sync" buttons
 
@@ -306,7 +306,7 @@ end
         <Alert variant="warning" className="mt-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            OrderLane Agent is not running. Download and install the agent on your Tally machine.
+            OrdWave Agent is not running. Download and install the agent on your Tally machine.
           </AlertDescription>
         </Alert>
       )}
@@ -347,10 +347,10 @@ end
 ---
 
 ### Step 3: Reverse Sync (Week 6)
-1. Implement Tally → OrderLane export XML builders
+1. Implement Tally → OrdWave export XML builders
 2. Add `push_from_tally` endpoint to handle imported data
 3. Map Tally entities back to OMS models (ledger balances, voucher status)
-4. Handle conflict resolution (e.g., OrderLane invoice vs Tally voucher mismatch)
+4. Handle conflict resolution (e.g., OrdWave invoice vs Tally voucher mismatch)
 
 ---
 
@@ -376,11 +376,11 @@ end
 
 - [ ] Agent registers successfully and receives API key
 - [ ] Heartbeat maintains `agent.status = "online"`
-- [ ] Sales invoice syncs from OrderLane → Tally within 30s of issue
+- [ ] Sales invoice syncs from OrdWave → Tally within 30s of issue
 - [ ] Failed sync retries 3 times with exponential backoff
 - [ ] Agent survives network disconnection and resumes sync
 - [ ] Tally restart detected and agent reconnects automatically
-- [ ] Ledger balance updates sync back from Tally → OrderLane
+- [ ] Ledger balance updates sync back from Tally → OrdWave
 - [ ] Agent installer works on Windows 10/11 and Ubuntu 22.04
 - [ ] System tray icon shows correct status (green/red/yellow)
 - [ ] Manual "Force Sync" button enqueues all pending records
@@ -415,7 +415,7 @@ end
 ## Future Enhancements (Phase 3)
 
 - **Multi-company support:** Single agent syncing multiple Tally companies
-- **Real-time voucher status:** Tally voucher alteration → webhook to OrderLane
+- **Real-time voucher status:** Tally voucher alteration → webhook to OrdWave
 - **Agent clustering:** Load balance across multiple Tally servers
 - **Dashboard analytics:** Sync latency, throughput, error rate metrics
 - **Mobile agent status:** Push notification when agent goes offline

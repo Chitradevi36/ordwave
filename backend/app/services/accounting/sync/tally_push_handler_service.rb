@@ -2,11 +2,11 @@
 
 module Accounting
   module Sync
-    # Handles incoming data pushed from the Tally Agent back to OrderLane.
+    # Handles incoming data pushed from the Tally Agent back to OrdWave.
     #
-    # Tally → OrderLane reverse sync flow:
+    # Tally → OrdWave reverse sync flow:
     #   1. Agent pushes a batch of Tally vouchers/receipts via POST /agent/push_from_tally
-    #   2. This service processes each record and creates/updates corresponding OrderLane entities
+    #   2. This service processes each record and creates/updates corresponding OrdWave entities
     #   3. Results (success/skipped/failed per record) are returned to the agent
     #
     # Supported record types:

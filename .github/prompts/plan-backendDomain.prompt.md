@@ -1,11 +1,11 @@
-# OrderLane Pro — Backend/Domain Implementation Plan
+# OrdWave — Backend/Domain Implementation Plan
 
 ## 6. Backend/Domain Implementation Plan
 
 ### 6.1 Domain Consistency Fixes
 
 - Standardize terminology: `Customer` everywhere (not "Retailer" in some places)
-- Rename product from "OmniDist OMS" to "OrderLane Pro" consistently across all seed data, emails, branded strings
+- Rename product from "OmniDist OMS" to "OrdWave" consistently across all seed data, emails, branded strings
 - Deprecate `return_records` table — add migration to link existing data to `return_requests`, then remove model
 - Add missing FK from `delivery_rejections` → `return_requests` (so delivery-time returns feed into the RMA pipeline)
 

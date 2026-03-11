@@ -1,5 +1,5 @@
 // ───────────────────────────────────────────────────────────────────────────
-// OrderLane Pro – GA4 Analytics Types
+// OrdWave – GA4 Analytics Types
 // ───────────────────────────────────────────────────────────────────────────
 
 // GA4 user roles — mirrors backend roles

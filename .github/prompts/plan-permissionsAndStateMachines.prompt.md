@@ -1,4 +1,4 @@
-# OrderLane Pro — Permissions & State Machine Plan
+# OrdWave — Permissions & State Machine Plan
 
 ## 7. Permissions and State Machine Plan
 

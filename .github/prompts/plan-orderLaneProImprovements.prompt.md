@@ -1,6 +1,6 @@
-# OrderLane Pro — Full Improvement Roadmap
+# OrdWave — Full Improvement Roadmap
 
-OrderLane Pro is a **well-architected FMCG distribution SaaS** with a solid backend (Rails 7.1, full domain coverage), a modern web frontend (Next.js 14), and a skeletal mobile app. The core B2B sales cycle — onboarding → orders → invoicing → payments → delivery — is functionally complete. The gaps fall into four buckets: compliance risk, unfinished wiring of existing schema, mobile app build-out, and monetization infrastructure.
+OrdWave is a **well-architected FMCG distribution SaaS** with a solid backend (Rails 7.1, full domain coverage), a modern web frontend (Next.js 14), and a skeletal mobile app. The core B2B sales cycle — onboarding → orders → invoicing → payments → delivery — is functionally complete. The gaps fall into four buckets: compliance risk, unfinished wiring of existing schema, mobile app build-out, and monetization infrastructure.
 
 ---
 
