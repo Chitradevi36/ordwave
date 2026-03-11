@@ -26,6 +26,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { usePincodeLookup } from '@/lib/use-pincode-lookup';
+import { ANALYTICS_EVENTS, trackOnboardingEvent } from '@/lib/analytics';
 
 // Reusable Searchable Select Component
 interface SelectOption {
@@ -188,6 +189,28 @@ export default function OnboardingWizardPage() {
     if (pcState) setFormData((prev) => ({ ...prev, state: pcState }));
   }, [pcCity, pcState]);
 
+  // Track page viewed once on mount
+  useEffect(() => {
+    trackOnboardingEvent(ANALYTICS_EVENTS.ONBOARDING_PAGE_VIEWED, 0, 'welcome');
+  }, []);
+
+  // Track each step advance
+  useEffect(() => {
+    if (step === 1) return; // welcome already tracked above
+    const stepNames: Record<number, string> = {
+      2: 'business_type',
+      3: 'org_details',
+      4: 'catalog_setup',
+      5: 'complete',
+    };
+    trackOnboardingEvent(
+      ANALYTICS_EVENTS.ONBOARDING_STEP_COMPLETED,
+      step,
+      stepNames[step] ?? `step_${step}`,
+      { total_steps: 5 },
+    );
+  }, [step]);
+
   const TOTAL_STEPS = 5;
 
   // Phases shown in the top stepper (steps 2-5 map to 4 phases)
@@ -287,6 +310,7 @@ export default function OnboardingWizardPage() {
   };
 
   const handleComplete = () => {
+    trackOnboardingEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, 5, 'complete');
     setShowConfetti(true);
     setTimeout(() => {
       window.location.href = '/dashboard';

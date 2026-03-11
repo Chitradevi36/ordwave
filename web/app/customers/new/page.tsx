@@ -6,6 +6,7 @@ import { AppShell, PageHeader } from "@/components/layout";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CustomerForm, type CustomerFormData } from "../_components/CustomerForm";
 import { API_URL } from "@/lib/api/client";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 
 interface Route { id: number; name: string; code: string; }
@@ -84,6 +85,7 @@ export default function NewCustomerPage() {
       const json = await res.json();
 
       if (res.ok) {
+        trackBusinessEvent(ANALYTICS_EVENTS.RETAILER_CREATED, { module: "customers", page: "/customers/new" });
         router.push(`/customers/${json.data.id}`);
       } else {
         setErrors(json.errors ?? ["Something went wrong"]);

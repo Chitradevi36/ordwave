@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/api/client";
 
@@ -91,6 +92,10 @@ function NewAdjustmentPageContent() {
       const json = await res.json();
 
       if (res.ok) {
+        trackBusinessEvent(ANALYTICS_EVENTS.INVENTORY_ADJUSTMENT_CREATED, {
+          module: "inventory",
+          page:   "/inventory/adjustments/new",
+        });
         router.push(`/inventory/stock/${productId}?branch_id=${branchId}`);
       } else {
         setErrors(json.errors ?? ["An unexpected error occurred."]);

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { ClientProviders } from "@/components/providers";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 
 export const metadata: Metadata = {
   title: {
@@ -46,8 +48,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <head suppressHydrationWarning>
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });
+              `}
+            </Script>
+          </>
+        )}
+      </head>
+      <body suppressHydrationWarning>
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

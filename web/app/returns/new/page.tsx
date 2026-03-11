@@ -7,6 +7,7 @@ import { AppShell, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { Plus, Trash2 } from "lucide-react";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 interface Branch   { id: number; name: string }
 interface Customer { id: number; name: string; code: string }
@@ -157,6 +158,7 @@ export default function NewReturnPage() {
 
       const body = await res.json();
       if (!res.ok) throw new Error(body.errors?.join(", ") || "Failed to create return");
+      trackBusinessEvent(ANALYTICS_EVENTS.RETURN_CREATED, { module: "dispatch", page: "/returns/new" });
       router.push(`/returns/${body.data.id}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");

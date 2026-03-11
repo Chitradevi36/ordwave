@@ -21,7 +21,13 @@
 
 # ── Recurring jobs (sidekiq-cron) ────────────────────────────────────────────
 :cron_jobs:
-  accounting_agent_heartbeat:\n    cron: '*/5 * * * *'         # every 5 minutes\n    class: 'AccountingAgentHeartbeatJob'\n    queue: default\n    description: 'Mark accounting agents offline when heartbeat is stale'\n\n  credit_limit_sla_breach:
+  accounting_agent_heartbeat:
+    cron: '*/5 * * * *'         # every 5 minutes
+    class: 'AccountingAgentHeartbeatJob'
+    queue: default
+    description: 'Mark accounting agents offline when heartbeat is stale'
+
+  credit_limit_sla_breach:
     cron: '*/30 * * * *'        # every 30 minutes
     class: 'CreditLimitSlaBreachJob'
     queue: default

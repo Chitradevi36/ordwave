@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { KpiCard, KpiCardSkeleton } from "@/components/dashboard/KpiCard";
 import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
 import { useDashboardData, DashboardAlert } from "@/lib/api/hooks/useDashboard";
+import { ANALYTICS_EVENTS, trackClick } from "@/lib/analytics";
 import { useOrders } from "@/lib/api/hooks/useOrders";
 import { useCurrentRoleWithLoading } from "@/lib/hooks/use-current-role";
 import { SalesRepView } from "@/components/dashboard/SalesRepView";
@@ -88,6 +89,13 @@ function AlertRibbon({ alerts }: { alerts: DashboardAlert[] }) {
           <Link
             key={a.type}
             href={a.href}
+            onClick={() => trackClick(ANALYTICS_EVENTS.DASHBOARD_ALERT_CLICKED, {
+              alert_type: a.type,
+              severity:   a.severity as "high" | "medium" | "low",
+              count:      a.count,
+              page:       "/dashboard",
+              module:     "dashboard",
+            })}
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-opacity hover:opacity-80 ${ALERT_BG[a.severity]}`}
           >
             <Icon className="h-4 w-4 shrink-0" />

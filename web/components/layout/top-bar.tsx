@@ -12,6 +12,7 @@ import { CommandPalette } from "@/components/global/CommandPalette";
 import { NotificationsPanel } from "@/components/global/NotificationsPanel";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { filterCreateActionsForRole } from "@/components/layout/nav.config";
+import { ANALYTICS_EVENTS, trackClick } from "@/lib/analytics";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface DropdownOption { value: string; label: string; sub?: string; }
@@ -118,7 +119,13 @@ function CreateDropdown() {
             <Link
               key={action.href}
               href={action.href}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                trackClick(ANALYTICS_EVENTS.HEADER_CREATE_CLICKED, {
+                  element_label: action.label,
+                  page:          action.href,
+                });
+                setOpen(false);
+              }}
               className="flex items-center gap-2.5 px-3 py-2 text-sm text-text-primary hover:bg-background-subtle transition-colors"
             >
               <Plus className="h-3.5 w-3.5 text-text-secondary shrink-0" />
@@ -285,7 +292,10 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
         <div className="ml-auto flex items-center gap-2">
           {/* Search / command palette trigger */}
           <button
-            onClick={() => setShowCommandPalette(true)}
+            onClick={() => {
+              trackClick(ANALYTICS_EVENTS.GLOBAL_SEARCH_USED, { element_label: 'command_palette' });
+              setShowCommandPalette(true);
+            }}
             aria-label="Open command palette (Ctrl+K)"
             className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border hover:bg-background-subtle transition-colors text-sm text-text-secondary"
           >

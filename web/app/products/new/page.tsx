@@ -14,6 +14,7 @@ import {
 } from "../_components/ProductForm";
 import { AssignPriceModal } from "../_components/AssignPriceModal";
 import { API_URL } from "@/lib/api/client";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -101,6 +102,7 @@ export default function NewProductPage() {
       });
       const json = await res.json();
       if (res.ok) {
+        trackBusinessEvent(ANALYTICS_EVENTS.PRODUCT_CREATED, { module: "products", page: "/products/new" });
         setCreatedProductId(json.data.id);
         setCreatedProductName(json.data.name);
       } else {

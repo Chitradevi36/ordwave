@@ -1,7 +1,8 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ANALYTICS_EVENTS, trackAuthEvent } from '@/lib/analytics';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,11 @@ export default function SignupPage() {
   const stepIndex = STEPS.indexOf(currentStep);
   const progress = ((stepIndex + 1) / STEPS.length) * 100;
 
+  // Fire page-view on mount
+  useEffect(() => {
+    trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_PAGE_VIEWED);
+  }, []);
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(``);
@@ -77,6 +83,7 @@ export default function SignupPage() {
         if (data.data.otp_code) {
           console.log('DEV OTP:', data.data.otp_code);
         }
+        trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_EMAIL_SUBMITTED);
         setCurrentStep('otp');
       } else {
         setError(data.errors?.[0] || 'Failed to send OTP');
@@ -103,6 +110,7 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (response.ok) {
+        trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_OTP_VERIFIED);
         setCurrentStep('password');
       } else {
         setError(data.errors?.[0] || 'Invalid OTP');
@@ -144,6 +152,7 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (response.ok) {
+        trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_PASSWORD_SET);
         setCurrentStep('profile');
       } else {
         setError(data.errors?.[0] || 'Failed to set password');
@@ -184,6 +193,7 @@ export default function SignupPage() {
         // Set the auth cookie so middleware allows access to protected routes
         document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
 
+        trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { plan });
         // Redirect to comprehensive onboarding wizard
         router.push('/onboarding');
       } else {

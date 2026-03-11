@@ -16,6 +16,7 @@ import {
 } from "./nav.config";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { useApprovals } from "@/lib/api/hooks/useApprovals";
+import { ANALYTICS_EVENTS, trackClick } from "@/lib/analytics";
 
 // ── NavChild item ─────────────────────────────────────────────────────────────
 function ChildItem({
@@ -34,7 +35,14 @@ function ChildItem({
     <li>
       <Link
         href={child.href}
-        onClick={onClick}
+        onClick={() => {
+          trackClick(ANALYTICS_EVENTS.SIDEBAR_NAV_CLICKED, {
+            element_label: child.label,
+            nav_item:      child.key,
+            page:          child.href,
+          });
+          onClick?.();
+        }}
         aria-current={active ? "page" : undefined}
         className={[
           "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",

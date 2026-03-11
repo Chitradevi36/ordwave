@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { API_URL } from "@/lib/api/client";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 export interface SupplierFormData {
   name:               string;
@@ -104,6 +105,7 @@ export function SupplierForm({ initial, supplierId, token, orgId }: SupplierForm
       const json = await res.json();
 
       if (res.ok) {
+        if (!isEdit) trackBusinessEvent(ANALYTICS_EVENTS.SUPPLIER_CREATED, { module: "purchases", page: "/suppliers/new" });
         router.push(isEdit ? `/suppliers/${supplierId}` : `/suppliers/${json.data?.id}`);
       } else {
         setErrors(json.errors ?? ["Something went wrong"]);
