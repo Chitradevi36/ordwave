@@ -401,7 +401,7 @@ function SidebarBody({
       </nav>
 
       {/* ── Footer: user avatar + name ── */}
-      <UserFooter collapsed={isCollapsed} onLogout={onLogout} />
+      {/* <UserFooter collapsed={isCollapsed} onLogout={onLogout} /> */}
     </div>
   );
 }

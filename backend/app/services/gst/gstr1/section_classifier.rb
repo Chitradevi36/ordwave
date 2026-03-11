@@ -5,14 +5,16 @@ module Gst
     # Classifies each invoice / credit-note into the appropriate GSTR-1 section.
     #
     # Invoice sections:
-    #   :b2b  — to a registered dealer (customer GSTIN present)
-    #   :b2cl — to an unregistered buyer, inter-state, invoice > ₹2,50,000
-    #   :b2cs — to an unregistered buyer (intra-state OR inter-state ≤ ₹2,50,000)
-    #   :exp  — export invoice (not yet supported; kept as enum value for future)
+    #   :b2b       — to a registered dealer (customer GSTIN present)
+    #   :b2cl      — to an unregistered buyer, inter-state, invoice > ₹2,50,000
+    #   :b2cs      — to an unregistered buyer (intra-state OR inter-state ≤ ₹2,50,000)
+    #   :nil_exempt — nil-rated / exempt supply to an unregistered buyer (all lines gst_rate=0)
+    #   :exp       — export invoice (not yet supported; kept as enum value for future)
     #
     # Credit-note sections:
-    #   :cdnr  — credit note against a registered dealer (GSTIN present)
-    #   :cdnur — credit note against an unregistered buyer
+    #   :cdnr      — credit note against a registered dealer (GSTIN present)
+    #   :cdnur     — credit note against an unregistered buyer (taxable)
+    #   :nil_exempt — credit note against unregistered buyer, nil-rated / exempt
     #
     # Usage:
     #   section = Gst::Gstr1::SectionClassifier.invoice_section(invoice, seller_state_code: '27')
@@ -24,13 +26,16 @@ module Gst
       # Classify a single sales invoice.
       # @param invoice [SalesInvoice]
       # @param seller_state_code [String] 2-digit state code of the billing branch
-      # @return [Symbol] one of :b2b, :b2cl, :b2cs, :exp
+      # @return [Symbol] one of :b2b, :b2cl, :b2cs, :nil_exempt, :exp
       def self.invoice_section(invoice, seller_state_code:)
         customer = invoice.customer
         return :b2b if customer&.gstin.present?
 
-        # Unregistered customer — determine inter/intra state
-        pos = place_of_supply_code(invoice)
+        # Unregistered customer — check if nil-rated / exempt (all lines gst_rate == 0)
+        return :nil_exempt if nil_rated_invoice?(invoice)
+
+        # Unregistered + taxable — determine inter/intra state for B2CL vs B2CS
+        pos      = place_of_supply_code(invoice)
         is_inter = seller_state_code.to_s.strip != pos.to_s.strip
 
         if is_inter && invoice.grand_total.to_d >= B2C_LARGE_THRESHOLD
@@ -42,9 +47,26 @@ module Gst
 
       # Classify a single credit note.
       # @param credit_note [CreditNote]
-      # @return [Symbol] :cdnr or :cdnur
+      # @return [Symbol] :cdnr, :cdnur, or :nil_exempt
       def self.credit_note_section(credit_note)
-        credit_note.customer&.gstin.present? ? :cdnr : :cdnur
+        return :cdnr if credit_note.customer&.gstin.present?
+        # Unregistered customer: nil-rated credit notes go to nil_exempt, others to cdnur
+        nil_rated_credit_note?(credit_note) ? :nil_exempt : :cdnur
+      end
+
+      # Returns true if every line on the invoice has a zero GST rate.
+      # These supplies fall into GSTR-1 Table 8 (nil/exempt/non-GST section).
+      def self.nil_rated_invoice?(invoice)
+        lines = invoice.try(:lines) || invoice.try(:invoice_lines) || []
+        return false if lines.empty?
+        lines.all? { |l| l.gst_rate.to_d.zero? }
+      end
+
+      # Returns true if every line on the credit note has a zero GST rate.
+      def self.nil_rated_credit_note?(credit_note)
+        lines = credit_note.try(:lines) || []
+        return false if lines.empty?
+        lines.all? { |l| l.gst_rate.to_d.zero? }
       end
 
       # Returns `true` if the invoice is inter-state based on branch state vs POS.

@@ -3,11 +3,13 @@
 module Api
   module V1
     module Compliance
-      # Handles GSTR-1 preview and JSON export for GST compliance.
+      # Handles GSTR-1 preview, JSON export, amendment detection, and audit records.
       #
       # GET  /api/v1/compliance/gstr1/preview           — Preview return data (human-readable).
       # GET  /api/v1/compliance/gstr1/export            — Download GST portal JSON file.
       # GET  /api/v1/compliance/gstr1/export_records    — List past export audit records.
+      # GET  /api/v1/compliance/gstr1/amendments        — List amendment candidates for a period.
+      # POST /api/v1/compliance/gstr1/detect_amendments — Scan a filed period for amendment candidates.
       #
       # Query params for preview / export:
       #   month        1–12          (preferred — combined with year)
@@ -104,6 +106,98 @@ module Api
           render_success(
             export_records: records.map { |r| serialize_export_record(r) }
           )
+        end
+
+        # GET /api/v1/compliance/gstr1/amendments
+        #
+        # Lists amendment candidates for a given month/year.
+        # Params: month, year, status (optional filter), branch_id (optional)
+        #
+        def amendments
+          authorize :gstr1, :index?
+
+          month = params.require(:month).to_i
+          year  = params.require(:year).to_i
+
+          period = GstReturnPeriod.find_by(
+            organization_id: current_organization.id,
+            month:           month,
+            year:            year,
+            return_type:     'gstr1'
+          )
+
+          unless period
+            return render_errors(["No GSTR-1 period found for #{month}/#{year}"],
+                                 status: :not_found)
+          end
+
+          candidates = GstAmendmentCandidate.for_period(period).for_org(current_organization)
+          candidates = candidates.where(status: params[:status]) if params[:status].present?
+
+          render_success({
+            period_id:  period.id,
+            month:      month,
+            year:       year,
+            count:      candidates.size,
+            candidates: candidates.order(detected_at: :desc).map { |c| serialize_amendment(c) }
+          })
+        rescue ActionController::ParameterMissing => e
+          render_errors([e.message], status: :unprocessable_entity)
+        end
+
+        # POST /api/v1/compliance/gstr1/detect_amendments
+        #
+        # Scans a filed GSTR-1 period and creates GstAmendmentCandidate records
+        # for any invoices or credit notes added/modified after filing.
+        # Idempotent — safe to re-run; duplicate candidates are not created.
+        #
+        # Params: month, year
+        #
+        def detect_amendments
+          authorize :gstr1, :export?
+
+          month = params.require(:month).to_i
+          year  = params.require(:year).to_i
+
+          period = GstReturnPeriod.find_by(
+            organization_id: current_organization.id,
+            month:           month,
+            year:            year,
+            return_type:     'gstr1'
+          )
+
+          unless period
+            return render_errors(["No GSTR-1 period found for #{month}/#{year}"],
+                                 status: :not_found)
+          end
+
+          unless period.filed?
+            return render_errors(
+              ['Period is not yet filed. Detect amendments only on filed periods.'],
+              status: :unprocessable_entity
+            )
+          end
+
+          result = Gst::Gstr1::AmendmentDetector.call(
+            organization:      current_organization,
+            gst_return_period: period
+          )
+
+          if result.success?
+            render_success(
+              {
+                period_id:      period.id,
+                detected_count: result.candidates.size,
+                counts:         result.counts,
+                candidates:     result.candidates.map { |c| serialize_amendment(c) }
+              },
+              status: :created
+            )
+          else
+            render_errors(result.errors, status: :unprocessable_entity)
+          end
+        rescue ActionController::ParameterMissing => e
+          render_errors([e.message], status: :unprocessable_entity)
         end
 
         private
@@ -208,6 +302,26 @@ module Api
             warning_count:       rec.warning_count,
             generated_by:        rec.generated_by&.name,
             completed_at:        rec.completed_at
+          }
+        end
+
+        def serialize_amendment(candidate)
+          {
+            id:                     candidate.id,
+            amendment_type:         candidate.amendment_type,
+            status:                 candidate.status,
+            source_type:            candidate.source_type,
+            source_id:              candidate.source_id,
+            document_number:        candidate.document_number,
+            taxable_value_original: candidate.taxable_value_original,
+            taxable_value_current:  candidate.taxable_value_current,
+            tax_original:           candidate.tax_original,
+            tax_current:            candidate.tax_current,
+            change_summary:         candidate.change_summary,
+            detected_at:            candidate.detected_at,
+            acknowledged_at:        candidate.acknowledged_at,
+            acknowledged_by:        candidate.acknowledged_by&.name,
+            gst_return_period_id:   candidate.gst_return_period_id
           }
         end
       end

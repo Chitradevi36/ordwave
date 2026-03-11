@@ -429,12 +429,60 @@ Rails.application.routes.draw do
         end
       end
 
+      # -- Financial Years ----------------------------------------------------
+      resources :financial_years, only: %i[index show create] do
+        member do
+          post :lock_gst
+          post :close
+          get  :checklist
+        end
+      end
+
       # -- Compliance / GST ---------------------------------------------------
       namespace :compliance do
+        # GSTR-1 (export, preview, generate, amendments)
         scope :gstr1, controller: :gstr1 do
-          get :preview
-          get :export
-          get :export_records
+          get  :preview
+          get  :export
+          get  :export_records
+          post :generate
+          get  :amendments
+          post :detect_amendments
+        end
+
+        # GST Return Periods (lifecycle management)
+        resources :gst_periods, controller: 'gst_periods', only: %i[index show] do
+          member do
+            post :review
+            post :lock
+            post :file
+            post :reopen
+          end
+        end
+
+        # GSTR-2B import and reconciliation
+        scope :gstr2b, controller: :gstr2b do
+          get  :imports
+          post :import
+          get  'imports/:id',       action: :show_import
+          get  'imports/:id/lines', action: :lines
+        end
+
+        # GSTR-3B computation
+        scope :gstr3b, controller: :gstr3b do
+          post :generate
+          get  :show
+          get  :variance
+        end
+
+        # Reconciliation issues
+        scope :reconciliation, controller: :reconciliation do
+          get  :issues
+          get  :summary
+          post :run
+          post 'issues/:id/resolve',     action: :resolve
+          post 'issues/:id/acknowledge', action: :acknowledge
+          post 'issues/:id/ignore',      action: :ignore
         end
       end
 

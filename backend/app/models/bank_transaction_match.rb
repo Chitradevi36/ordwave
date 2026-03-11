@@ -16,3 +16,4 @@ class BankTransactionMatch < ApplicationRecord
   # ── Scopes ───────────────────────────────────────────────────────────────
   scope :selected,   -> { where(selected: true) }
   scope :by_score,   -> { order(score: :desc) }
+end

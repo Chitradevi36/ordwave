@@ -376,14 +376,7 @@ export const GROUPED_NAV: NavGroup[] = [
         label: "Advances",
         href: "/advance-payments",
         matchers: ["/advance-payments"],
-      },
-      {
-        key: "compliance",
-        label: "Compliance",
-        href: "/compliance/gstr1",
-        matchers: ["/compliance"],
-        rolesAllowed: ["owner", "admin", "accountant"],
-      },
+      }
     ],
   },
 
@@ -395,6 +388,9 @@ export const GROUPED_NAV: NavGroup[] = [
       "/compliance/gstr1",
       "/compliance/gstr2b",
       "/compliance/gstr3b",
+      "/compliance/reconciliation",
+      "/compliance/variance",
+      "/compliance/amendments",
       "/accounting/integrations",
     ],
     rolesAllowed: ["owner", "admin", "accountant"],
@@ -416,15 +412,31 @@ export const GROUPED_NAV: NavGroup[] = [
         label: "GSTR 2B",
         href: "/compliance/gstr2b",
         matchers: ["/compliance/gstr2b"],
-        comingSoon: true,
       },
       {
         key: "gstr3b",
         label: "GSTR 3B",
         href: "/compliance/gstr3b",
         matchers: ["/compliance/gstr3b"],
-        comingSoon: true,
-      }
+      },
+      {
+        key: "reconciliation",
+        label: "Reconciliation",
+        href: "/compliance/reconciliation",
+        matchers: ["/compliance/reconciliation"],
+      },
+      {
+        key: "variance",
+        label: "Variance Report",
+        href: "/compliance/variance",
+        matchers: ["/compliance/variance"],
+      },
+      {
+        key: "amendments",
+        label: "Amendments",
+        href: "/compliance/amendments",
+        matchers: ["/compliance/amendments"],
+      },
     ],
   },
 

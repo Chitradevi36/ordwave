@@ -45,20 +45,24 @@ module Gst
       :b2cs_invoices,
       :cdnr_notes,
       :cdnur_notes,
+      :nil_exempt_invoices, # Table 8 — nil-rated / exempt supplies to unregistered buyers
+      :nil_exempt_notes,    # Table 8 — nil-rated credit notes to unregistered buyers
       :validation_result,
       keyword_init: true
     ) do
       # Delegate to SummaryBuilder — human-readable preview for API response.
       def summary
         @summary ||= Gst::Gstr1::SummaryBuilder.call(
-          period_from:       period_from,
-          period_to:         period_to,
-          b2b_invoices:      b2b_invoices,
-          b2cl_invoices:     b2cl_invoices,
-          b2cs_invoices:     b2cs_invoices,
-          cdnr_notes:        cdnr_notes,
-          cdnur_notes:       cdnur_notes,
-          seller_state_code: seller_state_code
+          period_from:          period_from,
+          period_to:            period_to,
+          b2b_invoices:         b2b_invoices,
+          b2cl_invoices:        b2cl_invoices,
+          b2cs_invoices:        b2cs_invoices,
+          cdnr_notes:           cdnr_notes,
+          cdnur_notes:          cdnur_notes,
+          nil_exempt_invoices:  nil_exempt_invoices,
+          nil_exempt_notes:     nil_exempt_notes,
+          seller_state_code:    seller_state_code
         ).merge(gstin: gstin)
       end
 
@@ -84,15 +88,17 @@ module Gst
           b2cs:         b2cs_invoices.size,
           cdnr:         cdnr_notes.size,
           cdnur:        cdnur_notes.size,
-          invoices:     b2b_invoices.size + b2cl_invoices.size + b2cs_invoices.size,
-          credit_notes: cdnr_notes.size + cdnur_notes.size
+          nil_exempt:   (nil_exempt_invoices || []).size,
+          invoices:     b2b_invoices.size + b2cl_invoices.size + b2cs_invoices.size +
+                        (nil_exempt_invoices || []).size,
+          credit_notes: cdnr_notes.size + cdnur_notes.size + (nil_exempt_notes || []).size
         }
       end
 
       # Convenience totals for audit record creation.
       def totals
-        all_invoices     = b2b_invoices + b2cl_invoices + b2cs_invoices
-        all_credit_notes = cdnr_notes + cdnur_notes
+        all_invoices     = b2b_invoices + b2cl_invoices + b2cs_invoices + (nil_exempt_invoices || [])
+        all_credit_notes = cdnr_notes + cdnur_notes + (nil_exempt_notes || [])
 
         {
           taxable: all_invoices.sum { |i| i.subtotal.to_d } -
@@ -135,31 +141,37 @@ module Gst
         Gst::Gstr1::SectionClassifier.credit_note_section(cn)
       end
 
-      b2b_invoices  = classified_invoices[:b2b]   || []
-      b2cl_invoices = classified_invoices[:b2cl]  || []
-      b2cs_invoices = classified_invoices[:b2cs]  || []
-      cdnr_notes    = classified_notes[:cdnr]     || []
-      cdnur_notes   = classified_notes[:cdnur]    || []
+      b2b_invoices         = classified_invoices[:b2b]        || []
+      b2cl_invoices        = classified_invoices[:b2cl]       || []
+      b2cs_invoices        = classified_invoices[:b2cs]       || []
+      nil_exempt_invoices  = classified_invoices[:nil_exempt]  || []
+      cdnr_notes           = classified_notes[:cdnr]          || []
+      cdnur_notes          = classified_notes[:cdnur]         || []
+      nil_exempt_notes     = classified_notes[:nil_exempt]    || []
 
       # Validate — non-blocking; errors surface in the result.
       validation = Gst::Gstr1::Validator.call(
-        gstin:        @organization.gst_number,
-        invoices:     invoices,
-        credit_notes: credit_notes
+        gstin:               @organization.gst_number,
+        invoices:            invoices,
+        credit_notes:        credit_notes,
+        nil_exempt_invoices: nil_exempt_invoices,
+        seller_state_code:   seller_state
       )
 
       Result.new(
-        gstin:              @organization.gst_number,
-        return_period:      @period_from.strftime('%m%Y'),
-        period_from:        @period_from,
-        period_to:          @period_to,
-        seller_state_code:  seller_state,
-        b2b_invoices:       b2b_invoices,
-        b2cl_invoices:      b2cl_invoices,
-        b2cs_invoices:      b2cs_invoices,
-        cdnr_notes:         cdnr_notes,
-        cdnur_notes:        cdnur_notes,
-        validation_result:  validation
+        gstin:               @organization.gst_number,
+        return_period:       @period_from.strftime('%m%Y'),
+        period_from:         @period_from,
+        period_to:           @period_to,
+        seller_state_code:   seller_state,
+        b2b_invoices:        b2b_invoices,
+        b2cl_invoices:       b2cl_invoices,
+        b2cs_invoices:       b2cs_invoices,
+        cdnr_notes:          cdnr_notes,
+        cdnur_notes:         cdnur_notes,
+        nil_exempt_invoices: nil_exempt_invoices,
+        nil_exempt_notes:    nil_exempt_notes,
+        validation_result:   validation
       )
     end
 

@@ -20,14 +20,16 @@ module Gst
     #
     # Usage:
     #   SummaryBuilder.call(
-    #     period_from:       Date,
-    #     period_to:         Date,
-    #     b2b_invoices:      [SalesInvoice, ...],
-    #     b2cl_invoices:     [SalesInvoice, ...],
-    #     b2cs_invoices:     [SalesInvoice, ...],
-    #     cdnr_notes:        [CreditNote, ...],
-    #     cdnur_notes:       [CreditNote, ...],
-    #     seller_state_code: "27"
+    #     period_from:          Date,
+    #     period_to:            Date,
+    #     b2b_invoices:         [SalesInvoice, ...],
+    #     b2cl_invoices:        [SalesInvoice, ...],
+    #     b2cs_invoices:        [SalesInvoice, ...],
+    #     cdnr_notes:           [CreditNote, ...],
+    #     cdnur_notes:          [CreditNote, ...],
+    #     seller_state_code:    "27",
+    #     nil_exempt_invoices:  [SalesInvoice, ...],  # optional
+    #     nil_exempt_notes:     [CreditNote, ...]     # optional
     #   )
     #
     class SummaryBuilder
@@ -36,30 +38,34 @@ module Gst
       end
 
       def initialize(period_from:, period_to:, b2b_invoices:, b2cl_invoices:,
-                     b2cs_invoices:, cdnr_notes:, cdnur_notes:, seller_state_code:)
-        @period_from       = period_from
-        @period_to         = period_to
-        @b2b_invoices      = b2b_invoices
-        @b2cl_invoices     = b2cl_invoices
-        @b2cs_invoices     = b2cs_invoices
-        @cdnr_notes        = cdnr_notes
-        @cdnur_notes       = cdnur_notes
-        @seller_state_code = seller_state_code
+                     b2cs_invoices:, cdnr_notes:, cdnur_notes:, seller_state_code:,
+                     nil_exempt_invoices: [], nil_exempt_notes: [])
+        @period_from          = period_from
+        @period_to            = period_to
+        @b2b_invoices         = b2b_invoices
+        @b2cl_invoices        = b2cl_invoices
+        @b2cs_invoices        = b2cs_invoices
+        @cdnr_notes           = cdnr_notes
+        @cdnur_notes          = cdnur_notes
+        @seller_state_code    = seller_state_code
+        @nil_exempt_invoices  = nil_exempt_invoices
+        @nil_exempt_notes     = nil_exempt_notes
       end
 
       def call
-        all_invoices    = @b2b_invoices + @b2cl_invoices + @b2cs_invoices
-        all_credit_notes = @cdnr_notes + @cdnur_notes
+        all_invoices     = @b2b_invoices + @b2cl_invoices + @b2cs_invoices + @nil_exempt_invoices
+        all_credit_notes = @cdnr_notes + @cdnur_notes + @nil_exempt_notes
 
         {
-          period:      @period_from.strftime('%Y-%m'),
-          gstin:       nil, # set at orchestration layer
-          b2b:         build_b2b_summary,
-          b2c:         build_b2c_summary,
-          cdnr:        build_cdnr_summary,
-          cdnur:       build_cdnur_summary,
-          hsn_summary: build_hsn_summary(all_invoices, all_credit_notes),
-          summary:     build_overall_summary(all_invoices, all_credit_notes)
+          period:              @period_from.strftime('%Y-%m'),
+          gstin:               nil, # set at orchestration layer
+          b2b:                 build_b2b_summary,
+          b2c:                 build_b2c_summary,
+          cdnr:                build_cdnr_summary,
+          cdnur:               build_cdnur_summary,
+          nil_exempt_count:    @nil_exempt_invoices.size,
+          hsn_summary:         build_hsn_summary(all_invoices, all_credit_notes),
+          summary:             build_overall_summary(all_invoices, all_credit_notes)
         }
       end
 

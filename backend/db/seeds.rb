@@ -1584,3 +1584,6 @@ end
 
 # Bank Reconciliation seed data (bank account, customers, invoices, sample transactions)
 load Rails.root.join("db/seeds/bank_reconciliation.rb")
+
+# GST Feb 2026 seed data (GSTR-1, GSTR-2B, GSTR-3B return periods, snapshots, reconciliation issues)
+load Rails.root.join("db/seeds/gst_feb2026.rb")

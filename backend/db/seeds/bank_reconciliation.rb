@@ -9,20 +9,20 @@ org = Organization.first
 raise "Need at least one Organization" unless org
 
 branch = org.branches.first || Branch.create!(organization: org, name: "HQ", code: "HQ")
+user   = org.users.first || raise("Need at least one User in the organization")
 
 # ── Bank Account ─────────────────────────────────────────────────────────────
 
 bank_account = BankAccount.find_or_create_by!(
   organization: org,
-  account_number: "123456789012"
+  account_name: "ordWave Distribution Pvt Ltd"
 ) do |ba|
-  ba.bank_name            = "HDFC Bank"
-  ba.account_holder_name  = "ordWave Distribution Pvt Ltd"
-  ba.ifsc_code            = "HDFC0001234"
-  ba.account_type         = "current"
-  ba.currency             = "INR"
-  ba.status               = :active
-  ba.branch               = branch
+  ba.bank_name             = "HDFC Bank"
+  ba.account_number_masked = "XXXXXXXX9012"
+  ba.account_number_full   = "123456789012"
+  ba.ifsc                  = "HDFC0001234"
+  ba.status                = "active"
+  ba.branch                = branch
 end
 puts "  BankAccount: #{bank_account.id}"
 
@@ -43,8 +43,8 @@ customers = customers_data.map do |d|
   end
 
   # Create aliases (common narration patterns banks strip to)
-  CustomerAlias.find_or_create_by!(organization: org, customer: c, alias_name: d[:name].upcase)
-  CustomerAlias.find_or_create_by!(organization: org, customer: c, alias_name: d[:code].upcase)
+  CustomerAlias.find_or_create_by!(customer: c, alias_name: d[:name].upcase)
+  CustomerAlias.find_or_create_by!(customer: c, alias_name: d[:code].upcase)
   c
 end
 puts "  Customers + aliases: #{customers.map(&:code).join(', ')}"
@@ -67,12 +67,13 @@ invoice_data = [
 
 invoices = invoice_data.map do |idx, inv_no, amount|
   inv = SalesInvoice.find_or_create_by!(organization: org, invoice_number: inv_no) do |i|
-    i.customer    = customers[idx]
-    i.branch      = branch
-    i.grand_total = amount
-    i.status      = :issued
-    i.issue_date  = 30.days.ago.to_date
-    i.due_date    = 15.days.from_now.to_date
+    i.customer     = customers[idx]
+    i.branch       = branch
+    i.created_by   = user
+    i.grand_total  = amount
+    i.status       = :issued
+    i.invoice_date = 30.days.ago.to_date
+    i.due_date     = 15.days.from_now.to_date
   end
   # Create expected payment reference for each invoice
   ExpectedPaymentReference.find_or_create_by!(
@@ -89,15 +90,15 @@ puts "  Invoices: #{invoices.map(&:invoice_number).join(', ')}"
 # ── Bank Statement Import placeholder ──────────────────────────────────────
 
 import = BankStatementImport.create!(
-  organization:      org,
-  bank_account:      bank_account,
-  source_type:       :manual,
-  status:            :completed,
-  original_filename: "seed_statement.csv",
-  total_rows:        5,
-  new_rows:          5,
-  duplicate_rows:    0,
-  failed_rows:       0
+  organization:        org,
+  bank_account:        bank_account,
+  source_type:         :manual,
+  status:              :completed,
+  file_name:           "seed_statement.csv",
+  rows_count:          5,
+  new_rows_count:      5,
+  duplicate_rows_count: 0,
+  failed_rows_count:   0
 )
 
 # ── Bank Transactions — one per scenario ────────────────────────────────────

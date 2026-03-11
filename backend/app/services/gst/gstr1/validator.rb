@@ -34,18 +34,21 @@ module Gst
         new(**kwargs).call
       end
 
-      def initialize(gstin:, invoices:, credit_notes:)
-        @gstin        = gstin
-        @invoices     = invoices
-        @credit_notes = credit_notes
-        @errors       = []
-        @warnings     = []
+      def initialize(gstin:, invoices:, credit_notes:, nil_exempt_invoices: [], seller_state_code: nil)
+        @gstin               = gstin
+        @invoices            = invoices
+        @credit_notes        = credit_notes
+        @nil_exempt_invoices = nil_exempt_invoices
+        @seller_state_code   = seller_state_code
+        @errors   = []
+        @warnings = []
       end
 
       def call
         validate_seller_gstin
         validate_invoices
         validate_credit_notes
+        validate_nil_exempt_invoices
 
         ValidationResult.new(errors: @errors.freeze, warnings: @warnings.freeze)
       end
@@ -101,11 +104,16 @@ module Gst
                                 'Unable to determine place of supply. Defaulting to 00.')
         end
 
-        # HSN codes — warn on missing (portal requires them for B2B above threshold)
+        # HSN codes — error for B2B (portal mandatory); warning for unregistered
         inv.lines.each do |line|
           if line.hsn_code.blank? && line.product&.hsn_code.blank?
-            @warnings << warning(ref, 'MISSING_HSN_CODE',
-                                  "Line item for '#{line.product&.name}' has no HSN/SAC code.")
+            if inv.customer&.gstin.present?
+              @errors << error(ref, 'MISSING_HSN_CODE',
+                               "B2B invoice: line item '#{line.product&.name}' has no HSN/SAC code. Required for portal upload.")
+            else
+              @warnings << warning(ref, 'MISSING_HSN_CODE',
+                                   "Line item for '#{line.product&.name}' has no HSN/SAC code.")
+            end
           end
         end
 
@@ -143,6 +151,26 @@ module Gst
           if line.hsn_code.blank? && line.product&.hsn_code.blank?
             @warnings << warning(ref, 'MISSING_HSN_CODE',
                                   "Credit note line for '#{line.product&.name}' has no HSN code.")
+          end
+        end
+      end
+
+      # ── NIL/Exempt validation ──────────────────────────────────────────────
+
+      def validate_nil_exempt_invoices
+        return if @nil_exempt_invoices.blank?
+
+        @warnings << {
+          code:    'NIL_EXEMPT_SUPPLIES_PRESENT',
+          message: "#{@nil_exempt_invoices.size} nil-rated/exempt invoice(s) to unregistered buyers detected. " \
+                   "These will appear in GSTR-1 Table 8 (Nil/Exempt/Non-GST). Verify exempt categorisation with CA."
+        }
+
+        @nil_exempt_invoices.each do |inv|
+          ref = inv.invoice_number.presence || "(id #{inv.id})"
+          if inv.grand_total.to_d <= 0
+            @warnings << warning(ref, 'ZERO_VALUE_NIL_EXEMPT',
+                                  'Nil-rated/exempt invoice has zero or negative grand total.')
           end
         end
       end
