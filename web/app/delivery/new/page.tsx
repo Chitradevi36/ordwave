@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { API_URL } from "@/lib/api/client";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 import { Truck, User, Package, X, GripVertical, Plus, ChevronRight } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
@@ -126,6 +127,11 @@ export default function NewTripPage() {
       });
       const json = await res.json();
       if (res.ok) {
+        trackBusinessEvent(ANALYTICS_EVENTS.TRIP_CREATED, {
+          module:      "dispatch",
+          page:        "/delivery/new",
+          items_count: selectedOrders.length,
+        });
         router.push(`/delivery/${json.data.id}`);
       } else {
         setErrors(json.errors ?? ["Failed to create trip"]);

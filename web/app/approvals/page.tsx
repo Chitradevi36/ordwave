@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, XCircle, ArrowLeftRight, AlertCircle, ShoppingCart, Loader2 } from "lucide-react";
 import { useApprovals, useApproveOrder, useDecideCreditLimit } from "@/lib/api/hooks/useApprovals";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 function fmtINR(n: number | null | undefined) {
   if (n == null) return "—";
@@ -38,6 +39,10 @@ export default function ApprovalsPage() {
     setActing(id);
     try {
       await approveOrder.mutateAsync({ id, decision, reason: reason[id] });
+      trackBusinessEvent(
+        decision === "approved" ? ANALYTICS_EVENTS.ORDER_APPROVED : ANALYTICS_EVENTS.ORDER_REJECTED,
+        { module: "approvals", page: "/approvals", order_id: id },
+      );
     } finally {
       setActing(null);
     }
@@ -47,6 +52,11 @@ export default function ApprovalsPage() {
     setActing(id);
     try {
       await decideCreditLim.mutateAsync({ id, decision, decision_note: reason[id] });
+      if (decision === "approved") {
+        trackBusinessEvent(ANALYTICS_EVENTS.CREDIT_LIMIT_APPROVED, {
+          module: "approvals", page: "/approvals", customer_id: id,
+        });
+      }
     } finally {
       setActing(null);
     }

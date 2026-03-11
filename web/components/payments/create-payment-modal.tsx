@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -119,6 +120,11 @@ export default function CreatePaymentModal({ onClose, onCreated, prefilledCustom
       });
       const json = await res.json();
       if (res.ok) {
+        trackBusinessEvent(ANALYTICS_EVENTS.COLLECTION_RECORDED, {
+          module:         "finance",
+          page:           "/collections",
+          payment_method: form.payment_mode,
+        });
         onCreated(json.data?.id);
       } else {
         setError(json.errors?.join(", ") ?? "Failed to create payment");

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Search } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Branch  { id: number; name: string; }
@@ -112,6 +113,11 @@ export default function NewTransferPage() {
       });
       const json = await res.json();
       if (res.ok) {
+        trackBusinessEvent(ANALYTICS_EVENTS.STOCK_TRANSFER_CREATED, {
+          module: "inventory",
+          page:   "/inventory/transfers/new",
+          items_count: lines.filter((l) => l.product !== null).length,
+        });
         router.push(`/inventory/transfers/${json.data.id}`);
       } else {
         setErrors(json.errors ?? ["An error occurred"]);

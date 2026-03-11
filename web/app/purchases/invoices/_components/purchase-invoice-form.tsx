@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { API_URL } from "@/lib/api/client";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export interface LineItem {
@@ -206,6 +207,7 @@ export function PurchaseInvoiceForm({ initial, invoiceId, token, orgId }: Purcha
     });
     const json = await res.json();
     if (res.ok) {
+      if (!isEdit) trackBusinessEvent(ANALYTICS_EVENTS.PURCHASE_INVOICE_CREATED, { module: "purchases", page: "/purchases/invoices/new" });
       router.push(`/purchases/invoices/${json.data.id}`);
     } else {
       setErrors(json.errors ?? ["Failed to save invoice"]);

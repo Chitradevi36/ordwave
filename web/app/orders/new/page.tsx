@@ -16,6 +16,7 @@ import {
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
 import { API_URL } from "@/lib/api/client";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface CustomerOption { id: number; name: string; code: string; branch_id: number }
@@ -619,6 +620,15 @@ export default function NewOrderPage() {
       setSavedOrderId(orderId);
       setIsDirty(false);
 
+      if (!isUpdate) {
+        trackBusinessEvent(ANALYTICS_EVENTS.ORDER_CREATED, {
+          module:      "sales",
+          page:        "/orders/new",
+          order_id:    orderId,
+          items_count: validLines.length,
+        });
+      }
+
       if (andSubmit) {
         const subRes  = await fetch(`${API_URL}/api/v1/sales_orders/${orderId}/submit`, {
           method: "POST",
@@ -632,6 +642,11 @@ export default function NewOrderPage() {
         const subJson = await subRes.json();
 
         if (subRes.ok && subJson.data) {
+          trackBusinessEvent(ANALYTICS_EVENTS.ORDER_SUBMITTED, {
+            module:   "sales",
+            page:     "/orders/new",
+            order_id: orderId,
+          });
           setCreditResult(subJson.credit ?? null);
           setDraftOrderId(orderId);
           setDraftOrderNum(subJson.data.order_number ?? null);

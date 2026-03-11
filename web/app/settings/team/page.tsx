@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
+import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 import {
   Users, UserPlus, Mail, MoreHorizontal, CheckCircle, XCircle,
   Clock, Shield, RefreshCw
@@ -109,6 +110,9 @@ export default function TeamSettingsPage() {
       });
       const json = await res.json();
       if (res.ok) {
+        trackBusinessEvent(ANALYTICS_EVENTS.USER_INVITED, {
+          module: "settings", page: "/settings/team", invited_role: inviteRole,
+        });
         showToast("success", `Invitation sent to ${inviteEmail}`);
         setInviteEmail("");
         setShowInvite(false);

@@ -1,7 +1,8 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ANALYTICS_EVENTS, trackAuthEvent } from '@/lib/analytics';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,10 @@ import { API_URL } from "@/lib/api/client";
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    trackAuthEvent(ANALYTICS_EVENTS.LOGIN_PAGE_VIEWED);
+  }, []);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,12 +44,16 @@ export default function LoginPage() {
         // Set a lightweight cookie so middleware.ts can guard server-side routing
         document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
 
+        trackAuthEvent(ANALYTICS_EVENTS.LOGIN_COMPLETED);
         router.push('/dashboard');
       } else {
-        setError(data.errors?.[0] || 'Login failed');
+        const reason = data.errors?.[0] || 'Login failed';
+        setError(reason);
+        trackAuthEvent(ANALYTICS_EVENTS.LOGIN_FAILED, { error_reason: reason });
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
+      trackAuthEvent(ANALYTICS_EVENTS.LOGIN_FAILED, { error_reason: 'network_error' });
     } finally {
       setLoading(false);
     }
