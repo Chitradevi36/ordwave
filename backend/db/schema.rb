@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_10_000021) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -1040,6 +1040,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000021) do
     t.index ["price_list_id"], name: "index_retailer_price_list_assignments_on_price_list_id"
   end
 
+  create_table "retailer_risk_snapshots", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "customer_id", null: false
+    t.integer "risk_score", default: 0, null: false
+    t.string "risk_tier", default: "low", null: false
+    t.string "recommendation", null: false
+    t.jsonb "factors_json", default: {}, null: false
+    t.string "score_version", default: "v1", null: false
+    t.datetime "computed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "computed_at"], name: "idx_risk_snapshots_customer_time"
+    t.index ["organization_id", "risk_tier"], name: "idx_risk_snapshots_org_tier"
+    t.index ["organization_id"], name: "index_retailer_risk_snapshots_on_organization_id"
+    t.index ["risk_score"], name: "index_retailer_risk_snapshots_on_risk_score"
+    t.index ["risk_tier"], name: "index_retailer_risk_snapshots_on_risk_tier"
+  end
+
   create_table "return_lines", force: :cascade do |t|
     t.bigint "return_request_id", null: false
     t.bigint "product_id", null: false
@@ -1867,6 +1885,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_000021) do
   add_foreign_key "purchase_invoices", "users", column: "created_by_id"
   add_foreign_key "retailer_price_list_assignments", "customers"
   add_foreign_key "retailer_price_list_assignments", "price_lists"
+  add_foreign_key "retailer_risk_snapshots", "customers"
+  add_foreign_key "retailer_risk_snapshots", "organizations"
   add_foreign_key "return_lines", "products"
   add_foreign_key "return_lines", "return_requests"
   add_foreign_key "return_lines", "sales_order_lines"

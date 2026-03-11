@@ -552,4 +552,39 @@ FactoryBot.define do
     response_body  { '<VOUCHER><VOUCHERTYPENAME>Sales</VOUCHERTYPENAME></VOUCHER>' }
   end
 
+  # ── Credit Intelligence ──────────────────────────────────────────────────
+
+  factory :retailer_risk_snapshot do
+    association :organization
+    association :customer
+    risk_score     { 20 }
+    risk_tier      { 'low' }
+    recommendation { 'Allow order — retailer is in good standing.' }
+    factors_json   { { factors: [] } }
+    score_version  { 'v1' }
+    computed_at    { Time.current }
+
+    trait :medium do
+      risk_score { 35 }
+      risk_tier  { 'medium' }
+      recommendation { 'Allow order with warning — review outstanding balance.' }
+    end
+
+    trait :high do
+      risk_score { 60 }
+      risk_tier  { 'high' }
+      recommendation { 'Hold order — manager approval required before dispatch.' }
+    end
+
+    trait :critical do
+      risk_score { 80 }
+      risk_tier  { 'critical' }
+      recommendation { 'Block order — require full collection before new order.' }
+    end
+
+    trait :stale do
+      computed_at { 8.hours.ago }
+    end
+  end
+
 end

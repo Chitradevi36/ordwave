@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, GitBranch, Users, ChevronRight, Plus, UserCircle, Receipt, Upload, CreditCard, Truck, Bell, FileDown, FileText, Shield } from "lucide-react";
+import { Building2, GitBranch, Users, ChevronRight, Plus, UserCircle, Receipt, Upload, CreditCard, Truck, Bell, FileDown, FileText, Shield, Workflow } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { AddBranchModal } from "@/components/add-branch-modal";
 import { AddOrganizationModal } from "@/components/add-organization-modal";
@@ -123,6 +123,16 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm font-medium text-text-primary">Organization Profile &amp; Settings</p>
                 <p className="text-xs text-text-secondary">Name, GSTIN, PAN, timezone, currency</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+            <button
+              onClick={() => router.push("/settings/organizations")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Manage Organizations</p>
+                <p className="text-xs text-text-secondary">Switch, add, or configure multiple organizations</p>
               </div>
               <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
             </button>

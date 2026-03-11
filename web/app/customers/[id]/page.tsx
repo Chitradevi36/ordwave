@@ -18,6 +18,7 @@ import {
 
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
+import { RiskWidget } from "@/components/customers/risk-widget";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Address {
@@ -851,6 +852,9 @@ function CreditTab({ credit, editHref, creditDays, creditBlockRule, customerId }
           </table>
         </div>
       )}
+
+      {/* ── Section F: Risk Profile ──────────────────────────────────────── */}
+      <RiskWidget customerId={customerId} canRecompute={isManager} />
 
       {/* ── Flag Confirm Modal ─────────────────────────────────────────────── */}
       <Modal

@@ -386,7 +386,7 @@ export default function CustomersPage() {
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => router.push(`/customers/${row.id}/edit`)}
-            className="p-1 rounded hover:bg-muted text-text-secondary hover:text-text-primary transition-colors"
+            className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-background text-text-secondary hover:text-text-primary hover:bg-background-subtle transition-colors"
             title="Edit"
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -395,7 +395,7 @@ export default function CustomersPage() {
             <button
               onClick={() => handleBlockCustomer(row.id, "block")}
               disabled={actionLoading === row.id}
-              className="p-1 rounded hover:bg-muted text-text-secondary hover:text-danger transition-colors disabled:opacity-40"
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-background text-text-secondary hover:text-danger hover:border-danger/40 hover:bg-danger/5 transition-colors disabled:opacity-40"
               title="Block"
             >
               <Ban className="h-3.5 w-3.5" />
@@ -404,7 +404,7 @@ export default function CustomersPage() {
             <button
               onClick={() => handleBlockCustomer(row.id, "unblock")}
               disabled={actionLoading === row.id}
-              className="p-1 rounded hover:bg-muted text-text-secondary hover:text-success transition-colors disabled:opacity-40"
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border bg-background text-text-secondary hover:text-success hover:border-success/40 hover:bg-success/5 transition-colors disabled:opacity-40"
               title="Unblock"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -475,10 +475,10 @@ export default function CustomersPage() {
   }, [token, orgId, search, channel, tier, status, savedView, exporting]);
 
   return (
-    <AppShell title="Customers">
+    <AppShell title="Retailers">
       <PageHeader
-        title="Customers"
-        description="Manage retailers, channel partners, credit limits, and customer profiles. Track credit usage and customer information across your distribution network."
+        title="Retailers & Credit Accounts"
+        description="Retailers, channel partners &amp; credit accounts."
         actions={[
           {
             label: "Import CSV",
@@ -506,7 +506,7 @@ export default function CustomersPage() {
       )}
 
       {/* Saved view tabs */}
-      <div className="flex mb-4 border-b border-border">
+      <div className="flex mb-4 border-b border-border overflow-x-auto">
         {SAVED_VIEWS.map((v) => (
           <button
             key={v.key}

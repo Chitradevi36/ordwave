@@ -39,3 +39,9 @@
     queue: low
     args: []                    # nil = all organisations
     description: 'Notify warehouse staff when stock falls below min_qty_threshold'
+
+  batch_risk_recompute:
+    cron: '0 3 * * *'           # 3 AM daily
+    class: 'BatchRiskRecomputeJob'
+    queue: low
+    description: 'Refresh retailer risk snapshots for all active retailers'

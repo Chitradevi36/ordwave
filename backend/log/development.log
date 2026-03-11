@@ -287402,3 +287402,29 @@ app/controllers/api/v1/sales_invoices_controller.rb:21:in `index'
   [1m[36mNotification Load (0.2ms)[0m  [1m[34mSELECT "notifications".* FROM "notifications" WHERE "notifications"."user_id" = $1 AND "notifications"."organization_id" = $2 AND "notifications"."dismissed_at" IS NULL ORDER BY "notifications"."created_at" DESC LIMIT $3[0m  [["user_id", 1], ["organization_id", 1], ["LIMIT", 50]]
   ↳ app/controllers/api/v1/notifications_controller.rb:30:in `map'
 {"method":"GET","path":"/api/v1/notifications","format":"html","controller":"Api::V1::NotificationsController","action":"index","status":200,"allocations":2903,"duration":9.35,"view":0.13,"db":1.36,"request_id":"16660c4f-9605-4bb0-b58f-462c20bb1ab3","user_id":1,"organization_id":1,"params":"{}"}
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (10.0ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (15.6ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to CreateRetailerRiskSnapshots (20260311000001)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (178.9ms)[0m  [1m[35mCREATE TABLE "retailer_risk_snapshots" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "customer_id" bigint NOT NULL, "risk_score" integer DEFAULT 0 NOT NULL, "risk_tier" character varying DEFAULT 'low' NOT NULL, "recommendation" character varying NOT NULL, "factors_json" jsonb DEFAULT '{}' NOT NULL, "score_version" character varying DEFAULT 'v1' NOT NULL, "computed_at" timestamp(6) NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_retailer_risk_snapshots_on_organization_id" ON "retailer_risk_snapshots" ("organization_id")[0m
+  [1m[35m (2.5ms)[0m  [1m[35mCREATE INDEX "idx_risk_snapshots_customer_time" ON "retailer_risk_snapshots" ("customer_id", "computed_at")[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE INDEX "index_retailer_risk_snapshots_on_risk_tier" ON "retailer_risk_snapshots" ("risk_tier")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_retailer_risk_snapshots_on_risk_score" ON "retailer_risk_snapshots" ("risk_score")[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "idx_risk_snapshots_org_tier" ON "retailer_risk_snapshots" ("organization_id", "risk_tier")[0m
+  [1m[35m (60.6ms)[0m  [1m[35mALTER TABLE "retailer_risk_snapshots" ADD CONSTRAINT "fk_rails_5346d09c84"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+[0m
+  [1m[35m (105.5ms)[0m  [1m[35mALTER TABLE "retailer_risk_snapshots" ADD CONSTRAINT "fk_rails_c14d0ecd40"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+[0m
+  [1m[36mActiveRecord::SchemaMigration Create (1.8ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000001') RETURNING "version"[0m
+  [1m[36mTRANSACTION (7.4ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.5ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker

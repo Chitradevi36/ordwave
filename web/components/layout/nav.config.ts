@@ -406,8 +406,9 @@ export const GROUPED_NAV: NavGroup[] = [
       "/settings",
       "/users",
       "/settings/branches",
-      "/settings/organization",
+      "/settings/organizations",
       "/settings/fleet",
+      "/settings/organization",
     ],
     rolesAllowed: ["owner", "admin"],
     children: [
@@ -424,12 +425,6 @@ export const GROUPED_NAV: NavGroup[] = [
         matchers: ["/products/hsn-codes"],
       },
       {
-        key: "branches",
-        label: "Branches",
-        href: "/settings/branches",
-        matchers: ["/settings/branches"],
-      },
-      {
         key: "users",
         label: "Users",
         href: "/users",
@@ -442,10 +437,10 @@ export const GROUPED_NAV: NavGroup[] = [
         matchers: ["/settings/fleet"],
       },
       {
-        key: "organization",
-        label: "Organization",
-        href: "/settings/organization",
-        matchers: ["/settings/organization"],
+        key: "organizations",
+        label: "Organizations",
+        href: "/settings/organizations",
+        matchers: ["/settings/organizations"],      
       },
       {
         key: "preferences",

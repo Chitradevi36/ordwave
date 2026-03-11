@@ -120,6 +120,12 @@ export const ANALYTICS_EVENTS = {
   INSIGHTS_CREDIT_RISK_VIEWED:        "insights_credit_risk_viewed",
   INSIGHTS_SCHEMES_VIEWED:            "insights_schemes_viewed",
 
+  // ── Credit Risk Intelligence ─────────────────────────────────────────────
+  RETAILER_RISK_VIEWED:               "retailer_risk_viewed",
+  RISK_RECOMPUTED:                    "risk_recomputed",
+  RISK_RECOMMENDATION_APPLIED:        "risk_recommendation_applied",
+  RISKIEST_RETAILERS_PANEL_VIEWED:    "riskiest_retailers_panel_viewed",
+
   // ── Approvals sub-pages ──────────────────────────────────────────────────
   APPROVALS_CREDIT_LIMITS_VIEWED:     "approvals_credit_limits_viewed",
 
