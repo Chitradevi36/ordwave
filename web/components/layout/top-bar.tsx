@@ -13,13 +13,16 @@ import { NotificationsPanel } from "@/components/global/NotificationsPanel";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { filterCreateActionsForRole } from "@/components/layout/nav.config";
 import { ANALYTICS_EVENTS, trackClick } from "@/lib/analytics";
+import { AddOrganizationModal } from "@/components/add-organization-modal";
+import { AddBranchModal } from "@/components/add-branch-modal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface DropdownOption { value: string; label: string; sub?: string; }
+interface FooterAction { label: string; onClick: () => void; }
 
 // ── SwitcherDropdown ──────────────────────────────────────────────────────────
 function SwitcherDropdown({
-  icon: Icon, label, options, value, onChange, loading, allLabel,
+  icon: Icon, label, options, value, onChange, loading, allLabel, footerAction,
 }: {
   icon: React.ElementType;
   label: string;
@@ -28,6 +31,7 @@ function SwitcherDropdown({
   onChange: (v: string) => void;
   loading?: boolean;
   allLabel?: string;
+  footerAction?: FooterAction;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -78,6 +82,18 @@ function SwitcherDropdown({
               {value === opt.value && <Check className="h-3.5 w-3.5 text-accent shrink-0" />}
             </button>
           ))}
+          {footerAction && (
+            <>
+              <div className="h-px bg-border mx-2 my-1" />
+              <button
+                onClick={() => { footerAction.onClick(); setOpen(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/5 transition-colors font-medium"
+              >
+                <Plus className="h-3.5 w-3.5 shrink-0" />
+                {footerAction.label}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -217,8 +233,11 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
 
   const {
     orgId, branchId, organizations, branches, orgsLoading, branchesLoading,
-    switchOrg, switchBranch,
+    switchOrg, switchBranch, refetchOrganizations, refetchBranches,
   } = useOrgBranch();
+
+  const [showAddOrg, setShowAddOrg]       = useState(false);
+  const [showAddBranch, setShowAddBranch] = useState(false);
 
   // Cmd+K / Ctrl+K shortcut
   useEffect(() => {
@@ -275,6 +294,7 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
             value={orgId}
             onChange={switchOrg}
             loading={orgsLoading}
+            footerAction={{ label: "New Organization", onClick: () => setShowAddOrg(true) }}
           />
           <span className="text-border select-none text-sm">/</span>
           <SwitcherDropdown
@@ -285,6 +305,7 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
             onChange={switchBranch}
             loading={branchesLoading}
             allLabel="All Branches"
+            footerAction={{ label: "New Branch", onClick: () => setShowAddBranch(true) }}
           />
         </div>
 
@@ -316,6 +337,20 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
 
       {/* Command palette */}
       <CommandPalette open={showCommandPalette} onClose={() => setShowCommandPalette(false)} />
+
+      {/* Add Organization modal */}
+      <AddOrganizationModal
+        open={showAddOrg}
+        onClose={() => setShowAddOrg(false)}
+        onCreated={() => { refetchOrganizations(); setShowAddOrg(false); }}
+      />
+
+      {/* Add Branch modal */}
+      <AddBranchModal
+        open={showAddBranch}
+        onClose={() => setShowAddBranch(false)}
+        onCreated={() => { refetchBranches(); setShowAddBranch(false); }}
+      />
     </>
   );
 }

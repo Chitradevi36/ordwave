@@ -443,13 +443,6 @@ export const GROUPED_NAV: NavGroup[] = [
         matchers: ["/settings/organizations"],      
       },
       {
-        key: "org-settings",
-        label: "Org Settings",
-        href: "/settings/organization",
-        matchers: ["/settings/organization"],
-        rolesAllowed: ["owner", "admin"],
-      },
-      {
         key: "preferences",
         label: "Preferences",
         href: "/settings",
