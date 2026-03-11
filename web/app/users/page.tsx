@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { UserPlus, Search, X, ChevronRight } from "lucide-react";
+import { UserPlus, Search, X, ChevronRight, Mail, Clock } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
 
@@ -93,7 +93,7 @@ function buildColumns(
 ) {
   return [
     {
-      key: "email" as keyof DisplayRow,
+      key: "full_name" as keyof DisplayRow,
       header: "Name",
       render: (_: unknown, row: DisplayRow) => {
         if (row.rowKind === "invitation") {
@@ -113,7 +113,7 @@ function buildColumns(
       },
     },
     {
-      key: "email" as keyof DisplayRow,
+      key: "role_col",
       header: "Role",
       render: (_: unknown, row: DisplayRow) => {
         const roleName =
@@ -130,7 +130,7 @@ function buildColumns(
       },
     },
     {
-      key: "email" as keyof DisplayRow,
+      key: "branch_col",
       header: "Branch",
       render: (_: unknown, row: DisplayRow) => {
         const branch =
@@ -141,7 +141,7 @@ function buildColumns(
       },
     },
     {
-      key: "email" as keyof DisplayRow,
+      key: "status_col",
       header: "Status",
       render: (_: unknown, row: DisplayRow) => {
         if (row.rowKind === "invitation") {
@@ -201,6 +201,7 @@ export default function UsersPage() {
   const [query, setQuery]               = useState("");
   const [roleFilter, setRoleFilter]     = useState("");
   const [showInvite, setShowInvite]     = useState(false);
+  const [pendingOnly, setPendingOnly]   = useState(false);
   const [inviteForm, setInviteForm]     = useState<InviteForm>({ email: "", role_id: "", branch_id: "" });
   const [inviteError, setInviteError]   = useState<string | null>(null);
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -350,12 +351,16 @@ export default function UsersPage() {
     }
   };
 
-  const rows: DisplayRow[] = [
+  const pendingCount = invitations.filter((i) => i.status === "pending").length;
+
+  const allRows: DisplayRow[] = [
     ...members.map((m) => ({ ...m, rowKind: "member" as const })),
     ...invitations.map((i) => ({ ...i, rowKind: "invitation" as const })),
   ];
 
-  const pendingCount = invitations.filter((i) => i.status === "pending").length;
+  const rows: DisplayRow[] = pendingOnly
+    ? allRows.filter((r) => r.rowKind === "invitation" && r.status === "pending")
+    : allRows;
 
   const columns = buildColumns(handleDeactivate, handleRevoke, currentUserId);
 
@@ -405,9 +410,21 @@ export default function UsersPage() {
               </option>
             ))}
         </select>
+
+        <Button
+          variant={pendingOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setPendingOnly(!pendingOnly)}
+          className="flex items-center gap-2"
+        >
+          <Clock className="h-4 w-4" />
+          Pending invitations only{pendingCount > 0 && ` (${pendingCount})`}
+        </Button>
       </div>
 
-      <DataTable columns={columns} data={rows} isLoading={loading} />
+      <div id="users-data-table">
+        <DataTable columns={columns} data={rows} isLoading={loading} />
+      </div>
 
       {/* Pagination */}
       {totalCount > 20 && (
