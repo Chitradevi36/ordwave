@@ -4,6 +4,7 @@ import { apiClient } from "../client";
 export interface HeldOrder {
   id: number;
   order_number: string;
+  customer_id?: number;
   customer_name: string;
   total_amount: number;
   status: string;

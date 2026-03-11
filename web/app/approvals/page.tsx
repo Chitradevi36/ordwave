@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, XCircle, ArrowLeftRight, AlertCircle, ShoppingCart, Loader2 } from "lucide-react";
 import { useApprovals, useApproveOrder, useDecideCreditLimit } from "@/lib/api/hooks/useApprovals";
+import { useRetailerRisk } from "@/lib/api/hooks/useRetailerRisk";
+import { RiskBadge } from "@/components/customers/risk-badge";
 import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
 
 function fmtINR(n: number | null | undefined) {
@@ -18,6 +20,13 @@ function fmtINR(n: number | null | undefined) {
 function fmtDate(iso: string) {
   try { return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); }
   catch { return iso; }
+}
+
+/** Small badge that fetches its own risk profile for a given customer */
+function OrderRiskBadge({ customerId }: { customerId: number }) {
+  const { data, loading } = useRetailerRisk(customerId);
+  if (loading || !data) return null;
+  return <RiskBadge score={data.risk_score} tier={data.risk_tier} compact className="ml-1" />;
 }
 
 type Tab = "all" | "orders" | "credit";
@@ -146,6 +155,7 @@ export default function ApprovalsPage() {
                     <p className="text-sm font-semibold text-text-primary">
                       {order.order_number}
                       <Badge variant="warning" className="ml-2 text-xs">On Hold</Badge>
+                      {order.customer_id && <OrderRiskBadge customerId={order.customer_id} />}
                     </p>
                     <p className="text-sm text-text-secondary mt-0.5">{order.customer_name}</p>
                     <p className="text-xs text-text-secondary mt-0.5">

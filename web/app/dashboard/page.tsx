@@ -22,6 +22,7 @@ import { AccountantView } from "@/components/dashboard/AccountantView";
 import { WarehouseView } from "@/components/dashboard/WarehouseView";
 import { DriverView } from "@/components/dashboard/DriverView";
 import { ManagerView } from "@/components/dashboard/ManagerView";
+import { RiskiestRetailersPanel } from "@/components/dashboard/RiskiestRetailersPanel";
 
 // â”€â”€ Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -401,7 +402,14 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* â”€â”€ Recent Orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Riskiest Retailers ─────────────────────────────────────────────────── */}
+      {(!role || role === "owner" || role === "admin" || role === "manager") && (
+        <div className="mb-5">
+          <RiskiestRetailersPanel />
+        </div>
+      )}
+
+      {/* ── Recent Orders ──────────────────────────────────────────────────────── */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-sm font-semibold">Recent Orders</CardTitle>

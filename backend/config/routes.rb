@@ -101,8 +101,19 @@ Rails.application.routes.draw do
           post :deactivate
           get  :credit_usage
           get  :timeline
+          # Credit Intelligence Engine
+          get  'risk_profile',            to: 'retailer_risk#show'
+          post 'risk_profile/recompute',  to: 'retailer_risk#recompute'
         end
       end
+
+      # Credit Intelligence — batch/aggregate endpoints
+      namespace :credit do
+        namespace :risk do
+          get :riskiest, to: 'retailer_risk#riskiest', controller: '/api/v1/retailer_risk'
+        end
+      end
+
       # Supplier Master
       resources :suppliers, only: %i[index show create update destroy] do
         member do
@@ -387,11 +398,12 @@ Rails.application.routes.draw do
 
       # -- Analytics / Insights -----------------------------------------------
       scope :analytics, controller: :analytics do
-        get :overview,          action: :overview
-        get :sales,             action: :sales
-        get :collections,       action: :collections
+        get :overview,            action: :overview
+        get :sales,               action: :sales
+        get :collections,         action: :collections
         get 'collections/export', action: :collections_csv
-        get :credit_risk,       action: :credit_risk
+        # credit_risk now enriched from RetailerRiskSnapshot; legacy endpoint kept
+        get :credit_risk,         action: :credit_risk
         get :beat_performance,  action: :beat_performance
         get :inventory_health,  action: :inventory_health
         get :returns,           action: :returns
