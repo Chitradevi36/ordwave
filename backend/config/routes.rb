@@ -448,6 +448,20 @@ Rails.application.routes.draw do
       # -- Device Tokens (Push Notifications) ---------------------------------
       resources :device_tokens, only: %i[create destroy]
 
+      # -- Bank Reconciliation -----------------------------------------------
+      resources :bank_accounts, only: %i[index show create update]
+
+      resources :bank_statement_imports, only: %i[index show create]
+
+      resources :bank_transactions, only: %i[index show] do
+        member do
+          post :confirm_match
+          post :mark_as_advance
+          post :ignore
+          post :retry_match
+        end
+      end
+
       # -- Accounting Integration ------------------------------------------
       namespace :accounting do
         resources :integrations, only: %i[index show create update] do

@@ -287428,3 +287428,131 @@ FOREIGN KEY ("customer_id")
   [1m[35m (0.5ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
   [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
 Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (1.2ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (14.5ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to CreateBankAccounts (20260311000002)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (114.2ms)[0m  [1m[35mCREATE TABLE "bank_accounts" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "branch_id" bigint, "bank_name" character varying NOT NULL, "account_name" character varying NOT NULL, "account_number_masked" character varying NOT NULL, "account_number_full" character varying, "ifsc" character varying, "status" character varying DEFAULT 'active' NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_35824197da"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_8b2570dab7"
+FOREIGN KEY ("branch_id")
+  REFERENCES "branches" ("id")
+)[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_bank_accounts_on_organization_id" ON "bank_accounts" ("organization_id")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_accounts_on_branch_id" ON "bank_accounts" ("branch_id")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_bank_accounts_on_status" ON "bank_accounts" ("status")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.8ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000002') RETURNING "version"[0m
+  [1m[36mTRANSACTION (9.0ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateBankStatementImports (20260311000003)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (7.6ms)[0m  [1m[35mCREATE TABLE "bank_statement_imports" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "bank_account_id" bigint NOT NULL, "uploaded_by_id" bigint, "file_name" character varying NOT NULL, "source_type" character varying DEFAULT 'csv' NOT NULL, "status" character varying DEFAULT 'uploaded' NOT NULL, "rows_count" integer DEFAULT 0 NOT NULL, "processed_rows_count" integer DEFAULT 0 NOT NULL, "new_rows_count" integer DEFAULT 0 NOT NULL, "duplicate_rows_count" integer DEFAULT 0 NOT NULL, "failed_rows_count" integer DEFAULT 0 NOT NULL, "error_message" text, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_b4b819bea2"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_fc8b42b15a"
+FOREIGN KEY ("bank_account_id")
+  REFERENCES "bank_accounts" ("id")
+, CONSTRAINT "fk_rails_b64b445e57"
+FOREIGN KEY ("uploaded_by_id")
+  REFERENCES "users" ("id")
+)[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_statement_imports_on_organization_id" ON "bank_statement_imports" ("organization_id")[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_bank_statement_imports_on_bank_account_id" ON "bank_statement_imports" ("bank_account_id")[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_bank_statement_imports_on_uploaded_by_id" ON "bank_statement_imports" ("uploaded_by_id")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_statement_imports_on_status" ON "bank_statement_imports" ("status")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000003') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateBankTransactions (20260311000004)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (11.1ms)[0m  [1m[35mCREATE TABLE "bank_transactions" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "bank_account_id" bigint NOT NULL, "bank_statement_import_id" bigint, "txn_date" date NOT NULL, "amount" decimal(15,2) NOT NULL, "direction" character varying DEFAULT 'credit' NOT NULL, "utr_number" character varying, "reference_number" character varying, "payer_name" character varying, "narration" text, "normalized_narration" text, "raw_row_json" jsonb DEFAULT '{}' NOT NULL, "match_meta" jsonb DEFAULT '{}' NOT NULL, "status" character varying DEFAULT 'unmatched' NOT NULL, "match_score" decimal(5,2), "match_rule" character varying, "matched_customer_id" bigint, "matched_invoice_id" bigint, "matched_payment_id" bigint, "reviewed_by_id" bigint, "review_notes" text, "processed_at" timestamp(6), "idempotency_key" character varying NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_af6392f37a"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_e0117c6727"
+FOREIGN KEY ("bank_account_id")
+  REFERENCES "bank_accounts" ("id")
+, CONSTRAINT "fk_rails_3c226a4a41"
+FOREIGN KEY ("bank_statement_import_id")
+  REFERENCES "bank_statement_imports" ("id")
+, CONSTRAINT "fk_rails_6cbdae2961"
+FOREIGN KEY ("matched_customer_id")
+  REFERENCES "customers" ("id")
+, CONSTRAINT "fk_rails_06b702542f"
+FOREIGN KEY ("matched_invoice_id")
+  REFERENCES "sales_invoices" ("id")
+, CONSTRAINT "fk_rails_3cf227229c"
+FOREIGN KEY ("matched_payment_id")
+  REFERENCES "payments" ("id")
+, CONSTRAINT "fk_rails_b7affb5dc1"
+FOREIGN KEY ("reviewed_by_id")
+  REFERENCES "users" ("id")
+)[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_organization_id" ON "bank_transactions" ("organization_id")[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_bank_account_id" ON "bank_transactions" ("bank_account_id")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_bank_statement_import_id" ON "bank_transactions" ("bank_statement_import_id")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_status" ON "bank_transactions" ("status")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_utr_number" ON "bank_transactions" ("utr_number")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_amount" ON "bank_transactions" ("amount")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_txn_date" ON "bank_transactions" ("txn_date")[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_bank_transactions_on_idempotency_key" ON "bank_transactions" ("idempotency_key")[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_matched_customer_id" ON "bank_transactions" ("matched_customer_id")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_transactions_on_matched_invoice_id" ON "bank_transactions" ("matched_invoice_id")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000004') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateBankTransactionMatches (20260311000005)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (11.2ms)[0m  [1m[35mCREATE TABLE "bank_transaction_matches" ("id" bigserial primary key, "bank_transaction_id" bigint NOT NULL, "customer_id" bigint, "sales_invoice_id" bigint, "score" decimal(5,2) NOT NULL, "rule_code" character varying NOT NULL, "explanation" jsonb DEFAULT '{}' NOT NULL, "selected" boolean DEFAULT FALSE NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_7a685504e6"
+FOREIGN KEY ("bank_transaction_id")
+  REFERENCES "bank_transactions" ("id")
+, CONSTRAINT "fk_rails_f9c8cd35ca"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+, CONSTRAINT "fk_rails_5c0ee15589"
+FOREIGN KEY ("sales_invoice_id")
+  REFERENCES "sales_invoices" ("id")
+)[0m
+  [1m[35m (2.2ms)[0m  [1m[35mCREATE INDEX "index_bank_transaction_matches_on_bank_transaction_id" ON "bank_transaction_matches" ("bank_transaction_id")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_bank_transaction_matches_on_customer_id" ON "bank_transaction_matches" ("customer_id")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_transaction_matches_on_sales_invoice_id" ON "bank_transaction_matches" ("sales_invoice_id")[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_bank_transaction_matches_on_rule_code" ON "bank_transaction_matches" ("rule_code")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_bank_transaction_matches_on_selected" ON "bank_transaction_matches" ("selected")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000005') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateCustomerAliases (20260311000006)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (5.2ms)[0m  [1m[35mCREATE TABLE "customer_aliases" ("id" bigserial primary key, "customer_id" bigint NOT NULL, "alias_name" character varying NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_01f63be666"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+)[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_customer_aliases_on_customer_id" ON "customer_aliases" ("customer_id")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_customer_aliases_on_alias_name" ON "customer_aliases" ("alias_name")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000006') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateExpectedPaymentReferences (20260311000007)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (5.2ms)[0m  [1m[35mCREATE TABLE "expected_payment_references" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "customer_id" bigint, "sales_invoice_id" bigint, "reference_type" character varying NOT NULL, "reference_value" character varying NOT NULL, "status" character varying DEFAULT 'pending' NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_14c215940e"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_d7cbd28767"
+FOREIGN KEY ("customer_id")
+  REFERENCES "customers" ("id")
+, CONSTRAINT "fk_rails_e80b6fe6f7"
+FOREIGN KEY ("sales_invoice_id")
+  REFERENCES "sales_invoices" ("id")
+)[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_expected_payment_references_on_organization_id" ON "expected_payment_references" ("organization_id")[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_expected_payment_references_on_customer_id" ON "expected_payment_references" ("customer_id")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_expected_payment_references_on_sales_invoice_id" ON "expected_payment_references" ("sales_invoice_id")[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_expected_payment_references_on_reference_value" ON "expected_payment_references" ("reference_value")[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE INDEX "index_expected_payment_references_on_status" ON "expected_payment_references" ("status")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000007') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT[0m
+Migrating to AddPaidStatusToSalesInvoices (20260311000008)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[36mActiveRecord::SchemaMigration Create (1.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000008') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker

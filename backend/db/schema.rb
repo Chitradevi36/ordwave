@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_11_000008) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -190,6 +190,98 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
     t.index ["auditable_type", "auditable_id"], name: "index_audit_logs_on_auditable"
     t.index ["organization_id", "created_at"], name: "idx_audit_logs_org_created_at"
     t.index ["organization_id"], name: "index_audit_logs_on_organization_id"
+  end
+
+  create_table "bank_accounts", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.string "bank_name", null: false
+    t.string "account_name", null: false
+    t.string "account_number_masked", null: false
+    t.string "account_number_full"
+    t.string "ifsc"
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_bank_accounts_on_branch_id"
+    t.index ["organization_id"], name: "index_bank_accounts_on_organization_id"
+    t.index ["status"], name: "index_bank_accounts_on_status"
+  end
+
+  create_table "bank_statement_imports", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "bank_account_id", null: false
+    t.bigint "uploaded_by_id"
+    t.string "file_name", null: false
+    t.string "source_type", default: "csv", null: false
+    t.string "status", default: "uploaded", null: false
+    t.integer "rows_count", default: 0, null: false
+    t.integer "processed_rows_count", default: 0, null: false
+    t.integer "new_rows_count", default: 0, null: false
+    t.integer "duplicate_rows_count", default: 0, null: false
+    t.integer "failed_rows_count", default: 0, null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bank_account_id"], name: "index_bank_statement_imports_on_bank_account_id"
+    t.index ["organization_id"], name: "index_bank_statement_imports_on_organization_id"
+    t.index ["status"], name: "index_bank_statement_imports_on_status"
+    t.index ["uploaded_by_id"], name: "index_bank_statement_imports_on_uploaded_by_id"
+  end
+
+  create_table "bank_transaction_matches", force: :cascade do |t|
+    t.bigint "bank_transaction_id", null: false
+    t.bigint "customer_id"
+    t.bigint "sales_invoice_id"
+    t.decimal "score", precision: 5, scale: 2, null: false
+    t.string "rule_code", null: false
+    t.jsonb "explanation", default: {}, null: false
+    t.boolean "selected", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bank_transaction_id"], name: "index_bank_transaction_matches_on_bank_transaction_id"
+    t.index ["customer_id"], name: "index_bank_transaction_matches_on_customer_id"
+    t.index ["rule_code"], name: "index_bank_transaction_matches_on_rule_code"
+    t.index ["sales_invoice_id"], name: "index_bank_transaction_matches_on_sales_invoice_id"
+    t.index ["selected"], name: "index_bank_transaction_matches_on_selected"
+  end
+
+  create_table "bank_transactions", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "bank_account_id", null: false
+    t.bigint "bank_statement_import_id"
+    t.date "txn_date", null: false
+    t.decimal "amount", precision: 15, scale: 2, null: false
+    t.string "direction", default: "credit", null: false
+    t.string "utr_number"
+    t.string "reference_number"
+    t.string "payer_name"
+    t.text "narration"
+    t.text "normalized_narration"
+    t.jsonb "raw_row_json", default: {}, null: false
+    t.jsonb "match_meta", default: {}, null: false
+    t.string "status", default: "unmatched", null: false
+    t.decimal "match_score", precision: 5, scale: 2
+    t.string "match_rule"
+    t.bigint "matched_customer_id"
+    t.bigint "matched_invoice_id"
+    t.bigint "matched_payment_id"
+    t.bigint "reviewed_by_id"
+    t.text "review_notes"
+    t.datetime "processed_at"
+    t.string "idempotency_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["amount"], name: "index_bank_transactions_on_amount"
+    t.index ["bank_account_id"], name: "index_bank_transactions_on_bank_account_id"
+    t.index ["bank_statement_import_id"], name: "index_bank_transactions_on_bank_statement_import_id"
+    t.index ["idempotency_key"], name: "index_bank_transactions_on_idempotency_key", unique: true
+    t.index ["matched_customer_id"], name: "index_bank_transactions_on_matched_customer_id"
+    t.index ["matched_invoice_id"], name: "index_bank_transactions_on_matched_invoice_id"
+    t.index ["organization_id"], name: "index_bank_transactions_on_organization_id"
+    t.index ["status"], name: "index_bank_transactions_on_status"
+    t.index ["txn_date"], name: "index_bank_transactions_on_txn_date"
+    t.index ["utr_number"], name: "index_bank_transactions_on_utr_number"
   end
 
   create_table "beat_retailers", force: :cascade do |t|
@@ -433,6 +525,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
     t.index ["label"], name: "index_customer_addresses_on_label"
   end
 
+  create_table "customer_aliases", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "alias_name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["alias_name"], name: "index_customer_aliases_on_alias_name"
+    t.index ["customer_id"], name: "index_customer_aliases_on_customer_id"
+  end
+
   create_table "customer_contacts", force: :cascade do |t|
     t.bigint "customer_id", null: false
     t.string "name", null: false
@@ -597,6 +698,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
     t.index ["requestable_type", "requestable_id"], name: "idx_ewaybill_requestable"
     t.index ["sales_invoice_id"], name: "index_ewaybill_requests_on_sales_invoice_id"
     t.index ["status"], name: "index_ewaybill_requests_on_status"
+  end
+
+  create_table "expected_payment_references", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "customer_id"
+    t.bigint "sales_invoice_id"
+    t.string "reference_type", null: false
+    t.string "reference_value", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_expected_payment_references_on_customer_id"
+    t.index ["organization_id"], name: "index_expected_payment_references_on_organization_id"
+    t.index ["reference_value"], name: "index_expected_payment_references_on_reference_value"
+    t.index ["sales_invoice_id"], name: "index_expected_payment_references_on_sales_invoice_id"
+    t.index ["status"], name: "index_expected_payment_references_on_status"
   end
 
   create_table "exports", force: :cascade do |t|
@@ -1772,6 +1889,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
   add_foreign_key "advance_payments", "payments", column: "source_payment_id"
   add_foreign_key "audit_logs", "organizations"
   add_foreign_key "audit_logs", "users", column: "actor_id"
+  add_foreign_key "bank_accounts", "branches"
+  add_foreign_key "bank_accounts", "organizations"
+  add_foreign_key "bank_statement_imports", "bank_accounts"
+  add_foreign_key "bank_statement_imports", "organizations"
+  add_foreign_key "bank_statement_imports", "users", column: "uploaded_by_id"
+  add_foreign_key "bank_transaction_matches", "bank_transactions"
+  add_foreign_key "bank_transaction_matches", "customers"
+  add_foreign_key "bank_transaction_matches", "sales_invoices"
+  add_foreign_key "bank_transactions", "bank_accounts"
+  add_foreign_key "bank_transactions", "bank_statement_imports"
+  add_foreign_key "bank_transactions", "customers", column: "matched_customer_id"
+  add_foreign_key "bank_transactions", "organizations"
+  add_foreign_key "bank_transactions", "payments", column: "matched_payment_id"
+  add_foreign_key "bank_transactions", "sales_invoices", column: "matched_invoice_id"
+  add_foreign_key "bank_transactions", "users", column: "reviewed_by_id"
   add_foreign_key "beat_retailers", "beat_schedules"
   add_foreign_key "beat_retailers", "customers"
   add_foreign_key "beat_schedules", "beats"
@@ -1809,6 +1941,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
   add_foreign_key "credit_notes", "users", column: "created_by_id"
   add_foreign_key "credit_policies", "organizations"
   add_foreign_key "customer_addresses", "customers"
+  add_foreign_key "customer_aliases", "customers"
   add_foreign_key "customer_contacts", "customers"
   add_foreign_key "customers", "branches"
   add_foreign_key "customers", "organizations"
@@ -1829,6 +1962,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
   add_foreign_key "device_tokens", "users"
   add_foreign_key "ewaybill_requests", "organizations"
   add_foreign_key "ewaybill_requests", "sales_invoices"
+  add_foreign_key "expected_payment_references", "customers"
+  add_foreign_key "expected_payment_references", "organizations"
+  add_foreign_key "expected_payment_references", "sales_invoices"
   add_foreign_key "exports", "organizations"
   add_foreign_key "exports", "users", column: "requested_by_id"
   add_foreign_key "inventory_levels", "branches"
