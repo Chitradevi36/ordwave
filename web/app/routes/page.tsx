@@ -149,7 +149,7 @@ export default function RoutesPage() {
     },
     {
       key: "customers_count",
-      header: "Customers",
+      header: "Retailers",
       render: (_, row) => (
         <span className="text-sm text-text-secondary">
           {row.customers_count != null ? row.customers_count : "—"}
@@ -186,24 +186,24 @@ export default function RoutesPage() {
         </Badge>
       ),
     },
-    {
-      key: "id",
-      header: "",
-      className: "w-20 text-right",
-      render: (_, row) => (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(`/routes/${row.id}`);
-          }}
-          className="text-xs text-primary"
-        >
-          View →
-        </Button>
-      ),
-    },
+    // {
+    //   key: "id",
+    //   header: "",
+    //   className: "w-20 text-right",
+    //   render: (_, row) => (
+    //     <Button
+    //       size="sm"
+    //       variant="ghost"
+    //       onClick={(e) => {
+    //         e.stopPropagation();
+    //         router.push(`/routes/${row.id}`);
+    //       }}
+    //       className="text-xs text-primary"
+    //     >
+    //       View →
+    //     </Button>
+    //   ),
+    // },
   ];
 
   const hasSearch = !!search;

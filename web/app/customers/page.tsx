@@ -76,7 +76,7 @@ const TIERS    = ["platinum", "gold", "silver", "bronze"];
 // ─── Saved views ─────────────────────────────────────────────────────────────
 type SavedView = "all" | "overdue" | "blocked" | "no_route" | "near_limit";
 const SAVED_VIEWS: { key: SavedView; label: string }[] = [
-  { key: "all",        label: "All Customers" },
+  { key: "all",        label: "All" },
   { key: "overdue",    label: "Overdue" },
   { key: "blocked",    label: "Blocked" },
   { key: "no_route",   label: "No Route" },
@@ -311,7 +311,7 @@ export default function CustomersPage() {
   const columns: Column<Customer>[] = [
     {
       key: "name",
-      header: "Customer",
+      header: "Retailer",
       render: (_: unknown, row: Customer) => (
         <div>
           <p className="font-medium text-text-primary">{row.name}</p>
@@ -492,7 +492,7 @@ export default function CustomersPage() {
             icon:    Download,
             variant: "ghost",
           },
-          { label: "Add Customer", onClick: () => router.push("/customers/new"), icon: Plus },
+          { label: "Add Retailer", onClick: () => router.push("/customers/new"), icon: Plus },
         ]}
       />
 

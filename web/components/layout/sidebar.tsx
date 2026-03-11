@@ -31,6 +31,23 @@ function ChildItem({
   const pathname = usePathname();
   const active = isActiveChild(pathname, child);
 
+  if (child.comingSoon) {
+    return (
+      <li>
+        <span
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm cursor-not-allowed opacity-50 select-none"
+          aria-disabled="true"
+        >
+          <span className="w-1 h-1 rounded-full shrink-0 bg-primary-500" aria-hidden="true" />
+          <span className="flex-1 truncate leading-none text-primary-400">{child.label}</span>
+          <span className="ml-auto rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-primary-700 text-primary-300">
+            Soon
+          </span>
+        </span>
+      </li>
+    );
+  }
+
   return (
     <li>
       <Link

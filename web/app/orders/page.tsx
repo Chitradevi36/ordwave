@@ -538,30 +538,30 @@ function OrdersPageContent() {
         </div>
       ),
     },
-    {
-      key:       "risk",
-      header:    "Risk",
-      className: "w-28",
-      render:    (_, o) => {
-        if (!o.credit_decision || o.credit_decision === "ok") {
-          return <span className="text-text-secondary text-xs">—</span>;
-        }
-        const cfg     = RISK_CONFIG[o.credit_decision];
-        const reasons = o.credit_reasons ?? [];
-        return (
-          <div className="flex items-center gap-1.5 group relative cursor-help">
-            <span className={`inline-block h-2 w-2 rounded-full ${cfg?.color ?? "bg-text-secondary"}`} />
-            <span className="text-xs text-text-secondary capitalize">{o.credit_decision.replace("_", " ")}</span>
-            {reasons.length > 0 && (
-              <div className="absolute left-0 top-full z-50 mt-1 hidden group-hover:block w-60 rounded-lg border border-border bg-white p-2.5 shadow-xl text-xs leading-relaxed pointer-events-none">
-                <p className="font-semibold text-text-primary mb-1.5">{cfg?.label}</p>
-                {reasons.map((r, i) => <p key={i} className="text-text-secondary">{r}</p>)}
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
+    // {
+    //   key:       "risk",
+    //   header:    "Risk",
+    //   className: "w-28",
+    //   render:    (_, o) => {
+    //     if (!o.credit_decision || o.credit_decision === "ok") {
+    //       return <span className="text-text-secondary text-xs">—</span>;
+    //     }
+    //     const cfg     = RISK_CONFIG[o.credit_decision];
+    //     const reasons = o.credit_reasons ?? [];
+    //     return (
+    //       <div className="flex items-center gap-1.5 group relative cursor-help">
+    //         <span className={`inline-block h-2 w-2 rounded-full ${cfg?.color ?? "bg-text-secondary"}`} />
+    //         <span className="text-xs text-text-secondary capitalize">{o.credit_decision.replace("_", " ")}</span>
+    //         {reasons.length > 0 && (
+    //           <div className="absolute left-0 top-full z-50 mt-1 hidden group-hover:block w-60 rounded-lg border border-border bg-white p-2.5 shadow-xl text-xs leading-relaxed pointer-events-none">
+    //             <p className="font-semibold text-text-primary mb-1.5">{cfg?.label}</p>
+    //             {reasons.map((r, i) => <p key={i} className="text-text-secondary">{r}</p>)}
+    //           </div>
+    //         )}
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       key:      "order_number",
       header:   "Order #",
@@ -899,7 +899,7 @@ function OrdersPageContent() {
               onClick={() => { setTab(t.key); setPage(1); setSelectedIds(new Set()); }}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                 tab === t.key
-                  ? "border-b-2 border-accent text-accent"
+                  ? "border-b-2 border-primary text-primary"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -1167,9 +1167,9 @@ function OrdersPageContent() {
           </button>
 
           {/* Info text */}
-          <span className="ml-4 text-xs text-text-secondary">
+          {/* <span className="ml-4 text-xs text-text-secondary">
             {meta.total_count} orders
-          </span>
+          </span> */}
         </div>
       )}
     </AppShell>

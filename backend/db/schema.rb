@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_11_000008) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_11_000009) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -732,6 +732,41 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000008) do
     t.index ["organization_id"], name: "index_exports_on_organization_id"
     t.index ["requested_by_id", "created_at"], name: "idx_exports_user_created"
     t.index ["requested_by_id"], name: "index_exports_on_requested_by_id"
+  end
+
+  create_table "gstr1_export_records", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.bigint "generated_by_id"
+    t.string "gstin", null: false
+    t.string "return_period", null: false
+    t.date "period_from", null: false
+    t.date "period_to", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "b2b_count", default: 0, null: false
+    t.integer "b2cl_count", default: 0, null: false
+    t.integer "b2cs_count", default: 0, null: false
+    t.integer "cdnr_count", default: 0, null: false
+    t.integer "cdnur_count", default: 0, null: false
+    t.integer "total_invoice_count", default: 0, null: false
+    t.integer "total_cn_count", default: 0, null: false
+    t.decimal "total_taxable_value", precision: 16, scale: 2, default: "0.0"
+    t.decimal "total_tax_value", precision: 16, scale: 2, default: "0.0"
+    t.decimal "total_invoice_value", precision: 16, scale: 2, default: "0.0"
+    t.integer "error_count", default: 0, null: false
+    t.integer "warning_count", default: 0, null: false
+    t.jsonb "validation_report", default: {}, null: false
+    t.string "file_path"
+    t.string "checksum"
+    t.text "error_message"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_gstr1_export_records_on_branch_id"
+    t.index ["generated_by_id"], name: "index_gstr1_export_records_on_generated_by_id"
+    t.index ["organization_id", "return_period"], name: "idx_gstr1_exports_org_period"
+    t.index ["organization_id"], name: "index_gstr1_export_records_on_organization_id"
+    t.index ["status"], name: "index_gstr1_export_records_on_status"
   end
 
   create_table "hsn_sac_codes", force: :cascade do |t|
@@ -1967,6 +2002,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000008) do
   add_foreign_key "expected_payment_references", "sales_invoices"
   add_foreign_key "exports", "organizations"
   add_foreign_key "exports", "users", column: "requested_by_id"
+  add_foreign_key "gstr1_export_records", "branches"
+  add_foreign_key "gstr1_export_records", "organizations"
+  add_foreign_key "gstr1_export_records", "users", column: "generated_by_id"
   add_foreign_key "inventory_levels", "branches"
   add_foreign_key "inventory_levels", "organizations"
   add_foreign_key "inventory_levels", "products"

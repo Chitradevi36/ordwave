@@ -587,4 +587,25 @@ FactoryBot.define do
     end
   end
 
+  # ── GSTR-1 Export Records ─────────────────────────────────────────────────────
+
+  factory :gstr1_export_record do
+    association :organization
+    association :generated_by, factory: :user
+    sequence(:gstin) { |n| "27ABCDE#{n.to_s.rjust(4, '0')}A1Z5" }
+    sequence(:return_period) { |n| format('%02d%04d', (n % 12) + 1, 2026) }
+    period_from { Date.new(2026, 3, 1) }
+    period_to   { Date.new(2026, 3, 31) }
+    status      { 'ready' }
+    b2b_count   { 0 }
+    b2cl_count  { 0 }
+    b2cs_count  { 0 }
+    cdnr_count  { 0 }
+    cdnur_count { 0 }
+    total_invoice_count { 0 }
+    total_cn_count      { 0 }
+    error_count         { 0 }
+    warning_count       { 0 }
+  end
+
 end

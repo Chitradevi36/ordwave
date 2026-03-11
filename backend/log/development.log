@@ -287556,3 +287556,30 @@ Migrating to AddPaidStatusToSalesInvoices (20260311000008)
   [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
   [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
 Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (0.8ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (2.3ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to CreateGstr1ExportRecords (20260311000009)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (27.0ms)[0m  [1m[35mCREATE TABLE "gstr1_export_records" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "branch_id" bigint, "generated_by_id" bigint, "gstin" character varying NOT NULL, "return_period" character varying NOT NULL, "period_from" date NOT NULL, "period_to" date NOT NULL, "status" character varying DEFAULT 'pending' NOT NULL, "b2b_count" integer DEFAULT 0 NOT NULL, "b2cl_count" integer DEFAULT 0 NOT NULL, "b2cs_count" integer DEFAULT 0 NOT NULL, "cdnr_count" integer DEFAULT 0 NOT NULL, "cdnur_count" integer DEFAULT 0 NOT NULL, "total_invoice_count" integer DEFAULT 0 NOT NULL, "total_cn_count" integer DEFAULT 0 NOT NULL, "total_taxable_value" decimal(16,2) DEFAULT 0.0, "total_tax_value" decimal(16,2) DEFAULT 0.0, "total_invoice_value" decimal(16,2) DEFAULT 0.0, "error_count" integer DEFAULT 0 NOT NULL, "warning_count" integer DEFAULT 0 NOT NULL, "validation_report" jsonb DEFAULT '{}' NOT NULL, "file_path" character varying, "checksum" character varying, "error_message" text, "completed_at" timestamp(6), "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_701acb3a5a"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_87606f7d74"
+FOREIGN KEY ("branch_id")
+  REFERENCES "branches" ("id")
+, CONSTRAINT "fk_rails_5837dbaa76"
+FOREIGN KEY ("generated_by_id")
+  REFERENCES "users" ("id")
+)[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_gstr1_export_records_on_organization_id" ON "gstr1_export_records" ("organization_id")[0m
+  [1m[35m (1.8ms)[0m  [1m[35mCREATE INDEX "index_gstr1_export_records_on_branch_id" ON "gstr1_export_records" ("branch_id")[0m
+  [1m[35m (2.7ms)[0m  [1m[35mCREATE INDEX "index_gstr1_export_records_on_generated_by_id" ON "gstr1_export_records" ("generated_by_id")[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "idx_gstr1_exports_org_period" ON "gstr1_export_records" ("organization_id", "return_period")[0m
+  [1m[35m (2.3ms)[0m  [1m[35mCREATE INDEX "index_gstr1_export_records_on_status" ON "gstr1_export_records" ("status")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.8ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000009') RETURNING "version"[0m
+  [1m[36mTRANSACTION (9.7ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.4ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker

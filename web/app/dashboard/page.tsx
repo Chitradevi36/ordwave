@@ -215,15 +215,9 @@ export default function DashboardPage() {
           <div className="flex gap-2 mt-3 sm:mt-0">
             <button
               onClick={() => router.push("/orders/new")}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
             >
               <Plus className="h-4 w-4" /> New Order
-            </button>
-            <button
-              onClick={() => router.push("/sales")}
-              className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-text-primary hover:bg-background-subtle transition-colors"
-            >
-              Sales
             </button>
           </div>
         )}

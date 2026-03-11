@@ -96,9 +96,9 @@ export default function NewCustomerPage() {
   };
 
   return (
-    <AppShell title="Customers">
+    <AppShell title="Retailers">
       <PageHeader
-        title="Add Customer"
+        title="Add Retailer"
         description="Fill in the essentials — you can add more details after creation."
       />
       <div className="mt-6">
@@ -108,7 +108,7 @@ export default function NewCustomerPage() {
           branches={branches}
           routes={routes}
           onSubmit={handleSubmit}
-          submitLabel="Create Customer"
+          submitLabel="Create Retailer"
           loading={loading}
           errors={errors}
           onCancel={() => router.push("/customers")}

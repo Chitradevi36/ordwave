@@ -15,7 +15,7 @@ export default function AccountingLayout({ children }: { children: React.ReactNo
   const pathname = usePathname();
 
   return (
-    <AppShell title="Accounting">
+    <AppShell title="Accounting" hideBreadcrumb>
       {/* ── Section header ── */}
       <div className="mb-6">
         <div className="flex flex-col gap-1 mb-4">

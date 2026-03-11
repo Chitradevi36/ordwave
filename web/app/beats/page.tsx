@@ -210,21 +210,21 @@ export default function BeatsPage() {
         </Badge>
       ),
     },
-    {
-      key: "id",
-      header: "",
-      className: "w-16 text-right",
-      render: (_, row) => (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => router.push(`/beats/${row.id}`)}
-          className="text-xs text-primary"
-        >
-          View →
-        </Button>
-      ),
-    },
+    // {
+    //   key: "id",
+    //   header: "",
+    //   className: "w-16 text-right",
+    //   render: (_, row) => (
+    //     <Button
+    //       size="sm"
+    //       variant="ghost"
+    //       onClick={() => router.push(`/beats/${row.id}`)}
+    //       className="text-xs text-primary"
+    //     >
+    //       View →
+    //     </Button>
+    //   ),
+    // },
   ];
 
   const hasSearch = !!search;

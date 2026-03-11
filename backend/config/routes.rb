@@ -434,6 +434,7 @@ Rails.application.routes.draw do
         scope :gstr1, controller: :gstr1 do
           get :preview
           get :export
+          get :export_records
         end
       end
 
