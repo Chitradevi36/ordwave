@@ -72,7 +72,7 @@ export default function OrganizationsPage() {
     <AppShell title="Organizations" hideBreadcrumb>
       <PageHeader
         title="Organizations"
-        description={`${orgs.length} organization${orgs.length !== 1 ? "s" : ""} in your account`}
+        description="View and manage all organizations linked to your account"
         actions={[
           {
             label: "New Organization",
