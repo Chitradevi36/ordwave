@@ -705,7 +705,7 @@ export function CustomerForm({
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
-            <FieldLabel text="Customer Name" required />
+            <FieldLabel text="Retailer Name" required />
             <Input
               required
               value={form.name}
@@ -716,7 +716,7 @@ export function CustomerForm({
           </div>
 
           <div className="space-y-1">
-            <FieldLabel text="Customer Code" required />
+            <FieldLabel text="Retailer Code" required />
             <Input
               required
               value={form.code}
@@ -726,7 +726,7 @@ export function CustomerForm({
             <p className="text-xs text-text-secondary">Auto-generated from name · Must be unique</p>
           </div>
 
-          <SelectField label="Customer Type" value={form.customer_type} onChange={set("customer_type")} required>
+          <SelectField label="Retailer Type" value={form.customer_type} onChange={set("customer_type")} required>
             {CUSTOMER_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </SelectField>
 

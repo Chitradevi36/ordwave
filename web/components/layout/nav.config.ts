@@ -167,6 +167,7 @@ export interface NavChild {
   href: string;
   matchers: string[];
   rolesAllowed?: UserRole[];
+  comingSoon?: boolean;
 }
 
 export interface NavGroup {
@@ -339,8 +340,7 @@ export const GROUPED_NAV: NavGroup[] = [
       "/sales-invoices",
       "/credit-notes",
       "/advance-payments",
-      "/approvals/credit-limits",
-      "/compliance",
+      "/approvals/credit-limits"
     ],
     rolesAllowed: ["owner", "admin", "manager", "accountant"],
     children: [
@@ -376,13 +376,66 @@ export const GROUPED_NAV: NavGroup[] = [
         label: "Advances",
         href: "/advance-payments",
         matchers: ["/advance-payments"],
+      }
+    ],
+  },
+
+  {
+    key: "accounting",
+    label: "Accounting",
+    icon: BookOpen,
+    matchers: [
+      "/compliance/gstr1",
+      "/compliance/gstr2b",
+      "/compliance/gstr3b",
+      "/compliance/reconciliation",
+      "/compliance/variance",
+      "/compliance/amendments",
+      "/accounting/integrations",
+    ],
+    rolesAllowed: ["owner", "admin", "accountant"],
+    children: [
+      {
+        key: "integrations",
+        label: "Integrations",
+        href: "/accounting/integrations",
+        matchers: ["/accounting/integrations"],
       },
       {
-        key: "compliance",
-        label: "Compliance",
+        key: "gstr1",
+        label: "GSTR 1",
         href: "/compliance/gstr1",
-        matchers: ["/compliance"],
-        rolesAllowed: ["owner", "admin", "accountant"],
+        matchers: ["/compliance/gstr1"]
+      },
+      {
+        key: "gstr2b",
+        label: "GSTR 2B",
+        href: "/compliance/gstr2b",
+        matchers: ["/compliance/gstr2b"],
+      },
+      {
+        key: "gstr3b",
+        label: "GSTR 3B",
+        href: "/compliance/gstr3b",
+        matchers: ["/compliance/gstr3b"],
+      },
+      {
+        key: "reconciliation",
+        label: "Reconciliation",
+        href: "/compliance/reconciliation",
+        matchers: ["/compliance/reconciliation"],
+      },
+      {
+        key: "variance",
+        label: "Variance Report",
+        href: "/compliance/variance",
+        matchers: ["/compliance/variance"],
+      },
+      {
+        key: "amendments",
+        label: "Amendments",
+        href: "/compliance/amendments",
+        matchers: ["/compliance/amendments"],
       },
     ],
   },

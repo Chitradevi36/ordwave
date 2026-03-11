@@ -26,7 +26,10 @@ class Customer < ApplicationRecord
   has_many :credit_notes,   dependent: :nullify
   has_many :sales_invoices, dependent: :restrict_with_error
   has_many :payments,        dependent: :restrict_with_error
-  has_many :advance_payments, dependent: :destroy
+  has_many :advance_payments,          dependent: :destroy
+  has_many :customer_aliases,           dependent: :destroy
+  has_many :expected_payment_references, dependent: :destroy
+  has_many :bank_transaction_matches,   dependent: :nullify
   has_many :beat_retailers,  dependent: :destroy
   has_many :visit_logs,      dependent: :destroy
 

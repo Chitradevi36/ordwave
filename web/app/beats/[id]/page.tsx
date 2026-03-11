@@ -177,7 +177,7 @@ export default function BeatDetailPage() {
     },
     {
       key: "customer_name",
-      header: "Customer",
+      header: "Retailer",
       render: (_: unknown, row: VisitLog) => (
         <span className="font-medium text-text-primary">{row.customer_name}</span>
       ),
@@ -271,15 +271,6 @@ export default function BeatDetailPage() {
           {toast.msg}
         </div>
       )}
-
-      {/* Back nav */}
-      <button
-        onClick={() => router.push("/beats")}
-        className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary mb-4 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Beats
-      </button>
 
       {/* Beat header card */}
       <Card className="mb-6">

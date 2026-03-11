@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_11_000016) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -190,6 +190,98 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
     t.index ["auditable_type", "auditable_id"], name: "index_audit_logs_on_auditable"
     t.index ["organization_id", "created_at"], name: "idx_audit_logs_org_created_at"
     t.index ["organization_id"], name: "index_audit_logs_on_organization_id"
+  end
+
+  create_table "bank_accounts", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.string "bank_name", null: false
+    t.string "account_name", null: false
+    t.string "account_number_masked", null: false
+    t.string "account_number_full"
+    t.string "ifsc"
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_bank_accounts_on_branch_id"
+    t.index ["organization_id"], name: "index_bank_accounts_on_organization_id"
+    t.index ["status"], name: "index_bank_accounts_on_status"
+  end
+
+  create_table "bank_statement_imports", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "bank_account_id", null: false
+    t.bigint "uploaded_by_id"
+    t.string "file_name", null: false
+    t.string "source_type", default: "csv", null: false
+    t.string "status", default: "uploaded", null: false
+    t.integer "rows_count", default: 0, null: false
+    t.integer "processed_rows_count", default: 0, null: false
+    t.integer "new_rows_count", default: 0, null: false
+    t.integer "duplicate_rows_count", default: 0, null: false
+    t.integer "failed_rows_count", default: 0, null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bank_account_id"], name: "index_bank_statement_imports_on_bank_account_id"
+    t.index ["organization_id"], name: "index_bank_statement_imports_on_organization_id"
+    t.index ["status"], name: "index_bank_statement_imports_on_status"
+    t.index ["uploaded_by_id"], name: "index_bank_statement_imports_on_uploaded_by_id"
+  end
+
+  create_table "bank_transaction_matches", force: :cascade do |t|
+    t.bigint "bank_transaction_id", null: false
+    t.bigint "customer_id"
+    t.bigint "sales_invoice_id"
+    t.decimal "score", precision: 5, scale: 2, null: false
+    t.string "rule_code", null: false
+    t.jsonb "explanation", default: {}, null: false
+    t.boolean "selected", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bank_transaction_id"], name: "index_bank_transaction_matches_on_bank_transaction_id"
+    t.index ["customer_id"], name: "index_bank_transaction_matches_on_customer_id"
+    t.index ["rule_code"], name: "index_bank_transaction_matches_on_rule_code"
+    t.index ["sales_invoice_id"], name: "index_bank_transaction_matches_on_sales_invoice_id"
+    t.index ["selected"], name: "index_bank_transaction_matches_on_selected"
+  end
+
+  create_table "bank_transactions", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "bank_account_id", null: false
+    t.bigint "bank_statement_import_id"
+    t.date "txn_date", null: false
+    t.decimal "amount", precision: 15, scale: 2, null: false
+    t.string "direction", default: "credit", null: false
+    t.string "utr_number"
+    t.string "reference_number"
+    t.string "payer_name"
+    t.text "narration"
+    t.text "normalized_narration"
+    t.jsonb "raw_row_json", default: {}, null: false
+    t.jsonb "match_meta", default: {}, null: false
+    t.string "status", default: "unmatched", null: false
+    t.decimal "match_score", precision: 5, scale: 2
+    t.string "match_rule"
+    t.bigint "matched_customer_id"
+    t.bigint "matched_invoice_id"
+    t.bigint "matched_payment_id"
+    t.bigint "reviewed_by_id"
+    t.text "review_notes"
+    t.datetime "processed_at"
+    t.string "idempotency_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["amount"], name: "index_bank_transactions_on_amount"
+    t.index ["bank_account_id"], name: "index_bank_transactions_on_bank_account_id"
+    t.index ["bank_statement_import_id"], name: "index_bank_transactions_on_bank_statement_import_id"
+    t.index ["idempotency_key"], name: "index_bank_transactions_on_idempotency_key", unique: true
+    t.index ["matched_customer_id"], name: "index_bank_transactions_on_matched_customer_id"
+    t.index ["matched_invoice_id"], name: "index_bank_transactions_on_matched_invoice_id"
+    t.index ["organization_id"], name: "index_bank_transactions_on_organization_id"
+    t.index ["status"], name: "index_bank_transactions_on_status"
+    t.index ["txn_date"], name: "index_bank_transactions_on_txn_date"
+    t.index ["utr_number"], name: "index_bank_transactions_on_utr_number"
   end
 
   create_table "beat_retailers", force: :cascade do |t|
@@ -433,6 +525,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
     t.index ["label"], name: "index_customer_addresses_on_label"
   end
 
+  create_table "customer_aliases", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "alias_name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["alias_name"], name: "index_customer_aliases_on_alias_name"
+    t.index ["customer_id"], name: "index_customer_aliases_on_customer_id"
+  end
+
   create_table "customer_contacts", force: :cascade do |t|
     t.bigint "customer_id", null: false
     t.string "name", null: false
@@ -599,6 +700,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
     t.index ["status"], name: "index_ewaybill_requests_on_status"
   end
 
+  create_table "expected_payment_references", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "customer_id"
+    t.bigint "sales_invoice_id"
+    t.string "reference_type", null: false
+    t.string "reference_value", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_expected_payment_references_on_customer_id"
+    t.index ["organization_id"], name: "index_expected_payment_references_on_organization_id"
+    t.index ["reference_value"], name: "index_expected_payment_references_on_reference_value"
+    t.index ["sales_invoice_id"], name: "index_expected_payment_references_on_sales_invoice_id"
+    t.index ["status"], name: "index_expected_payment_references_on_status"
+  end
+
   create_table "exports", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.bigint "requested_by_id", null: false
@@ -615,6 +732,253 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
     t.index ["organization_id"], name: "index_exports_on_organization_id"
     t.index ["requested_by_id", "created_at"], name: "idx_exports_user_created"
     t.index ["requested_by_id"], name: "index_exports_on_requested_by_id"
+  end
+
+  create_table "financial_years", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "code", null: false
+    t.string "label", null: false
+    t.date "start_date", null: false
+    t.date "end_date", null: false
+    t.integer "starts_on_month", default: 4, null: false
+    t.integer "starts_on_day", default: 1, null: false
+    t.string "status", default: "open", null: false
+    t.datetime "books_locked_at"
+    t.datetime "gst_locked_at"
+    t.datetime "closed_at"
+    t.bigint "closed_by_id"
+    t.text "notes"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["closed_by_id"], name: "index_financial_years_on_closed_by_id"
+    t.index ["organization_id", "code"], name: "idx_financial_years_org_code_unique", unique: true
+    t.index ["organization_id", "start_date"], name: "idx_financial_years_org_start_date"
+    t.index ["organization_id", "status"], name: "idx_financial_years_org_status"
+    t.index ["status"], name: "index_financial_years_on_status"
+  end
+
+  create_table "gst2b_import_lines", force: :cascade do |t|
+    t.bigint "gst2b_import_id", null: false
+    t.bigint "organization_id", null: false
+    t.string "supplier_gstin", null: false
+    t.string "supplier_name"
+    t.string "invoice_number", null: false
+    t.date "invoice_date"
+    t.decimal "invoice_value", precision: 16, scale: 2, default: "0.0"
+    t.decimal "taxable_value", precision: 16, scale: 2, default: "0.0"
+    t.decimal "igst", precision: 14, scale: 2, default: "0.0"
+    t.decimal "cgst", precision: 14, scale: 2, default: "0.0"
+    t.decimal "sgst", precision: 14, scale: 2, default: "0.0"
+    t.decimal "cess", precision: 14, scale: 2, default: "0.0"
+    t.string "document_type", default: "invoice"
+    t.string "section_type", default: "b2b"
+    t.string "place_of_supply"
+    t.boolean "reverse_charge", default: false, null: false
+    t.boolean "itc_available", default: true, null: false
+    t.string "itc_reversal_reason"
+    t.bigint "matched_purchase_invoice_id"
+    t.string "match_status", default: "pending", null: false
+    t.decimal "match_confidence", precision: 5, scale: 2
+    t.jsonb "match_explanation", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gst2b_import_id"], name: "idx_gst2b_lines_import_id"
+    t.index ["invoice_date"], name: "index_gst2b_import_lines_on_invoice_date"
+    t.index ["match_status"], name: "idx_gst2b_lines_match_status"
+    t.index ["matched_purchase_invoice_id"], name: "idx_gst2b_lines_matched_pi"
+    t.index ["organization_id", "supplier_gstin", "invoice_number"], name: "idx_gst2b_lines_gstin_number"
+    t.index ["supplier_gstin"], name: "index_gst2b_import_lines_on_supplier_gstin"
+  end
+
+  create_table "gst2b_imports", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.bigint "financial_year_id", null: false
+    t.string "financial_year_label"
+    t.integer "month", null: false
+    t.integer "year", null: false
+    t.date "period_start_on", null: false
+    t.date "period_end_on", null: false
+    t.string "gstin", null: false
+    t.string "file_name"
+    t.string "source_type", default: "json", null: false
+    t.string "import_status", default: "uploaded", null: false
+    t.jsonb "raw_payload", default: {}, null: false
+    t.jsonb "parsed_summary", default: {}, null: false
+    t.integer "total_rows", default: 0, null: false
+    t.integer "matched_rows", default: 0, null: false
+    t.integer "unmatched_rows", default: 0, null: false
+    t.integer "error_rows", default: 0, null: false
+    t.datetime "imported_at"
+    t.bigint "imported_by_id"
+    t.string "source_hash"
+    t.text "error_message"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_gst2b_imports_on_branch_id"
+    t.index ["financial_year_id"], name: "index_gst2b_imports_on_financial_year_id"
+    t.index ["import_status"], name: "index_gst2b_imports_on_import_status"
+    t.index ["imported_by_id"], name: "index_gst2b_imports_on_imported_by_id"
+    t.index ["organization_id", "financial_year_id", "month", "year"], name: "idx_gst2b_imports_org_fy_period"
+    t.index ["organization_id", "source_hash"], name: "idx_gst2b_imports_source_hash"
+  end
+
+  create_table "gst_amendment_candidates", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "gst_return_period_id", null: false
+    t.string "source_type", null: false
+    t.bigint "source_id", null: false
+    t.string "amendment_type", null: false
+    t.string "status", default: "detected", null: false
+    t.decimal "taxable_value_original", precision: 16, scale: 2
+    t.decimal "taxable_value_current", precision: 16, scale: 2
+    t.decimal "tax_original", precision: 16, scale: 2
+    t.decimal "tax_current", precision: 16, scale: 2
+    t.text "change_summary"
+    t.datetime "detected_at", null: false
+    t.bigint "acknowledged_by_id"
+    t.datetime "acknowledged_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gst_return_period_id", "amendment_type"], name: "idx_gst_amc_on_period_and_type"
+    t.index ["gst_return_period_id"], name: "index_gst_amendment_candidates_on_gst_return_period_id"
+    t.index ["organization_id", "gst_return_period_id"], name: "idx_gst_amc_on_org_and_period"
+    t.index ["organization_id"], name: "index_gst_amendment_candidates_on_organization_id"
+    t.index ["source_type", "source_id"], name: "idx_gst_amc_on_source"
+    t.index ["status"], name: "idx_gst_amc_on_status"
+  end
+
+  create_table "gst_reconciliation_issues", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.bigint "financial_year_id", null: false
+    t.bigint "gst_return_period_id"
+    t.bigint "gst2b_import_id"
+    t.string "issue_type", null: false
+    t.string "severity", default: "medium", null: false
+    t.string "source_type"
+    t.bigint "source_id"
+    t.string "counterpart_type"
+    t.bigint "counterpart_id"
+    t.string "supplier_gstin"
+    t.string "customer_gstin"
+    t.string "invoice_number"
+    t.date "invoice_date"
+    t.decimal "amount_books", precision: 16, scale: 2
+    t.decimal "amount_portal", precision: 16, scale: 2
+    t.decimal "difference_amount", precision: 16, scale: 2
+    t.string "status", default: "open", null: false
+    t.text "resolution_notes"
+    t.bigint "resolved_by_id"
+    t.datetime "resolved_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["financial_year_id"], name: "index_gst_reconciliation_issues_on_financial_year_id"
+    t.index ["gst2b_import_id"], name: "index_gst_reconciliation_issues_on_gst2b_import_id"
+    t.index ["gst_return_period_id"], name: "index_gst_reconciliation_issues_on_gst_return_period_id"
+    t.index ["organization_id", "financial_year_id", "issue_type"], name: "idx_gst_recon_issues_org_fy_type"
+    t.index ["organization_id", "status"], name: "idx_gst_recon_issues_org_status"
+    t.index ["resolved_by_id"], name: "index_gst_reconciliation_issues_on_resolved_by_id"
+    t.index ["severity"], name: "index_gst_reconciliation_issues_on_severity"
+    t.index ["source_type", "source_id"], name: "idx_gst_recon_issues_source"
+    t.index ["status"], name: "index_gst_reconciliation_issues_on_status"
+  end
+
+  create_table "gst_return_periods", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.bigint "financial_year_id", null: false
+    t.string "financial_year_label"
+    t.integer "month", null: false
+    t.integer "year", null: false
+    t.date "period_start_on", null: false
+    t.date "period_end_on", null: false
+    t.string "return_type", null: false
+    t.string "status", default: "draft", null: false
+    t.datetime "generated_at"
+    t.datetime "locked_at"
+    t.datetime "filed_at"
+    t.bigint "filed_by_id"
+    t.bigint "locked_by_id"
+    t.bigint "reviewed_by_id"
+    t.string "source_hash"
+    t.string "snapshot_hash"
+    t.text "filing_notes"
+    t.integer "error_count", default: 0, null: false
+    t.integer "warning_count", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_gst_return_periods_on_branch_id"
+    t.index ["filed_by_id"], name: "index_gst_return_periods_on_filed_by_id"
+    t.index ["financial_year_id"], name: "index_gst_return_periods_on_financial_year_id"
+    t.index ["organization_id", "financial_year_id", "month", "year", "return_type", "branch_id"], name: "idx_gst_return_periods_unique", unique: true, where: "(branch_id IS NOT NULL)"
+    t.index ["organization_id", "financial_year_id", "month", "year", "return_type"], name: "idx_gst_return_periods_unique_no_branch", unique: true, where: "(branch_id IS NULL)"
+    t.index ["organization_id", "return_type", "year", "month"], name: "idx_gst_return_periods_org_type_period"
+    t.index ["organization_id", "status"], name: "idx_gst_return_periods_org_status"
+    t.index ["status"], name: "index_gst_return_periods_on_status"
+  end
+
+  create_table "gst_return_snapshots", force: :cascade do |t|
+    t.bigint "gst_return_period_id", null: false
+    t.bigint "organization_id", null: false
+    t.string "section_key", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.jsonb "totals", default: {}, null: false
+    t.jsonb "source_counts", default: {}, null: false
+    t.jsonb "source_invoice_ids", default: [], null: false
+    t.datetime "generated_at", null: false
+    t.integer "version_number", default: 1, null: false
+    t.string "source_hash"
+    t.string "snapshot_hash"
+    t.boolean "is_filed", default: false, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["generated_at"], name: "index_gst_return_snapshots_on_generated_at"
+    t.index ["gst_return_period_id", "is_filed"], name: "idx_gst_snapshots_period_filed"
+    t.index ["gst_return_period_id", "section_key", "version_number"], name: "idx_gst_snapshots_period_section_version"
+    t.index ["organization_id"], name: "index_gst_return_snapshots_on_organization_id"
+  end
+
+  create_table "gstr1_export_records", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "branch_id"
+    t.bigint "generated_by_id"
+    t.string "gstin", null: false
+    t.string "return_period", null: false
+    t.date "period_from", null: false
+    t.date "period_to", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "b2b_count", default: 0, null: false
+    t.integer "b2cl_count", default: 0, null: false
+    t.integer "b2cs_count", default: 0, null: false
+    t.integer "cdnr_count", default: 0, null: false
+    t.integer "cdnur_count", default: 0, null: false
+    t.integer "total_invoice_count", default: 0, null: false
+    t.integer "total_cn_count", default: 0, null: false
+    t.decimal "total_taxable_value", precision: 16, scale: 2, default: "0.0"
+    t.decimal "total_tax_value", precision: 16, scale: 2, default: "0.0"
+    t.decimal "total_invoice_value", precision: 16, scale: 2, default: "0.0"
+    t.integer "error_count", default: 0, null: false
+    t.integer "warning_count", default: 0, null: false
+    t.jsonb "validation_report", default: {}, null: false
+    t.string "file_path"
+    t.string "checksum"
+    t.text "error_message"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_gstr1_export_records_on_branch_id"
+    t.index ["generated_by_id"], name: "index_gstr1_export_records_on_generated_by_id"
+    t.index ["organization_id", "return_period"], name: "idx_gstr1_exports_org_period"
+    t.index ["organization_id"], name: "index_gstr1_export_records_on_organization_id"
+    t.index ["status"], name: "index_gstr1_export_records_on_status"
   end
 
   create_table "hsn_sac_codes", force: :cascade do |t|
@@ -1772,6 +2136,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
   add_foreign_key "advance_payments", "payments", column: "source_payment_id"
   add_foreign_key "audit_logs", "organizations"
   add_foreign_key "audit_logs", "users", column: "actor_id"
+  add_foreign_key "bank_accounts", "branches"
+  add_foreign_key "bank_accounts", "organizations"
+  add_foreign_key "bank_statement_imports", "bank_accounts"
+  add_foreign_key "bank_statement_imports", "organizations"
+  add_foreign_key "bank_statement_imports", "users", column: "uploaded_by_id"
+  add_foreign_key "bank_transaction_matches", "bank_transactions"
+  add_foreign_key "bank_transaction_matches", "customers"
+  add_foreign_key "bank_transaction_matches", "sales_invoices"
+  add_foreign_key "bank_transactions", "bank_accounts"
+  add_foreign_key "bank_transactions", "bank_statement_imports"
+  add_foreign_key "bank_transactions", "customers", column: "matched_customer_id"
+  add_foreign_key "bank_transactions", "organizations"
+  add_foreign_key "bank_transactions", "payments", column: "matched_payment_id"
+  add_foreign_key "bank_transactions", "sales_invoices", column: "matched_invoice_id"
+  add_foreign_key "bank_transactions", "users", column: "reviewed_by_id"
   add_foreign_key "beat_retailers", "beat_schedules"
   add_foreign_key "beat_retailers", "customers"
   add_foreign_key "beat_schedules", "beats"
@@ -1809,6 +2188,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
   add_foreign_key "credit_notes", "users", column: "created_by_id"
   add_foreign_key "credit_policies", "organizations"
   add_foreign_key "customer_addresses", "customers"
+  add_foreign_key "customer_aliases", "customers"
   add_foreign_key "customer_contacts", "customers"
   add_foreign_key "customers", "branches"
   add_foreign_key "customers", "organizations"
@@ -1829,8 +2209,39 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000001) do
   add_foreign_key "device_tokens", "users"
   add_foreign_key "ewaybill_requests", "organizations"
   add_foreign_key "ewaybill_requests", "sales_invoices"
+  add_foreign_key "expected_payment_references", "customers"
+  add_foreign_key "expected_payment_references", "organizations"
+  add_foreign_key "expected_payment_references", "sales_invoices"
   add_foreign_key "exports", "organizations"
   add_foreign_key "exports", "users", column: "requested_by_id"
+  add_foreign_key "financial_years", "organizations"
+  add_foreign_key "financial_years", "users", column: "closed_by_id"
+  add_foreign_key "gst2b_import_lines", "gst2b_imports"
+  add_foreign_key "gst2b_import_lines", "organizations"
+  add_foreign_key "gst2b_import_lines", "purchase_invoices", column: "matched_purchase_invoice_id"
+  add_foreign_key "gst2b_imports", "branches"
+  add_foreign_key "gst2b_imports", "financial_years"
+  add_foreign_key "gst2b_imports", "organizations"
+  add_foreign_key "gst2b_imports", "users", column: "imported_by_id"
+  add_foreign_key "gst_amendment_candidates", "gst_return_periods"
+  add_foreign_key "gst_amendment_candidates", "organizations"
+  add_foreign_key "gst_amendment_candidates", "users", column: "acknowledged_by_id", on_delete: :nullify
+  add_foreign_key "gst_reconciliation_issues", "financial_years"
+  add_foreign_key "gst_reconciliation_issues", "gst2b_imports"
+  add_foreign_key "gst_reconciliation_issues", "gst_return_periods"
+  add_foreign_key "gst_reconciliation_issues", "organizations"
+  add_foreign_key "gst_reconciliation_issues", "users", column: "resolved_by_id"
+  add_foreign_key "gst_return_periods", "branches"
+  add_foreign_key "gst_return_periods", "financial_years"
+  add_foreign_key "gst_return_periods", "organizations"
+  add_foreign_key "gst_return_periods", "users", column: "filed_by_id"
+  add_foreign_key "gst_return_periods", "users", column: "locked_by_id"
+  add_foreign_key "gst_return_periods", "users", column: "reviewed_by_id"
+  add_foreign_key "gst_return_snapshots", "gst_return_periods"
+  add_foreign_key "gst_return_snapshots", "organizations"
+  add_foreign_key "gstr1_export_records", "branches"
+  add_foreign_key "gstr1_export_records", "organizations"
+  add_foreign_key "gstr1_export_records", "users", column: "generated_by_id"
   add_foreign_key "inventory_levels", "branches"
   add_foreign_key "inventory_levels", "organizations"
   add_foreign_key "inventory_levels", "products"

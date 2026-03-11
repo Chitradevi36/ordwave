@@ -1,5 +1,5 @@
 class SalesInvoice < ApplicationRecord
-  STATUSES           = %w[draft issued partially_paid void].freeze
+  STATUSES           = %w[draft issued partially_paid paid void].freeze
   GENERATION_SOURCES = %w[auto_on_delivery manual_from_order manual_direct].freeze
 
   # ── Associations ─────────────────────────────────────────────────────────
@@ -13,8 +13,10 @@ class SalesInvoice < ApplicationRecord
   include Auditable
 
   has_many :products,            through: :lines
-  has_many :payment_allocations, dependent: :destroy
-  has_many :payments,            through: :payment_allocations
+  has_many :payment_allocations,    dependent: :destroy
+  has_many :payments,               through: :payment_allocations
+  has_many :bank_transaction_matches, dependent: :nullify
+  has_many :expected_payment_references, dependent: :destroy
 
   accepts_nested_attributes_for :lines, allow_destroy: false
 

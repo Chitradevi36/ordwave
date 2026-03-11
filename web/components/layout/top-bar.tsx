@@ -121,7 +121,7 @@ function CreateDropdown() {
         onClick={() => setOpen((p) => !p)}
         aria-expanded={open}
         aria-label="Create new"
-        className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors"
+        className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-700 transition-colors"
       >
         <Plus className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Create</span>

@@ -362,14 +362,14 @@ export function BeatRetailersPanel({
         <div className="rounded-lg border border-border overflow-hidden">
           {rows.length === 0 ? (
             <div className="py-8 text-center text-sm text-text-secondary">
-              No retailers assigned. Use the search below to add customers.
+              No retailers assigned. Use the search below to add retailers.
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/50 text-left text-text-secondary text-xs">
                   <th className="px-3 py-2 w-10">#</th>
-                  <th className="px-3 py-2">Customer</th>
+                  <th className="px-3 py-2">Retailer</th>
                   <th className="px-3 py-2 w-40">Visit Override</th>
                   <th className="px-3 py-2 w-20 text-center">Reorder</th>
                   <th className="px-3 py-2 w-10"></th>

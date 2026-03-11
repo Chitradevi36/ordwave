@@ -1324,8 +1324,8 @@ export default function CustomerDetailPage() {
   ];
 
   return (
-    <AppShell title="Customers" breadcrumbs={[
-      { label: "Customers", href: "/customers" },
+    <AppShell title="Retailers" breadcrumbs={[
+      { label: "Retailers", href: "/customers" },
       { label: customer.name },
     ]}>
 

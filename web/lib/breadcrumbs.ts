@@ -14,7 +14,7 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   "/inventory":                   { label: "Inventory" },
   "/insights":                    { label: "Insights" },
   "/settings":                    { label: "Settings" },
-  "/customers":                   { label: "Customers" },
+  "/customers":                   { label: "Retailers" },
 
   // ── Sales workspace
   // "/orders":                      { label: "Orders",             parent: "/sales" },
@@ -26,7 +26,7 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   // ── Customers workspace (sub-pages)
   // "/routes":                      { label: "Routes",             parent: "/customers" },
   // "/beats":                       { label: "Beats",              parent: "/customers" },
-  "/customers/new":               { label: "New Customer",       parent: "/customers" },
+  "/customers/new":               { label: "New Retailer",       parent: "/customers" },
 
   // ── Catalog workspace
   // "/products":                    { label: "Products",           parent: "/catalog" },

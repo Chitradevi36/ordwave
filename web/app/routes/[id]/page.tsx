@@ -109,12 +109,12 @@ function AddCustomerPanel({
   return (
     <div className="rounded-lg border border-border bg-background-subtle p-4 mb-4">
       <p className="text-sm font-medium text-text-primary mb-3 flex items-center gap-1.5">
-        <UserPlus className="h-4 w-4 text-primary" /> Add customers to this route
+        <UserPlus className="h-4 w-4 text-primary" /> Add retailers to this route
       </p>
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
         <Input
-          placeholder="Search by customer name or code…"
+          placeholder="Search by retailer name or code…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-9"
@@ -151,7 +151,7 @@ function AddCustomerPanel({
       )}
 
       {!searching && query.trim() && results.length === 0 && (
-        <p className="text-xs text-text-secondary mt-2">No unassigned customers match "{query}".</p>
+        <p className="text-xs text-text-secondary mt-2">No unassigned retailers match "{query}".</p>
       )}
     </div>
   );
@@ -457,7 +457,7 @@ export default function RouteDetailPage() {
   const tabs = [
     {
       value: "customers",
-      label: `Customers (${customers.length || route.customers_count})`,
+      label: `Retailers (${customers.length || route.customers_count})`,
       content: (
         <div>
           <div className="flex justify-end mb-3">
@@ -469,7 +469,7 @@ export default function RouteDetailPage() {
               {showAddPanel ? (
                 <><X className="mr-1.5 h-3.5 w-3.5" />Close</>
               ) : (
-                <><UserPlus className="mr-1.5 h-3.5 w-3.5" />Add Customers</>
+                <><UserPlus className="mr-1.5 h-3.5 w-3.5" />Add Retailers</>
               )}
             </Button>
           </div>
@@ -492,8 +492,8 @@ export default function RouteDetailPage() {
           {customers.length === 0 && !custLoading ? (
             <EmptyState
               icon={Users}
-              title="No customers on this route"
-              description="Use the Add Customers button above to assign customers."
+              title="No retailers on this route"
+              description="Use the Add Retailers button above to assign retailers."
             />
           ) : (
             <DataTable
@@ -501,7 +501,7 @@ export default function RouteDetailPage() {
               data={customers}
               isLoading={custLoading}
               onRowClick={(row) => router.push(`/customers/${row.id}`)}
-              emptyMessage="No customers found."
+              emptyMessage="No retailers found."
             />
           )}
         </div>
@@ -654,7 +654,7 @@ export default function RouteDetailPage() {
                   </div>
                   <p className="mt-1.5 text-sm text-text-secondary flex items-center gap-1">
                     <Users className="h-3.5 w-3.5" />
-                    {route.customers_count} customer{route.customers_count !== 1 ? "s" : ""}
+                    {route.customers_count} retailer{route.customers_count !== 1 ? "s" : ""}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
                     <span className="flex items-center gap-1.5 text-sm text-text-secondary">
