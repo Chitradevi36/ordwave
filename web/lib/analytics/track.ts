@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// OrderLane Pro � High-Level Analytics Helpers
+// OrdWave � High-Level Analytics Helpers
 // ---------------------------------------------------------------------------
 
 import { gtagEvent, gtagPageView, gtagSetUser } from "./ga";

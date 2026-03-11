@@ -1,10 +1,10 @@
-# OrderLane Pro — Web Dashboard
+# OrdWave — Web Dashboard
 ## Functional Requirements Document (FRD)
 
 **Version:** 1.0  
 **Date:** March 2026  
 **Classification:** Investor Distribution  
-**Product:** OrderLane Pro Web Application
+**Product:** OrdWave Web Application
 
 ---
 
@@ -39,7 +39,7 @@
 
 ## 1. Executive Summary
 
-OrderLane Pro is a **cloud-native, offline-first, credit-first B2B Distribution Management Platform** purpose-built for FMCG distributors in India. The web dashboard is the primary management interface used by distributor owners, managers, accountants, and warehouse staff to run every dimension of their business — from generating sales orders to recording collections, managing inventory, and filing GST returns.
+OrdWave is a **cloud-native, offline-first, credit-first B2B Distribution Management Platform** purpose-built for FMCG distributors in India. The web dashboard is the primary management interface used by distributor owners, managers, accountants, and warehouse staff to run every dimension of their business — from generating sales orders to recording collections, managing inventory, and filing GST returns.
 
 **Key differentiators:**
 
@@ -636,7 +636,7 @@ A two-way integration layer that syncs sales, collections, purchase invoices, an
 The system uses an **Agent Model** for Tally (on-premise):
 
 ```
-OrderLane Cloud API
+OrdWave Cloud API
       ↕ (poll / push over HTTPS)
 Accounting Agent (lightweight daemon running locally at distributor's machine)
       ↕
@@ -651,7 +651,7 @@ Tally / Local ERP
 
 ### 18.3 Mapping Layer
 
-`/api/v1/accounting/integrations/:id/mappings` — configures how OrderLane entities (customers, products, ledgers) map to accounting software masters. Supports custom field mappings.
+`/api/v1/accounting/integrations/:id/mappings` — configures how OrdWave entities (customers, products, ledgers) map to accounting software masters. Supports custom field mappings.
 
 ### 18.4 Export Files
 
@@ -892,4 +892,4 @@ Every meaningful CTA records a structured business event:
 
 ---
 
-*This document reflects the implemented state of the OrderLane Pro platform as of March 2026. All feature descriptions correspond to working, deployed code.*
+*This document reflects the implemented state of the OrdWave platform as of March 2026. All feature descriptions correspond to working, deployed code.*

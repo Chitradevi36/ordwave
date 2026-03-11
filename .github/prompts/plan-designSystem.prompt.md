@@ -1,4 +1,4 @@
-# OrderLane Pro — Shared Components & Design System Plan
+# OrdWave — Shared Components & Design System Plan
 
 ## 8. Shared Components and Design System Plan
 

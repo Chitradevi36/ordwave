@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 3: Credit + Order Flow Completion
+# OrdWave — Phase 3: Credit + Order Flow Completion
 
 ## Goal
 Complete order lifecycle from mobile and web, with credit checks. Warehouse sees pick lists. Delta sync enables offline order creation.

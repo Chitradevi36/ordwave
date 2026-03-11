@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 5: Payments + Invoices + Returns + Credit Notes
+# OrdWave — Phase 5: Payments + Invoices + Returns + Credit Notes
 
 ## Goal
 Complete financial cycle. Accountant can manage collections, reconcile payments, generate invoices. Sales rep can collect on mobile.

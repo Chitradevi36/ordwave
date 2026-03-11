@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 7: Mobile Flutter Offline Experience Polish
+# OrdWave — Phase 7: Mobile Flutter Offline Experience Polish
 
 ## Goal
 Offline-first experience is robust, reliable, and delightful. Sync conflicts handled gracefully. Performance optimized.

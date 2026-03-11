@@ -1,4 +1,4 @@
-# OrderLane Pro — UI/UX Revamp: Modules 9–17
+# OrdWave — UI/UX Revamp: Modules 9–17
 
 ## Module 9: Delivery Trip Detail — Exceptions & POD
 

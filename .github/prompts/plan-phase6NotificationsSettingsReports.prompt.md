@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 6: Notifications + Settings + Reports Polish
+# OrdWave — Phase 6: Notifications + Settings + Reports Polish
 
 ## Goal
 Notification system fully wired. Settings pages complete. Reports and insights actionable. Beat management operational.

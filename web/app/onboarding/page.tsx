@@ -330,7 +330,7 @@ export default function OnboardingWizardPage() {
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary mb-3 leading-tight">
             Welcome to<br />
-            <span className="text-primary">OrderLane Pro</span>
+            <span className="text-primary">OrdWave</span>
           </h1>
           <p className="text-sm sm:text-base text-text-secondary mb-5 leading-relaxed">
             Manage orders, credit, GST invoicing and deliveries —

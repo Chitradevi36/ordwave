@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'colors.dart';
 import 'typography.dart';
 
-/// App-wide [ThemeData] built from OrderLane Pro design tokens.
+/// App-wide [ThemeData] built from OrdWave design tokens.
 class AppTheme {
   AppTheme._();
 

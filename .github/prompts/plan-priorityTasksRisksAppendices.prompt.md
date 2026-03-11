@@ -1,4 +1,4 @@
-# OrderLane Pro — Top 30 Priority Tasks + Risks + Appendices
+# OrdWave — Top 30 Priority Tasks + Risks + Appendices
 
 ## Section 10: Top 30 Implementation Tasks (Priority Order)
 

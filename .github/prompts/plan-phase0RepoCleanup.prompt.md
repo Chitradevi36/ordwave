@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 0: Repo Cleanup & Architecture Foundation
+# OrdWave — Phase 0: Repo Cleanup & Architecture Foundation
 
 ## Goal
 Clean up naming, fix inconsistencies, set up Flutter project properly, add web infrastructure guardrails.
@@ -15,13 +15,13 @@ Clean up naming, fix inconsistencies, set up Flutter project properly, add web i
 ## Backend Tasks
 
 ### B0.1 — Standardize Product Naming
-- Replace all instances of "OmniDist OMS" with "OrderLane Pro" in:
+- Replace all instances of "OmniDist OMS" with "OrdWave" in:
   - `backend/db/seeds.rb` (org name, email domains)
   - `backend/app/views/` (mailer templates)
   - `web/app/layout.tsx` (metadata title)
   - `docs/ARCHITECTURE_OVERVIEW.md`
 - Change seed email domains from `@riceoms.dev` to `@orderlanepro.dev`
-- Update `web/components/layout/sidebar.tsx` brand text to "OrderLane Pro"
+- Update `web/components/layout/sidebar.tsx` brand text to "OrdWave"
 
 ### B0.2 — Deprecate `return_records`
 - Create migration to add `return_request_id` FK on `return_records` (for linking legacy data)
@@ -166,7 +166,7 @@ lib/
 - [ ] All workspace tabs visible and clickable
 - [ ] Flutter project compiles and runs — shows a blank themed screen
 - [ ] Flutter Dio client can successfully call `GET /health` endpoint
-- [ ] All seed data uses "OrderLane Pro" branding
+- [ ] All seed data uses "OrdWave" branding
 - [ ] All tests pass after naming fixes
 - [ ] `return_records` have deprecation warning in model
 

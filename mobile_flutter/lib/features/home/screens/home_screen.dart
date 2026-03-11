@@ -112,7 +112,7 @@ class _SalesRepHomeState extends ConsumerState<SalesRepHome> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('OrderLane Pro'),
+        title: const Text('OrdWave'),
         actions: [
           // Sync indicator
           if (_syncing)
@@ -434,7 +434,7 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('OrderLane Pro'),
+        title: const Text('OrdWave'),
         actions: [
           IconButton(
             onPressed: () => context.go('/home/settings'),
@@ -505,7 +505,7 @@ class GenericHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('OrderLane Pro')),
+      appBar: AppBar(title: const Text('OrdWave')),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

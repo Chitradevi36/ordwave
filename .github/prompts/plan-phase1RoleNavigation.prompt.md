@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 1: Core Role/Navigation Foundation
+# OrdWave — Phase 1: Core Role/Navigation Foundation
 
 ## Goal
 Role-based experience works end-to-end on web. Notification infrastructure exists. Flutter login + role-based home screen functional.

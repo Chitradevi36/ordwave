@@ -26,19 +26,19 @@ void main() async {
       overrides: [
         preferencesProvider.overrideWithValue(prefsService),
       ],
-      child: const OrderLaneApp(),
+      child: const OrdWaveApp(),
     ),
   );
 }
 
-class OrderLaneApp extends ConsumerWidget {
-  const OrderLaneApp({super.key});
+class OrdWaveApp extends ConsumerWidget {
+  const OrdWaveApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'OrderLane Pro',
+      title: 'OrdWave',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: router,

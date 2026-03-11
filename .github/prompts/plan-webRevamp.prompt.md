@@ -1,4 +1,4 @@
-# OrderLane Pro — Web App Revamp Plan
+# OrdWave — Web App Revamp Plan
 
 ## 4. Web App Revamp Plan
 

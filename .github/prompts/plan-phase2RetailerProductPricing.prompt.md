@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 2: Retailer + Product + Pricing Foundation
+# OrdWave — Phase 2: Retailer + Product + Pricing Foundation
 
 ## Goal
 CRM and catalog fully functional on web with enhanced UX. Mobile can search retailers and view profiles with cached data.

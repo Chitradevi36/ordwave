@@ -1,4 +1,4 @@
-# OrderLane Pro — Role-Based Product Architecture
+# OrdWave — Role-Based Product Architecture
 
 ## 3. Final Role-Based Product Architecture
 

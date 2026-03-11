@@ -1,4 +1,4 @@
-# OrderLane Pro — Mobile Flutter Revamp Plan
+# OrdWave — Mobile Flutter Revamp Plan
 
 ## 5. Mobile Flutter Revamp Plan
 
@@ -24,7 +24,7 @@ mobile_flutter/lib/
 ├── app.dart                          # MaterialApp + GoRouter + Riverpod scope
 ├── core/
 │   ├── theme/
-│   │   ├── app_theme.dart            # ThemeData with OrderLane tokens
+│   │   ├── app_theme.dart            # ThemeData with OrdWave tokens
 │   │   ├── colors.dart               # Brand color constants
 │   │   └── typography.dart           # Text styles
 │   ├── network/

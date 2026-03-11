@@ -1,4 +1,4 @@
-# OrderLane Pro — Top 30 Priority Tasks, Risks & Appendices
+# OrdWave — Top 30 Priority Tasks, Risks & Appendices
 
 > **Date**: March 9, 2026  
 > **Status**: Active development — Phase 8 complete, production-hardening in progress  

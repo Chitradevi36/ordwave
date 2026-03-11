@@ -211,7 +211,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">OrderLane Pro</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">OrdWave</h1>
           <p className="text-sm sm:text-base text-text-secondary">Create your account in seconds</p>
         </div>
 

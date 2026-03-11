@@ -3,7 +3,7 @@
 module Api
   module V1
     module Accounting
-      # REST API for OrderLane Tally Agent communication.
+      # REST API for OrdWave Tally Agent communication.
       #
       # Endpoints:
       #   POST /api/v1/accounting/agent/register      - Agent registration + API key
@@ -11,7 +11,7 @@ module Api
       #   GET  /api/v1/accounting/agent/poll          - Long-polling for pending sync records
       #   POST /api/v1/accounting/agent/ack/:id       - Acknowledge successful sync
       #   POST /api/v1/accounting/agent/fail/:id      - Report failure with error details
-      #   POST /api/v1/accounting/agent/push_from_tally - Reverse sync (Tally → OrderLane)
+      #   POST /api/v1/accounting/agent/push_from_tally - Reverse sync (Tally → OrdWave)
       #
       # Authentication: Agent uses organization-scoped API key in Authorization header
       class AgentController < Api::V1::BaseController
@@ -159,7 +159,7 @@ module Api
         end
 
         # POST /api/v1/accounting/agent/push_from_tally
-        # Reverse sync: receive a batch of Tally vouchers/balances and reconcile into OrderLane.
+        # Reverse sync: receive a batch of Tally vouchers/balances and reconcile into OrdWave.
         #
         # Expected body:
         #   {

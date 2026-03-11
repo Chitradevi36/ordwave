@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 #
-# Demo seed data for OrderLane Pro — Kannan Rice Distributors
+# Demo seed data for OrdWave — Kannan Rice Distributors
 # Idempotent: safe to re-run. Uses find_or_initialize_by throughout.
 #
 # Usage:
@@ -9,7 +9,7 @@
 
 puts ""
 puts "=" * 60
-puts "  OrderLane Pro — Demo Seed: Kannan Rice Distributors"
+puts "  OrdWave — Demo Seed: Kannan Rice Distributors"
 puts "=" * 60
 puts ""
 

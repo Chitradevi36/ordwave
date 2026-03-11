@@ -1,4 +1,4 @@
-# OrderLane Pro — UI/UX Revamp: Modules 18–25
+# OrdWave — UI/UX Revamp: Modules 18–25
 
 ## Module 18: Collection Schedule
 

@@ -1,7 +1,7 @@
 "use client";
 
 // ───────────────────────────────────────────────────────────────────────────
-// OrderLane Pro – Automatic Route-Change Page View Hook
+// OrdWave – Automatic Route-Change Page View Hook
 //
 // Drop this into any client-side provider component (e.g. providers.tsx).
 // It fires trackRoutePageView() whenever the Next.js pathname changes.

@@ -272,7 +272,7 @@ export function AgentStatus({ integrationId }: AgentStatusProps) {
         {/* Instructions */}
         <div className="pt-3 border-t border-border">
           <p className="text-xs text-text-secondary leading-relaxed">
-            The OrderLane Tally Agent runs on your local machine and syncs data with Tally in real-time.
+            The OrdWave Tally Agent runs on your local machine and syncs data with Tally in real-time.
             Download the installer and use the API key shown above during setup.
           </p>
         </div>

@@ -78,7 +78,7 @@ class AppVersionService {
           status: VersionCheckStatus.maintenance,
           currentVersion: currentVersion,
           maintenanceMessage: data['maintenance_message'] as String? ??
-              'OrderLane Pro is undergoing scheduled maintenance.\nPlease check back shortly.',
+              'OrdWave is undergoing scheduled maintenance.\nPlease check back shortly.',
         );
       }
 

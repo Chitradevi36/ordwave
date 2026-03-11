@@ -1,4 +1,4 @@
-# OrderLane Pro — UI/UX Revamp: Modules 1–8
+# OrdWave — UI/UX Revamp: Modules 1–8
 
 ## Module 1: Dashboard
 
@@ -26,7 +26,7 @@
 
 **Microcopy improvements:**
 - Page subtitle: "Your business at a glance — focus on what needs attention first"
-- Empty state: "Welcome to OrderLane Pro! Complete your setup checklist to start seeing real-time business insights here."
+- Empty state: "Welcome to OrdWave! Complete your setup checklist to start seeing real-time business insights here."
 - Alert labels: "5 collections overdue by ₹2.4L" not "5 overdue"
 
 **Role-based variation:**

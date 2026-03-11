@@ -1,5 +1,5 @@
 // ───────────────────────────────────────────────────────────────────────────
-// OrderLane Pro – GA4 Core Wrapper
+// OrdWave – GA4 Core Wrapper
 //
 // Low-level, safe gtag adapter. All calls are guarded against:
 // - SSR (no window)

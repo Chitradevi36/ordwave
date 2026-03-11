@@ -47,7 +47,7 @@ config.action_mailer.default_url_options = { host: 'localhost:3000' }
 In `app/mailers/application_mailer.rb`:
 ```ruby
 class ApplicationMailer < ActionMailer::Base
-  default from: "OrderLane Pro <no-reply@yourdomain.com>"
+  default from: "OrdWave <no-reply@yourdomain.com>"
   layout "mailer"
 end
 ```
@@ -64,7 +64,7 @@ class SignupMailer < ApplicationMailer
 
     mail(
       to: @email,
-      subject: "Your OrderLane Pro verification code: #{@otp}",
+      subject: "Your OrdWave verification code: #{@otp}",
       message_stream: 'outbound'  # Postmark stream name
     )
   end
@@ -76,7 +76,7 @@ end
 **`app/views/signup_mailer/send_otp.html.erb`**:
 ```erb
 <h2>Your verification code</h2>
-<p>Use the code below to verify your email and create your OrderLane Pro account.</p>
+<p>Use the code below to verify your email and create your OrdWave account.</p>
 
 <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">
   <%= @otp %>
@@ -88,7 +88,7 @@ end
 
 **`app/views/signup_mailer/send_otp.text.erb`**:
 ```erb
-Your OrderLane Pro verification code: <%= @otp %>
+Your OrdWave verification code: <%= @otp %>
 
 This code expires in <%= @expires_in %>.
 

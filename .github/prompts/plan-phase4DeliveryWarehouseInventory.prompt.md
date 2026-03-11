@@ -1,4 +1,4 @@
-# OrderLane Pro — Phase 4: Delivery + Warehouse + Inventory
+# OrdWave — Phase 4: Delivery + Warehouse + Inventory
 
 ## Goal
 Complete delivery lifecycle on mobile. Warehouse workflows on web. Inventory management enhanced.
