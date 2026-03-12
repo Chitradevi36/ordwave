@@ -25,7 +25,7 @@ module Analytics
       {
         total_returns: total,
         total_qty:     lines.sum(:qty_reported).to_d.round(3),
-        total_value:   base.sum(:credit_note_value).to_d.round(2),
+        total_value:   lines.sum("qty_reported * COALESCE(unit_price_snapshot, 0)").to_d.round(2),
         approval_rate: approval_rate(base)
       }
     end
@@ -56,12 +56,13 @@ module Analytics
 
     def by_month
       base_scope
+        .joins(:lines)
         .group("TO_CHAR(return_requests.created_at, 'Mon YYYY')")
         .order(Arel.sql("MIN(return_requests.created_at)"))
         .select(
           "TO_CHAR(return_requests.created_at, 'Mon YYYY') AS month",
-          "COUNT(*) AS count",
-          "SUM(return_requests.credit_note_value) AS total_value"
+          "COUNT(DISTINCT return_requests.id) AS count",
+          "SUM(return_lines.qty_reported * COALESCE(return_lines.unit_price_snapshot, 0)) AS total_value"
         )
         .map { |r| { month: r.month, count: r.count.to_i, total_value: r.total_value.to_d.round(2) } }
     end
@@ -92,15 +93,15 @@ module Analytics
 
     def by_customer
       base_scope
-        .joins(:customer)
+        .joins(:customer, :lines)
         .group("customers.id, customers.name, customers.code")
         .order(Arel.sql("COUNT(return_requests.id) DESC"))
         .limit(25)
         .select(
           "customers.name AS customer_name",
           "customers.code AS customer_code",
-          "COUNT(return_requests.id) AS count",
-          "SUM(return_requests.credit_note_value) AS total_value"
+          "COUNT(DISTINCT return_requests.id) AS count",
+          "SUM(return_lines.qty_reported * COALESCE(return_lines.unit_price_snapshot, 0)) AS total_value"
         )
         .map do |r|
           {

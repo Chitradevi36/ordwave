@@ -226,9 +226,11 @@ export default function ReturnAnalyticsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/20">
-                  {["Product", "SKU", "Return Count", "Qty Returned", "Total Value"].map((h) => (
-                    <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">{h}</th>
-                  ))}
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">Product</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">SKU</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-text-secondary">Return Count</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-text-secondary">Qty Returned</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-text-secondary">Total Value</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -255,9 +257,10 @@ export default function ReturnAnalyticsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/20">
-                  {["Customer", "Code", "Return Count", "Total Value"].map((h) => (
-                    <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">{h}</th>
-                  ))}
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">Customer</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">Code</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-text-secondary">Return Count</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-text-secondary">Total Value</th>
                 </tr>
               </thead>
               <tbody className="divide-y">

@@ -222,8 +222,8 @@ export default function InsightsBeatPerformancePage() {
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="completed" name="Completed" stackId="v" fill="hsl(var(--success))" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="skipped"   name="Skipped"   stackId="v" fill="hsl(var(--warning))" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="completed" name="Completed" stackId="v" fill="#10b981" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="skipped"   name="Skipped"   stackId="v" fill="#f59e0b" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -244,7 +244,7 @@ export default function InsightsBeatPerformancePage() {
                   domain={[0, 100]}
                   tick={{ fontSize: 9, fill: "hsl(var(--text-secondary))" }}
                 />
-                <Radar name="Completion %" dataKey="completion_rate" stroke="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.25} strokeWidth={2} />
+                <Radar name="Completion %" dataKey="completion_rate" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.25} strokeWidth={2} />
                 <Tooltip
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
                   formatter={(v: number) => [`${v.toFixed(1)}%`, "Completion"]}

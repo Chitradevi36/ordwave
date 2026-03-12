@@ -8,13 +8,36 @@ import { API_URL } from "@/lib/api/client";
 import { RefreshCw, TrendingUp, FileText, AlertCircle } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, BarChart, Bar, Legend,
+  Tooltip, BarChart, Bar, Legend, Cell,
 } from "recharts";
 
 function fmt(n: number | undefined | null, prefix = "") {
   if (n == null) return "—";
   return `${prefix}${Number(n).toLocaleString("en-IN")}`;
 }
+
+// Color palette for bars - sales theme
+const RETAILER_COLORS = [
+  "#3b82f6", // blue-500
+  "#2563eb", // blue-600
+  "#1d4ed8", // blue-700
+  "#1e40af", // blue-800
+  "#1e3a8a", // blue-900
+  "#0369a1", // cyan-700
+  "#0284c7", // cyan-600
+  "#06b6d4", // cyan-500
+];
+
+const PRODUCT_COLORS = [
+  "#10b981", // emerald-500
+  "#059669", // emerald-600
+  "#047857", // emerald-700
+  "#065f46", // emerald-800
+  "#064e3b", // emerald-900
+  "#14b8a6", // teal-500
+  "#0d9488", // teal-600
+  "#0f766e", // teal-700
+];
 
 interface Retailer { id: number; name: string; invoice_count: number; total_value: number }
 interface TopProduct { id: number; name: string; sku: string; total_qty: number; total_value: number }
@@ -151,12 +174,12 @@ export default function InsightsSalesPage() {
               <AreaChart data={data?.timeseries ?? []} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradOrders" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="hsl(var(--accent))" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gradInvoices" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="hsl(var(--success))" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -180,8 +203,8 @@ export default function InsightsSalesPage() {
                   labelFormatter={(l) => String(l).slice(0, 10)}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Area type="monotone" dataKey="orders_value"   name="Order Value"   stroke="hsl(var(--accent))"   fill="url(#gradOrders)"   strokeWidth={2} dot={false} />
-                <Area type="monotone" dataKey="invoices_value" name="Invoice Value" stroke="hsl(var(--success))"  fill="url(#gradInvoices)" strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="orders_value"   name="Order Value"   stroke="#3b82f6" fill="url(#gradOrders)"   strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="invoices_value" name="Invoice Value" stroke="#10b981" fill="url(#gradInvoices)" strokeWidth={2} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -220,7 +243,11 @@ export default function InsightsSalesPage() {
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
                   formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Value"]}
                 />
-                <Bar dataKey="total_value" name="Total Value" fill="hsl(var(--accent))" radius={[0, 3, 3, 0]} />
+                <Bar dataKey="total_value" name="Total Value" radius={[0, 3, 3, 0]}>
+                  {(data?.top_retailers?.slice(0, 8) ?? []).map((_, idx) => (
+                    <Cell key={`cell-${idx}`} fill={RETAILER_COLORS[idx % RETAILER_COLORS.length]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -258,7 +285,11 @@ export default function InsightsSalesPage() {
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
                   formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Revenue"]}
                 />
-                <Bar dataKey="total_value" name="Revenue" fill="hsl(var(--success))" radius={[0, 3, 3, 0]} />
+                <Bar dataKey="total_value" name="Revenue" radius={[0, 3, 3, 0]}>
+                  {(data?.top_products?.slice(0, 8) ?? []).map((_, idx) => (
+                    <Cell key={`cell-${idx}`} fill={PRODUCT_COLORS[idx % PRODUCT_COLORS.length]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
