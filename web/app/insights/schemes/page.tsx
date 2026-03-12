@@ -53,6 +53,10 @@ const SCHEME_TYPE_LABEL: Record<string, string> = {
   order_discount:  "Order Discount",
   free_goods:      "Free Goods",
   flat_price:      "Flat Price",
+  buy_x_get_y:     "Buy X Get Y",
+  volume_discount: "Volume Discount",
+  slab_discount:   "Slab Discount",
+  combo_discount:  "Combo Discount",
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -137,7 +141,7 @@ export default function SchemeAnalyticsPage() {
               { label: "Total Revenue",     value: fmt(data.summary.total_revenue) },
               { label: "Avg ROI",           value: data.summary.avg_roi_pct != null ? `${Number(data.summary.avg_roi_pct).toFixed(1)}%` : "—" },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-lg border bg-card p-4">
+              <div key={label} className="rounded-lg border border-border bg-surface p-4">
                 <p className="text-xs text-text-secondary">{label}</p>
                 <p className="text-lg font-bold mt-1 truncate">{value}</p>
               </div>
@@ -196,8 +200,15 @@ export default function SchemeAnalyticsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/20">
-                  {["Scheme", "Type", "Redemptions", "Total Discount", "Total Revenue", "ROI %"].map((h) => (
-                    <th key={h} className="px-3 py-2.5 text-left text-xs font-semibold text-text-secondary">{h}</th>
+                  {[
+                    { label: "Scheme",         align: "text-left"  },
+                    { label: "Type",           align: "text-left"  },
+                    { label: "Redemptions",    align: "text-right" },
+                    { label: "Total Discount", align: "text-right" },
+                    { label: "Total Revenue",  align: "text-right" },
+                    { label: "ROI %",          align: "text-right" },
+                  ].map(({ label, align }) => (
+                    <th key={label} className={`px-3 py-2.5 ${align} text-xs font-semibold text-text-secondary`}>{label}</th>
                   ))}
                 </tr>
               </thead>

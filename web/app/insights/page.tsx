@@ -52,6 +52,12 @@ interface OverviewData {
     dead_stock_count?: number;
     total_skus?: number;
   };
+  returns?: {
+    total_returns?: number;
+    total_qty?: number;
+    total_value?: number;
+    approval_rate?: number;
+  };
 }
 
 export default function InsightsOverviewPage() {
@@ -70,6 +76,23 @@ export default function InsightsOverviewPage() {
       });
       if (!res.ok) throw new Error("Failed to load overview");
       const json = await res.json();
+      
+      // Fetch returns analytics
+      try {
+        const returnsRes = await fetch(
+          `${API_URL}/api/v1/analytics/returns?from=${new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().slice(0, 10)}&to=${new Date().toISOString().slice(0, 10)}`,
+          {
+            headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+          }
+        );
+        if (returnsRes.ok) {
+          const returnsJson = await returnsRes.json();
+          json.data.returns = returnsJson.data?.summary;
+        }
+      } catch {
+        // Silently fail for returns data
+      }
+      
       setData(json.data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -143,7 +166,10 @@ export default function InsightsOverviewPage() {
       icon: RotateCcw,
       color: "text-amber-600",
       stats: [
-        { label: "View return reason analytics", value: "" },
+        { label: "Total Returns",       value: fmt(data?.returns?.total_returns) },
+        { label: "Total Qty Returned",  value: fmt(data?.returns?.total_qty) },
+        { label: "Total Value",         value: fmt(data?.returns?.total_value, "₹") },
+        { label: "Approval Rate",       value: fmtPct(data?.returns?.approval_rate) },
       ],
     },
     {
