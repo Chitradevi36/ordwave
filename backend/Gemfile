@@ -71,6 +71,9 @@ gem 'pry'
 # Security
 gem "rack-attack", "~> 6.7"
 
+# Billing / Payments
+gem "razorpay", "~> 3.2"    # Razorpay Subscriptions + Webhooks
+
 # Notifications
 gem "fcm"
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_11_000016) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -332,6 +332,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000016) do
     t.index ["organization_id", "active"], name: "index_beats_on_org_active"
     t.index ["organization_id"], name: "index_beats_on_organization_id"
     t.index ["route_id"], name: "index_beats_on_route_id"
+  end
+
+  create_table "billing_events", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "subscription_id"
+    t.string "event_type", null: false
+    t.string "razorpay_event_id"
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "processed_at"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_type"], name: "index_billing_events_on_event_type"
+    t.index ["organization_id", "event_type"], name: "index_billing_events_on_organization_id_and_event_type"
+    t.index ["organization_id"], name: "index_billing_events_on_organization_id"
+    t.index ["processed_at"], name: "index_billing_events_on_processed_at"
+    t.index ["razorpay_event_id"], name: "index_billing_events_on_razorpay_event_id", unique: true, where: "(razorpay_event_id IS NOT NULL)"
+    t.index ["subscription_id"], name: "index_billing_events_on_subscription_id"
   end
 
   create_table "branches", force: :cascade do |t|
@@ -1140,6 +1158,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000016) do
     t.string "timezone", default: "Asia/Kolkata"
     t.string "currency", default: "INR"
     t.jsonb "settings", default: {}, null: false
+    t.string "billing_status", default: "inactive", null: false
+    t.string "razorpay_customer_id"
+    t.datetime "current_period_end"
+    t.datetime "trial_ends_at"
+    t.index ["billing_status"], name: "index_organizations_on_billing_status"
+    t.index ["razorpay_customer_id"], name: "index_organizations_on_razorpay_customer_id", unique: true, where: "(razorpay_customer_id IS NOT NULL)"
     t.index ["settings"], name: "index_organizations_on_settings", using: :gin
     t.index ["slug"], name: "index_organizations_on_slug", unique: true
   end
@@ -1847,6 +1871,28 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000016) do
     t.index ["status"], name: "index_stock_transfers_on_status"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "plan", null: false
+    t.string "status", default: "pending", null: false
+    t.string "razorpay_subscription_id"
+    t.string "razorpay_plan_id"
+    t.integer "quantity", default: 1, null: false
+    t.datetime "current_period_start"
+    t.datetime "current_period_end"
+    t.datetime "trial_ends_at"
+    t.datetime "cancelled_at"
+    t.datetime "ends_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "status"], name: "index_subscriptions_on_organization_id_and_status"
+    t.index ["organization_id"], name: "index_subscriptions_on_organization_id"
+    t.index ["plan"], name: "index_subscriptions_on_plan"
+    t.index ["razorpay_subscription_id"], name: "index_subscriptions_on_razorpay_subscription_id", unique: true, where: "(razorpay_subscription_id IS NOT NULL)"
+    t.index ["status"], name: "index_subscriptions_on_status"
+  end
+
   create_table "supplier_debit_note_lines", force: :cascade do |t|
     t.bigint "supplier_debit_note_id", null: false
     t.bigint "product_id", null: false
@@ -2161,6 +2207,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000016) do
   add_foreign_key "beats", "organizations"
   add_foreign_key "beats", "routes"
   add_foreign_key "beats", "users", column: "created_by_id"
+  add_foreign_key "billing_events", "organizations"
+  add_foreign_key "billing_events", "subscriptions"
   add_foreign_key "branches", "organizations"
   add_foreign_key "collection_schedules", "branches"
   add_foreign_key "collection_schedules", "customers"
@@ -2353,6 +2401,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000016) do
   add_foreign_key "stock_transfers", "users", column: "created_by_id"
   add_foreign_key "stock_transfers", "users", column: "dispatched_by_id"
   add_foreign_key "stock_transfers", "users", column: "received_by_id"
+  add_foreign_key "subscriptions", "organizations"
   add_foreign_key "supplier_debit_note_lines", "products"
   add_foreign_key "supplier_debit_note_lines", "return_lines"
   add_foreign_key "supplier_debit_note_lines", "supplier_debit_notes"

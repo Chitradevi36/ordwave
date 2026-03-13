@@ -1,5 +1,5 @@
 class PendingRegistration < ApplicationRecord
-  STEPS = %w[initiate verify_otp set_password org_details first_branch choose_plan].freeze
+  STEPS = %w[initiate verify_otp set_password org_details first_branch choose_plan billing_pending].freeze
   OTP_EXPIRY = 10.minutes
   MAX_OTP_ATTEMPTS = 5
 

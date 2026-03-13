@@ -116,9 +116,13 @@ module Api
         if result.success?
           render json: {
             data: {
-              token: result.token,
-              user:  serialize_user(result.user),
-              message: 'Registration completed successfully. Please proceed to onboarding.'
+              token:                  result.token,
+              user:                   serialize_user(result.user),
+              requires_payment:       result.requires_payment,
+              subscription_short_url: result.subscription_short_url,
+              message: result.requires_payment \
+                         ? 'Please complete payment to activate your plan.' \
+                         : 'Registration completed successfully. Please proceed to onboarding.'
             }
           }, status: :created
         else
