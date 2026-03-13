@@ -1,6 +1,6 @@
 module Signup
   class ChoosePlanService
-    Result = Struct.new(:success?, :user, :token, :errors, keyword_init: true)
+    Result = Struct.new(:success?, :user, :token, :requires_payment, :subscription_short_url, :errors, keyword_init: true)
 
     def initialize(email:, plan:, first_name:, last_name:, phone: nil)
       @email      = email.to_s.downcase.strip
@@ -15,37 +15,32 @@ module Signup
 
       unless pending
         return Result.new(
-          success?: false,
-          user: nil,
-          token: nil,
+          success?: false, user: nil, token: nil,
+          requires_payment: false, subscription_short_url: nil,
           errors: ['No pending registration found or session expired']
         )
       end
 
       unless pending.current_step == 'set_password'
         return Result.new(
-          success?: false,
-          user: nil,
-          token: nil,
+          success?: false, user: nil, token: nil,
+          requires_payment: false, subscription_short_url: nil,
           errors: ['Please complete previous steps first']
         )
       end
 
       unless @plan.in?(User::PLANS)
         return Result.new(
-          success?: false,
-          user: nil,
-          token: nil,
+          success?: false, user: nil, token: nil,
+          requires_payment: false, subscription_short_url: nil,
           errors: ["Invalid plan. Choose from: #{User::PLANS.join(', ')}"]
         )
       end
 
-      user = nil
+      user  = nil
       token = nil
 
       ActiveRecord::Base.transaction do
-        # Create user with the selected plan
-        # Organization, branch, and membership will be created during onboarding
         user = User.create!(
           email:      @email,
           password:   pending.data['password'],
@@ -56,32 +51,40 @@ module Signup
           active:     true
         )
 
-        # Mark pending registration as completed
-        pending.advance_to!('choose_plan')
-        pending.mark_completed!
+        # Free plan → complete registration immediately
+        if Billing::PlanCatalog.free?(@plan)
+          pending.advance_to!('choose_plan')
+          pending.mark_completed!
+        else
+          # Paid plan → advance to billing_pending (checkout in progress)
+          pending.advance_to!('billing_pending')
+          # NOTE: subscription is created lazily when user hits POST /billing/checkout
+          # (the user may not have an organization yet at this point)
+        end
 
-        # Generate JWT token
         token = generate_jwt(user)
       end
 
+      requires_payment = Billing::PlanCatalog.paid?(@plan)
+
       Result.new(
-        success?: true,
-        user: user,
-        token: token,
-        errors: []
+        success?:               true,
+        user:                   user,
+        token:                  token,
+        requires_payment:       requires_payment,
+        subscription_short_url: nil,   # populated later via POST /billing/checkout
+        errors:                 []
       )
     rescue ActiveRecord::RecordInvalid => e
       Result.new(
-        success?: false,
-        user: nil,
-        token: nil,
+        success?: false, user: nil, token: nil,
+        requires_payment: false, subscription_short_url: nil,
         errors: e.record.errors.full_messages
       )
     rescue ActiveRecord::RecordNotFound => e
       Result.new(
-        success?: false,
-        user: nil,
-        token: nil,
+        success?: false, user: nil, token: nil,
+        requires_payment: false, subscription_short_url: nil,
         errors: [e.message]
       )
     end

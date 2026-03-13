@@ -691,4 +691,84 @@ FactoryBot.define do
     end
   end
 
+  # ── Billing ──────────────────────────────────────────────────────────────────
+
+  factory :subscription do
+    association :organization
+    plan     { "starter" }
+    status   { "active" }
+    quantity { 1 }
+    current_period_start { Time.current.beginning_of_day }
+    current_period_end   { 1.month.from_now.end_of_day }
+    metadata { {} }
+
+    trait :free do
+      plan   { "free" }
+      status { "active" }
+    end
+
+    trait :starter do
+      plan { "starter" }
+    end
+
+    trait :pro do
+      plan { "pro" }
+    end
+
+    trait :pending do
+      status { "pending" }
+      sequence(:razorpay_subscription_id) { |n| "sub_razorpay_pending_#{n}" }
+    end
+
+    trait :active do
+      status { "active" }
+      sequence(:razorpay_subscription_id) { |n| "sub_razorpay_active_#{n}" }
+    end
+
+    trait :past_due do
+      status  { "past_due" }
+      ends_at { 7.days.from_now }
+      sequence(:razorpay_subscription_id) { |n| "sub_razorpay_pastdue_#{n}" }
+    end
+
+    trait :cancelled do
+      status       { "cancelled" }
+      cancelled_at { Time.current }
+      ends_at      { 1.month.from_now }
+      sequence(:razorpay_subscription_id) { |n| "sub_razorpay_cancelled_#{n}" }
+    end
+
+    trait :expired do
+      status  { "expired" }
+      ends_at { 1.day.ago }
+    end
+  end
+
+  factory :billing_event do
+    association :organization
+    association :subscription
+    event_type   { "subscription.charged" }
+    payload      { {} }
+    processed_at { Time.current }
+    sequence(:razorpay_event_id) { |n| "evt_razorpay_#{n}" }
+
+    trait :unprocessed do
+      processed_at { nil }
+    end
+
+    trait :payment_failed do
+      event_type { "payment.failed" }
+    end
+
+    trait :subscription_cancelled do
+      event_type { "subscription.cancelled" }
+    end
+
+    trait :internal_free_plan do
+      event_type         { "internal.free_plan_activated" }
+      razorpay_event_id  { nil }
+      subscription       { nil }
+    end
+  end
+
 end

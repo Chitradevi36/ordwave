@@ -544,6 +544,14 @@ Rails.application.routes.draw do
         end
       end
 
+      # -- Billing (Razorpay) ------------------------------------------------
+      get  'billing/subscription',         to: 'billing#subscription'
+      post 'billing/checkout',             to: 'billing#checkout'
+      post 'billing/cancel',               to: 'billing#cancel'
+      get  'billing/invoices',             to: 'billing#invoices'
+      # Razorpay webhook — no JWT auth, verified via HMAC signature
+      post 'billing/webhooks/razorpay',    to: 'webhooks/razorpay#receive'
+
     end
 
     namespace :v2 do
