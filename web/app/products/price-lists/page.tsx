@@ -261,7 +261,6 @@ export default function PriceListsPage() {
     <AppShell hideBreadcrumb>
       <PageHeader
         title="Price Lists"
-        description={totalCount > 0 ? `${totalCount} lists` : undefined}
         actions={[{ label: "New Price List", onClick: () => setShowNew(true) }]}
       />
 

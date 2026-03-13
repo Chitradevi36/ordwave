@@ -87,7 +87,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     label: "Finance",
     href: "/finance",
     icon: DollarSign,
-    matchers: ["/finance", "/collections", "/sales-invoices", "/credit-notes", "/advance-payments", "/payments", "/compliance", "/supplier-debit-notes"],
+    matchers: ["/finance", "/collections", "/bank-reconciliation", "/sales-invoices", "/credit-notes", "/advance-payments", "/payments", "/compliance", "/supplier-debit-notes"],
     rolesAllowed: ["owner", "admin", "manager", "accountant"],
   },
   {

@@ -503,6 +503,9 @@ Rails.application.routes.draw do
       resources :bank_statement_imports, only: %i[index show create]
 
       resources :bank_transactions, only: %i[index show] do
+        collection do
+          get :dashboard
+        end
         member do
           post :confirm_match
           post :mark_as_advance

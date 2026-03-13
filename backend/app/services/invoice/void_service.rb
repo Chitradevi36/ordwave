@@ -61,8 +61,8 @@ module Invoice
     def validate
       errs = []
 
-      unless @invoice.issued?
-        errs << "Only issued invoices can be voided (current status: #{@invoice.status})"
+      unless @invoice.voidable?
+        errs << "Invoice cannot be voided in its current state (#{@invoice.status})"
       end
 
       errs << 'Void reason is required' if @reason.blank?

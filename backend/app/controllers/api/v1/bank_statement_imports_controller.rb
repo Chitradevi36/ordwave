@@ -24,14 +24,14 @@ module Api
         bank_account = policy_scope(BankAccount).find_by!(id: params[:bank_account_id])
 
         import = BankStatementImport.new(
-          organization:      Current.organization,
-          bank_account:      bank_account,
-          source_type:       :csv,
-          imported_by:       Current.user,
-          original_filename: csv_file.original_filename,
-          status:            :uploaded
+          organization:  Current.organization,
+          bank_account:  bank_account,
+          source_type:   detect_source_type(csv_file.original_filename),
+          uploaded_by:   Current.user,
+          file_name:     csv_file.original_filename,
+          status:        "uploaded"
         )
-        import.file.attach(csv_file)
+        import.csv_file.attach(csv_file)
 
         authorize import
 
@@ -51,6 +51,11 @@ module Api
 
       def csv_file
         params.require(:file)
+      end
+
+      def detect_source_type(filename)
+        ext = File.extname(filename.to_s).downcase.delete(".")
+        { "csv" => "csv", "xlsx" => "xlsx", "xls" => "xlsx", "pdf" => "pdf" }.fetch(ext, "csv")
       end
     end
   end

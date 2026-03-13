@@ -86,6 +86,10 @@ gem "lograge"
 gem "caxlsx", "~> 3.4"
 gem "caxlsx_rails"
 
+# Spreadsheet / PDF parsing (bank statement import)
+gem "roo",        "~> 2.10"   # XLSX + XLS reading
+gem "pdf-reader", "~> 2.12"   # PDF text extraction (bank statement PDFs)
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]

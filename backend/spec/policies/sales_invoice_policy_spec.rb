@@ -26,72 +26,72 @@ RSpec.describe SalesInvoicePolicy, type: :policy do
   # ── index? ────────────────────────────────────────────────────────────────────
 
   describe 'index?' do
-    it 'permits owner'     { expect(permissions_for(owner).index?).to be true }
-    it 'permits admin'     { expect(permissions_for(admin).index?).to be true }
-    it 'permits manager'   { expect(permissions_for(manager).index?).to be true }
-    it 'permits sales_rep' { expect(permissions_for(sales_rep).index?).to be true }
+    it 'permits owner'     do expect(permissions_for(owner).index?).to be true end
+    it 'permits admin'     do expect(permissions_for(admin).index?).to be true end
+    it 'permits manager'   do expect(permissions_for(manager).index?).to be true end
+    it 'permits sales_rep' do expect(permissions_for(sales_rep).index?).to be true end
   end
 
   # ── show? ─────────────────────────────────────────────────────────────────────
 
   describe 'show?' do
-    it 'permits owner'     { expect(permissions_for(owner).show?).to be true }
-    it 'permits admin'     { expect(permissions_for(admin).show?).to be true }
-    it 'permits manager'   { expect(permissions_for(manager).show?).to be true }
-    it 'permits sales_rep' { expect(permissions_for(sales_rep).show?).to be true }
+    it 'permits owner'     do expect(permissions_for(owner).show?).to be true end
+    it 'permits admin'     do expect(permissions_for(admin).show?).to be true end
+    it 'permits manager'   do expect(permissions_for(manager).show?).to be true end
+    it 'permits sales_rep' do expect(permissions_for(sales_rep).show?).to be true end
   end
 
   # ── create? ───────────────────────────────────────────────────────────────────
 
   describe 'create?' do
-    it 'permits owner'   { expect(permissions_for(owner).create?).to be true }
-    it 'permits admin'   { expect(permissions_for(admin).create?).to be true }
-    it 'permits manager' { expect(permissions_for(manager).create?).to be true }
+    it 'permits owner'   do expect(permissions_for(owner).create?).to be true end
+    it 'permits admin'   do expect(permissions_for(admin).create?).to be true end
+    it 'permits manager' do expect(permissions_for(manager).create?).to be true end
 
-    it 'denies sales_rep' { expect(permissions_for(sales_rep).create?).to be false }
+    it 'denies sales_rep' do expect(permissions_for(sales_rep).create?).to be false end
   end
 
   # ── issue? ────────────────────────────────────────────────────────────────────
 
   describe 'issue?' do
-    it 'permits owner'   { expect(permissions_for(owner).issue?).to be true }
-    it 'permits admin'   { expect(permissions_for(admin).issue?).to be true }
-    it 'permits manager' { expect(permissions_for(manager).issue?).to be true }
+    it 'permits owner'   do expect(permissions_for(owner).issue?).to be true end
+    it 'permits admin'   do expect(permissions_for(admin).issue?).to be true end
+    it 'permits manager' do expect(permissions_for(manager).issue?).to be true end
 
-    it 'denies sales_rep' { expect(permissions_for(sales_rep).issue?).to be false }
+    it 'denies sales_rep' do expect(permissions_for(sales_rep).issue?).to be false end
   end
 
   # ── generate_from_order? ──────────────────────────────────────────────────────
 
   describe 'generate_from_order?' do
-    it 'permits manager' { expect(permissions_for(manager).generate_from_order?).to be true }
-    it 'denies sales_rep' { expect(permissions_for(sales_rep).generate_from_order?).to be false }
+    it 'permits manager' do expect(permissions_for(manager).generate_from_order?).to be true end
+    it 'denies sales_rep' do expect(permissions_for(sales_rep).generate_from_order?).to be false end
   end
 
   # ── generate_from_stop? ───────────────────────────────────────────────────────
 
   describe 'generate_from_stop?' do
-    it 'permits manager' { expect(permissions_for(manager).generate_from_stop?).to be true }
-    it 'denies sales_rep' { expect(permissions_for(sales_rep).generate_from_stop?).to be false }
+    it 'permits manager' do expect(permissions_for(manager).generate_from_stop?).to be true end
+    it 'denies sales_rep' do expect(permissions_for(sales_rep).generate_from_stop?).to be false end
   end
 
   # ── void? ─────────────────────────────────────────────────────────────────────
 
   describe 'void?' do
-    it 'permits owner'  { expect(permissions_for(owner).void?).to be true }
-    it 'permits admin'  { expect(permissions_for(admin).void?).to be true }
+    it 'permits owner'  do expect(permissions_for(owner).void?).to be true end
+    it 'permits admin'  do expect(permissions_for(admin).void?).to be true end
 
-    it 'denies manager'   { expect(permissions_for(manager).void?).to be false }
-    it 'denies sales_rep' { expect(permissions_for(sales_rep).void?).to be false }
+    it 'denies manager'   do expect(permissions_for(manager).void?).to be false end
+    it 'denies sales_rep' do expect(permissions_for(sales_rep).void?).to be false end
   end
 
   # ── pdf? ──────────────────────────────────────────────────────────────────────
 
   describe 'pdf?' do
-    it 'permits owner'     { expect(permissions_for(owner).pdf?).to be true }
-    it 'permits admin'     { expect(permissions_for(admin).pdf?).to be true }
-    it 'permits manager'   { expect(permissions_for(manager).pdf?).to be true }
-    it 'permits sales_rep' { expect(permissions_for(sales_rep).pdf?).to be true }
+    it 'permits owner'     do expect(permissions_for(owner).pdf?).to be true end
+    it 'permits admin'     do expect(permissions_for(admin).pdf?).to be true end
+    it 'permits manager'   do expect(permissions_for(manager).pdf?).to be true end
+    it 'permits sales_rep' do expect(permissions_for(sales_rep).pdf?).to be true end
   end
 
   # ── Scope ─────────────────────────────────────────────────────────────────────

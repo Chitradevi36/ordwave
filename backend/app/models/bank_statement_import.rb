@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class BankStatementImport < ApplicationRecord
-  SOURCE_TYPES = %w[csv manual api].freeze
+  SOURCE_TYPES = %w[csv xlsx pdf manual api].freeze
   STATUSES     = %w[uploaded processing completed failed].freeze
 
   # ── Associations ─────────────────────────────────────────────────────────

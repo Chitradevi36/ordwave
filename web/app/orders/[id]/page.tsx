@@ -100,6 +100,10 @@ interface OrderDetail {
   discount_amount: number;
   submitted_at: string | null;
   approved_at: string | null;
+  dispatched_at: string | null;
+  delivered_at: string | null;
+  invoiced_at: string | null;
+  paid_at: string | null;
   cancelled_at: string | null;
   cancellation_reason: string | null;
   pick_status: "pending_pick" | "picked" | "pick_confirmed";
@@ -622,6 +626,10 @@ export default function OrderDetailPage() {
         createdAt={order.created_at}
         submittedAt={order.submitted_at}
         approvedAt={order.approved_at}
+        dispatchedAt={order.dispatched_at ?? null}
+        deliveredAt={order.delivered_at ?? null}
+        invoicedAt={order.invoiced_at ?? null}
+        paidAt={order.paid_at ?? null}
         cancelledAt={order.cancelled_at}
         rejectedAt={null}
         cancellationReason={order.cancellation_reason}
@@ -631,9 +639,9 @@ export default function OrderDetailPage() {
         status={order.status}
         creditDecision={order.credit_decision}
         creditReasons={order.credit_reasons}
-        invoicedAt={null}
-        paidAt={null}
-        deliveredAt={null}
+        invoicedAt={order.invoiced_at ?? null}
+        paidAt={order.paid_at ?? null}
+        deliveredAt={order.delivered_at ?? null}
         onAction={(action) => {
           if (action === "submit") handleSubmit();
           else if (action === "approve") { setDecision("approved"); setApproveModal(true); }

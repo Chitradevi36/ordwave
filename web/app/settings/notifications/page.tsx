@@ -183,7 +183,7 @@ export default function NotificationsSettingsPage() {
   };
 
   return (
-    <AppShell title="Notification Settings">
+    <AppShell title="Notification Settings" hideBreadcrumb>
       <PageHeader
         title="Notification Settings"
         description="Control which events trigger email, push, and in-app notifications"

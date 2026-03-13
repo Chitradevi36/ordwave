@@ -63,7 +63,7 @@ class SalesInvoice < ApplicationRecord
   end
 
   def voidable?
-    issued? || partially_paid?
+    issued? || partially_paid? || paid?
   end
 
   def soft_delete!
@@ -120,7 +120,7 @@ class SalesInvoice < ApplicationRecord
   )
 
   def sync_to_accounting?
-    issued? || partially_paid?
+    issued? || partially_paid? || paid?
   end
 
   private
@@ -132,12 +132,12 @@ class SalesInvoice < ApplicationRecord
   def immutable_when_issued
     return if status_changed?  # allow status transitions
 
-    if issued? || void?
+    if issued? || partially_paid? || paid? || void?
       immutable_cols = %w[subtotal tax_total grand_total lines customer_id branch_id
                           sales_order_id invoice_date invoice_number]
       changed_fields = changed.map(&:to_s) & immutable_cols
       if changed_fields.any?
-        errors.add(:base, "Issued/voided invoices are immutable (changed: #{changed_fields.join(', ')})")
+        errors.add(:base, "Invoice is immutable once issued (changed: #{changed_fields.join(', ')})")
       end
     end
   end

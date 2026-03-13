@@ -496,6 +496,10 @@ module Api
           discount_amount: order.discount_amount,
           submitted_at:    order.submitted_at,
           approved_at:     order.approved_at,
+          dispatched_at:   order.dispatched_at,
+          delivered_at:    order.delivered_at,
+          invoiced_at:     order_invoiced_at(order),
+          paid_at:         order_paid_at(order),
           cancelled_at:    order.cancelled_at,
           cancellation_reason: order.cancellation_reason,
           pick_status:         order.pick_status,
@@ -528,6 +532,22 @@ module Api
         end
 
         data
+      end
+
+      # Returns the earliest timestamp an invoice was generated for this order.
+      def order_invoiced_at(order)
+        order.sales_invoices.not_deleted
+             .where.not(status: 'draft')
+             .minimum(:created_at)
+      end
+
+      # Returns the timestamp when ALL non-void invoices on the order became fully paid.
+      # Nil if any invoice is still outstanding.
+      def order_paid_at(order)
+        invoices = order.sales_invoices.not_deleted.where.not(status: 'void')
+        return nil if invoices.empty?
+        return nil unless invoices.all? { |inv| inv.paid? }
+        invoices.map(&:updated_at).max
       end
 
       def serialize_credit(credit)
