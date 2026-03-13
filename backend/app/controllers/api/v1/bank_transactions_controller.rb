@@ -5,6 +5,30 @@ module Api
     class BankTransactionsController < BaseController
       before_action :set_txn, only: %i[show confirm_match mark_as_advance ignore retry_match]
 
+      # GET /api/v1/bank_transactions/dashboard
+      def dashboard
+        summary = BankReconciliation::ImportDashboardQuery.call(
+          organization:    Current.organization,
+          bank_account_id: params[:bank_account_id],
+          date_from:       params[:date_from],
+          date_to:         params[:date_to]
+        )
+
+        render json: {
+          data: {
+            total_credits_imported: summary.total_credits_imported,
+            total_amount_imported:  summary.total_amount_imported,
+            auto_matched:  { count: summary.auto_matched_count,  amount: summary.auto_matched_amount },
+            needs_review:  { count: summary.needs_review_count,  amount: summary.needs_review_amount },
+            unmatched:     { count: summary.unmatched_count,     amount: summary.unmatched_amount },
+            confirmed:     { count: summary.confirmed_count,     amount: summary.confirmed_amount },
+            duplicates:    { count: summary.duplicates_count },
+            ignored:       { count: summary.ignored_count },
+            recent_imports: summary.recent_imports
+          }
+        }
+      end
+
       # GET /api/v1/bank_transactions?status=suggested&bank_account_id=1
       def index
         txns = policy_scope(BankTransaction)

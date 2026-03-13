@@ -63,7 +63,14 @@ export function OrderLifecycle({
     cancelled: 1, // stuck at submitted
   };
 
-  const currentIdx = stageIndex[status] ?? 0;
+  const currentIdx = (() => {
+    let idx = stageIndex[status] ?? 0;
+    // Invoice and payment stages are not reflected in order.status —
+    // advance the index based on the timestamps computed by the API.
+    if (paidAt) idx = Math.max(idx, 8);
+    else if (invoicedAt) idx = Math.max(idx, 7);
+    return idx;
+  })();
   const isFailed = ["rejected", "cancelled"].includes(status);
 
   return (

@@ -135,8 +135,8 @@ module Payments
 
         new_paid        = (invoice.paid_amount.to_d + allocated).round(2)
         new_outstanding = (invoice.outstanding_amount.to_d - allocated).round(2)
-        # When fully paid always use 'issued'; partial payment uses 'partially_paid'.
-        new_status      = new_outstanding <= 0 ? 'issued' : 'partially_paid'
+        # Correct status: 'paid' when fully settled, 'partially_paid' otherwise.
+        new_status      = new_outstanding <= 0 ? 'paid' : 'partially_paid'
 
         invoice.update_columns(
           paid_amount:        new_paid,

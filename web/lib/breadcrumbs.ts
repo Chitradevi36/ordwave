@@ -13,7 +13,7 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   "/finance":                     { label: "Finance" },
   "/inventory":                   { label: "Inventory" },
   "/insights":                    { label: "Insights" },
-  "/settings":                    { label: "Settings" },
+  // "/settings":                    { label: "Settings" },
   "/customers":                   { label: "Retailers" },
 
   // ── Sales workspace
@@ -72,7 +72,7 @@ const ROUTE_CONFIG: Record<string, { label: string; parent?: string }> = {
   "/insights/beat-performance":   { label: "Beat Performance",   parent: "/insights" },
 
   // ── Settings
-  "/settings/profile":            { label: "Profile",            parent: "/settings" },
+  // "/settings/profile":            { label: "Profile",            parent: "/settings" },
   "/settings/account":            { label: "Account",            parent: "/settings" },
   "/settings/credit-policy":      { label: "Credit Policy",      parent: "/settings" },
   // "/settings/fleet":              { label: "Fleet",              parent: "/settings" },

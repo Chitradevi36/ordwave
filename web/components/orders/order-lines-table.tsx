@@ -10,15 +10,15 @@ export interface OrderLineItem {
   product_name: string;
   product_sku: string;
   hsn_code: string | null;
-  qty: number;
-  unit_price: number;
-  discount_pct: number;
-  gst_rate: number;
-  line_total: number;
+  qty: number | string;
+  unit_price: number | string;
+  discount_pct: number | string;
+  gst_rate: number | string;
+  line_total: number | string;
 }
 
-function fmtINR(n: number) {
-  return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function fmtINR(n: number | string) {
+  return `₹${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export interface OrderLinesTableProps {
@@ -34,13 +34,13 @@ export function OrderLinesTable({
   onEditLine,
   editable = false,
 }: OrderLinesTableProps) {
-  const subtotal = lines.reduce((sum, l) => sum + l.line_total, 0);
+  const subtotal = lines.reduce((sum, l) => sum + Number(l.line_total), 0);
   const totalGst = lines.reduce(
-    (sum, l) => sum + (l.line_total * l.gst_rate) / 100,
+    (sum, l) => sum + (Number(l.line_total) * Number(l.gst_rate)) / 100,
     0
   );
   const totalDiscount = lines.reduce(
-    (sum, l) => sum + ((l.qty * l.unit_price * l.discount_pct) / 100),
+    (sum, l) => sum + ((Number(l.qty) * Number(l.unit_price) * Number(l.discount_pct)) / 100),
     0
   );
 
@@ -100,10 +100,10 @@ export function OrderLinesTable({
                       {fmtINR(line.unit_price)}
                     </td>
                     <td className="px-2 sm:px-3 py-1 sm:py-2 text-right text-text-secondary">
-                      {line.discount_pct > 0 ? `${line.discount_pct}%` : "—"}
+                      {Number(line.discount_pct) > 0 ? `${line.discount_pct}%` : "—"}
                     </td>
                     <td className="px-2 sm:px-3 py-1 sm:py-2 text-right text-text-secondary">
-                      {line.gst_rate}%
+                      {Number(line.gst_rate)}%
                     </td>
                     <td className="px-2 sm:px-3 py-1 sm:py-2 text-right font-semibold text-text-primary">
                       {fmtINR(line.line_total)}

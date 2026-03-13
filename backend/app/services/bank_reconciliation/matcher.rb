@@ -23,6 +23,8 @@ module BankReconciliation
       Rules::ExactRetailerCodeRule,
       Rules::ExactReferenceRule,
       Rules::RetailerAliasAndAmountRule,
+      Rules::ExactAmountCustomerNameRule,
+      Rules::MultiInvoiceSameCustomerRule,
       Rules::ExactAmountSingleOpenInvoiceRule
     ].freeze
 

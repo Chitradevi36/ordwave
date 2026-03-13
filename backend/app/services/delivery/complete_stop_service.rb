@@ -135,6 +135,19 @@ module Delivery
             action:       action,
             changes:      { status: @outcome }
           )
+        elsif @outcome == 'failed' && order.dispatched?
+          # Revert to approved so the order can be re-routed on a new trip.
+          # dispatched → approved is not in TRANSITIONS (no forward path), so
+          # we bypass transition_to! intentionally — same pattern as CancelTripService.
+          order.update!(status: 'approved', dispatched_at: nil)
+          Credit::AuditLogger.log(
+            actor:        @actor,
+            organization: @stop.delivery_trip.organization,
+            auditable:    order,
+            action:       'order_delivery_failed',
+            changes:      { status: 'approved', reverted_reason: 'delivery_failed',
+                            exception_code: @exception_code }
+          )
         end
 
         # 6. Check if whole trip is complete

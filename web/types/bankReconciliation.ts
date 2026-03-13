@@ -18,7 +18,7 @@ export interface BankAccount {
 }
 
 export type ImportStatus = 'uploaded' | 'processing' | 'completed' | 'failed'
-export type ImportSourceType = 'csv' | 'manual' | 'api'
+export type ImportSourceType = 'csv' | 'xlsx' | 'pdf' | 'manual' | 'api'
 
 export interface BankStatementImport {
   id: number
@@ -27,13 +27,13 @@ export interface BankStatementImport {
   bank_account: BankAccount
   source_type: ImportSourceType
   status: ImportStatus
-  original_filename: string
+  file_name: string
   total_rows: number | null
   new_rows: number | null
   duplicate_rows: number | null
   failed_rows: number | null
   error_message: string | null
-  imported_by_id: number
+  uploaded_by_id: number
   created_at: string
   updated_at: string
 }
@@ -124,3 +124,12 @@ export interface PaginatedResponse<T> {
 }
 
 export type TxnTab = 'auto_matched' | 'suggested' | 'unmatched' | 'matched' | 'ignored'
+
+export interface BankDashboard {
+  total_credits_imported: number
+  total_amount_imported: string
+  status_counts: Record<string, number>
+  status_amounts: Record<string, string>
+  duplicates_count: number
+  recent_imports: BankStatementImport[]
+}

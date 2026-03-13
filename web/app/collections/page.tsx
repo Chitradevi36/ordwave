@@ -1,15 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+// Bank reconciliation imports
+import { useBankTransactions } from "@/lib/api/hooks/useBankTransactions";
+import type { BankTransaction, TxnTab, TxnStatus } from "@/types/bankReconciliation";
+import { ReviewDrawer } from "@/components/bank-reconciliation/ReviewDrawer";
+import { ImportScreen } from "@/components/bank-reconciliation/ImportScreen";
+import { Upload, Search, Plus, Download, Wallet, Building2 } from "lucide-react";
 
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { Search, Plus, Download } from "lucide-react";
 import CreatePaymentModal from "@/components/payments/create-payment-modal";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -36,6 +41,29 @@ const STATUS_VARIANT: Record<string, "secondary" | "warning" | "success" | "dang
   confirmed: "success",
   reversed:  "danger",
 };
+
+// ── Bank Reconciliation constants ─────────────────────────────────────────────
+
+const TXN_TABS: { key: TxnTab; label: string; status: TxnStatus }[] = [
+  { key: "auto_matched", label: "Auto Matched", status: "auto_matched" },
+  { key: "suggested",    label: "Needs Review",  status: "suggested"   },
+  { key: "unmatched",    label: "Unmatched",     status: "unmatched"   },
+  { key: "matched",      label: "History",       status: "matched"     },
+  { key: "ignored",      label: "Ignored",       status: "ignored"     },
+];
+
+const TXN_STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "secondary" | "default"> = {
+  auto_matched: "success",
+  suggested:    "warning",
+  unmatched:    "danger",
+  matched:      "default",
+  ignored:      "secondary",
+};
+
+function ScoreBadge({ score }: { score: number }) {
+  const variant = score >= 95 ? "success" : score >= 80 ? "warning" : "danger";
+  return <Badge variant={variant}>{score.toFixed(0)}</Badge>;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,8 +94,19 @@ const fmtDate = (d: string | null) =>
 
 export default function CollectionsPage() {
   const router           = useRouter();
+  const searchParams     = useSearchParams();
   const { token, orgId } = useOrgBranch();
 
+  // Top-level section: "collections" | "bank"
+  const section = searchParams.get("section") === "bank" ? "bank" : "collections";
+  function setSection(s: "collections" | "bank") {
+    const params = new URLSearchParams(searchParams.toString());
+    if (s === "bank") params.set("section", "bank");
+    else params.delete("section");
+    router.replace(`/collections?${params.toString()}`);
+  }
+
+  // ── Collections state ────────────────────────────────────────────────────────
   const [payments, setPayments]     = useState<PaymentSummary[]>([]);
   const [loading, setLoading]       = useState(true);
   const [activeTab, setActiveTab]   = useState("");
@@ -78,6 +117,22 @@ export default function CollectionsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [exporting, setExporting]   = useState(false);
 
+  // ── Bank Reconciliation state ─────────────────────────────────────────────
+  const [activeTxnTab, setActiveTxnTab]   = useState<TxnTab>("suggested");
+  const [txnPage, setTxnPage]             = useState(1);
+  const [selectedTxn, setSelectedTxn]     = useState<BankTransaction | null>(null);
+  const [showImport, setShowImport]       = useState(false);
+
+  const txnStatusParam = TXN_TABS.find((t) => t.key === activeTxnTab)?.status;
+  const { data: txnData, isLoading: txnLoading, mutate: txnMutate } = useBankTransactions({
+    status: txnStatusParam,
+    page:   txnPage,
+    per_page: 25,
+  });
+  const transactions = txnData?.data ?? [];
+  const txnMeta      = txnData?.meta;
+
+  // ── Collections fetch ────────────────────────────────────────────────────────
   const fetchPayments = useCallback(async () => {
     if (!token || !orgId) return;
     setLoading(true);
@@ -136,6 +191,7 @@ export default function CollectionsPage() {
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
+  // ── Collections columns ──────────────────────────────────────────────────────
   const columns: Column<PaymentSummary>[] = [
     {
       key:    "payment_number",
@@ -186,85 +242,259 @@ export default function CollectionsPage() {
     },
   ];
 
+  // ── Bank Reconciliation columns ──────────────────────────────────────────────
+  const txnColumns: Column<BankTransaction>[] = [
+    {
+      key:    "txn_date",
+      header: "Date",
+      render: (_, row) => <span className="whitespace-nowrap text-sm">{fmtDate(row.txn_date)}</span>,
+    },
+    {
+      key:    "narration",
+      header: "Narration",
+      render: (_, row) => (
+        <span className="block max-w-xs truncate text-sm" title={row.narration}>{row.narration}</span>
+      ),
+    },
+    {
+      key:       "amount",
+      header:    "Amount",
+      className: "text-right",
+      render: (_, row) => <span className="font-semibold text-sm">{fmtCurrency(row.amount)}</span>,
+    },
+    {
+      key:    "status",
+      header: "Status",
+      render: (_, row) => (
+        <Badge variant={TXN_STATUS_VARIANT[row.status] ?? "secondary"}>
+          {row.status.replace(/_/g, " ")}
+        </Badge>
+      ),
+    },
+    {
+      key:    "candidates",
+      header: "Suggested Match",
+      render: (_, row) => {
+        const best = row.candidates.find((c) => c.selected);
+        if (!best) return <span className="text-text-secondary">—</span>;
+        return (
+          <div className="text-sm">
+            {best.customer_name && <span className="font-medium">{best.customer_name}</span>}
+            {best.invoice_number && <span className="ml-1 text-text-secondary">· {best.invoice_number}</span>}
+          </div>
+        );
+      },
+    },
+    {
+      key:    "match_score",
+      header: "Score",
+      render: (_, row) => {
+        const best = row.candidates.find((c) => c.selected);
+        if (!best) return <span className="text-text-secondary">—</span>;
+        return <ScoreBadge score={best.score} />;
+      },
+    },
+    {
+      key:    "id",
+      header: "",
+      render: (_, row) => (
+        <Button size="sm" variant="outline"
+          onClick={(e) => { e.stopPropagation(); setSelectedTxn(row); }}
+        >
+          Review
+        </Button>
+      ),
+    },
+  ];
+
   const tabTotal = (key: string) =>
     key === "" ? Object.values(counts).reduce((s, v) => s + v, 0) : (counts[key] ?? 0);
 
   return (
-    <AppShell>
-      <PageHeader
-        title="Payments & Collections"
-        actions={[
-          { label: exporting ? "Exporting…" : "Export CSV", onClick: handleExportCsv, icon: Download, variant: "outline" as const, disabled: exporting },
-          { label: "Record Payment", onClick: () => setShowCreate(true), icon: Plus },
-        ]}
-      />
-
-      {/* Status Tabs */}
-      <div className="flex items-center gap-1 border-b border-border mb-4 overflow-x-auto">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => { setActiveTab(tab.key); setPage(1); }}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === tab.key
-                ? "border-b-2 border-accent text-accent"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            {tab.label}
-            <span className={`inline-flex items-center justify-center rounded-full min-w-[18px] px-1 py-0.5 text-[10px] font-medium ${
-              activeTab === tab.key ? "bg-accent/10 text-accent" : "bg-background-subtle text-text-secondary"
-            }`}>
-              {tabTotal(tab.key)}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Search */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="relative flex-1 min-w-[180px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
-          <Input
-            placeholder="Search payment # or reference..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          />
+    <>
+      <AppShell>
+        {/* Section switcher - elevated prominence */}
+        <div className="bg-background-subtle border-b border-border mb-0">
+          <div className="flex gap-0 overflow-x-auto">
+            {([
+              { key: "collections", label: "Payments & Collections", icon: Wallet },
+              { key: "bank",        label: "Bank Reconciliation",    icon: Building2 },
+            ] as const).map((s) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setSection(s.key)}
+                  className={`flex items-center gap-2 px-6 py-3.5 text-sm font-semibold whitespace-nowrap transition-all border-b-2 group ${
+                    section === s.key
+                      ? "border-accent text-accent"
+                      : "border-transparent text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 transition-colors ${
+                    section === s.key ? "text-accent" : "text-text-secondary group-hover:text-text-primary"
+                  }`} />
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <DataTable
-        columns={columns}
-        data={payments}
-        isLoading={loading}
-        onRowClick={(row) => router.push(`/collections/${row.id}`)}
-        emptyMessage="No payments recorded yet."
-      />
+        {/* ── Collections section ─────────────────────────────────────────────── */}
+        {section === "collections" && (
+          <>
+            <PageHeader
+              title=" "
+              actions={[
+                { label: exporting ? "Exporting…" : "Export CSV", onClick: handleExportCsv, icon: Download, variant: "outline" as const, disabled: exporting },
+                { label: "Record Payment", onClick: () => setShowCreate(true), icon: Plus },
+              ]}
+            />
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-6">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            Previous
-          </Button>
-          <span className="px-3 py-1.5 text-sm text-text-secondary">
-            Page {page} of {totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-            Next
-          </Button>
-        </div>
-      )}
+            {/* Status Tabs - enhanced styling */}
+            <div className="flex items-center gap-1 border-b border-border border-opacity-50 mb-6 pb-0 overflow-x-auto">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => { setActiveTab(tab.key); setPage(1); }}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 ${
+                    activeTab === tab.key
+                      ? "border-accent text-accent shadow-sm"
+                      : "border-transparent text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`inline-flex items-center justify-center rounded-full min-w-[20px] h-5 px-1.5 text-[10px] font-bold transition-all ${
+                    activeTab === tab.key ? "bg-accent text-white" : "bg-background-subtle text-text-secondary"
+                  }`}>
+                    {tabTotal(tab.key)}
+                  </span>
+                </button>
+              ))}
+            </div>
 
-      {/* Create Modal */}
-      {showCreate && (
-        <CreatePaymentModal
-          onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); fetchPayments(); }}
+            {/* Search - enhanced styling */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="relative flex-1 min-w-[180px] max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+                <Input
+                  placeholder="Search payment # or reference..."
+                  className="pl-10 bg-background-subtle border-border focus:bg-background transition-colors"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                />
+              </div>
+            </div>
+
+            {/* Table - enhanced with better styling */}
+            <div className="rounded-lg border border-border overflow-hidden shadow-sm">
+              <DataTable
+                columns={columns}
+                data={payments}
+                isLoading={loading}
+                onRowClick={(row) => router.push(`/collections/${row.id}`)}
+                emptyMessage="No payments recorded yet."
+              />
+            </div>
+
+            {/* Pagination - improved styling */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-3 mt-8 py-4">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  Previous
+                </Button>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-background-subtle">
+                  <span className="text-sm font-medium text-text-primary">{page}</span>
+                  <span className="text-xs text-text-secondary">/</span>
+                  <span className="text-sm text-text-secondary">{totalPages}</span>
+                </div>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                  Next
+                </Button>
+              </div>
+            )}
+
+            {showCreate && (
+              <CreatePaymentModal
+                onClose={() => setShowCreate(false)}
+                onCreated={() => { setShowCreate(false); fetchPayments(); }}
+              />
+            )}
+          </>
+        )}
+
+        {/* ── Bank Reconciliation section ──────────────────────────────────────── */}
+        {section === "bank" && (
+          <>
+            <PageHeader
+              title=" "
+              subtitle="Match incoming bank credits to invoices and customer payments."
+              actions={[
+                { label: "Upload Statement", onClick: () => setShowImport(true), icon: Upload },
+              ]}
+            />
+
+            {/* Txn status tabs - enhanced styling */}
+            <div className="flex gap-1 border-b border-border border-opacity-50 mb-6 pb-0 overflow-x-auto">
+              {TXN_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => { setActiveTxnTab(tab.key); setTxnPage(1); }}
+                  className={`px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 ${
+                    activeTxnTab === tab.key
+                      ? "border-accent text-accent shadow-sm"
+                      : "border-transparent text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="rounded-lg border border-border overflow-hidden shadow-sm">
+              <DataTable
+                columns={txnColumns}
+                data={transactions}
+                isLoading={txnLoading}
+                onRowClick={(row) => setSelectedTxn(row)}
+                emptyMessage="No transactions in this category."
+              />
+            </div>
+
+            {txnMeta && txnMeta.total_pages > 1 && (
+              <div className="flex items-center justify-between mt-8 py-4">
+                <span className="text-sm text-text-secondary">
+                  {txnMeta.total_count} transactions · <span className="font-medium text-text-primary">Page {txnMeta.current_page}</span> of {txnMeta.total_pages}
+                </span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" disabled={txnPage <= 1} onClick={() => setTxnPage((p) => p - 1)}>
+                    Previous
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={txnPage >= txnMeta.total_pages} onClick={() => setTxnPage((p) => p + 1)}>
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </AppShell>
+
+      {/* Bank Reconciliation overlays */}
+      {selectedTxn && (
+        <ReviewDrawer
+          txn={selectedTxn}
+          onClose={() => setSelectedTxn(null)}
+          onSaved={() => { setSelectedTxn(null); txnMutate(); }}
         />
       )}
-    </AppShell>
+      {showImport && (
+        <ImportScreen
+          onClose={() => setShowImport(false)}
+          onImported={() => { setShowImport(false); txnMutate(); }}
+        />
+      )}
+    </>
   );
 }

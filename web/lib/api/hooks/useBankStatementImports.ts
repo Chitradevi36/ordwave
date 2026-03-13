@@ -3,11 +3,19 @@ import type { BankStatementImport, PaginatedResponse } from '@/types/bankReconci
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
+function authHeaders(contentType?: string): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+  const token = localStorage.getItem('auth_token')
+  const orgId = localStorage.getItem('organization_id')
+  return {
+    Authorization: `Bearer ${token ?? ''}`,
+    ...(contentType ? { 'Content-Type': contentType } : {}),
+    ...(orgId ? { 'X-Organization-Id': orgId } : {}),
+  }
+}
+
 async function fetcher<T>(url: string): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
-  const res = await fetch(`${API}${url}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+  const res = await fetch(`${API}${url}`, { headers: authHeaders() })
   if (!res.ok) throw new Error(`API error ${res.status}`)
   return res.json()
 }
@@ -36,14 +44,14 @@ export async function uploadBankStatement(
   bankAccountId: number,
   file: File
 ): Promise<BankStatementImport> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
   const form = new FormData()
   form.append('file', file)
   form.append('bank_account_id', String(bankAccountId))
 
+  // Note: do NOT set Content-Type here — browser sets multipart boundary automatically
   const res = await fetch(`${API}/api/v1/bank_statement_imports`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(),   // includes Authorization + X-Organization-Id
     body: form,
   })
   if (!res.ok) {

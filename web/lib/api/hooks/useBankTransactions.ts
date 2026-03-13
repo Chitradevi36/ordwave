@@ -2,6 +2,7 @@ import useSWR from 'swr'
 import useSWRMutation from 'swr/mutation'
 import type {
   BankTransaction,
+  BankDashboard,
   PaginatedResponse,
   ConfirmMatchPayload,
   MarkAsAdvancePayload,
@@ -9,20 +10,27 @@ import type {
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
+function authHeaders() {
+  if (typeof window === 'undefined') return {}
+  const token = localStorage.getItem('auth_token')
+  const orgId = localStorage.getItem('organization_id')
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    ...(orgId ? { 'X-Organization-Id': orgId } : {}),
+  }
+}
+
 async function fetcher<T>(url: string): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
-  const res = await fetch(`${API}${url}`, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-  })
+  const res = await fetch(`${API}${url}`, { headers: authHeaders() })
   if (!res.ok) throw new Error(`API error ${res.status}`)
   return res.json()
 }
 
 async function poster<T>(url: string, { arg }: { arg: unknown }): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
   const res = await fetch(`${API}${url}`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify(arg),
   })
   if (!res.ok) {
@@ -86,4 +94,11 @@ export function useRetryMatch(txnId: number) {
     `/api/v1/bank_transactions/${txnId}/retry_match`,
     poster
   )
+}
+
+export function useBankDashboard(params: { bank_account_id?: number } = {}) {
+  const qs = params.bank_account_id
+    ? `?bank_account_id=${params.bank_account_id}`
+    : ''
+  return useSWR<BankDashboard>(`/api/v1/bank_transactions/dashboard${qs}`, fetcher)
 }

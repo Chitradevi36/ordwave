@@ -72,9 +72,15 @@ module CreditNotes
           )
 
           # Update invoice paid/outstanding
+          new_outstanding = (invoice.outstanding_amount.to_d - amount).round(2)
+          new_paid        = (invoice.paid_amount.to_d + amount).round(2)
+          new_status      = new_outstanding <= 0 ? 'paid' : 'partially_paid'
+          # Only move forward in status — never downgrade a paid invoice
+          new_status = invoice.status if invoice.paid?
           invoice.update!(
-            paid_amount:        (invoice.paid_amount.to_d + amount).round(2),
-            outstanding_amount: (invoice.outstanding_amount.to_d - amount).round(2)
+            paid_amount:        new_paid,
+            outstanding_amount: new_outstanding,
+            status:             new_status
           )
 
           created_applications << application

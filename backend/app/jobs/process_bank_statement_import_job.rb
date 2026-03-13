@@ -14,22 +14,20 @@ class ProcessBankStatementImportJob < ApplicationJob
     # Set Current context (no user in background — use a system sentinel)
     Current.organization = import.organization
 
-    file_path = ActiveStorage::Blob.service.path_for(import.file.blob.key)
-    result    = BankReconciliation::CsvImportService.call(
-      import:   import,
-      file_path: file_path
-    )
+    blob_path  = ActiveStorage::Blob.service.path_for(import.csv_file.blob.key)
+    dispatcher = BankReconciliation::FileDispatcher.new(import: import, blob_path: blob_path)
+    result     = dispatcher.call
 
     unless result.success?
-      import.mark_failed!(message: result.errors.join("; "))
+      import.mark_failed!(result.errors.join("; "))
       return
     end
 
     import.mark_completed!(
-      new_rows:   result.summary[:new_rows],
+      new_rows:   result.summary[:new],
       duplicates: result.summary[:duplicates],
-      failed:     result.summary[:failed_rows],
-      total:      result.summary[:total_rows]
+      failed:     result.summary[:failed],
+      total:      result.summary[:total]
     )
 
     # Run matcher on each new unmatched transaction in batches
@@ -46,7 +44,7 @@ class ProcessBankStatementImportJob < ApplicationJob
     # Auto-post any transactions that scored >= 95
     auto_post_matched(import)
   rescue StandardError => e
-    import&.mark_failed!(message: e.message)
+    import&.mark_failed!(e.message)
     raise
   end
 

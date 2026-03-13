@@ -82,8 +82,8 @@ module Payments
         new_paid        = (invoice.paid_amount.to_d - alloc.allocated_amount.to_d).round(2)
         new_outstanding = (invoice.outstanding_amount.to_d + alloc.allocated_amount.to_d).round(2)
 
-        # Restore status: if outstanding > 0, it's back to issued
-        restored_status = new_outstanding >= invoice.grand_total ? 'issued' : 'partially_paid'
+        # Restore status: fully outstanding → issued, partially outstanding → partially_paid
+        restored_status = new_outstanding >= invoice.grand_total.to_d ? 'issued' : 'partially_paid'
 
         invoice.update_columns(
           paid_amount:        [new_paid, 0].max,

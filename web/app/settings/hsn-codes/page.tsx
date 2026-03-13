@@ -58,7 +58,8 @@ const GST_RATES = [0, 5, 12, 18, 28] as const;
 // Helpers
 // ---------------------------------------------------------------------------
 function getApiBase() {
-  return process.env.NEXT_PUBLIC_API_URL ?? `${API_URL}/api/v1`;
+  // Strip any trailing /api or /api/v1 from the URL, then always append /api/v1
+  return `${API_URL.replace(/\/api(\/v\d+)?\/?$/, '')}/api/v1`;
 }
 
 function authHeaders(token?: string | null, orgId?: string | null): Record<string, string> {

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Building2, GitBranch, ChevronDown, Check, Search, Plus, User, LogOut,
+  Building2, GitBranch, ChevronDown, Check, Search, Plus, User, LogOut, Bell,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { apiClient } from "@/lib/api/client";
@@ -205,6 +205,14 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
           >
             <User className="h-4 w-4 text-text-secondary" />
             Profile settings
+          </Link>
+          <Link
+            href="/settings/notifications"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-background-subtle transition-colors"
+          >
+            <Bell className="h-4 w-4 text-text-secondary" />
+            Notification settings
           </Link>
           <div className="h-px bg-border mx-2 my-1" />
           <button

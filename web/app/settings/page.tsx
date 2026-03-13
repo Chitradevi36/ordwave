@@ -85,82 +85,6 @@ export default function SettingsPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Account */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <UserCircle className="h-4 w-4 text-accent" />
-              Account
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 p-0 pb-3">
-            <button
-              onClick={() => router.push("/settings/account")}
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
-            >
-              <div>
-                <p className="text-sm font-medium text-text-primary">Profile &amp; Password</p>
-                <p className="text-xs text-text-secondary">Name, phone, and change password</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
-            </button>
-          </CardContent>
-        </Card>
-
-        {/* Organization */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Building2 className="h-4 w-4 text-accent" />
-              Organization
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 p-0 pb-3">
-            <button
-              onClick={() => router.push("/settings/organization")}
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
-            >
-              <div>
-                <p className="text-sm font-medium text-text-primary">Organization Profile &amp; Settings</p>
-                <p className="text-xs text-text-secondary">Name, GSTIN, PAN, timezone, currency</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
-            </button>
-            <button
-              onClick={() => router.push("/settings/organizations")}
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
-            >
-              <div>
-                <p className="text-sm font-medium text-text-primary">Manage Organizations</p>
-                <p className="text-xs text-text-secondary">Switch, add, or configure multiple organizations</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
-            </button>
-          </CardContent>
-        </Card>
-
-        {/* Team */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Users className="h-4 w-4 text-accent" />
-              Team
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 p-0 pb-3">
-            <button
-              onClick={() => router.push("/settings/team")}
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
-            >
-              <div>
-                <p className="text-sm font-medium text-text-primary">Team Members &amp; Invitations</p>
-                <p className="text-xs text-text-secondary">Manage users, roles, and invitations</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
-            </button>
-          </CardContent>
-        </Card>
-
         {/* Invoices */}
         <Card>
           <CardHeader>
@@ -182,29 +106,7 @@ export default function SettingsPage() {
             </button>
           </CardContent>
         </Card>
-
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Bell className="h-4 w-4 text-accent" />
-              Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 p-0 pb-3">
-            <button
-              onClick={() => router.push("/settings/notifications")}
-              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
-            >
-              <div>
-                <p className="text-sm font-medium text-text-primary">Notification Preferences</p>
-                <p className="text-xs text-text-secondary">Email, push, and in-app alert preferences per event</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
-            </button>
-          </CardContent>
-        </Card>
-
+        
         {/* Exports */}
         <Card>
           <CardHeader>
@@ -334,81 +236,13 @@ export default function SettingsPage() {
             </button>
           </CardContent>
         </Card>
-
-        {/* Branch Settings */}
-        <Card className="sm:col-span-2 lg:col-span-3">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <GitBranch className="h-4 w-4 text-accent" />
-              Branch Settings
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="ghost" onClick={() => document.getElementById("branch-import-input")?.click()} disabled={importingBranch}>
-                <Upload className="mr-1.5 h-3.5 w-3.5" /> {importingBranch ? "Importing…" : "Import CSV"}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowAddBranch(true)}>
-                <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Branch
-              </Button>
-            </div>
-          </CardHeader>
-
-          {/* Hidden file input */}
-          <input id="branch-import-input" type="file" accept=".csv" className="sr-only" onChange={handleBulkImportBranches} />
-
-          <CardContent className="grid gap-1 p-0 pb-3 sm:grid-cols-2 lg:grid-cols-3">
-            {isLoading ? (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            ) : branches.length === 0 ? (
-              <div className="col-span-full px-4 py-6 text-center">
-                <GitBranch className="mx-auto mb-2 h-8 w-8 text-text-secondary/40" />
-                <p className="text-sm font-medium text-text-primary">No branches yet</p>
-                <p className="mt-0.5 text-xs text-text-secondary">Add your first branch to get started.</p>
-                <Button size="sm" variant="outline" className="mt-3" onClick={() => setShowAddBranch(true)}>
-                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Branch
-                </Button>
-              </div>
-            ) : (
-              branches.map((branch) => (
-                <button
-                  key={branch.id}
-                  onClick={() => router.push(`/settings/branches/${branch.id}`)}
-                  className="flex items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-text-primary">{branch.name}</p>
-                    <p className="text-xs text-text-secondary">
-                      {branch.code}{branch.city ? `  ${branch.city}` : ""}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
-                </button>
-              ))
-            )}
-          </CardContent>
-          {/* Import feedback + sample download */}
-          <div className="flex items-center gap-3 px-4 pb-3">
-            <a href="/samples/sample_branches.csv" download className="text-xs text-accent hover:underline">
-              Download sample CSV
-            </a>
-            {branchImportMsg && (
-              <span className={`text-xs font-medium ${
-                branchImportMsg.type === "success" ? "text-success" : "text-danger"
-              }`}>
-                {branchImportMsg.text}
-              </span>
-            )}
-          </div>
-        </Card>
       </div>
 
-      <AddBranchModal
+      {/* <AddBranchModal
         open={showAddBranch}
         onClose={() => setShowAddBranch(false)}
         onCreated={() => { refetchBranches(); setShowAddBranch(false); }}
-      />
+      /> */}
 
       <AddOrganizationModal
         open={showAddOrg}
