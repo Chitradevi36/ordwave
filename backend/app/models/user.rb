@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  PLANS = %w[starter growth enterprise].freeze
+  PLANS = %w[free starter pro].freeze
 
   # Devise modules
   devise :database_authenticatable, :recoverable, :rememberable, :trackable,

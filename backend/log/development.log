@@ -322671,6 +322671,61 @@ Initializing the Sentry background worker with 8 threads
 Shutting down background worker
 [Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
 Initializing the Sentry background worker with 8 threads
+<<<<<<< HEAD
   [1m[36mSalesOrder Load (2.0ms)[0m  [1m[34mSELECT "sales_orders".* FROM "sales_orders" ORDER BY "sales_orders"."id" DESC LIMIT $1[0m  [["LIMIT", 1]]
   [1m[36mSalesOrder Load (0.8ms)[0m  [1m[34mSELECT "sales_orders".* FROM "sales_orders" ORDER BY "sales_orders"."id" DESC LIMIT $1[0m  [["LIMIT", 2]]
   [1m[36mSalesOrder Load (0.7ms)[0m  [1m[34mSELECT "sales_orders".* FROM "sales_orders" WHERE "sales_orders"."id" = $1 LIMIT $2[0m  [["id", 26], ["LIMIT", 1]]
+=======
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[35m (2.0ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (13.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to AddBillingFieldsToOrganizations (20260311000017)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (65.9ms)[0m  [1m[35mALTER TABLE "organizations" ADD "billing_status" character varying DEFAULT 'inactive' NOT NULL[0m
+  [1m[35m (0.6ms)[0m  [1m[35mALTER TABLE "organizations" ADD "razorpay_customer_id" character varying[0m
+  [1m[35m (9.1ms)[0m  [1m[35mALTER TABLE "organizations" ADD "current_period_end" timestamp(6)[0m
+  [1m[35m (0.4ms)[0m  [1m[35mALTER TABLE "organizations" ADD "trial_ends_at" timestamp(6)[0m
+  [1m[35m (25.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_organizations_on_razorpay_customer_id" ON "organizations" ("razorpay_customer_id") WHERE razorpay_customer_id IS NOT NULL[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE INDEX "index_organizations_on_billing_status" ON "organizations" ("billing_status")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.7ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000017') RETURNING "version"[0m
+  [1m[36mTRANSACTION (9.1ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateSubscriptions (20260311000018)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (87.6ms)[0m  [1m[35mCREATE TABLE "subscriptions" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "plan" character varying NOT NULL, "status" character varying DEFAULT 'pending' NOT NULL, "razorpay_subscription_id" character varying, "razorpay_plan_id" character varying, "quantity" integer DEFAULT 1 NOT NULL, "current_period_start" timestamp(6), "current_period_end" timestamp(6), "trial_ends_at" timestamp(6), "cancelled_at" timestamp(6), "ends_at" timestamp(6), "metadata" jsonb DEFAULT '{}' NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_364213cc3e"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+)[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_subscriptions_on_organization_id" ON "subscriptions" ("organization_id")[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_subscriptions_on_razorpay_subscription_id" ON "subscriptions" ("razorpay_subscription_id") WHERE razorpay_subscription_id IS NOT NULL[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_subscriptions_on_status" ON "subscriptions" ("status")[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE INDEX "index_subscriptions_on_plan" ON "subscriptions" ("plan")[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_subscriptions_on_organization_id_and_status" ON "subscriptions" ("organization_id", "status")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000018') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT[0m
+Migrating to CreateBillingEvents (20260311000019)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (7.1ms)[0m  [1m[35mCREATE TABLE "billing_events" ("id" bigserial primary key, "organization_id" bigint NOT NULL, "subscription_id" bigint, "event_type" character varying NOT NULL, "razorpay_event_id" character varying, "payload" jsonb DEFAULT '{}' NOT NULL, "processed_at" timestamp(6), "error_message" text, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_33eeb6389d"
+FOREIGN KEY ("organization_id")
+  REFERENCES "organizations" ("id")
+, CONSTRAINT "fk_rails_0d18b0d264"
+FOREIGN KEY ("subscription_id")
+  REFERENCES "subscriptions" ("id")
+)[0m
+  [1m[35m (3.0ms)[0m  [1m[35mCREATE INDEX "index_billing_events_on_organization_id" ON "billing_events" ("organization_id")[0m
+  [1m[35m (1.9ms)[0m  [1m[35mCREATE INDEX "index_billing_events_on_subscription_id" ON "billing_events" ("subscription_id")[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_billing_events_on_razorpay_event_id" ON "billing_events" ("razorpay_event_id") WHERE razorpay_event_id IS NOT NULL[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE INDEX "index_billing_events_on_event_type" ON "billing_events" ("event_type")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_billing_events_on_processed_at" ON "billing_events" ("processed_at")[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_billing_events_on_organization_id_and_event_type" ON "billing_events" ("organization_id", "event_type")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260311000019') RETURNING "version"[0m
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.6ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker
+>>>>>>> 1ea2151836acce4071e001c7bc5b18d853b493d4

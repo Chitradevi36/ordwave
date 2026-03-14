@@ -236,6 +236,28 @@ export default function SettingsPage() {
             </button>
           </CardContent>
         </Card>
+
+        {/* Billing */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Receipt className="h-4 w-4 text-accent" />
+              Billing &amp; Subscription
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 p-0 pb-3">
+            <button
+              onClick={() => router.push("/settings/billing")}
+              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-background-subtle transition-colors"
+            >
+              <div>
+                <p className="text-sm font-medium text-text-primary">Subscription &amp; Plans</p>
+                <p className="text-xs text-text-secondary">Manage your plan, view usage limits, and access payment history</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-text-secondary shrink-0" />
+            </button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* <AddBranchModal

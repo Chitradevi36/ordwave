@@ -8,6 +8,7 @@
   - [invoicing, 3]   # auto-invoice generation from delivery stops
   - [default,   2]   # most background jobs
   - [low,       1]   # exports, report generation, beat scheduling
+  - [billing,   2]   # billing lifecycle jobs
 
 # Dead job retention
 :dead_max_jobs: 10_000
@@ -45,3 +46,15 @@
     class: 'BatchRiskRecomputeJob'
     queue: low
     description: 'Refresh retailer risk snapshots for all active retailers'
+
+  billing_past_due_expiry:
+    cron: '0 1 * * *'           # 1 AM daily
+    class: 'Billing::PastDueExpiryJob'
+    queue: billing
+    description: 'Downgrade orgs whose payment grace period has expired'
+
+  billing_past_due_reminder:
+    cron: '0 10 * * *'          # 10 AM daily
+    class: 'Billing::PastDueReminderJob'
+    queue: billing
+    description: 'Send payment reminder to orgs in past_due billing status'

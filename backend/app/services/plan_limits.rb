@@ -3,9 +3,9 @@
 # source of truth when limits are adjusted / a billing provider is integrated.
 #
 # Plans (mirrors User::PLANS / Organization::PLANS):
-#   starter    — free / trial tier
-#   growth     — mid-market paid
-#   enterprise — custom / unlimited
+#   free     — permanent free tier (1 branch, 3 users, 100 orders/month)
+#   starter  — ₹1,499/month  (3 branches, 15 users, unlimited orders)
+#   pro      — ₹3,999/month  (unlimited branches, unlimited users, all features)
 #
 # Usage:
 #   limits = PlanLimits.for(current_organization)
@@ -16,28 +16,36 @@
 class PlanLimits
   # ── Plan definitions ────────────────────────────────────────────────────────
   LIMITS = {
-    "starter" => {
-      max_branches:        1,
-      max_active_users:    5,
+    "free" => {
+      max_branches:         1,
+      max_active_users:     3,
+      max_orders_per_month: 100,
+      max_products:         500,
       features: %w[].freeze
     },
-    "growth" => {
-      max_branches:        5,
-      max_active_users:    25,
-      features: %w[exports advanced_analytics].freeze
+    "starter" => {
+      max_branches:         3,
+      max_active_users:     15,
+      max_orders_per_month: Float::INFINITY,
+      max_products:         Float::INFINITY,
+      features: %w[exports api_access].freeze
     },
-    "enterprise" => {
-      max_branches:        Float::INFINITY,
-      max_active_users:    Float::INFINITY,
-      features: %w[exports advanced_analytics webhooks custom_roles].freeze
+    "pro" => {
+      max_branches:         Float::INFINITY,
+      max_active_users:     Float::INFINITY,
+      max_orders_per_month: Float::INFINITY,
+      max_products:         Float::INFINITY,
+      features: %w[exports api_access advanced_analytics webhooks custom_roles priority_support].freeze
     }
   }.freeze
 
   FEATURE_LABELS = {
     "exports"            => "Data exports",
+    "api_access"         => "API access",
     "advanced_analytics" => "Advanced analytics",
     "webhooks"           => "Webhooks",
-    "custom_roles"       => "Custom roles"
+    "custom_roles"       => "Custom roles",
+    "priority_support"   => "Priority support"
   }.freeze
 
   class PlanLimitError < StandardError
@@ -59,8 +67,8 @@ class PlanLimits
 
   def initialize(organization)
     @organization = organization
-    @plan         = organization.plan.presence || "starter"
-    @config       = LIMITS.fetch(@plan, LIMITS["starter"])
+    @plan         = organization.plan.presence || "free"
+    @config       = LIMITS.fetch(@plan, LIMITS["free"])
   end
 
   # ── Branch limit ─────────────────────────────────────────────────────────────
@@ -121,18 +129,22 @@ class PlanLimits
   def summary
     max_b = @config[:max_branches]
     max_u = @config[:max_active_users]
+    max_o = @config[:max_orders_per_month]
+    max_p = @config[:max_products]
     {
-      plan:             @plan,
-      max_branches:     max_b == Float::INFINITY ? nil : max_b,
-      max_active_users: max_u == Float::INFINITY ? nil : max_u,
-      features:         @config[:features]
+      plan:                  @plan,
+      max_branches:          max_b == Float::INFINITY ? nil : max_b,
+      max_active_users:      max_u == Float::INFINITY ? nil : max_u,
+      max_orders_per_month:  max_o == Float::INFINITY ? nil : max_o,
+      max_products:          max_p == Float::INFINITY ? nil : max_p,
+      features:              @config[:features]
     }
   end
 
   private
 
   def next_plan
-    plans = User::PLANS  # ["starter", "growth", "enterprise"]
+    plans = User::PLANS  # ["free", "starter", "pro"]
     idx   = plans.index(@plan)
     idx && idx < plans.length - 1 ? plans[idx + 1] : nil
   end

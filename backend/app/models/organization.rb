@@ -23,6 +23,12 @@ class Organization < ApplicationRecord
   has_many :accounting_sync_records,  dependent: :destroy
   has_many :accounting_export_files,  dependent: :destroy
 
+  # Billing
+  has_many :subscriptions,  dependent: :destroy
+  has_many :billing_events, dependent: :destroy
+
+  BILLING_STATUSES = %w[inactive trialing active past_due cancelled].freeze
+
   # Validations
   validates :name,          presence: true, length: { maximum: 100 }
   validates :slug,          presence: true, uniqueness: true,
@@ -43,6 +49,30 @@ class Organization < ApplicationRecord
   def update_setting!(key, value)
     settings_will_change!
     update!(settings: settings.merge(key.to_s => value))
+  end
+
+  # ── Billing helpers ────────────────────────────────────────────────────────
+
+  def billing_active?
+    billing_status == "active"
+  end
+
+  def billing_past_due?
+    billing_status == "past_due"
+  end
+
+  def on_free_plan?
+    plan == "free"
+  end
+
+  def current_subscription
+    subscriptions.current.first
+  end
+
+  def activate_billing!(plan_name: nil)
+    update_attrs = { billing_status: "active" }
+    update_attrs[:plan] = plan_name if plan_name.present?
+    update!(update_attrs)
   end
 
   # Callbacks
