@@ -14,6 +14,8 @@ class Organization < ApplicationRecord
   has_many :prepayment_skus,    dependent: :destroy
   has_many :audit_logs,         dependent: :destroy
   has_many :customers,          dependent: :destroy
+  has_many :sales_orders,       dependent: :destroy
+  has_many :sales_invoices,     dependent: :destroy
   has_one  :credit_policy,      dependent: :destroy
 
   # Accounting

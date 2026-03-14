@@ -31,6 +31,11 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "warning" | "succ
   approved: "success",
   rejected: "danger",
   cancelled: "outline",
+  dispatched: "default",
+  delivered: "success",
+  partial_delivery: "warning",
+  invoiced: "success",
+  paid: "success",
 };
 
 function fmtINR(n: number) {

@@ -17,6 +17,7 @@ class SalesInvoice < ApplicationRecord
   has_many :payments,               through: :payment_allocations
   has_many :bank_transaction_matches, dependent: :nullify
   has_many :expected_payment_references, dependent: :destroy
+  has_many :ewaybill_requests, dependent: :destroy
 
   accepts_nested_attributes_for :lines, allow_destroy: false
 

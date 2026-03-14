@@ -322669,3 +322669,8 @@ Shutting down background worker
 [Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
 Initializing the Sentry background worker with 8 threads
 Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+  [1m[36mSalesOrder Load (2.0ms)[0m  [1m[34mSELECT "sales_orders".* FROM "sales_orders" ORDER BY "sales_orders"."id" DESC LIMIT $1[0m  [["LIMIT", 1]]
+  [1m[36mSalesOrder Load (0.8ms)[0m  [1m[34mSELECT "sales_orders".* FROM "sales_orders" ORDER BY "sales_orders"."id" DESC LIMIT $1[0m  [["LIMIT", 2]]
+  [1m[36mSalesOrder Load (0.7ms)[0m  [1m[34mSELECT "sales_orders".* FROM "sales_orders" WHERE "sales_orders"."id" = $1 LIMIT $2[0m  [["id", 26], ["LIMIT", 1]]

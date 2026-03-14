@@ -6,12 +6,13 @@ module Api
 
       INVOICE_INCLUDES = [
         :branch, :customer, :sales_order, :created_by,
+        :ewaybill_requests,
         { lines: :product }
       ].freeze
 
       # ── GET /api/v1/sales_invoices ─────────────────────────────────────────
       def index
-        base  = policy_scope(SalesInvoice).includes(:branch, :customer, :sales_order)
+        base  = policy_scope(SalesInvoice).includes(:branch, :customer, :sales_order, :ewaybill_requests)
         base  = apply_filters(base)
         items = paginate(base.recent)
 
@@ -70,8 +71,14 @@ module Api
                   :generate_from_order?
 
         # Build invoiceable lines from delivered - already-invoiced qty
+        # For orders in 'delivered' status: if delivered_qty is untracked (0), assume full qty was delivered
         delivered_lines = order.lines.map do |sol|
-          invoiceable_qty = sol.delivered_qty.to_d - sol.invoiced_qty.to_d
+          available_qty = if sol.delivered_qty.zero? && order.delivered?
+                            sol.qty.to_d
+                          else
+                            sol.delivered_qty.to_d
+                          end
+          invoiceable_qty = available_qty - sol.invoiced_qty.to_d
           next if invoiceable_qty <= 0
 
           # Allow caller to pass explicit quantities (partial re-invoice)
@@ -124,8 +131,14 @@ module Api
           return render_errors(['Stop does not belong to your organization'], status: :forbidden)
         end
 
+        # For orders in 'delivered' status: if delivered_qty is untracked (0), assume full qty was delivered
         delivered_lines = order.lines.map do |sol|
-          invoiceable_qty = sol.delivered_qty.to_d - sol.invoiced_qty.to_d
+          available_qty = if sol.delivered_qty.zero? && order.delivered?
+                            sol.qty.to_d
+                          else
+                            sol.delivered_qty.to_d
+                          end
+          invoiceable_qty = available_qty - sol.invoiced_qty.to_d
           next if invoiceable_qty <= 0
 
           {
@@ -179,8 +192,14 @@ module Api
                                      .includes(:lines, :customer, :branch)
 
         orders.each do |order|
+          # For orders in 'delivered' status: if delivered_qty is untracked (0), assume full qty was delivered
           delivered_lines = order.lines.map do |sol|
-            invoiceable_qty = sol.delivered_qty.to_d - sol.invoiced_qty.to_d
+            available_qty = if sol.delivered_qty.zero? && order.delivered?
+                              sol.qty.to_d
+                            else
+                              sol.delivered_qty.to_d
+                            end
+            invoiceable_qty = available_qty - sol.invoiced_qty.to_d
             next if invoiceable_qty <= 0
 
             {

@@ -1,0 +1,41 @@
+version: '3.9'
+
+# Local development services only — not for production.
+# Usage:
+#   docker-compose up -d        # start all services in background
+#   docker-compose up -d redis  # start only Redis
+#   docker-compose down         # stop and remove containers
+
+services:
+  redis:
+    image: redis:7.2-alpine
+    container_name: orderlane_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Optional: Uncomment to run Postgres locally via Docker as well
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: orderlane_db
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER:-orderlane}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+  #     POSTGRES_DB: ${POSTGRES_DB:-orderlane_development}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pg_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+volumes:
+  redis_data:
+  # pg_data:

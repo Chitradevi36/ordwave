@@ -308,14 +308,14 @@ export default function OrderDetailPage() {
   const handleGenerateInvoice = async () => {
     setActing(true);
     try {
-      const res  = await fetch(`${API_URL}/api/v1/sales_invoices/generate_from_order`, {
+      const res  = await fetch(`${API_URL}/api/v1/sales_invoices/generate_from_order/${params.id}`, {
         method:  "POST",
         headers: {
           Authorization:       `Bearer ${token}`,
           "X-Organization-Id": orgId!,
           "Content-Type":      "application/json",
         },
-        body: JSON.stringify({ order_id: params.id }),
+        body: JSON.stringify({}),
       });
       const json = await res.json();
       if (res.ok) {
@@ -424,6 +424,9 @@ export default function OrderDetailPage() {
 
   if (!order) return null;
 
+  // Compute display status based on invoice/payment state
+  const displayStatus = payment ? "paid" : invoice ? "invoiced" : order.status;
+
   const tabItems = [
     {
       value: "overview",
@@ -504,7 +507,7 @@ export default function OrderDetailPage() {
           invoiceAmount={invoice?.total_amount}
           paidAmount={payment?.amount}
           outstandingAmount={invoice ? Number(invoice.total_amount) - (payment?.amount ?? 0) : undefined}
-          onGenerateInvoice={handleGenerateInvoice}
+          onGenerateInvoice={order.status === "delivered" && !invoice ? handleGenerateInvoice : undefined}
           onRecordPayment={() => {}}
           onCreateCreditNote={() => {}}
           onViewInvoice={() => invoice && router.push(`/sales-invoices/${invoice.id}`)}
@@ -550,7 +553,7 @@ export default function OrderDetailPage() {
         orderNumber={order.order_number}
         customerName={order.customer.name}
         branch={order.branch.name}
-        status={order.status}
+        status={displayStatus}
         creditDecision={order.credit_decision}
         totalAmount={order.total_amount}
         actions={[
@@ -589,7 +592,7 @@ export default function OrderDetailPage() {
             variant: "outline" as const,
           }] : []),
           // Cancel
-          ...(!["rejected", "cancelled"].includes(order.status) ? [{
+          ...(!(["rejected", "cancelled", "delivered"].includes(order.status)) ? [{
             label: "Cancel Order",
             onClick: () => { setCancelReason(""); setCancelModal(true); },
             variant: "outline" as const,
@@ -600,8 +603,8 @@ export default function OrderDetailPage() {
             onClick: () => router.push(`/delivery/new?order_id=${order.id}`),
             variant: "outline" as const,
           }] : []),
-          // Generate Invoice (delivered)
-          ...(order.status === "delivered" ? [{
+          // Generate Invoice (delivered + not yet invoiced)
+          ...(order.status === "delivered" && !order.invoiced_at ? [{
             label: "Generate Invoice",
             onClick: handleGenerateInvoice,
           }] : []),
