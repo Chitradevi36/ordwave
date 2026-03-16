@@ -77,6 +77,14 @@ module Invoice
         write_audit!(invoice)
 
         Result.new(success?: true, invoice: invoice.reload, errors: [])
+      end.tap do |result|
+        if result.success?
+          # Enqueue email notification asynchronously
+          SendInvoiceEmailJob.perform_later(result.invoice.id)
+          
+          # Enqueue SMS notification asynchronously (if enabled)
+          SendInvoiceSmsJob.perform_later(result.invoice.id) if FEATURES.invoice_sms_notifications_enabled?(@branch.organization)
+        end
       end
     rescue ActiveRecord::RecordInvalid => e
       Result.new(success?: false, invoice: nil, errors: [e.message])

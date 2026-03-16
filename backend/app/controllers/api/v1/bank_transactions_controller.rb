@@ -5,6 +5,30 @@ module Api
     class BankTransactionsController < BaseController
       before_action :set_txn, only: %i[show confirm_match mark_as_advance ignore retry_match]
 
+      # GET /api/v1/bank_transactions/queue
+      # Returns unmatched transaction queue with AI suggestions for quick assignment
+      def queue
+        result = BankReconciliation::UnmatchedQueueQuery.call(
+          organization:    Current.organization,
+          bank_account_id: params[:bank_account_id],
+          date_from:       params[:date_from].present? ? Date.parse(params[:date_from]) : nil,
+          date_to:         params[:date_to].present? ? Date.parse(params[:date_to]) : nil,
+          limit:           params[:limit] || 25
+        )
+
+        render json: {
+          data: {
+            transactions: result.transactions,
+            meta: {
+              total_unmatched: result.total_count,
+              total_amount_unmatched: result.total_amount,
+              oldest_unmatched_date: result.oldest_date,
+              urgency_flag: result.total_count > 50 # If more than 50 unmatched, flag as urgent
+            }
+          }
+        }
+      end
+
       # GET /api/v1/bank_transactions/dashboard
       def dashboard
         summary = BankReconciliation::ImportDashboardQuery.call(
@@ -48,6 +72,30 @@ module Api
       def show
         authorize @txn
         render json: @txn, serializer: BankTransactionSerializer
+      end
+
+      # POST /api/v1/bank_transactions/:id/quick_assign
+      # Executes one of the suggested actions from the unmatched queue
+      # Body: { action_type: 'mark_as_advance', customer_id: X }
+      def quick_assign
+        authorize @txn, :confirm_match? # Same permissions as confirm_match
+
+        result = BankReconciliation::QuickAssignService.call(
+          bank_transaction: @txn,
+          action_type: params.require(:action_type),
+          customer_id: params[:customer_id],
+          invoice_id: params[:invoice_id],
+          user: Current.user
+        )
+
+        if result.success?
+          render json: {
+            data: @txn.reload,
+            message: result.message
+          }, serializer: BankTransactionSerializer
+        else
+          render json: { errors: result.errors }, status: :unprocessable_entity
+        end
       end
 
       # POST /api/v1/bank_transactions/:id/confirm_match

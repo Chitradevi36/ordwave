@@ -156,6 +156,59 @@ module Api
         render_success({ steps: events, order_number: @order.order_number })
       end
 
+      # GET /api/v1/sales_orders/:id/trip_assignment_suggestions
+      # Returns suggested trip assignments for an approved order
+      def trip_assignment_suggestions
+        authorize @order, :show?
+        
+        return render_errors(['Order must be in approved status']) unless @order.approved?
+        return render_errors(['Order already assigned to a trip']) if @order.trip_stop.present?
+
+        suggester = Delivery::TripAssignmentSuggester.new(
+          sales_order: @order,
+          organization: Current.organization,
+          trip_date: params[:trip_date].present? ? Date.parse(params[:trip_date]) : Date.today
+        )
+
+        suggestions = suggester.get_suggestions
+
+        render json: {
+          data: suggestions
+        }
+      end
+
+      # POST /api/v1/sales_orders/:id/assign_to_trip
+      # Assigns order to a trip (existing or new)
+      # Body: { trip_id: X } OR { driver_id: Y, trip_date: 'YYYY-MM-DD' }
+      def assign_to_trip
+        authorize @order, :approve?
+
+        trip_date = params[:trip_date].present? ? Date.parse(params[:trip_date]) : Date.today
+
+        result = Delivery::AssignToTripService.call(
+          order: @order,
+          trip_id: params[:trip_id],
+          driver_id: params[:driver_id],
+          user: Current.user,
+          trip_date: trip_date
+        )
+
+        if result.success?
+          render_success({
+            data: serialize_order(result.trip_stop.sales_order, detailed: true),
+            trip: {
+              id: result.trip.id,
+              trip_number: result.trip.trip_number,
+              status: result.trip.status,
+              driver_name: result.trip.driver&.name
+            },
+            message: result.message
+          })
+        else
+          render_errors(result.errors)
+        end
+      end
+
       # POST /api/v1/sales_orders
       def create
         authorize SalesOrder.new(organization: current_organization), :create?

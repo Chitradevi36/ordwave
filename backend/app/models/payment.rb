@@ -1,6 +1,7 @@
 class Payment < ApplicationRecord
-  PAYMENT_MODES = %w[cash bank_transfer upi cheque neft rtgs adjustment tally_sync].freeze
+  PAYMENT_MODES = %w[cash bank_transfer upi cheque neft rtgs adjustment tally_sync razorpay].freeze
   STATUSES      = %w[draft confirmed reversed].freeze
+  EXTERNAL_STATUSES = %w[authorized captured failed declined].freeze
 
   # ── Associations ─────────────────────────────────────────────────────────────
   belongs_to :organization
@@ -40,12 +41,19 @@ class Payment < ApplicationRecord
   scope :search_query,  ->(q) {
     where('payment_number ILIKE :q OR reference_number ILIKE :q', q: "%#{q}%")
   }
+  scope :external_payments, -> { where(payment_mode: 'razorpay') }
+  scope :successful_external, -> { where(external_payment_status: %w[captured authorized]) }
 
   # ── Status helpers ────────────────────────────────────────────────────────────
   STATUSES.each { |s| define_method(:"#{s}?") { status == s } }
 
   def confirmable? = draft?
   def reversible?  = confirmed?
+  def external_payment? = payment_mode == 'razorpay'
+  def external_successful? = external_payment_status.in?(%w[captured authorized])
+
+  # ── Callbacks ────────────────────────────────────────────────────────────────
+  after_save :sync_to_invoices!, if: :saved_change_to_status?
 
   # ── Number generation ─────────────────────────────────────────────────────────
   # Format: PAY-{BRANCH_CODE}-{YYYYMM}-{0001}
@@ -57,9 +65,87 @@ class Payment < ApplicationRecord
     "#{prefix}-#{(max_seq + 1).to_s.rjust(4, '0')}"
   end
 
+  # ── Razorpay Payment Processing ──────────────────────────────────────────────
+  def self.from_razorpay_webhook(payload, organization, invoice: nil)
+    # payload = Razorpay payment object from webhook
+    # { id, amount, status, method, customer, ... }
+    
+    external_id = payload['id']
+    amount_paise = payload['amount'].to_i
+    amount_rupees = amount_paise.to_f / 100
+
+    payment = find_or_initialize_by(
+      organization: organization,
+      external_payment_id: external_id
+    )
+
+    payment.assign_attributes(
+      amount:                  amount_rupees,
+      payment_mode:            'razorpay',
+      status:                  'draft',  # Will confirm after we link to invoice
+      received_date:           Date.current,
+      external_payload_data:   payload,
+      external_payment_status: parse_razorpay_status(payload['status']),
+      external_confirmed_at:   payload['captured_at'] ? Time.at(payload['captured_at']) : nil
+    )
+
+    # If invoice provided, auto-allocate payment to invoice
+    if payment.save! && invoice.present?
+      PaymentAllocation.create!(
+        payment:        payment,
+        sales_invoice:  invoice,
+        allocated_amount: amount_rupees
+      )
+    end
+
+    payment
+  end
+
+  def self.parse_razorpay_status(razorpay_status)
+    case razorpay_status
+    when 'authorized' then 'authorized'
+    when 'captured' then 'captured'
+    when 'failed', 'refunded' then 'failed'
+    when 'declined' then 'declined'
+    else 'unknown'
+    end
+  end
+
+  # Mark payment as manually confirmed (e.g., admin approval of external payment)
+  def confirm_external_payment!
+    return false unless external_payment? && external_successful?
+    
+    update!(
+      status: 'confirmed',
+      external_confirmed_at: Time.current
+    )
+  end
+
   # ── Helpers ───────────────────────────────────────────────────────────────────
   def overallocated?
     allocated_amount > amount
+  end
+
+  # ── Payment → Invoice Sync ───────────────────────────────────────────────────
+  # When payment is confirmed, update linked invoice paid_at status
+  def sync_to_invoices!
+    return unless confirmed? && external_successful?
+
+    sales_invoices.each do |invoice|
+      next if invoice.paid_at.present?  # Already marked paid
+
+      invoice.update!(
+        paid_at: external_confirmed_at || Time.current,
+        status:  'paid'
+      )
+
+      # Cascade: if all invoice lines paid, mark order as paid
+      if invoice.sales_order.present?
+        if invoice.sales_order.invoices.all? { |inv| inv.paid_at.present? }
+          invoice.sales_order.update!(status: 'paid')
+        end
+      end
+    end
   end
 
   # ── Accounting Sync Triggers ────────────────────────────────────────────────

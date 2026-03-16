@@ -6,6 +6,7 @@ class DeliveryTripPolicy < ApplicationPolicy
   def dispatch? = manager_above? && within_org?
   def cancel?   = manager_above? && within_org?
   def complete? = member? && within_org?
+  def optimize? = manager_above? && within_org?  # Route optimization
 
   class Scope < ApplicationPolicy::Scope
     def resolve

@@ -2,7 +2,7 @@ module Api
   module V1
     class DeliveryTripsController < BaseController
       before_action :require_organization!
-      before_action :set_trip, only: %i[show update dispatch_trip cancel summary]
+      before_action :set_trip, only: %i[show update dispatch_trip cancel summary optimize]
 
       TRIP_INCLUDES = [
         :vehicle, :driver, :branch,
@@ -128,6 +128,31 @@ module Api
           render_success(serialize_trip(result[:trip]))
         else
           render_errors(result[:errors])
+        end
+      end
+
+      # POST /api/v1/delivery_trips/:id/optimize
+      def optimize
+        authorize @trip, :optimize?
+
+        result = Delivery::RouteOptimizationService.call(
+          delivery_trip: @trip,
+          actor: current_user
+        )
+
+        if result.success?
+          render_success({
+            trip: serialize_trip(@trip.reload),
+            optimization_metrics: {
+              original_distance_km: (result.original_distance / 1000).round(2),
+              optimized_distance_km: (result.optimized_distance / 1000).round(2),
+              distance_saved_km: result.distance_saved_km,
+              time_saved_min: result.time_saved_min,
+              stops_count: @trip.stops.count
+            }
+          })
+        else
+          render_errors(result.errors)
         end
       end
 

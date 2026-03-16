@@ -2,7 +2,7 @@ module Api
   module V1
     class PaymentsController < BaseController
       before_action :require_organization!
-      before_action :set_payment, only: %i[show confirm reverse]
+      before_action :set_payment, only: %i[show confirm reverse retry]
 
       PAYMENT_INCLUDES = [
         :branch, :customer, :created_by,
@@ -98,6 +98,20 @@ module Api
           render_success(serialize_payment(result.payment, detailed: true))
         else
           render_errors(result.errors)
+        end
+      end
+
+      # ── POST /api/v1/payments/:id/retry ────────────────────────────────────
+      def retry
+        @payment = policy_scope(Payment).find(params[:id])
+        authorize @payment, :retry?
+
+        result = Payment::RetryService.new(@payment, 'customer').call
+
+        if result[:success]
+          render_success(result)
+        else
+          render_errors(result[:message])
         end
       end
 

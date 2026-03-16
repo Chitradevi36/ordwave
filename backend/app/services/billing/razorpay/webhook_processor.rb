@@ -18,6 +18,8 @@ module Billing
         subscription.cancelled
         subscription.halted
         payment.failed
+        payment.captured
+        payment.authorized
       ].freeze
 
       Result = Struct.new(:success?, :error, :skipped, keyword_init: true)
@@ -132,7 +134,9 @@ module Billing
         "subscription.activated" => EventHandlers::SubscriptionActivated,
         "subscription.cancelled" => EventHandlers::SubscriptionCancelled,
         "subscription.halted"    => EventHandlers::PaymentFailed,   # halted = repeated failures
-        "payment.failed"         => EventHandlers::PaymentFailed
+        "payment.failed"         => EventHandlers::PaymentFailed,
+        "payment.captured"       => EventHandlers::PaymentCaptured,  # Invoice payment received
+        "payment.authorized"     => EventHandlers::PaymentCaptured   # Pre-authorized payment
       }.freeze
     end
   end

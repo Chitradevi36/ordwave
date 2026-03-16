@@ -1,0 +1,90 @@
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+  <!-- Header - Success -->
+  <div style="background-color: #dcfce7; padding: 20px; border-bottom: 3px solid #22c55e; border-left: 5px solid #22c55e;">
+    <h2 style="margin: 0; color: #166534;">
+      ✅ Payment Successful
+    </h2>
+    <p style="margin: 5px 0 0 0; color: #166534; font-size: 14px;">
+      Invoice <%= @invoice.invoice_number %> has been paid (Retry #<%= @retry_number %>)
+    </p>
+  </div>
+
+  <!-- Main Content -->
+  <div style="padding: 30px;">
+    <p style="color: #18181b;">Hi <%= @customer.name %>,</p>
+
+    <p style="color: #16a34a; line-height: 1.6; margin: 20px 0; font-size: 16px; font-weight: 600;">
+      Great news! Your payment has been successfully processed on retry attempt #<%= @retry_number %>.
+    </p>
+
+    <!-- Invoice Details -->
+    <div style="margin: 30px 0; border: 1px solid #22c55e; border-radius: 4px; padding: 20px; background-color: #f0fdf4;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px;">
+        <div>
+          <p style="color: #166534; margin: 0 0 5px 0;">Invoice Number</p>
+          <p style="margin: 0; font-weight: 600;"><%= @invoice.invoice_number %></p>
+        </div>
+        <div>
+          <p style="color: #166534; margin: 0 0 5px 0;">Amount Paid</p>
+          <p style="margin: 0; font-weight: 600; color: #16a34a;">₹<%= number_with_precision(@invoice.total_amount, precision: 2) %></p>
+        </div>
+        <div>
+          <p style="color: #166534; margin: 0 0 5px 0;">Payment Status</p>
+          <p style="margin: 0; font-weight: 600; color: #16a34a;">Confirmed</p>
+        </div>
+        <div>
+          <p style="color: #166534; margin: 0 0 5px 0;">Payment Date</p>
+          <p style="margin: 0; font-weight: 600;"><%= @payment.external_confirmed_at&.strftime('%b %d, %Y') || Date.current.strftime('%b %d, %Y') %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div style="margin: 30px 0; padding: 20px; background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 4px;">
+      <p style="color: #166534; margin: 0; line-height: 1.6;">
+        Your account is <strong>fully active</strong> and all restrictions have been lifted. 
+        You can now place new orders and access all features as normal.
+      </p>
+    </div>
+
+    <!-- Next Steps -->
+    <div style="margin: 30px 0;">
+      <h3 style="color: #18181b; margin: 0 0 15px 0; font-size: 14px;">What's Next?</h3>
+      <p style="color: #555; line-height: 1.6;">
+        Your invoice has been marked as paid in our system. A receipt has been attached to this email 
+        for your records.
+      </p>
+      <p style="color: #555; line-height: 1.6; margin-top: 10px;">
+        You can now resume normal operations:
+      </p>
+      <ul style="color: #555; margin: 15px 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">Place new orders</li>
+        <li style="margin-bottom: 8px;">Access your dashboard and reports</li>
+        <li style="margin-bottom: 8px;">Manage deliveries and inventory</li>
+        <li>Use all platform features</li>
+      </ul>
+    </div>
+
+    <!-- CTA - View Invoice -->
+    <div style="margin: 30px 0; text-align: center;">
+      <a href="<%= invoice_url(@invoice) %>" style="display: inline-block; padding: 12px 36px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 14px;">
+        View Invoice & Receipt
+      </a>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+    <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
+      <strong>Thank you!</strong><br>
+      We appreciate your prompt payment. If you have any questions about this transaction, 
+      please reach out to <%= ENV['MAILER_FROM_ADDRESS'] %>
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color: #f0fdf4; padding: 20px; text-align: center; border-top: 1px solid #dcfce7; font-size: 12px; color: #166534;">
+    <p style="margin: 0;">
+      © <%= Date.current.year %> <%= @organization.name %>. All rights reserved.
+    </p>
+  </div>
+</div>
