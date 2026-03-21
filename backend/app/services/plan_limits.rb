@@ -18,17 +18,24 @@ class PlanLimits
   LIMITS = {
     "free" => {
       max_branches:         1,
-      max_active_users:     3,
-      max_orders_per_month: 100,
+      max_active_users:     1,
+      max_orders_per_month: 50,
       max_products:         500,
       features: %w[].freeze
     },
     "starter" => {
       max_branches:         3,
-      max_active_users:     15,
-      max_orders_per_month: Float::INFINITY,
+      max_active_users:     3,
+      max_orders_per_month: 100,
       max_products:         Float::INFINITY,
       features: %w[exports api_access].freeze
+    },
+    "growth" => {
+      max_branches:         5,
+      max_active_users:     10,
+      max_orders_per_month: 500,
+      max_products:         Float::INFINITY,
+      features: %w[exports api_access advanced_analytics webhooks].freeze
     },
     "pro" => {
       max_branches:         Float::INFINITY,

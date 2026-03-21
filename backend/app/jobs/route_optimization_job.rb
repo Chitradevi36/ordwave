@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-class RouteOptimizationJob
-  include Sidekiq::Job
+class RouteOptimizationJob < ApplicationJob
   sidekiq_options queue: 'operations', retry: 3
 
   # Asynchronously optimizes route for a delivery trip

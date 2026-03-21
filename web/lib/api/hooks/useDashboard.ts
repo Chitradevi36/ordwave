@@ -76,16 +76,23 @@ export interface DashboardData {
 }
 
 // ── Primary hook: single fetch for the entire dashboard ──────────────────────
+import { useOrgBranch } from "@/lib/org-branch-context";
+
 export function useDashboardData() {
+  const { orgId, branchId } = useOrgBranch();
+  
   return useQuery<DashboardData>({
-    queryKey: ["dashboard"],
+    queryKey: ["dashboard", { orgId, branchId }],
     queryFn: async () => {
+      const params = branchId ? { branch_id: branchId } : {};
       const { data } = await apiClient.get<{ data: DashboardData }>(
-        "/api/v1/dashboard"
+        "/api/v1/dashboard",
+        { params }
       );
       return data.data;
     },
     staleTime: 3 * 60 * 1_000, // 3 min — matches backend cache TTL
+    enabled: !!orgId,
   });
 }
 

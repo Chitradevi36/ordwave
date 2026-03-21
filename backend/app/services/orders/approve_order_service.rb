@@ -101,7 +101,7 @@ module Orders
         actor:  @actor
       )
 
-      if shortage_result.success? && shortage_result.has_shortage?
+      if shortage_result.errors.empty? && shortage_result.has_shortage?
         # Shortages detected - block approval and return shortage details
         {
           ok:               false,

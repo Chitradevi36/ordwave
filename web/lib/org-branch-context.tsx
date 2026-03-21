@@ -92,12 +92,15 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const t   = localStorage.getItem("auth_token")    ?? "";
     const org = localStorage.getItem("organization_id") ?? "";
+    const br  = localStorage.getItem("branch_id")      ?? "";
     // Guard against stale "undefined" / "null" strings written by older code
     const validToken = t && t !== "null" && t !== "undefined" ? t : "";
     const validOrg = /^\d+$/.test(org) ? org : "";
+    const validBr = /^\d*$/.test(br) ? br : ""; // allow empty string for "All Branches"
     
     setToken(validToken);
     setOrgIdState(validOrg);
+    setBranchId(validBr);
     
     // If we have organization_id from localStorage, ensure it's in the context
     // This is important for the post-onboarding redirect scenario
@@ -175,6 +178,7 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (orgId && orgId !== prevOrgIdRef.current) {
       prevOrgIdRef.current = orgId;
+      localStorage.setItem("branch_id", ""); // reset branch in storage
       setBranchId(""); // reset branch on org change
       fetchBranches(token, orgId);
     }
@@ -183,10 +187,12 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   // ── Switch helpers ────────────────────────────────────────────────────────
   const switchOrg = useCallback((id: string) => {
     localStorage.setItem("organization_id", id);
+    localStorage.setItem("branch_id", ""); // reset branch when changing org
     setOrgIdState(id);
   }, []);
 
   const switchBranch = useCallback((id: string) => {
+    localStorage.setItem("branch_id", id);
     setBranchId(id);
   }, []);
 
