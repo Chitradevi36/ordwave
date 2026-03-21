@@ -33,14 +33,18 @@ export interface OrdersResponse {
 }
 
 // ── Hook ────────────────────────────────────────────────────────────────────
+import { useOrgBranch } from "@/lib/org-branch-context";
+
 export function useOrders(params: OrdersParams = {}) {
+  const { orgId, branchId } = useOrgBranch();
   const { page = 1, per_page = 5, sort = "created_at_desc", status } = params;
 
   return useQuery<OrdersResponse>({
-    queryKey: ["orders", { page, per_page, sort, status }],
+    queryKey: ["orders", { page, per_page, sort, status, orgId, branchId }],
     queryFn: async () => {
       const queryParams: Record<string, string | number> = { page, per_page, sort };
       if (status) queryParams.status = status;
+      if (branchId) queryParams.branch_id = branchId;
 
       const { data } = await apiClient.get<OrdersResponse>("/api/v1/sales_orders", {
         params: queryParams,
@@ -49,5 +53,6 @@ export function useOrders(params: OrdersParams = {}) {
     },
     staleTime: 30_000,
     placeholderData: (prev) => prev,
+    enabled: !!orgId,
   });
 }

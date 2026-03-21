@@ -78,7 +78,7 @@ module Api
           name:          uom.name,
           symbol:        uom.symbol,
           active:        uom.active,
-          product_count: uom.products.not_deleted.count,
+          product_count: uom.products.not_deleted.where(organization_id: current_organization.id).count,
           created_at:    uom.created_at,
           updated_at:    uom.updated_at
         }

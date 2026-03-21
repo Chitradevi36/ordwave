@@ -34,6 +34,7 @@ interface OrgBranchContextValue {
   branches: Branch[];
   orgsLoading: boolean;
   branchesLoading: boolean;
+  isInitialized: boolean;  // True when initial org/branch fetch is complete
   switchOrg: (id: string) => void;
   switchBranch: (id: string) => void;
   refetchOrganizations: () => void;
@@ -50,6 +51,7 @@ const OrgBranchContext = createContext<OrgBranchContextValue>({
   branches: [],
   orgsLoading: false,
   branchesLoading: false,
+  isInitialized: false,
   switchOrg: () => {},
   switchBranch: () => {},
   refetchOrganizations: () => {},
@@ -71,9 +73,11 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   const [branches, setBranches]           = useState<Branch[]>([]);
   const [orgsLoading, setOrgsLoading]       = useState(false);
   const [branchesLoading, setBranchesLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Track previous orgId to avoid re-fetching branches unnecessarily
   const prevOrgIdRef = useRef<string>("");
+  const initializedRef = useRef(false);
 
   // ── Clears auth state and redirects to login (called on 401 responses) ──
   const clearAuth = useCallback(() => {
@@ -88,10 +92,22 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const t   = localStorage.getItem("auth_token")    ?? "";
     const org = localStorage.getItem("organization_id") ?? "";
+    const br  = localStorage.getItem("branch_id")      ?? "";
     // Guard against stale "undefined" / "null" strings written by older code
     const validToken = t && t !== "null" && t !== "undefined" ? t : "";
+    const validOrg = /^\d+$/.test(org) ? org : "";
+    const validBr = /^\d*$/.test(br) ? br : ""; // allow empty string for "All Branches"
+    
     setToken(validToken);
-    setOrgIdState(/^\d+$/.test(org) ? org : "");
+    setOrgIdState(validOrg);
+    setBranchId(validBr);
+    
+    // If we have organization_id from localStorage, ensure it's in the context
+    // This is important for the post-onboarding redirect scenario
+    if (validOrg && !orgId) {
+      // Organization ID was just set from localStorage, it will trigger
+      // branch fetching in the next effect
+    }
   }, []);
 
   // ── Fetch organizations ──────────────────────────────────────────────────
@@ -116,9 +132,18 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
           }
           return prev;
         });
+        // Mark as initialized on first successful fetch
+        if (!initializedRef.current) {
+          initializedRef.current = true;
+          setIsInitialized(true);
+        }
       }
     } catch {
-      // silently ignore
+      // silently ignore, but mark as initialized anyway to avoid infinite loading
+      if (!initializedRef.current) {
+        initializedRef.current = true;
+        setIsInitialized(true);
+      }
     } finally {
       setOrgsLoading(false);
     }
@@ -153,6 +178,7 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (orgId && orgId !== prevOrgIdRef.current) {
       prevOrgIdRef.current = orgId;
+      localStorage.setItem("branch_id", ""); // reset branch in storage
       setBranchId(""); // reset branch on org change
       fetchBranches(token, orgId);
     }
@@ -161,10 +187,12 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
   // ── Switch helpers ────────────────────────────────────────────────────────
   const switchOrg = useCallback((id: string) => {
     localStorage.setItem("organization_id", id);
+    localStorage.setItem("branch_id", ""); // reset branch when changing org
     setOrgIdState(id);
   }, []);
 
   const switchBranch = useCallback((id: string) => {
+    localStorage.setItem("branch_id", id);
     setBranchId(id);
   }, []);
 
@@ -186,6 +214,7 @@ export function OrgBranchProvider({ children }: { children: React.ReactNode }) {
         branches,
         orgsLoading,
         branchesLoading,
+        isInitialized,
         switchOrg,
         switchBranch,
         refetchOrganizations,

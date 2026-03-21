@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonics Activity Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --tertiary: #45B7D1;
+            --success: #2ECC71;
+            --warning: #F39C12;
+            --danger: #E74C3C;
+            --light: #F5F7FA;
+            --dark: #2C3E50;
+            --radius: 16px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+            max-height: 90vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header .meta {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .page-card {
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .instruction {
+            background: white;
+            color: var(--dark);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.4;
+            border-left: 4px solid var(--primary);
+        }
+
+        .audio-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        .audio-button:hover {
+            background: #3ab5a5;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .audio-button:active {
+            transform: translateY(0);
+        }
+
+        /* Image Display */
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            max-height: 280px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .option-card {
+            background: white;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .option-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--tertiary);
+        }
+
+        .option-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .option-card.text-only {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .option-card.correct {
+            background: #E8F8F5;
+            border-color: var(--success);
+            color: var(--success);
+            animation: pulse-correct 0.5s;
+        }
+
+        .option-card.incorrect {
+            background: #FADBD8;
+            border-color: var(--danger);
+            color: var(--danger);
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse-correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* Letter Display */
+        .letter-display {
+            font-size: 120px;
+            font-weight: 700;
+            text-align: center;
+            color: var(--primary);
+            margin: 20px 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .letter-info {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 14px;
+            color: var(--dark);
+        }
+
+        /* Word Display */
+        .word-display {
+            font-size: 36px;
+            font-weight: 700;
+            text-align: center;
+            color: var(--dark);
+            margin: 20px 0;
+            font-family: 'Arial', sans-serif;
+            letter-spacing: 4px;
+        }
+
+        .words-inline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 16px 0;
+        }
+
+        .word-button {
+            background: white;
+            border: 2px solid var(--secondary);
+            color: var(--secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .word-button:hover {
+            background: var(--secondary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Fallback Message */
+        .fallback-message {
+            background: #FFF3CD;
+            border: 2px solid var(--warning);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #856404;
+            font-weight: 500;
+        }
+
+        /* Navigation Footer */
+        .footer {
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+        }
+
+        .nav-button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-button.prev {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .nav-button.prev:hover:not(:disabled) {
+            background: #3ab5a5;
+            transform: translateX(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-button.next {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-button.next:hover:not(:disabled) {
+            background: #e55555;
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Debug Panel */
+        .debug-panel {
+            background: #f5f5f5;
+            border-top: 1px solid #ddd;
+            padding: 16px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s;
+        }
+
+        .debug-panel.open {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .debug-toggle {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .debug-toggle:hover {
+            background: #444;
+        }
+
+        .debug-content {
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: #333;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 8px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .letter-display {
+                font-size: 80px;
+            }
+
+            .word-display {
+                font-size: 28px;
+            }
+
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-button {
+                font-size: 14px;
+                padding: 12px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 700px;
+            }
+
+            .main-content {
+                padding: 32px;
+            }
+
+            .options-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Audio element hide */
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="activityType">Activity</h1>
+            <div class="meta">
+                Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+            </div>
+        </div>
+
+        <div class="main-content" id="pageContent">
+            <!-- Page content rendered here -->
+        </div>
+
+        <div class="footer">
+            <button class="nav-button prev" id="prevBtn" onclick="previousPage()">← Previous</button>
+            <button class="nav-button next" id="nextBtn" onclick="nextPage()">Next →</button>
+        </div>
+
+        <div class="debug-panel">
+            <button class="debug-toggle" onclick="toggleDebug()">📊 Show JSON</button>
+            <div class="debug-content" id="debugContent"></div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer"></audio>
+
+    <script>
+        // ============================================================================
+        // ACTIVITY DATA - Replace this object with cleaned JSON
+        // ============================================================================
+        
+        const activityData = {
+            "activity_type": "listen_and_choose",
+            "pages": [
+                {
+                    "page": 1,
+                    "type": "choose_the_object",
+                    "instruction_text": "Tap on the words that begin with /d/.",
+                    "instruction_audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/vo/tap-words-begin-d.mp3",
+                    "options_type": "image",
+                    "options": [
+                        {
+                            "id": "opt1",
+                            "is_correct": true,
+                            "audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/words/dog.mp3",
+                            "image_url": "https://s3.amazonaws.com/bucket/phonics/images/dog.png"
+                        },
+                        {
+                            "id": "opt2",
+                            "is_correct": false,
+                            "audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/words/cat.mp3",
+                            "image_url": "https://s3.amazonaws.com/bucket/phonics/images/cat.png"
+                        },
+                        {
+                            "id": "opt3",
+                            "is_correct": true,
+                            "audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/words/donkey.mp3",
+                            "image_url": "https://s3.amazonaws.com/bucket/phonics/images/donkey.png"
+                        }
+                    ]
+                },
+                {
+                    "page": 2,
+                    "type": "choose_the_object",
+                    "instruction_text": "Tap on the words that begin with /d/.",
+                    "instruction_audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/vo/tap-words-begin-d.mp3",
+                    "options_type": "image",
+                    "options": [
+                        {
+                            "id": "opt1",
+                            "is_correct": true,
+                            "audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/words/dog.mp3",
+                            "image_url": "https://s3.amazonaws.com/bucket/phonics/images/dog.png"
+                        },
+                        {
+                            "id": "opt2",
+                            "is_correct": false,
+                            "audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/words/cat.mp3",
+                            "image_url": "https://s3.amazonaws.com/bucket/phonics/images/cat.png"
+                        },
+                        {
+                            "id": "opt3",
+                            "is_correct": true,
+                            "audio_url": "https://s3.amazonaws.com/bucket/phonics/audio/words/donkey.mp3",
+                            "image_url": "https://s3.amazonaws.com/bucket/phonics/images/donkey.png"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // ============================================================================
+        // STATE
+        // ============================================================================
+        let currentPageIndex = 0;
+        let selectedOptions = {};
+        let showingResults = false;
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        function init() {
+            if (!activityData || !activityData.pages || activityData.pages.length === 0) {
+                console.error('❌ Invalid activity data');
+                document.getElementById('pageContent').innerHTML = '<div class="fallback-message">Invalid activity data. Check console.</div>';
+                return;
+            }
+
+            updatePageCounter();
+            renderPage(currentPageIndex);
+            console.log('✅ Activity initialized with', activityData.pages.length, 'pages');
+        }
+
+        // ============================================================================
+        // PAGE RENDERING
+        // ============================================================================
+        function renderPage(index) {
+            if (index < 0 || index >= activityData.pages.length) return;
+
+            currentPageIndex = index;
+            const page = activityData.pages[index];
+            const contentDiv = document.getElementById('pageContent');
+
+            // Reset state
+            selectedOptions = {};
+            showingResults = false;
+
+            // Render based on page type
+            let html = '<div class="page-card">';
+
+            // Instruction section
+            if (page.instruction_text) {
+                html += `<div class="instruction">${escapeHtml(page.instruction_text)}`;
+                if (page.instruction_audio_url) {
+                    html += `<button class="audio-button" onclick="playAudio('${page.instruction_audio_url}')">🔊 Play Instruction</button>`;
+                }
+                html += '</div>';
+            }
+
+            // Render page based on type
+            const pageType = page.type || 'unknown';
+            console.log(`📖 Rendering page ${index + 1} type: ${pageType}`);
+
+            switch (pageType) {
+                case 'choose_the_object':
+                    html += renderChooseTheObject(page);
+                    break;
+                case 'letter_introduction':
+                    html += renderLetterIntroduction(page);
+                    break;
+                case 'letter_animation':
+                    html += renderLetterAnimation(page);
+                    break;
+                case 'letter_tracing':
+                    html += renderLetterTracing(page);
+                    break;
+                case 'drag_to_match':
+                    html += renderDragToMatch(page);
+                    break;
+                case 'xylophone_drag':
+                    html += renderXylophoneDrag(page);
+                    break;
+                case 'tap_the_correct_object':
+                    html += renderTapTheCorrectObject(page);
+                    break;
+                case 'tap_word_in_story':
+                    html += renderTapWordInStory(page);
+                    break;
+                case 'audio_tap_words':
+                    html += renderAudioTapWords(page);
+                    break;
+                case 'drag_build_word':
+                    html += renderDragBuildWord(page);
+                    break;
+                case 'sound_bubble_decode':
+                    html += renderSoundBubbleDecode(page);
+                    break;
+                case 'word_tracing':
+                    html += renderWordTracing(page);
+                    break;
+                default:
+                    console.warn(`⚠️  Page type not implemented: ${pageType}`);
+                    html += `<div class="fallback-message">Preview not implemented for page type: ${pageType}</div>`;
+            }
+
+            html += '</div>';
+            contentDiv.innerHTML = html;
+
+            // Update page counter and buttons
+            updatePageCounter();
+            updateNavButtons();
+
+            // Show debug info
+            updateDebugPanel(page);
+        }
+
+        // ============================================================================
+        // RENDERER: choose_the_object
+        // ============================================================================
+        function renderChooseTheObject(page) {
+            if (!page.options || page.options.length === 0) {
+                return '<div class="fallback-message">No options provided</div>';
+            }
+
+            let html = '<div class="options-grid">';
+            
+            page.options.forEach((option, idx) => {
+                const optionId = option.id || `opt-${idx}`;
+                const isSelected = selectedOptions[optionId];
+                let cardClass = 'option-card';
+                
+                if (isSelected) {
+                    cardClass += option.is_correct ? ' correct' : ' incorrect';
+                }
+
+                html += `<div class="${cardClass}" onclick="selectOption(this, '${optionId}', ${option.is_correct || false}, '${option.audio_url || ''}')">`;
+
+                if (option.image_url) {
+                    html += `<img src="${option.image_url}" alt="Option ${idx + 1}" onerror="this.style.display='none'">`;
+                }
+
+                if (option.display_text) {
+                    html += `<div>${escapeHtml(option.display_text)}</div>`;
+                }
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: letter_introduction
+        // ============================================================================
+        function renderLetterIntroduction(page) {
+            let html = '';
+
+            if (page.letters && page.letters.letter) {
+                html += `<div class="letter-display">${escapeHtml(page.letters.letter)}</div>`;
+                if (page.letters.case) {
+                    html += `<div class="letter-info">Case: ${escapeHtml(page.letters.case)}</div>`;
+                }
+                if (page.letters.letter_audio) {
+                    html += `<button class="audio-button" onclick="playAudio('${page.letters.letter_audio}')">🔊 Phonics</button>`;
+                }
+            }
+
+            if (page.example_image) {
+                html += `<div class="image-container"><img src="${page.example_image}" alt="Example" onerror="this.style.display='none'"></div>`;
+            }
+
+            if (page.voiceover_sequence && Array.isArray(page.voiceover_sequence)) {
+                html += '<div style="margin-top: 16px;">';
+                page.voiceover_sequence.forEach((step, idx) => {
+                    html += `<div class="letter-info" style="margin: 8px 0;">`;
+                    html += `<strong>Step ${step.step || idx + 1}:</strong> ${escapeHtml(step.text || '')}`;
+                    if (step.audio_url) {
+                        html += `<button class="audio-button" onclick="playAudio('${step.audio_url}')">🔊</button>`;
+                    }
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: letter_animation
+        // ============================================================================
+        function renderLetterAnimation(page) {
+            let html = '';
+
+            if (page.letters && page.letters.letter) {
+                html += `<div class="letter-display">${escapeHtml(page.letters.letter)}</div>`;
+                if (page.letters.case) {
+                    html += `<div class="letter-info">Case: ${escapeHtml(page.letters.case)}</div>`;
+                }
+            }
+
+            html += '<div style="text-align: center; padding: 20px; background: #fff9e6; border-radius: 12px; margin-top: 16px;">';
+            html += '<p style="color: #666; font-size: 14px;">Animation placeholder - implementation requires canvas or SVG</p>';
+            html += '</div>';
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: letter_tracing
+        // ============================================================================
+        function renderLetterTracing(page) {
+            let html = '';
+
+            if (page.letters && page.letters.letter) {
+                html += `<div class="letter-display">${escapeHtml(page.letters.letter)}</div>`;
+            }
+
+            html += '<div style="text-align: center; padding: 20px; background: #e6f7ff; border-radius: 12px; margin-top: 16px;">';
+            html += '<p style="color: #0066cc; font-weight: 600;">Letter Tracing Practice</p>';
+            if (page.guardrail_attempts) {
+                html += `<p style="color: #666; font-size: 13px;">Guardrail attempts: ${page.guardrail_attempts}</p>`;
+            }
+            if (page.freehand_attempts) {
+                html += `<p style="color: #666; font-size: 13px;">Freehand attempts: ${page.freehand_attempts}</p>`;
+            }
+            html += '<p style="color: #999; font-size: 12px;">Interactive tracing requires touch/mouse canvas implementation</p>';
+            html += '</div>';
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: drag_to_match
+        // ============================================================================
+        function renderDragToMatch(page) {
+            let html = '';
+
+            if (page.letter && page.letter.letter) {
+                html += `<div style="text-align: center; margin: 16px 0;">`;
+                html += `<div class="letter-display">${escapeHtml(page.letter.letter)}</div>`;
+                if (page.letter.letter_audio) {
+                    html += `<button class="audio-button" onclick="playAudio('${page.letter.letter_audio}')">🔊 Listen</button>`;
+                }
+                html += `</div>`;
+            }
+
+            if (page.options && page.options.length > 0) {
+                html += '<div class="options-grid">';
+                page.options.forEach((option, idx) => {
+                    const optionId = option.id || `opt-${idx}`;
+                    const isSelected = selectedOptions[optionId];
+                    let cardClass = 'option-card text-only';
+                    
+                    if (isSelected) {
+                        cardClass += option.is_correct ? ' correct' : ' incorrect';
+                    }
+
+                    html += `<div class="${cardClass}" onclick="selectOption(this, '${optionId}', ${option.is_correct || false}, '${option.audio_url || ''}')">`;
+                    html += escapeHtml(option.letter || '?');
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: xylophone_drag
+        // ============================================================================
+        function renderXylophoneDrag(page) {
+            if (!page.options || page.options.length === 0) {
+                return '<div class="fallback-message">No phoneme options provided</div>';
+            }
+
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFD93D', '#6BCB77', '#FF85A2'];
+            let html = '<div class="options-grid">';
+
+            page.options.forEach((option, idx) => {
+                const color = colors[idx % colors.length];
+                html += `<div class="option-card" style="background: ${color}; color: white; font-size: 32px; border-color: ${color};" onclick="playAudio('${option.audio_url || ''}')">${escapeHtml(option.phoneme || '?')}</div>`;
+            });
+
+            html += '</div>';
+
+            if (page.on_complete && page.on_complete.voiceover_audio) {
+                html += `<div style="text-align: center; margin-top: 16px;">`;
+                html += `<button class="audio-button" onclick="playAudio('${page.on_complete.voiceover_audio}')">🎉 Completion Sound</button>`;
+                html += `</div>`;
+            }
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: tap_the_correct_object
+        // ============================================================================
+        function renderTapTheCorrectObject(page) {
+            if (!page.options || page.options.length === 0) {
+                return '<div class="fallback-message">No balloon options provided</div>';
+            }
+
+            let html = '<div class="options-grid">';
+            const seenIds = new Set();
+
+            page.options.forEach((option, idx) => {
+                const optionId = option.id || `opt-${idx}`;
+                
+                // Skip duplicate IDs
+                if (seenIds.has(optionId)) {
+                    console.warn(`⚠️  Duplicate option ID: ${optionId}`);
+                    return;
+                }
+                seenIds.add(optionId);
+
+                const isSelected = selectedOptions[optionId];
+                let cardClass = 'option-card';
+                
+                if (isSelected) {
+                    cardClass += option.is_correct ? ' correct' : ' incorrect';
+                }
+
+                html += `<div class="${cardClass}" onclick="selectOption(this, '${optionId}', ${option.is_correct || false}, '${option.audio_url || ''}')">`;
+
+                if (option.image_url) {
+                    html += `<img src="${option.image_url}" alt="Balloon" onerror="this.style.display='none'" style="height: 80px; width: 100%; object-fit: cover;">`;
+                }
+
+                if (option.display_text) {
+                    html += `<div style="font-size: 20px; margin-top: 4px;">${escapeHtml(option.display_text)}</div>`;
+                }
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: tap_word_in_story
+        // ============================================================================
+        function renderTapWordInStory(page) {
+            let html = '';
+
+            if (page.image_url) {
+                html += `<div class="image-container"><img src="${page.image_url}" alt="Story" onerror="this.style.display='none'"></div>`;
+            }
+
+            if (page.sentence) {
+                html += `<div style="text-align: center; font-size: 18px; font-weight: 600; margin: 16px 0; color: #333;">${escapeHtml(page.sentence)}</div>`;
+            }
+
+            if (page.words && Array.isArray(page.words)) {
+                html += '<div class="words-inline">';
+                page.words.forEach((word, idx) => {
+                    const isSelected = selectedOptions[`word-${idx}`];
+                    let btnClass = 'word-button';
+                    if (isSelected) {
+                        btnClass += word.is_correct ? ' correct' : ' incorrect';
+                    }
+                    html += `<button class="${btnClass}" style="border-color: ${isSelected && !word.is_correct ? '#e74c3c' : isSelected && word.is_correct ? '#27ae60' : '#4ecdc4'}; background: ${isSelected && !word.is_correct ? '#fadbd8' : isSelected && word.is_correct ? '#d5f4e6' : 'white'}; color: ${isSelected && !word.is_correct ? '#c0392b' : isSelected && word.is_correct ? '#27ae60' : '#4ecdc4'};" onclick="selectWordOption(this, 'word-${idx}', ${word.is_correct || false}, '${word.audio_url || ''}')">${escapeHtml(word.word || '')}</button>`;
+                });
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: audio_tap_words
+        // ============================================================================
+        function renderAudioTapWords(page) {
+            if (!page.options || page.options.length === 0) {
+                return '<div class="fallback-message">No word options provided</div>';
+            }
+
+            let html = '<div class="options-grid">';
+
+            page.options.forEach((option, idx) => {
+                const optionId = option.id || `opt-${idx}`;
+                const isSelected = selectedOptions[optionId];
+                let cardClass = 'option-card';
+                
+                if (isSelected) {
+                    // For audio_tap_words, we don't mark correctness visually
+                    cardClass += ' correct';
+                }
+
+                html += `<div class="${cardClass}" onclick="playAudio('${option.audio_url || ''}'); selectOption(this, '${optionId}', true, '${option.audio_url || ''}')">`;
+
+                if (option.image_url) {
+                    html += `<img src="${option.image_url}" alt="${option.word}" onerror="this.style.display='none'">`;
+                }
+
+                html += `<div style="font-weight: 600; margin-top: 8px;">${escapeHtml(option.word || '')}</div>`;
+                html += '</div>';
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: drag_build_word
+        // ============================================================================
+        function renderDragBuildWord(page) {
+            let html = '';
+
+            if (page.image_url) {
+                html += `<div class="image-container"><img src="${page.image_url}" alt="Target word" onerror="this.style.display='none'"></div>`;
+            }
+
+            if (page.target_word) {
+                html += `<div class="word-display">${escapeHtml(page.target_word)}</div>`;
+            }
+
+            if (page.options && Array.isArray(page.options)) {
+                html += '<div style="text-align: center; margin: 16px 0;">';
+                html += '<p style="color: #666; font-size: 13px; margin-bottom: 12px;">Letter tiles to arrange:</p>';
+                html += '<div class="options-grid">';
+                
+                // Sort by position_order for visual feedback
+                const sorted = [...page.options].sort((a, b) => (a.position_order || 0) - (b.position_order || 0));
+                
+                sorted.forEach((option, idx) => {
+                    html += `<div class="option-card text-only" style="font-size: 32px; cursor: grab;" onclick="playAudio('${option.audio_url || ''}')">${escapeHtml(option.letter || '?')}</div>`;
+                });
+
+                html += '</div>';
+                html += '</div>';
+            }
+
+            if (page.on_complete && page.on_complete.voiceover_audio) {
+                html += `<div style="text-align: center; margin-top: 12px;">`;
+                html += `<button class="audio-button" onclick="playAudio('${page.on_complete.voiceover_audio}')">🎉 Completion Audio</button>`;
+                html += `</div>`;
+            }
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: sound_bubble_decode
+        // ============================================================================
+        function renderSoundBubbleDecode(page) {
+            let html = '';
+
+            if (page.image_url) {
+                html += `<div class="image-container"><img src="${page.image_url}" alt="Word" onerror="this.style.display='none'"></div>`;
+            }
+
+            if (page.word) {
+                html += `<div class="word-display">${escapeHtml(page.word)}</div>`;
+            }
+
+            if (page.options && Array.isArray(page.options)) {
+                const sorted = [...page.options].sort((a, b) => (a.position_order || 0) - (b.position_order || 0));
+                html += '<div class="options-grid">';
+                
+                sorted.forEach((option, idx) => {
+                    html += `<div class="option-card" onclick="playAudio('${option.audio_url || ''}')" style="position: relative;">`;
+                    html += `<div style="font-size: 28px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(option.letter || '?')}</div>`;
+                    html += `<div style="font-size: 11px; color: #999;">Position ${option.position_order || idx + 1}</div>`;
+                    html += '</div>';
+                });
+
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        // ============================================================================
+        // RENDERER: word_tracing
+        // ============================================================================
+        function renderWordTracing(page) {
+            let html = '';
+
+            if (page.word) {
+                html += `<div class="word-display">${escapeHtml(page.word)}</div>`;
+            }
+
+            html += '<div style="text-align: center; padding: 20px; background: #f0e6ff; border-radius: 12px; margin-top: 16px;">';
+            html += '<p style="color: #5a3f99; font-weight: 600;">Word Tracing Practice</p>';
+            html += '<p style="color: #999; font-size: 12px;">Interactive tracing requires canvas implementation</p>';
+            html += '</div>';
+
+            if (page.options && Array.isArray(page.options)) {
+                html += '<div style="margin-top: 16px;">';
+                page.options.forEach((option, idx) => {
+                    html += `<div class="letter-info" style="display: inline-block; margin: 4px;">`;
+                    html += `<strong>${escapeHtml(option.letter || '?')}</strong>`;
+                    if (option.audio_url) {
+                        html += `<button class="audio-button" onclick="playAudio('${option.audio_url}')">🔊</button>`;
+                    }
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+
+            return html;
+        }
+
+        // ============================================================================
+        // UTILITY FUNCTIONS
+        // ============================================================================
+        function selectOption(element, optionId, isCorrect, audioUrl) {
+            selectedOptions[optionId] = true;
+            
+            // Update visual state
+            element.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+            // Play audio if available
+            if (audioUrl) {
+                playAudio(audioUrl);
+            }
+
+            console.log(`Option ${optionId}: ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
+        }
+
+        function selectWordOption(element, wordId, isCorrect, audioUrl) {
+            selectedOptions[wordId] = true;
+            element.style.borderColor = isCorrect ? '#27ae60' : '#e74c3c';
+            element.style.background = isCorrect ? '#d5f4e6' : '#fadbd8';
+            element.style.color = isCorrect ? '#27ae60' : '#c0392b';
+
+            if (audioUrl) {
+                playAudio(audioUrl);
+            }
+        }
+
+        function playAudio(url) {
+            if (!url) {
+                console.warn('⚠️  No audio URL provided');
+                return;
+            }
+
+            const audio = document.getElementById('audioPlayer');
+            audio.src = url;
+            audio.play().catch(err => console.warn('⚠️  Audio play failed:', err));
+        }
+
+        function updatePageCounter() {
+            document.getElementById('currentPage').textContent = currentPageIndex + 1;
+            document.getElementById('totalPages').textContent = activityData.pages.length;
+            document.getElementById('activityType').textContent = activityData.activity_type || 'Activity';
+        }
+
+        function updateNavButtons() {
+            document.getElementById('prevBtn').disabled = currentPageIndex === 0;
+            document.getElementById('nextBtn').disabled = currentPageIndex === activityData.pages.length - 1;
+        }
+
+        function previousPage() {
+            if (currentPageIndex > 0) {
+                renderPage(currentPageIndex - 1);
+            }
+        }
+
+        function nextPage() {
+            if (currentPageIndex < activityData.pages.length - 1) {
+                renderPage(currentPageIndex + 1);
+            }
+        }
+
+        function updateDebugPanel(page) {
+            const debugContent = document.getElementById('debugContent');
+            debugContent.textContent = JSON.stringify(page, null, 2);
+        }
+
+        function toggleDebug() {
+            document.querySelector('.debug-panel').classList.toggle('open');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

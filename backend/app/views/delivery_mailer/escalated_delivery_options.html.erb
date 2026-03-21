@@ -1,0 +1,75 @@
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div style="background: #f5f5f5; padding: 20px; text-align: center;">
+    <h1 style="color: #d32f2f; margin: 0; font-size: 20px;">Your Delivery Failed</h1>
+  </div>
+
+  <div style="padding: 30px; background: white;">
+    <p style="color: #666; margin: 0 0 20px 0;">
+      Hi <strong><%= @customer.name %></strong>,
+    </p>
+
+    <p style="color: #666; margin: 0 0 20px 0;">
+      Unfortunately, our delivery team was unable to deliver your order 
+      <strong><%= @order.order_number %></strong> despite multiple attempts.
+    </p>
+
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+      <p style="color: #856404; margin: 0; font-weight: 600;">
+        We need your help! Please choose one of the options below:
+      </p>
+    </div>
+
+    <div style="margin: 30px 0;">
+      <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+        <p style="margin: 0 0 10px 0; font-weight: 600; color: #333;">
+          Option 1: Get a Refund
+        </p>
+        <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+          We'll refund ₹<%= number_with_precision(@order.total_amount, precision: 0) %> to your original payment method within 3-5 business days.
+        </p>
+        <a href="<%= refund_link %>" style="display: inline-block; padding: 8px 20px; background: #d32f2f; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">
+          Accept Refund
+        </a>
+      </div>
+
+      <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+        <p style="margin: 0 0 10px 0; font-weight: 600; color: #333;">
+          Option 2: Reschedule Delivery
+        </p>
+        <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+          We'll try again in 3 days (<strong><%= (Date.current + 3.days).strftime('%A, %B %d') %></strong>). Same items, same price.
+        </p>
+        <a href="<%= reschedule_link %>" style="display: inline-block; padding: 8px 20px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">
+          Reschedule
+        </a>
+      </div>
+
+      <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+        <p style="margin: 0 0 10px 0; font-weight: 600; color: #333;">
+          Option 3: Pick Up Order
+        </p>
+        <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+          Pick up your order at our warehouse (<%= @organization.primary_branch&.address || @organization.name %>). 
+          Call to arrange a time: <%= @organization.phone %>
+        </p>
+        <a href="<%= pickup_link %>" style="display: inline-block; padding: 8px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">
+          Schedule Pickup
+        </a>
+      </div>
+    </div>
+
+    <p style="color: #999; margin: 30px 0 0 0; font-size: 12px; text-align: center;">
+      <strong>Didn't see an option you like?</strong> 
+      <a href="mailto:<%= @organization.support_email %>" style="color: #0066cc; text-decoration: none;">
+        Contact our support team
+      </a>
+      and we'll work something out.
+    </p>
+  </div>
+
+  <div style="padding: 20px; background: #f9f9f9; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee;">
+    <p style="margin: 0;">
+      © <%= Date.current.year %> <%= @organization.name %>. All rights reserved.
+    </p>
+  </div>
+</div>

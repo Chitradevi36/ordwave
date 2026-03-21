@@ -81,6 +81,15 @@ module Delivery
       errors = validate
       return { ok: false, stop: @stop, errors: errors } if errors.any?
 
+      # Gate check: Enforce geofence validation BEFORE marking delivered
+      # If geofence enforcement enabled and delivery is far from address, require supervisor override
+      if FEATURES.geofence_validation_enabled?(@actor&.organization) &&
+         @latitude.present? && @longitude.present? &&
+         @outcome.in?(%w[delivered partial_delivery])
+        geofence_error = check_geofence_requirements
+        return { ok: false, stop: @stop, errors: [geofence_error] } if geofence_error.present?
+      end
+
       ActiveRecord::Base.transaction do
         # 1. Update stop
         # `completed_at` from device is used for audit-trail accuracy (offline submissions)
@@ -96,7 +105,11 @@ module Delivery
           idempotency_key: @idempotency_key
         )
 
-        # 2. Create proof record
+        # 1a. Record geofence validation result for audit trail
+        if @latitude.present? && @longitude.present? && @outcome.in?(%w[delivered partial_delivery])
+          record_geofence_validation
+        end
+
         proof = DeliveryProof.new(trip_stop: @stop, proof_type: @proof_type)
         proof.override_reason = @override_reason if @proof_type == 'override'
         proof.overridden_by   = @actor           if @proof_type == 'override'
@@ -172,6 +185,17 @@ module Delivery
             Delivery::AutoCreateReturnService.call(stop: @stop.reload, actor: @actor)
           end
 
+          # Auto-reschedule failed deliveries
+          if @outcome == 'failed'
+            Delivery::FailedDeliveryRescheduleService.call(
+              trip_stop: @stop.reload,
+              exception_code: @exception_code,
+              notes: @delivery_notes,
+              auto_reschedule: true,
+              actor: @actor
+            )
+          end
+
           notify_on_stop_completion
         end
       end
@@ -240,12 +264,189 @@ module Delivery
     def auto_invoice_enabled?
       return false unless @outcome.in?(%w[delivered partial_delivery])
       org     = @stop.delivery_trip.organization
+      
+      # Check global feature flag first
+      return false unless FEATURES.auto_invoice_enabled?(org)
+      
       # Read trigger from CreditPolicy (single source of truth);
       # fall back to org.settings for backward compatibility.
       policy  = org.credit_policy
       trigger = policy&.auto_invoice_trigger.to_s
       trigger = org.settings&.dig('auto_invoice_trigger').to_s if trigger.blank?
       trigger.blank? || trigger == 'on_delivery'
+    end
+
+    def check_geofence_requirements
+      # Gate check: Called BEFORE marking delivery complete
+      # Returns error message if geofence violation detected without override
+      
+      geofence_result = Delivery::GeofenceValidationService.call(
+        trip_stop: @stop,
+        latitude: @latitude,
+        longitude: @longitude
+      )
+
+      case geofence_result.status
+      when 'outside_geofence'
+        distance_m = geofence_result.distance_m
+
+        # Hard block: > 1000m away (clearly wrong address or fraud attempt)
+        if distance_m > 1000
+          return "Delivery location is #{distance_m.round(0)}m away from customer address. " \
+                 "This looks like the wrong address. Cannot mark delivered."
+        end
+
+        # Soft block: > 500m away (requires supervisor override code)
+        if distance_m > 500
+          # Override code not provided OR override timeout expired
+          unless @override_reason.present? && within_override_timeout?
+            return "Delivery location is #{distance_m.round(0)}m away from customer address. " \
+                   "Supervisor approval required. Contact your manager for override code."
+          end
+
+          # Log override for audit trail
+          log_geofence_override(distance_m)
+        end
+
+        # Within 500m is acceptable but log for monitoring
+        nil
+      else
+        # Within geofence - no error
+        nil
+      end
+    rescue => error
+      Rails.logger.warn("Geofence check failed: #{error.message}")
+      nil # Don't block delivery if geofence service fails
+    end
+
+    def within_override_timeout?
+      # Override code valid for 5 minutes after issue
+      # In production, could validate against manager-issued one-time codes
+      # For now, just checking presence indicates supervisor approved
+      true
+    end
+
+    def log_geofence_override(distance_m)
+      org = @stop.delivery_trip.organization
+      Credit::AuditLogger.log(
+        actor:        @actor,
+        organization: org,
+        auditable:    @stop,
+        action:       'geofence_override_approved',
+        changes:      {
+          distance_m: distance_m.round(1),
+          latitude: @latitude,
+          longitude: @longitude
+        },
+        reason: "Delivery #{distance_m.round(0)}m away, supervisor override: #{@override_reason}"
+      )
+
+      # Notify ops manager about override
+      Notification.create(
+        user_id: org.users.where(role: %w[owner admin manager]).first&.id,
+        organization_id: org.id,
+        title: 'Geofence Override Approved',
+        body: "Driver #{@actor.name} completed delivery #{distance_m.round(0)}m from address (Override: #{@override_reason})",
+        notification_type: 'geofence_override',
+        deep_link_url: "/trips/#{@stop.delivery_trip.id}"
+      ) if org.users.where(role: %w[owner admin manager]).exists?
+    end
+
+    def record_geofence_validation
+      # Record geofence data for audit trail (called AFTER delivery marked complete)
+      geofence_result = Delivery::GeofenceValidationService.call(
+        trip_stop: @stop,
+        latitude: @latitude,
+        longitude: @longitude
+      )
+
+      # Record geofence validation result
+      @stop.update(
+        geofence_status: geofence_result.status,
+        geofence_distance_m: geofence_result.distance_m,
+        geofence_validated_at: Time.current
+      )
+
+      # Log if outside geofence (for monitoring)
+      if geofence_result.status == 'outside_geofence'
+        org = @stop.delivery_trip.organization
+        Credit::AuditLogger.log(
+          actor:        @actor,
+          organization: org,
+          auditable:    @stop,
+          action:       'delivery_outside_geofence_recorded',
+          changes:      {
+            geofence_status: 'outside_geofence',
+            distance_m: geofence_result.distance_m.round(1),
+            latitude: @latitude,
+            longitude: @longitude
+          },
+          reason: "Delivery completed #{geofence_result.distance_m.round(1)}m from customer address"
+        )
+      end
+    rescue => error
+      Rails.logger.warn({
+        service: 'Delivery::CompleteStopService',
+        action: 'record_geofence_validation',
+        stop_id: @stop.id,
+        error: error.message
+      }.to_json)
+      # Don't fail the delivery - recording is informational
+    end
+
+    def validate_geofence
+      # DEPRECATED - use check_geofence_requirements + record_geofence_validation instead
+      # Kept for backwards compatibility
+      geofence_result = Delivery::GeofenceValidationService.call(
+        trip_stop: @stop,
+        latitude: @latitude,
+        longitude: @longitude
+      )
+
+      # Record geofence validation result
+      @stop.update(
+        geofence_status: geofence_result.status,
+        geofence_distance_m: geofence_result.distance_m,
+        geofence_validated_at: Time.current
+      )
+
+      # Log if outside geofence (potential anomaly)
+      if geofence_result.status == 'outside_geofence'
+        org = @stop.delivery_trip.organization
+        Credit::AuditLogger.log(
+          actor:        @actor,
+          organization: org,
+          auditable:    @stop,
+          action:       'delivery_outside_geofence',
+          changes:      {
+            geofence_status: 'outside_geofence',
+            distance_m: geofence_result.distance_m.round(1),
+            latitude: @latitude,
+            longitude: @longitude
+          },
+          reason: "Delivery marked #{@distance_m.round(1)}m away from customer address"
+        )
+
+        # Alert admins if significantly outside geofence
+        if geofence_result.distance_m > 500  # More than 500m away
+          Notification.create(
+            user_id: @stop.delivery_trip.driver_id,
+            organization_id: org.id,
+            title: 'Geofence Anomaly Detected',
+            body: "Delivery location #{geofence_result.distance_m.round(1)}m from customers address.",
+            notification_type: 'geofence_anomaly',
+            deep_link_url: "/trips/#{@stop.delivery_trip.id}"
+          )
+        end
+      end
+    rescue => error
+      Rails.logger.warn({
+        service: 'Delivery::CompleteStopService',
+        action: 'validate_geofence',
+        stop_id: @stop.id,
+        error: error.message
+      }.to_json)
+      # Don't fail the delivery - geofence is informational
     end
 
     def check_and_complete_trip!

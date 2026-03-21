@@ -283,55 +283,57 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background px-4 md:px-6 z-30">
-        {/* Mobile hamburger */}
-        {mobileMenuButton}
-
-        {/* Page title (mobile) */}
-        {title && (
-          <h1 className="text-base font-semibold text-text-primary shrink-0 mr-1 sm:hidden truncate max-w-[140px]">
-            {title}
-          </h1>
-        )}
-
-        {/* Org / Branch switchers */}
-        <div className="hidden sm:flex items-center gap-2">
-          <SwitcherDropdown
-            icon={Building2}
-            label="Organization"
-            options={orgOptions}
-            value={orgId}
-            onChange={switchOrg}
-            loading={orgsLoading}
-            footerAction={{ label: "New Organization", onClick: () => setShowAddOrg(true) }}
-          />
-          <span className="text-border select-none text-sm">/</span>
-          <SwitcherDropdown
-            icon={GitBranch}
-            label="All Branches"
-            options={branchOptions}
-            value={branchId}
-            onChange={switchBranch}
-            loading={branchesLoading}
-            allLabel="All Branches"
-            footerAction={{ label: "New Branch", onClick: () => setShowAddBranch(true) }}
-          />
+        {/* Left section */}
+        <div className="flex items-center gap-3">
+          {mobileMenuButton}
+          {title && (
+            <h1 className="text-base font-semibold text-text-primary shrink-0 mr-1 sm:hidden truncate max-w-[140px]">
+              {title}
+            </h1>
+          )}
+          {/* Org / Branch switchers */}
+          <div className="hidden sm:flex items-center gap-2">
+            <SwitcherDropdown
+              icon={Building2}
+              label="Organization"
+              options={orgOptions}
+              value={orgId}
+              onChange={switchOrg}
+              loading={orgsLoading}
+              footerAction={{ label: "New Organization", onClick: () => setShowAddOrg(true) }}
+            />
+            <span className="text-border select-none text-sm">/</span>
+            <SwitcherDropdown
+              icon={GitBranch}
+              label="All Branches"
+              options={branchOptions}
+              value={branchId}
+              onChange={switchBranch}
+              loading={branchesLoading}
+              allLabel="All Branches"
+              footerAction={{ label: "New Branch", onClick: () => setShowAddBranch(true) }}
+            />
+          </div>
         </div>
 
-        {/* Right actions */}
-        <div className="ml-auto flex items-center gap-2">
-          {/* Search / command palette trigger */}
+        {/* Center: Search/Command Palette */}
+        <div className="flex-1 flex justify-center">
           <button
             onClick={() => {
               trackClick(ANALYTICS_EVENTS.GLOBAL_SEARCH_USED, { element_label: 'command_palette' });
               setShowCommandPalette(true);
             }}
             aria-label="Open command palette (Ctrl+K)"
-            className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border hover:bg-background-subtle transition-colors text-sm text-text-secondary"
+            className="flex items-center gap-2 h-9 px-6 rounded-lg border border-border hover:bg-background-subtle transition-colors text-sm text-text-secondary min-w-[160px]"
           >
             <Search className="h-4 w-4" />
-            <span className="hidden md:inline text-xs font-mono opacity-60">⌘K</span>
+            <span className="hidden md:inline text-xs font-mono opacity-60">Search</span>
+            <span className="hidden lg:inline text-xs font-mono opacity-60">⌘K</span>
           </button>
+        </div>
 
+        {/* Right actions */}
+        <div className="flex items-center gap-2">
           {/* + Create */}
           <CreateDropdown />
 

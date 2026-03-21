@@ -262,7 +262,11 @@ Rails.application.routes.draw do
           post :refresh_price
           post :pick
           post :confirm_pick
+          post :detect_shortage
+          post :resolve_shortage
           get  :lifecycle
+          get  :trip_assignment_suggestions
+          post :assign_to_trip
         end
       end
 
@@ -315,15 +319,34 @@ Rails.application.routes.draw do
           post 'generate_from_order/:sales_order_id', action: :generate_from_order,       as: :generate_invoice_from_order
           post 'generate_from_delivery_stop/:stop_id', action: :generate_from_delivery_stop, as: :generate_invoice_from_stop
           post :bulk_generate
+          get  'bulk_status/:session_id', action: :bulk_status
         end
       end
 
+      # Invoice Generation Quarantine (Failed Invoices)
+      resources :invoice_quarantines, only: %i[index show] do
+        member do
+          post :reprocess
+          post :mark_resolved
+        end
+        collection do
+          get :stats
+        end
+      end
 
       # Payments / Collections
       resources :payments, only: %i[index show create] do
+        collection do
+          get :auto_posting_status
+          get :audit_trail
+          get :auto_post_stats
+        end
         member do
           post :confirm
           post :reverse
+          post :retry
+          post :reject_auto_post
+          get :confidence_breakdown
         end
       end
 
@@ -353,6 +376,7 @@ Rails.application.routes.draw do
         member do
           post :dispatch_trip, path: 'dispatch'
           post :cancel
+          post :optimize
           get  :summary
         end
         resources :trip_stops, only: %i[index show] do
@@ -505,9 +529,11 @@ Rails.application.routes.draw do
       resources :bank_transactions, only: %i[index show] do
         collection do
           get :dashboard
+          get :queue
         end
         member do
           post :confirm_match
+          post :quick_assign
           post :mark_as_advance
           post :ignore
           post :retry_match
@@ -551,6 +577,10 @@ Rails.application.routes.draw do
       get  'billing/invoices',             to: 'billing#invoices'
       # Razorpay webhook — no JWT auth, verified via HMAC signature
       post 'billing/webhooks/razorpay',    to: 'webhooks/razorpay#receive'
+
+      # -- Twilio Webhooks ---------------------------------------------------
+      # Feature 10: SMS reply webhook from Twilio (incoming customer messages)
+      post 'webhooks/twilio/sms_reply',    to: 'webhooks/twilio#sms_reply'
 
     end
 

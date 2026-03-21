@@ -426,17 +426,17 @@ export default function ProductsPage() {
             icon:    Upload,
             onClick: () => setShowImport(true),
           },
-          {
+          ...(totalCount > 0 ? [{
             label:   exporting ? 'Exporting…' : 'Export CSV',
             variant: 'ghost' as const,
             icon:    Download,
             onClick: handleExportCsv,
-          },
-          {
+          }] : []),
+          ...(totalCount > 0 ? [{
             label:   'Add Product',
             icon:    Plus,
             onClick: () => router.push('/products/new'),
-          },
+          }] : []),
         ]}
       />
 

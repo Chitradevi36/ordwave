@@ -152,6 +152,7 @@ export default function OrderDetailPage() {
   const [invoice, setInvoice] = useState<InvoiceInfo | null>(null);
   const [payment, setPayment] = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [prevOrgId, setPrevOrgId] = useState<string | null>(null);
 
   // Modals
   const [approveModal, setApproveModal] = useState(false);
@@ -196,12 +197,23 @@ export default function OrderDetailPage() {
       const orderJson = await orderRes.json();
       
       if (!orderRes.ok) {
-        showToast("error", orderJson.errors?.[0] ?? "Failed to load order");
+        // If order not found (404) and organization changed, redirect to orders list
+        if (orderRes.status === 404) {
+          if (prevOrgId && prevOrgId !== orgId) {
+            showToast("error", "Order not found in this organization");
+            router.push("/orders");
+            return;
+          }
+          showToast("error", "Order not found");
+        } else {
+          showToast("error", orderJson.errors?.[0] ?? "Failed to load order");
+        }
         return;
       }
 
       const orderData = orderJson.data as OrderDetail;
       setOrder(orderData);
+      setPrevOrgId(orgId);
 
       // Fetch related data in parallel (trip, invoice, payment)
       // These may fail gracefully if not available

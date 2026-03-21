@@ -58,3 +58,31 @@
     class: 'Billing::PastDueReminderJob'
     queue: billing
     description: 'Send payment reminder to orgs in past_due billing status'
+  dunning_sequence:
+    cron: '0 8 * * *'           # 8 AM daily
+    class: 'DunningSequenceJob'
+    queue: default
+    description: 'Send dunning reminders for overdue invoices (day 1, 5, 10)'
+
+  payment_retry:
+    cron: '0 1 * * *'           # 1 AM daily
+    class: 'PaymentRetryJob'
+    queue: billing
+    description: 'Retry failed payments (attempt 1, 2, 3 at 24h, 48h, 72h intervals)'
+
+  bank_reconciliation:
+    cron: '0 5 * * *'           # 5 AM daily
+    class: 'BankReconciliationJob'
+    queue: default
+    description: 'Run bank transaction matching and auto-post confirmed matches'
+
+  delivery_escalation_action:
+    cron: '0 7 * * *'           # 7 AM daily
+    class: 'DeliveryEscalationActionJob'
+    queue: operations
+    description: 'Handle escalated deliveries: send options, auto-refund, alert manager'
+  auto_assign_trips:
+    cron: '0 18 * * *'          # 6 PM daily (end of business)
+    class: 'AutoAssignTripsJob'
+    queue: operations
+    description: 'Auto-assign all approved orders to optimal trips or create new trips'

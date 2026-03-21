@@ -233,13 +233,13 @@ export default function FleetPage() {
       <PageHeader
         title="Fleet Management"
         subtitle="Manage vehicles used for deliveries"
-        actions={[
+        actions={ (vehicles.length > 0) ? ([
           {
             label: "Add Vehicle",
             icon: <Plus className="h-4 w-4" />,
             onClick: openCreate,
           },
-        ]}
+        ]) : null }
       />
 
       {loading ? (

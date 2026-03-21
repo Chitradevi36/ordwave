@@ -175,71 +175,62 @@ module Api
       end
 
       # ── POST /api/v1/sales_invoices/bulk_generate ─────────────────────────
-      # Body: { order_ids: [1, 2, 3], invoice_date: "2026-03-09" }
-      # Returns: { generated: N, skipped: N, errors: [] }
+      # Async bulk invoice generation with progress tracking.
+      # Body: { order_ids: [1, 2, 3] }
+      # Returns: { session_id, total_orders, message }
       def bulk_generate
         authorize SalesInvoice.new(organization: current_organization), :bulk_generate?
 
-        order_ids    = Array(params[:order_ids]).map(&:to_i).uniq
-        invoice_date = params[:invoice_date].presence&.then { |d| Date.parse(d) rescue Date.current } || Date.current
+        session_id = SecureRandom.uuid
+        order_ids = Array(params[:order_ids]).map(&:to_i).uniq
 
-        generated = 0
-        skipped   = 0
-        errors    = []
-
-        orders = current_organization.sales_orders
-                                     .where(id: order_ids)
-                                     .includes(:lines, :customer, :branch)
-
-        orders.each do |order|
-          # For orders in 'delivered' status: if delivered_qty is untracked (0), assume full qty was delivered
-          delivered_lines = order.lines.map do |sol|
-            available_qty = if sol.delivered_qty.zero? && order.delivered?
-                              sol.qty.to_d
-                            else
-                              sol.delivered_qty.to_d
-                            end
-            invoiceable_qty = available_qty - sol.invoiced_qty.to_d
-            next if invoiceable_qty <= 0
-
-            {
-              product_id:          sol.product_id,
-              qty:                 invoiceable_qty,
-              sales_order_line_id: sol.id,
-              unit_price:          sol.unit_price,
-              discount_pct:        sol.discount_pct,
-              hsn_code:            sol.hsn_code,
-              gst_rate:            sol.gst_rate
-            }
-          end.compact
-
-          if delivered_lines.empty?
-            skipped += 1
-            next
-          end
-
-          result = Invoice::GenerateFromDeliveryService.call(
-            actor:             current_user,
-            branch:            order.branch,
-            customer:          order.customer,
-            sales_order:       order,
-            invoice_date:      invoice_date,
-            generation_source: "manual_from_order",
-            delivered_lines:   delivered_lines
-          )
-
-          if result.success?
-            generated += 1
-          else
-            skipped += 1
-            errors << { order_id: order.id, order_number: order.order_number, errors: result.errors }
-          end
-        rescue => e
-          skipped += 1
-          errors << { order_id: order.id, errors: [e.message] }
+        if order_ids.empty?
+          return render_errors(['order_ids is required'])
         end
 
-        render_success({ generated: generated, skipped: skipped, errors: errors })
+        # Validate orders belong to this organization
+        orders = current_organization.sales_orders.where(id: order_ids)
+        unless orders.count == order_ids.count
+          return render_errors(['Some orders not found or do not belong to this organization'])
+        end
+
+        # Enqueue the async job
+        BulkInvoiceGenerationJob.perform_later(
+          organization_id: current_organization.id,
+          order_ids:       order_ids,
+          user_id:         current_user.id,
+          session_id:      session_id
+        )
+
+        # Return immediately with session ID for WebSocket subscription
+        render_success({
+          session_id:        session_id,
+          total_orders:      order_ids.count,
+          message:           'Bulk invoice generation started. Subscribe to WebSocket for updates.'
+        }, status: :accepted)
+      end
+
+      # ── GET /api/v1/sales_invoices/bulk_status/:session_id ────────────────
+      # Polling endpoint to check bulk generation progress (WebSocket fallback)
+      def bulk_status
+        session_id = params[:session_id]
+        bulk_gen = BulkGeneration.find_by(session_id: session_id)
+
+        unless bulk_gen&.organization_id == current_organization.id
+          return render_errors(['Session not found'], status: :not_found)
+        end
+
+        render_success({
+          session_id:       bulk_gen.session_id,
+          completed_count:  bulk_gen.completed_count,
+          total_count:      bulk_gen.total_count,
+          error_count:      bulk_gen.error_count,
+          progress_percent: bulk_gen.progress_percent,
+          success_rate:     bulk_gen.success_rate,
+          status:           bulk_gen.status,
+          errors:           bulk_gen.errors,
+          completed_at:     bulk_gen.completed_at
+        })
       end
 
       # ── POST /api/v1/sales_invoices/:id/issue ──────────────────────────────

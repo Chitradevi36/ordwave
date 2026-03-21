@@ -41,15 +41,31 @@ module Signup
       token = nil
 
       ActiveRecord::Base.transaction do
-        user = User.create!(
-          email:      @email,
-          password:   pending.data['password'],
-          first_name: @first_name,
-          last_name:  @last_name,
-          phone:      @phone,
-          plan:       @plan,
-          active:     true
-        )
+        # Check if user already exists (handle duplicate signup attempts)
+        existing_user = User.find_by(email: @email)
+        
+        if existing_user
+          # User already exists - update their info and use existing user
+          existing_user.update!(
+            first_name: @first_name,
+            last_name:  @last_name,
+            phone:      @phone,
+            plan:       @plan,
+            active:     true
+          )
+          user = existing_user
+        else
+          # Create new user
+          user = User.create!(
+            email:      @email,
+            password:   pending.data['password'],
+            first_name: @first_name,
+            last_name:  @last_name,
+            phone:      @phone,
+            plan:       @plan,
+            active:     true
+          )
+        end
 
         # Free plan → complete registration immediately
         if Billing::PlanCatalog.free?(@plan)

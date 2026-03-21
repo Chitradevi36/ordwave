@@ -17,6 +17,9 @@ class PaymentPolicy < ApplicationPolicy
   # Owner/admin only can reverse a confirmed payment (destructive)
   def reverse? = owner_or_admin? && within_org? && record.confirmed?
 
+  # Any member can retry a failed payment
+  def retry? = member? && within_org? && record.external_payment_status == 'failed' && record.retry_count < 3
+
   # ── Scope ─────────────────────────────────────────────────────────────────────
 
   class Scope < ApplicationPolicy::Scope

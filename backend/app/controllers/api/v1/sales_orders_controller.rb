@@ -2,7 +2,7 @@ module Api
   module V1
     class SalesOrdersController < BaseController
       before_action :require_organization!
-      before_action :set_order, only: %i[show update submit approve hold cancel refresh_price lifecycle pick confirm_pick]
+      before_action :set_order, only: %i[show update submit approve hold cancel refresh_price lifecycle pick confirm_pick detect_shortage resolve_shortage]
 
       # recent_for_customer uses policy_scope (not authorize) — skip the
       # verify_authorized after_action that BaseController enforces on all
@@ -156,6 +156,59 @@ module Api
         render_success({ steps: events, order_number: @order.order_number })
       end
 
+      # GET /api/v1/sales_orders/:id/trip_assignment_suggestions
+      # Returns suggested trip assignments for an approved order
+      def trip_assignment_suggestions
+        authorize @order, :show?
+        
+        return render_errors(['Order must be in approved status']) unless @order.approved?
+        return render_errors(['Order already assigned to a trip']) if @order.trip_stop.present?
+
+        suggester = Delivery::TripAssignmentSuggester.new(
+          sales_order: @order,
+          organization: Current.organization,
+          trip_date: params[:trip_date].present? ? Date.parse(params[:trip_date]) : Date.today
+        )
+
+        suggestions = suggester.get_suggestions
+
+        render json: {
+          data: suggestions
+        }
+      end
+
+      # POST /api/v1/sales_orders/:id/assign_to_trip
+      # Assigns order to a trip (existing or new)
+      # Body: { trip_id: X } OR { driver_id: Y, trip_date: 'YYYY-MM-DD' }
+      def assign_to_trip
+        authorize @order, :approve?
+
+        trip_date = params[:trip_date].present? ? Date.parse(params[:trip_date]) : Date.today
+
+        result = Delivery::AssignToTripService.call(
+          order: @order,
+          trip_id: params[:trip_id],
+          driver_id: params[:driver_id],
+          user: Current.user,
+          trip_date: trip_date
+        )
+
+        if result.success?
+          render_success({
+            data: serialize_order(result.trip_stop.sales_order, detailed: true),
+            trip: {
+              id: result.trip.id,
+              trip_number: result.trip.trip_number,
+              status: result.trip.status,
+              driver_name: result.trip.driver&.name
+            },
+            message: result.message
+          })
+        else
+          render_errors(result.errors)
+        end
+      end
+
       # POST /api/v1/sales_orders
       def create
         authorize SalesOrder.new(organization: current_organization), :create?
@@ -263,6 +316,13 @@ module Api
             }
           end
           render_success(data)
+        elsif result[:shortage_blocked]
+          # Feature 12: Shortages detected - return shortage info for resolution
+          render_success({
+            shortage_blocked: true,
+            order: serialize_order(result[:order], detailed: true),
+            shortage_detection: result[:shortage_detection]
+          }, status: :unprocessable_entity)
         else
           render_errors(result[:errors])
         end
@@ -443,6 +503,52 @@ module Api
         end
       end
 
+      # POST /api/v1/sales_orders/:id/detect_shortage
+      def detect_shortage
+        authorize @order, :show?
+
+        result = Inventory::ShortageDetectionService.call(
+          order:  @order,
+          branch: @order.branch,
+          actor:  current_user
+        )
+
+        if result.success?
+          render_success({
+            has_shortage:       result.has_shortage?,
+            shortage_items:     serialize_shortage_items(result.shortage_items),
+            total_shortage_qty: result.shortage_items.sum(&:shortage_qty),
+            total_shortage_value: result.total_shortage_value,
+            resolution_options: result.resolution_options
+          })
+        else
+          render_errors(result.errors)
+        end
+      end
+
+      # POST /api/v1/sales_orders/:id/resolve_shortage
+      def resolve_shortage
+        authorize @order, :update?
+
+        result = Inventory::ShortageResolutionService.call(
+          order:             @order,
+          resolution_type:   params.require(:resolution_type),
+          actor:             current_user,
+          notes:             params[:notes],
+          customer_communication: params[:customer_communication]
+        )
+
+        if result.success?
+          render_success({
+            order:            serialize_order(result.order, detailed: true),
+            refunded_amount:  result.refunded_amount,
+            resolution_notes: result.notes
+          })
+        else
+          render_errors(result.errors)
+        end
+      end
+
       private
 
       def set_order
@@ -457,6 +563,21 @@ module Api
           :notes,
           lines: %i[product_id qty unit_price discount_pct]
         )
+      end
+
+      def serialize_shortage_items(shortage_items)
+        shortage_items.map do |item|
+          {
+            product_id:    item.product_id,
+            product_name:  item.product_name,
+            product_sku:   item.product_sku,
+            requested_qty: item.requested_qty,
+            available_qty: item.available_qty,
+            shortage_qty:  item.shortage_qty,
+            unit_price:    item.unit_price,
+            shortage_value: item.shortage_value
+          }
+        end
       end
 
       def apply_filters(scope)

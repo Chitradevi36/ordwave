@@ -35,6 +35,7 @@ module Delivery
       errors = validate
       return { ok: false, trip: nil, errors: errors } if errors.any?
 
+      trip = nil
       ActiveRecord::Base.transaction do
         trip = DeliveryTrip.create!(
           organization: @organization,
@@ -63,9 +64,13 @@ module Delivery
           action:       'trip_created',
           changes:      { trip_number: trip.trip_number, stop_count: @order_ids.size }
         )
-
-        { ok: true, trip: trip.reload, errors: [] }
       end
+
+      # Enqueue route optimization job after transaction succeeds
+      # Runs async if > 2 stops and auto-optimization enabled
+      RouteOptimizationJob.perform_later(trip.id, @actor&.id)
+
+      { ok: true, trip: trip.reload, errors: [] }
     rescue ActiveRecord::RecordInvalid => e
       { ok: false, trip: nil, errors: [e.message] }
     end

@@ -1,13 +1,15 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useOrgBranch } from '@/lib/org-branch-context';
 
 /**
  * Hook to ensure user has completed onboarding initialization (org/branch creation)
- * Returns true only when user is authenticated and has initialized organization
+ * Returns true only when user is authenticated, has organization, AND context has initialized
  * Redirects immediately if checks fail (returns false, page shouldn't render)
  */
 export function useOnboardingGuard(): boolean {
   const router = useRouter();
+  const { isInitialized, organizations } = useOrgBranch();
   const [isReady, setIsReady] = useState<boolean>(false);
   const [hasChecked, setHasChecked] = useState<boolean>(false);
 
@@ -41,7 +43,11 @@ export function useOnboardingGuard(): boolean {
     checkAndRedirect();
   }, [router]);
 
+  // Wait for BOTH localStorage check AND context initialization
+  // This prevents rendering before organizations are fetched from API
+  const isFullyReady = hasChecked && isReady && isInitialized && organizations.length > 0;
+
   // Return false while checking to prevent render
-  // Return true only when check is complete AND user is authenticated+initialized
-  return hasChecked && isReady;
+  // Return true only when fully initialized (context data available)
+  return isFullyReady;
 }

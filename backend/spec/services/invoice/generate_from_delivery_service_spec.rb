@@ -245,4 +245,106 @@ RSpec.describe Invoice::GenerateFromDeliveryService, type: :service do
       expect(result.success?).to be false
     end
   end
+
+  # Feature 9: Dunning suspension handling for invoice generation
+  describe '.call — dunning suspension scenarios' do
+    context 'when customer is dunning suspended' do
+      before do
+        customer_intra.update(
+          credit_block_rule: 'hard_block',
+          dunning_suspended_at: 5.days.ago,
+          dunning_suspension_reason: 'overdue_invoice',
+          dunning_suspension_invoice_id: 'INV-OLD-123'
+        )
+      end
+
+      it 'still generates invoice (allows billing to continue)' do
+        result = call
+        expect(result.success?).to be true
+        expect(result.invoice).to be_present
+      end
+
+      it 'creates audit log noting suspended customer invoice' do
+        expect {
+          call
+        }.to change(AuditLog, :count)
+
+        audit = AuditLog.where(action: 'invoice_generated_for_suspended_customer').last
+        expect(audit).to be_present
+        expect(audit.changes['customer_id']).to eq(customer_intra.id)
+        expect(audit.changes['suspended_since']).to be_present
+      end
+
+      it 'notifies finance team for manual review' do
+        expect {
+          call
+        }.to change(Notification, :count)
+
+        notification = Notification.where(notification_type: 'invoice_generated_for_suspended_customer').last
+        expect(notification).to be_present
+        expect(notification.title).to include('suspended account')
+        expect(notification.body).to include(customer_intra.name)
+        expect(notification.severity).to eq('medium')
+      end
+
+      it 'includes suspension details in audit log' do
+        call
+
+        audit = AuditLog.where(action: 'invoice_generated_for_suspended_customer').last
+        expect(audit.changes).to include(
+          'suspension_reason' => 'overdue_invoice',
+          'suspension_invoice_id' => 'INV-OLD-123',
+          'manual_review_recommended' => true
+        )
+      end
+
+      it 'creates invoice with correct amount despite suspension' do
+        result = call
+        expect(result.invoice.grand_total).to be > 0
+        expect(result.invoice.outstanding_amount).to eq(result.invoice.grand_total)
+      end
+    end
+
+    context 'when customer is not suspended' do
+      before do
+        customer_intra.update(dunning_suspended_at: nil, credit_block_rule: 'none')
+      end
+
+      it 'generates invoice without dunning notifications' do
+        expect {
+          call
+        }.not_to change { Notification.where(notification_type: 'invoice_generated_for_suspended_customer').count }
+      end
+
+      it 'does not create dunning suspension audit log' do
+        expect {
+          call
+        }.not_to change { AuditLog.where(action: 'invoice_generated_for_suspended_customer').count }
+      end
+    end
+
+    context 'with auto_on_delivery source and suspended customer' do
+      let(:trip_stop) { create(:trip_stop) }
+
+      it 'generates invoice even if delivery is automatic for suspended customer' do
+        customer_intra.update(dunning_suspended_at: 2.days.ago)
+
+        result = Invoice::GenerateFromDeliveryService.call(
+          actor: actor,
+          branch: branch,
+          customer: customer_intra,
+          sales_order: order_intra,
+          trip_stop: trip_stop,
+          generation_source: 'auto_on_delivery',
+          delivered_lines: [{
+            product_id: product.id,
+            qty: sol_intra.delivered_qty
+          }]
+        )
+
+        expect(result.success?).to be true
+        expect(AuditLog.where(action: 'invoice_generated_for_suspended_customer').count).to eq(1)
+      end
+    end
+  end
 end

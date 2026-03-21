@@ -56,10 +56,8 @@ module Api
         ).call
 
         if result.success?
-          # Mark relevant steps as complete
-          %w[setup_details].each do |step|
-            progress.mark_step_complete!(step) if progress.step_completed?(step) == false
-          end
+          # Mark organization setup as complete
+          progress.mark_step_complete!('organization_setup') unless progress.step_completed?('organization_setup')
 
           render_success(
             serialize_progress(progress),

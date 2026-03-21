@@ -77,6 +77,14 @@ module Invoice
         write_audit!(invoice)
 
         Result.new(success?: true, invoice: invoice.reload, errors: [])
+      end.tap do |result|
+        if result.success?
+          # Enqueue email notification asynchronously
+          SendInvoiceEmailJob.perform_later(result.invoice.id)
+          
+          # Enqueue SMS notification asynchronously (if enabled)
+          SendInvoiceSmsJob.perform_later(result.invoice.id) if FEATURES.invoice_sms_notifications_enabled?(@branch.organization)
+        end
       end
     rescue ActiveRecord::RecordInvalid => e
       Result.new(success?: false, invoice: nil, errors: [e.message])
@@ -111,6 +119,12 @@ module Invoice
         ).where(customer: @customer).exists?
 
         errs << "Invoice already auto-generated for this delivery stop" if existing
+      end
+
+      # Feature 9: Warn if creating invoice for dunning-suspended customer
+      # Allow creation but flag for manual review
+      if @customer&.dunning_suspended_at.present?
+        log_suspended_customer_invoice
       end
 
       errs
@@ -270,6 +284,50 @@ module Invoice
         event:        'invoice.generated',
         payload:      WebhookEvents.invoice_payload(invoice)
       )
+    end
+
+    def log_suspended_customer_invoice
+      # Feature 9: Notify finance that invoice is being created for suspended account
+      Credit::AuditLogger.log(
+        actor:        @actor,
+        organization: @branch.organization,
+        auditable:    @customer,
+        action:       'invoice_generated_for_suspended_customer',
+        changes: {
+          customer_id:               @customer.id,
+          suspended_since:           @customer.dunning_suspended_at,
+          suspension_reason:         @customer.dunning_suspension_reason,
+          suspension_invoice_id:     @customer.dunning_suspension_invoice_id,
+          generation_source:         @generation_source,
+          manual_review_recommended: true
+        }
+      )
+
+      # Create notification for finance team
+      finance_users = User.joins(:memberships)
+                          .where(memberships: {
+                            organization_id: @branch.organization_id,
+                            deleted_at:      nil,
+                            active:          true
+                          })
+                          .joins(memberships: :role)
+                          .where(roles: { name: %w[finance admin] })
+                          .distinct
+
+      Notifications::CreateService.call(
+        organization: @branch.organization,
+        recipients:   finance_users,
+        actor:        @actor,
+        notifiable:   @customer,
+        type:         'invoice_generated_for_suspended_customer',
+        title:        "Invoice generated for suspended account",
+        body:         "An invoice is being created for #{@customer.name} (suspended since #{@customer.dunning_suspended_at.to_date}). " \
+                      "Review income recognition and dunning status.",
+        deep_link:    "/customers/#{@customer.id}/invoices",
+        severity:     'medium'
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[GenerateFromDeliveryService] Suspended customer notification failed: #{e.message}")
     end
   end
 end

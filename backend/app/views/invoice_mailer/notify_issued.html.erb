@@ -1,0 +1,129 @@
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+  <!-- Header -->
+  <div style="background-color: #f8f9fa; padding: 20px; border-bottom: 1px solid #dee2e6;">
+    <h2 style="margin: 0; color: #1f2937;">
+      Invoice <%= @invoice.invoice_number %>
+    </h2>
+    <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">
+      From <%= @organization.name %>
+    </p>
+  </div>
+
+  <!-- Main Content -->
+  <div style="padding: 30px;">
+    <p>Hi <%= @customer.name %>,</p>
+
+    <p style="color: #555;">
+      Your invoice <%= @invoice.invoice_number %> is now ready. Below is a summary of your order.
+    </p>
+
+    <!-- Order Summary -->
+    <div style="margin: 30px 0; border: 1px solid #dee2e6; border-radius: 4px; padding: 20px; background-color: #fafbfc;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <tr style="border-bottom: 1px solid #dee2e6;">
+          <td style="padding: 8px 0; color: #6b7280;">Invoice #:</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: 500;"><strong><%= @invoice.invoice_number %></strong></td>
+        </tr>
+        <tr style="border-bottom: 1px solid #dee2e6;">
+          <td style="padding: 8px 0; color: #6b7280;">Invoice Date:</td>
+          <td style="padding: 8px 0; text-align: right;"><%= @invoice.invoice_date.strftime('%b %d, %Y') %></td>
+        </tr>
+        <% if @invoice.due_date %>
+        <tr style="border-bottom: 1px solid #dee2e6;">
+          <td style="padding: 8px 0; color: #6b7280;">Due Date:</td>
+          <td style="padding: 8px 0; text-align: right;">
+            <strong><%= @invoice.due_date.strftime('%b %d, %Y') %></strong>
+          </td>
+        </tr>
+        <% end %>
+        <% if @order %>
+        <tr style="border-bottom: 1px solid #dee2e6;">
+          <td style="padding: 8px 0; color: #6b7280;">Order #:</td>
+          <td style="padding: 8px 0; text-align: right;"><%= @order.order_number %></td>
+        </tr>
+        <% end %>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280; font-size: 14px;"><strong>Amount Due:</strong></td>
+          <td style="padding: 8px 0; text-align: right; font-size: 16px; color: #1f2937;">
+            <strong>₹<%= number_with_precision(@invoice.total_amount, precision: 2) %></strong>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Call to Action -->
+    <div style="margin: 30px 0; text-align: center;">
+      <a href="<%= invoice_payment_url(@invoice) %>" style="display: inline-block; padding: 12px 30px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 4px; font-weight: 500;">
+        Pay Invoice Now
+      </a>
+    </div>
+
+    <!-- Invoice Items -->
+    <p style="color: #6b7280; font-size: 12px; margin-top: 30px; margin-bottom: 10px;">
+      <strong>Invoice Items:</strong>
+    </p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+      <thead>
+        <tr style="background-color: #f3f4f6; border: 1px solid #dee2e6;">
+          <th style="padding: 10px; text-align: left; color: #6b7280;">Item</th>
+          <th style="padding: 10px; text-align: center; color: #6b7280;">Qty</th>
+          <th style="padding: 10px; text-align: right; color: #6b7280;">Unit Price</th>
+          <th style="padding: 10px; text-align: right; color: #6b7280;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @invoice.lines.each do |line| %>
+        <tr style="border: 1px solid #dee2e6;">
+          <td style="padding: 10px; color: #333;"><%= line.product&.name %></td>
+          <td style="padding: 10px; text-align: center;">
+            <%= number_with_precision(line.qty, precision: 2) %>
+          </td>
+          <td style="padding: 10px; text-align: right;">
+            ₹<%= number_with_precision(line.unit_price, precision: 2) %>
+          </td>
+          <td style="padding: 10px; text-align: right;">
+            <strong>₹<%= number_with_precision(line.line_total, precision: 2) %></strong>
+          </td>
+        </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <div style="border-top: 2px solid #dee2e6; padding-top: 15px; text-align: right;">
+      <div style="margin: 8px 0;">
+        <span style="color: #6b7280;">Subtotal:</span>
+        <strong>₹<%= number_with_precision(@invoice.subtotal_amount, precision: 2) %></strong>
+      </div>
+      <% if @invoice.tax_amount > 0 %>
+      <div style="margin: 8px 0;">
+        <span style="color: #6b7280;">Tax (GST):</span>
+        <strong>₹<%= number_with_precision(@invoice.tax_amount, precision: 2) %></strong>
+      </div>
+      <% end %>
+      <div style="margin: 8px 0; font-size: 16px; color: #1f2937;">
+        <strong>Total: ₹<%= number_with_precision(@invoice.total_amount, precision: 2) %></strong>
+      </div>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
+
+    <!-- Footer -->
+    <p style="color: #6b7280; font-size: 12px;">
+      <strong>Questions?</strong> Contact us:
+    </p>
+    <p style="color: #6b7280; font-size: 12px; margin: 5px 0;">
+      Email: <%= ENV['MAILER_FROM_ADDRESS'] %><br>
+      Organization: <%= @organization.name %>
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color: #f3f4f6; padding: 20px; text-align: center; border-top: 1px solid #dee2e6; font-size: 12px; color: #6b7280;">
+    <p style="margin: 0;">
+      © <%= Date.current.year %> <%= @organization.name %>. All rights reserved.
+    </p>
+    <p style="margin: 5px 0 0 0;">
+      <a href="<%= unsubscribe_url %>" style="color: #3b82f6; text-decoration: none;">Unsubscribe</a>
+    </p>
+  </div>
+</div>

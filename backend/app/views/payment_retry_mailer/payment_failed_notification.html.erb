@@ -1,0 +1,113 @@
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+  <!-- Header -->
+  <div style="background-color: #fef3c7; padding: 20px; border-bottom: 3px solid #f59e0b; border-left: 5px solid #f59e0b;">
+    <h2 style="margin: 0; color: #d97706;">
+      ⚠️ Payment Failed
+    </h2>
+    <p style="margin: 5px 0 0 0; color: #92400e; font-size: 14px;">
+      Invoice <%= @invoice.invoice_number %> — We've Scheduled an Automatic Retry
+    </p>
+  </div>
+
+  <!-- Main Content -->
+  <div style="padding: 30px;">
+    <p style="color: #18181b;">Hi <%= @customer.name %>,</p>
+
+    <p style="color: #555; line-height: 1.6;">
+      <strong>Your payment for invoice <%= @invoice.invoice_number %> could not be processed.</strong> 
+      This can happen due to temporary issues with your payment method or bank.
+    </p>
+
+    <p style="color: #555; line-height: 1.6;">
+      <strong>Reason:</strong> <%= @failed_reason %>
+    </p>
+
+    <!-- Invoice Details -->
+    <div style="margin: 30px 0; border: 1px solid #f59e0b; border-radius: 4px; padding: 20px; background-color: #fffbeb;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px;">
+        <div>
+          <p style="color: #92400e; margin: 0 0 5px 0;">Invoice Number</p>
+          <p style="margin: 0; font-weight: 600;"><%= @invoice.invoice_number %></p>
+        </div>
+        <div>
+          <p style="color: #92400e; margin: 0 0 5px 0;">Amount</p>
+          <p style="margin: 0; font-weight: 600;">₹<%= number_with_precision(@invoice.total_amount, precision: 2) %></p>
+        </div>
+        <div>
+          <p style="color: #92400e; margin: 0 0 5px 0;">Due Date</p>
+          <p style="margin: 0; font-weight: 600;"><%= @invoice.due_date.strftime('%b %d, %Y') %></p>
+        </div>
+        <div>
+          <p style="color: #92400e; margin: 0 0 5px 0;">Retry Attempt</p>
+          <p style="margin: 0; font-weight: 600;">#<%= @retry_number %> of 3</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- What Will Happen Next -->
+    <div style="margin: 30px 0; padding: 20px; background-color: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px;">
+      <h3 style="margin: 0 0 10px 0; color: #0c4a6e; font-size: 14px;">
+        ✓ Automatic Retry Scheduled
+      </h3>
+      <p style="color: #0c4a6e; font-size: 13px; margin: 0; line-height: 1.6;">
+        We will automatically attempt to process your payment again <strong>tomorrow</strong>. 
+        You don't need to do anything unless you'd like to retry immediately.
+      </p>
+    </div>
+
+    <!-- Options -->
+    <div style="margin: 30px 0;">
+      <h3 style="color: #18181b; margin: 0 0 15px 0; font-size: 14px;">Your Options:</h3>
+      <table width="100%" style="border-collapse: collapse;">
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb; background-color: #f9fafb;">
+            <strong style="color: #18181b;">1. Wait for Automatic Retry</strong><br>
+            <span style="color: #6b7280; font-size: 13px;">We'll try again tomorrow at 1 AM</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb;">
+            <strong style="color: #18181b;">2. Update Your Payment Method</strong><br>
+            <span style="color: #6b7280; font-size: 13px;">
+              <a href="<%= payment_method_update_url(@payment) %>" style="color: #0284c7; text-decoration: none;">
+                Update your card details
+              </a> and we'll retry immediately
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e5e7eb; background-color: #f9fafb;">
+            <strong style="color: #18181b;">3. Retry Immediately</strong><br>
+            <span style="color: #6b7280; font-size: 13px;">Click the button below to retry with your current payment method</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- CTA - Retry Now -->
+    <div style="margin: 30px 0; text-align: center;">
+      <a href="<%= retry_payment_url(@payment) %>" style="display: inline-block; padding: 14px 40px; background-color: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">
+        Retry Payment Now
+      </a>
+      <p style="color: #6b7280; font-size: 12px; margin: 10px 0 0 0;">
+        or <a href="<%= invoice_payment_url(@invoice) %>" style="color: #0284c7; text-decoration: none;">try a different payment method</a>
+      </p>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+    <p style="color: #6b7280; font-size: 13px; line-height: 1.6;">
+      <strong>Need help?</strong><br>
+      If you're experiencing repeated payment failures, contact our support team at 
+      <%= ENV['MAILER_FROM_ADDRESS'] %><br>
+      We can help troubleshoot the issue or arrange a payment plan.
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color: #f3f4f6; padding: 20px; text-align: center; border-top: 1px solid #dee2e6; font-size: 12px; color: #6b7280;">
+    <p style="margin: 0;">
+      © <%= Date.current.year %> <%= @organization.name %>. All rights reserved.
+    </p>
+  </div>
+</div>

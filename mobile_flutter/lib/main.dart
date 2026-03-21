@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,12 +12,14 @@ import 'features/orders/services/sync_service.dart' show SyncService, workManage
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register background sync task (15-min periodic, requires connectivity)
-  await Workmanager().initialize(
-    workManagerCallback,
-    isInDebugMode: false,
-  );
-  await SyncService.registerPeriodicSync();
+  // Register background sync task (Android/iOS only — not supported on web)
+  if (!kIsWeb) {
+    await Workmanager().initialize(
+      workManagerCallback,
+      isInDebugMode: false,
+    );
+    await SyncService.registerPeriodicSync();
+  }
 
   final sharedPrefs = await SharedPreferences.getInstance();
   final prefsService = PreferencesService(sharedPrefs);

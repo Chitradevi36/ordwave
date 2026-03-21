@@ -7,12 +7,23 @@ module Invoice
   # Idempotent: if an invoice already exists for this stop + customer pair
   # (checked inside GenerateFromDeliveryService), the job silently no-ops.
   #
+  # Error handling:
+  #   - Retries up to 5 times before giving up
+  #   - On persistent failure (dead-letter), alerts organization managers
+  #   - Logs all failures with full context for debugging
+  #
   class GenerateFromDeliveryJob < ApplicationJob
     queue_as :invoicing
 
     # Retry up to 5 times with exponential back-off before discarding
     retry_on StandardError, wait: :polynomially_longer, attempts: 5
     discard_on ActiveRecord::RecordNotFound
+
+    # On permanent failure (after max retries), quarantine + alert the organization
+    discard_on StandardError do |job, exception|
+      stop = TripStop.find_by(id: job.arguments.first)
+      quarantine_and_alert(stop, exception) if stop.present?
+    end
 
     # @param stop_id [Integer] TripStop id
     def perform(stop_id)
@@ -71,6 +82,86 @@ module Invoice
         unless result.errors.any? { |e| e.include?('already auto-generated') }
           raise "Invoice generation failed: #{result.errors.join(', ')}"
         end
+      end
+    end
+
+    private
+
+    # ── Error Handling ──────────────────────────────────────────────────────
+
+    # Called when job is permanently discarded after max retries
+    # Quarantines the invoice generation for manual review + one-click retry
+    def self.quarantine_and_alert(stop, exception)
+      org = stop.delivery_trip.organization
+      order = stop.sales_order
+
+      # Create quarantine record for the failed invoice generation
+      begin
+        quarantine = InvoiceGenerationQuarantine.create!(
+          organization: org,
+          trip_stop: stop,
+          sales_order: order,
+          branch: order.branch,
+          error_message: exception.message,
+          error_backtrace: exception.backtrace&.first(5)&.join("\n"),
+          delivered_lines: stop.delivered_lines_snapshot || {},
+          error_context: {
+            retry_count_before_discard: 5,
+            last_error_at: Time.current.iso8601
+          }
+        )
+
+        Rails.logger.error("[Invoice::GenerateFromDeliveryJob] Quarantine created: #{quarantine.id} for stop #{stop.id}")
+      rescue StandardError => e
+        Rails.logger.error("[Invoice::GenerateFromDeliveryJob] Failed to create quarantine: #{e.message}")
+      end
+
+      # Call original alert method for backward compatibility + notifications
+      alert_persistent_failure(stop, exception)
+    end
+
+    # Called when job is permanently discarded after max retries
+    # Creates an alert notification for organization managers
+    def self.alert_persistent_failure(stop, exception)
+      org = stop.delivery_trip.organization
+      order = stop.sales_order
+
+      # Log to Sentry or error tracking service if available
+      if defined?(Sentry)
+        Sentry.capture_exception(exception,
+          extra: {
+            trip_stop_id: stop.id,
+            sales_order_id: order.id,
+            order_number: order.order_number,
+            customer: order.customer&.name,
+            delivery_date: stop.delivered_at
+          }
+        )
+      end
+
+      # Create alert notification for managers and admins
+      begin
+        managers = User.joins(:memberships)
+                       .where(memberships: { organization_id: org.id, deleted_at: nil, active: true })
+                       .joins(memberships: :role)
+                       .where(roles: { name: %w[manager admin owner] })
+                       .distinct
+
+        Notifications::CreateService.call(
+          organization: org,
+          recipients:   managers,
+          actor:        nil,
+          notifiable:   order,
+          type:         'invoice_generation_failed',
+          title:        "⚠️ Auto-Invoice Failed — Order #{order.order_number}",
+          body:         "Invoice generation failed after 5 retries for delivery of #{order.customer&.name}. Review in quarantine queue.",
+          deep_link:    "/invoices/quarantine",
+          severity:     'high'
+        )
+
+        Rails.logger.error("[Invoice::GenerateFromDeliveryJob] Persistent failure alert sent for stop #{stop.id}: #{exception.message}")
+      rescue StandardError => e
+        Rails.logger.error("[Invoice::GenerateFromDeliveryJob] Failed to create alert notification: #{e.message}")
       end
     end
   end

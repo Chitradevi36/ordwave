@@ -18,6 +18,14 @@ const STEPS: Step[] = ['email', 'otp', 'password', 'profile'];
 
 const PLANS = [
   {
+    id: 'free',
+    name: 'Free',
+    price: '₹0',
+    period: '/month',
+    features: ['Up to 50 orders/month', '1 branch', '1 team member', 'Basic reports'],
+    popular: false,
+  },
+  {
     id: 'starter',
     name: 'Starter',
     price: '₹999',
@@ -189,6 +197,12 @@ export default function SignupPage() {
         // Store auth token and user data
         localStorage.setItem('auth_token', data.data.token);
         localStorage.setItem('user', JSON.stringify(data.data.user));
+
+        // Store organization_id from signup response
+        const orgId = data.data.user?.organization_id || data.data.user?.current_organization_id;
+        if (orgId) {
+          localStorage.setItem('organization_id', String(orgId));
+        }
 
         // Set the auth cookie so middleware allows access to protected routes
         document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';

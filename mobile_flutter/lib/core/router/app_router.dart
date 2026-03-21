@@ -319,8 +319,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 // ── Placeholder screens (replaced in Phase 1) ────────────────────────────────
 import 'package:flutter/material.dart';
 
-class _SplashPlaceholder extends StatelessWidget {
+class _SplashPlaceholder extends StatefulWidget {
   const _SplashPlaceholder();
+  @override
+  State<_SplashPlaceholder> createState() => _SplashPlaceholderState();
+}
+
+class _SplashPlaceholderState extends State<_SplashPlaceholder> {
+  @override
+  void initState() {
+    super.initState();
+    // Navigate to login after a brief splash delay
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted) context.go(AppRoutes.login);
+    });
+  }
+
   @override
   Widget build(BuildContext context) => const Scaffold(
         backgroundColor: Color(0xFF1B4332),

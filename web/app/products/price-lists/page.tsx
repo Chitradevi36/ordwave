@@ -261,7 +261,7 @@ export default function PriceListsPage() {
     <AppShell hideBreadcrumb>
       <PageHeader
         title="Price Lists"
-        actions={[{ label: "New Price List", onClick: () => setShowNew(true) }]}
+        actions={priceLists.length > 0 ? [{ label: "New Price List", onClick: () => setShowNew(true) }] : []}
       />
 
       <ProductsSubNav active="price-lists" />

@@ -198,10 +198,10 @@ export default function OnboardingWizardPage() {
   useEffect(() => {
     if (step === 1) return; // welcome already tracked above
     const stepNames: Record<number, string> = {
-      2: 'business_type',
-      3: 'org_details',
-      4: 'catalog_setup',
-      5: 'complete',
+      2: 'business_type_selection',
+      3: 'organization_setup',     // REQUIRED: org details + branch
+      4: 'optional_catalog_setup',
+      5: 'onboarding_complete',
     };
     trackOnboardingEvent(
       ANALYTICS_EVENTS.ONBOARDING_STEP_COMPLETED,
@@ -214,11 +214,13 @@ export default function OnboardingWizardPage() {
   const TOTAL_STEPS = 5;
 
   // Phases shown in the top stepper (steps 2-5 map to 4 phases)
+  // Required steps: Step 3 (Organization Setup)
+  // Optional steps: Step 2 (Business Type), Step 4 (Catalog), Step 5 (Quick Start)
   const ONBOARDING_PHASES = [
-    { label: 'Business', steps: [2] },
-    { label: 'Details',  steps: [3] },
-    { label: 'Catalog',  steps: [4] },
-    { label: 'Done',     steps: [5] },
+    { label: 'Business', steps: [2], optional: true },
+    { label: 'Setup (Required)', steps: [3], optional: false },
+    { label: 'Catalog', steps: [4], optional: true },
+    { label: 'Done', steps: [5], optional: true },
   ] as const;
 
   const validateGSTIN = (value: string) => {
@@ -295,6 +297,14 @@ export default function OnboardingWizardPage() {
         operating_model: formData.operatingModel,
       });
 
+      // Verify organization_id is still in localStorage after setup
+      if (!localStorage.getItem('organization_id')) {
+        console.error('Organization ID lost after setup call');
+        if (orgId) {
+          localStorage.setItem('organization_id', orgId as string);
+        }
+      }
+
       setStep(step + 1);
       window.scrollTo(0, 0);
     } catch (error) {
@@ -312,8 +322,18 @@ export default function OnboardingWizardPage() {
   const handleComplete = () => {
     trackOnboardingEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, 5, 'complete');
     setShowConfetti(true);
+    
+    // Ensure organization_id is in localStorage before redirecting
+    // This helps the dashboard context initialize properly
+    const orgId = localStorage.getItem('organization_id');
+    if (!orgId) {
+      console.warn('Organization ID not found in localStorage');
+    }
+    
     setTimeout(() => {
-      window.location.href = '/dashboard';
+      // Use Next.js router for better state management instead of hard reload
+      // The OrgBranchProvider will refetch organizations on mount/when token changes
+      router.push('/dashboard');
     }, 2000);
   };
 
