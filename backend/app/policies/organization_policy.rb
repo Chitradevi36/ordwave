@@ -11,7 +11,7 @@ class OrganizationPolicy < ApplicationPolicy
       # Return all active orgs the user has an active membership in
       Organization.active
                   .joins(:memberships)
-                  .where(memberships: { user: user, deleted_at: nil, active: true })
+                  .where(memberships: { user_id: user.id, deleted_at: nil, active: true })
                   .distinct
     end
   end
