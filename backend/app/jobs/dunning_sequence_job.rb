@@ -169,11 +169,15 @@ class DunningSequenceJob
     action = organization.dunning_config&.dig('day_10', 'action')
     return unless action == 'suspend_account'
 
-    # Suspend the customer account
+    # Suspend the customer account due to dunning
     customer = invoice.customer
     return unless customer
 
-    customer.update(account_status: 'suspended', account_suspended_at: Time.current)
+    customer.update(
+      dunning_suspended_at: Time.current,
+      dunning_suspension_reason: dunning_step,
+      dunning_suspension_invoice_id: invoice.id
+    )
 
     # Send suspension notification
     DunningMailer.account_suspended(invoice, organization, customer).deliver_later

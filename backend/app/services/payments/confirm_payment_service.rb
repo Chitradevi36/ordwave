@@ -32,7 +32,15 @@ module Payments
       return failure(['Payment is not in draft status']) unless @payment.draft?
       return failure(['Payment amount must be positive']) unless @payment.amount.to_d > 0
 
+      # Feature 9: Log if payment is from a dunning-suspended customer
+      if @payment.customer&.dunning_suspended_at.present?
+        log_dunning_suspension_payment
+      end
+
       ActiveRecord::Base.transaction do
+        # Feature 11: Auto-deduce advance balance before allocating cash payment
+        advance_deduction_result = apply_advance_deduction
+
         alloc_result = run_allocation
         write_allocations(alloc_result.allocations)
 
@@ -87,6 +95,43 @@ module Payments
     end
 
     private
+
+    def apply_advance_deduction
+      # Feature 11: Check if customer has available advance balance
+      # If yes, apply it to oldest outstanding invoices before allocating cash
+      deduction = AdvanceDeductionService.call(
+        customer:       @payment.customer,
+        payment_amount: @payment.amount.to_d,
+        organization:   @payment.organization
+      )
+
+      return deduction if deduction.advance_deducted.zero?
+
+      # Apply the advance balance to invoices
+      allocation_result = AdvanceAllocationService.call(
+        actor:             @actor,
+        customer:          @payment.customer,
+        deduction_amount:  deduction.advance_deducted,
+        advance_payment:   deduction.advance_used
+      )
+
+      return deduction unless allocation_result.success?
+
+      # Log Feature 11 advance deduction
+      Credit::AuditLogger.log(
+        actor:        @actor,
+        organization: @payment.organization,
+        auditable:    @payment,
+        action:       'payment_advance_deduction_applied',
+        changes:      {
+          advance_deducted:    deduction.advance_deducted,
+          advance_balance_after: deduction.advance_used.balance,
+          invoices_covered:    allocation_result.allocations.count
+        }
+      )
+
+      deduction
+    end
 
     def run_allocation
       if @manual_lines.present?
@@ -212,6 +257,49 @@ module Payments
 
     def failure(errors)
       Result.new(success?: false, payment: @payment, advance_payment: nil, errors: errors)
+    end
+
+    def log_dunning_suspension_payment
+      # Feature 9: Flag payments from suspended customers for manual review
+      Credit::AuditLogger.log(
+        actor:        @actor,
+        organization: @payment.organization,
+        auditable:    @payment,
+        action:       'payment_from_suspended_customer',
+        changes:      {
+          customer_id:              @payment.customer_id,
+          suspended_since:          @payment.customer.dunning_suspended_at,
+          suspension_reason:        @payment.customer.dunning_suspension_reason,
+          suspension_invoice_id:    @payment.customer.dunning_suspension_invoice_id,
+          requires_manual_review:   true
+        }
+      )
+
+      # Create notification for finance team to review
+      finance_users = User.joins(:memberships)
+                          .where(memberships: {
+                            organization_id: @payment.organization_id,
+                            deleted_at:      nil,
+                            active:          true
+                          })
+                          .joins(memberships: :role)
+                          .where(roles: { name: %w[finance admin] })
+                          .distinct
+
+      Notifications::CreateService.call(
+        organization: @payment.organization,
+        recipients:   finance_users,
+        actor:        @actor,
+        notifiable:   @payment,
+        type:         'payment_from_suspended_customer',
+        title:        "Payment received from suspended account",
+        body:         "#{@payment.customer.name} (suspended since #{@payment.customer.dunning_suspended_at.to_date}) " \
+                      "submitted payment of ₹#{@payment.amount.to_i.to_s(:delimited)}. Manual review recommended.",
+        deep_link:    "/finance/payments/#{@payment.id}",
+        severity:     'high'
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[ConfirmPaymentService] Dunning suspension notification failed: #{e.message}")
     end
   end
 end

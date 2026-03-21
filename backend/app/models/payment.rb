@@ -8,10 +8,13 @@ class Payment < ApplicationRecord
   belongs_to :branch
   belongs_to :customer
   belongs_to :created_by, class_name: 'User'
+  belongs_to :reversed_by, class_name: 'User', optional: true
 
   has_many :allocations,      class_name: 'PaymentAllocation', dependent: :destroy
   has_many :sales_invoices,   through: :allocations
   has_many :advance_payments, foreign_key: :source_payment_id, dependent: :destroy
+  has_many :auto_post_audits, dependent: :destroy
+  has_many :rejection_feedbacks, dependent: :destroy
   include Auditable
 
 
@@ -43,6 +46,10 @@ class Payment < ApplicationRecord
   }
   scope :external_payments, -> { where(payment_mode: 'razorpay') }
   scope :successful_external, -> { where(external_payment_status: %w[captured authorized]) }
+  scope :auto_posted, -> { where(auto_posted: true) }
+  scope :manual_posted, -> { where(auto_posted: false) }
+  scope :pending_rejection, -> { where('rejection_window_expires_at > ?', Time.current) }
+  scope :auto_posting_expired, -> { where('rejection_window_expires_at <= ?', Time.current) }
 
   # ── Status helpers ────────────────────────────────────────────────────────────
   STATUSES.each { |s| define_method(:"#{s}?") { status == s } }
@@ -145,6 +152,46 @@ class Payment < ApplicationRecord
           invoice.sales_order.update!(status: 'paid')
         end
       end
+    end
+  end
+
+  # ── Auto-Posting Helpers ────────────────────────────────────────────────────
+  def auto_posted?
+    auto_posted.present? && auto_posted == true
+  end
+
+  def manual_posted?
+    !auto_posted?
+  end
+
+  def can_reject?
+    auto_posted? && rejection_window_expires_at.present? && Time.current < rejection_window_expires_at
+  end
+
+  def rejection_window_expired?
+    !can_reject?
+  end
+
+  def time_until_rejection_expires
+    return nil unless rejection_window_expires_at.present?
+    (rejection_window_expires_at - Time.current).round
+  end
+
+  def reversed?
+    status == 'reversed'
+  end
+
+  def confidence_grade
+    return 'manual' if !auto_posted?
+    return nil if confidence_score.blank?
+
+    case confidence_score
+    when 95..100
+      'high'
+    when 85..94
+      'medium'
+    else
+      'low'
     end
   end
 

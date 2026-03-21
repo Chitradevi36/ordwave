@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_17_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -192,6 +192,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["organization_id"], name: "index_audit_logs_on_organization_id"
   end
 
+  create_table "auto_post_audits", force: :cascade do |t|
+    t.bigint "payment_id"
+    t.bigint "bank_transaction_id"
+    t.jsonb "confidence_breakdown", default: {}, null: false
+    t.boolean "auto_posted", default: false
+    t.string "action", limit: 50, null: false
+    t.bigint "actor_id"
+    t.datetime "timestamp", null: false
+    t.text "audit_notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "idx_auto_post_audits_action"
+    t.index ["bank_transaction_id"], name: "idx_auto_post_audits_bank_transaction_id"
+    t.index ["payment_id"], name: "idx_auto_post_audits_payment_id"
+    t.index ["timestamp"], name: "idx_auto_post_audits_timestamp"
+  end
+
   create_table "bank_accounts", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.bigint "branch_id"
@@ -272,6 +289,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.string "idempotency_key", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "customer_name", limit: 255
+    t.string "reference", limit: 255
+    t.float "matched_confidence"
     t.index ["amount"], name: "index_bank_transactions_on_amount"
     t.index ["bank_account_id"], name: "index_bank_transactions_on_bank_account_id"
     t.index ["bank_statement_import_id"], name: "index_bank_transactions_on_bank_statement_import_id"
@@ -373,6 +393,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["state_code"], name: "index_branches_on_state_code"
   end
 
+  create_table "bulk_generations", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "user_id", null: false
+    t.string "session_id", null: false
+    t.integer "total_count", default: 0, null: false
+    t.integer "completed_count", default: 0, null: false
+    t.integer "error_count", default: 0, null: false
+    t.string "status", default: "in_progress", null: false
+    t.jsonb "errors", default: [], null: false
+    t.text "error_message"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "idx_bulk_gen_created_at"
+    t.index ["organization_id", "completed_at"], name: "idx_bulk_gen_org_completed"
+    t.index ["organization_id"], name: "index_bulk_generations_on_organization_id"
+    t.index ["session_id"], name: "index_bulk_generations_on_session_id", unique: true
+    t.index ["user_id"], name: "index_bulk_generations_on_user_id"
+  end
+
   create_table "collection_schedules", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.bigint "branch_id", null: false
@@ -395,6 +435,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["customer_id"], name: "index_collection_schedules_on_customer_id"
     t.index ["organization_id", "branch_id", "scheduled_date"], name: "idx_collection_schedules_org_branch_date"
     t.index ["organization_id"], name: "index_collection_schedules_on_organization_id"
+  end
+
+  create_table "confidence_adjustments", force: :cascade do |t|
+    t.float "amount_tolerance_pct", default: 2.0
+    t.integer "date_tolerance_days", default: 3
+    t.float "customer_fuzzy_minimum", default: 0.8
+    t.integer "reference_weight", default: 15
+    t.integer "auto_post_threshold", default: 95
+    t.integer "suggestion_threshold", default: 85
+    t.integer "rejection_window_minutes", default: 60
+    t.integer "model_version", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["model_version"], name: "idx_confidence_adjustments_model_version", unique: true
   end
 
   create_table "credit_accounts", force: :cascade do |t|
@@ -594,10 +648,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.string "tally_ledger_name"
     t.decimal "tally_closing_balance", precision: 15, scale: 2
     t.date "tally_balance_as_of_date"
+    t.datetime "dunning_suspended_at", comment: "When customer account was suspended due to dunning"
+    t.string "dunning_suspension_reason", comment: "Which dunning step triggered suspension (day_10)"
+    t.bigint "dunning_suspension_invoice_id", comment: "Which invoice triggered the suspension"
     t.index ["branch_id"], name: "index_customers_on_branch_id"
     t.index ["channel"], name: "index_customers_on_channel"
     t.index ["customer_type"], name: "index_customers_on_customer_type"
     t.index ["deleted_at"], name: "index_customers_on_deleted_at"
+    t.index ["dunning_suspended_at"], name: "index_customers_on_dunning_suspended_at", where: "(dunning_suspended_at IS NOT NULL)"
     t.index ["last_visited_at"], name: "index_customers_on_last_visited_at"
     t.index ["next_due_on"], name: "index_customers_on_next_due_on"
     t.index ["organization_id", "code"], name: "idx_customers_org_code", unique: true
@@ -1076,6 +1134,31 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["token_digest"], name: "index_invitations_on_token_digest", unique: true
   end
 
+  create_table "invoice_generation_quarantines", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "trip_stop_id", null: false
+    t.bigint "sales_order_id", null: false
+    t.bigint "branch_id", null: false
+    t.text "error_message", null: false
+    t.text "error_backtrace"
+    t.integer "retry_count", default: 0, null: false
+    t.datetime "last_retry_at"
+    t.jsonb "delivered_lines", default: {}, null: false, comment: "Snapshot of delivered line items for retry"
+    t.jsonb "error_context", default: {}, comment: "Additional context (retry reason code, etc.)"
+    t.string "status", default: "quarantined", null: false, comment: "quarantined, processing, resolved, archived"
+    t.datetime "resolved_at"
+    t.bigint "resolved_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id"], name: "index_invoice_generation_quarantines_on_branch_id"
+    t.index ["created_at", "status"], name: "index_invoice_generation_quarantines_on_created_at_and_status"
+    t.index ["organization_id", "status"], name: "idx_on_organization_id_status_8171273d98"
+    t.index ["organization_id"], name: "index_invoice_generation_quarantines_on_organization_id"
+    t.index ["resolved_by_id"], name: "index_invoice_generation_quarantines_on_resolved_by_id"
+    t.index ["sales_order_id"], name: "index_invoice_generation_quarantines_on_sales_order_id"
+    t.index ["trip_stop_id"], name: "index_invoice_generation_quarantines_on_trip_stop_id", comment: "One quarantine per trip stop"
+  end
+
   create_table "jwt_denylist", force: :cascade do |t|
     t.string "jti", null: false
     t.datetime "exp", null: false
@@ -1162,6 +1245,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.string "razorpay_customer_id"
     t.datetime "current_period_end"
     t.datetime "trial_ends_at"
+    t.jsonb "dunning_config", default: {"day_1"=>{"type"=>"friendly_reminder", "enabled"=>true}, "day_5"=>{"type"=>"urgent_notice", "enabled"=>true}, "day_10"=>{"type"=>"final_notice", "action"=>"suspend_account", "enabled"=>true}, "enabled"=>false, "quiet_hours_end"=>8, "quiet_hours_start"=>22, "max_reminders_per_month"=>3}, null: false
     t.index ["billing_status"], name: "index_organizations_on_billing_status"
     t.index ["razorpay_customer_id"], name: "index_organizations_on_razorpay_customer_id", unique: true, where: "(razorpay_customer_id IS NOT NULL)"
     t.index ["settings"], name: "index_organizations_on_settings", using: :gin
@@ -1181,6 +1265,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["sales_invoice_id"], name: "idx_allocations_invoice"
     t.index ["sales_invoice_id"], name: "index_payment_allocations_on_sales_invoice_id"
     t.index ["status"], name: "idx_allocations_status"
+  end
+
+  create_table "payment_suggestions", force: :cascade do |t|
+    t.bigint "bank_transaction_id", null: false
+    t.bigint "invoice_id", null: false
+    t.float "confidence_score"
+    t.jsonb "confidence_breakdown", default: {}, null: false
+    t.string "status", limit: 50, default: "pending_approval"
+    t.bigint "approved_by"
+    t.datetime "approved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bank_transaction_id"], name: "idx_payment_suggestions_bank_transaction_id"
+    t.index ["invoice_id"], name: "idx_payment_suggestions_invoice_id"
+    t.index ["status"], name: "idx_payment_suggestions_status"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -1206,18 +1305,36 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.string "idempotency_key"
     t.string "tally_voucher_number"
     t.datetime "tally_sync_at"
+    t.string "external_payment_id"
+    t.jsonb "external_payload_data", default: {}
+    t.string "external_payment_status"
+    t.datetime "external_confirmed_at"
+    t.string "failed_reason", comment: "Reason for payment failure (e.g., \"insufficient_funds\", \"card_declined\", \"network_error\")"
+    t.integer "retry_count", default: 0, comment: "Number of retry attempts made"
+    t.datetime "next_retry_at", comment: "Timestamp of scheduled next retry"
+    t.datetime "last_retry_at", comment: "Timestamp of last retry attempt"
+    t.string "retry_status", default: "pending", comment: "pending | scheduled | completed | abandoned"
+    t.boolean "auto_posted", default: false
+    t.float "confidence_score"
+    t.datetime "rejection_window_expires_at"
+    t.bigint "reversed_by"
+    t.index ["auto_posted", "rejection_window_expires_at"], name: "idx_payments_auto_posted_window"
     t.index ["branch_id"], name: "index_payments_on_branch_id"
     t.index ["created_by_id"], name: "index_payments_on_created_by_id"
     t.index ["customer_id", "received_date"], name: "idx_payments_customer_payment_date"
     t.index ["customer_id", "status"], name: "idx_payments_customer_status"
     t.index ["customer_id"], name: "index_payments_on_customer_id"
+    t.index ["external_payment_id"], name: "index_payments_on_external_payment_id", unique: true, where: "(external_payment_id IS NOT NULL)"
+    t.index ["external_payment_status", "retry_count"], name: "idx_payments_failed_retryable", where: "((external_payment_status)::text = 'failed'::text)"
     t.index ["idempotency_key"], name: "index_payments_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["metadata"], name: "idx_payments_metadata", using: :gin
+    t.index ["organization_id", "external_payment_status"], name: "idx_payments_org_ext_status"
     t.index ["organization_id", "payment_number"], name: "idx_payments_org_number", unique: true
     t.index ["organization_id", "status"], name: "idx_payments_org_status"
     t.index ["organization_id"], name: "index_payments_on_organization_id"
     t.index ["payment_mode"], name: "idx_payments_mode"
     t.index ["received_date"], name: "idx_payments_received_date"
+    t.index ["retry_status", "next_retry_at"], name: "idx_payments_retry_scheduling", where: "((retry_status)::text = ANY ((ARRAY['pending'::character varying, 'scheduled'::character varying])::text[]))"
     t.index ["tally_voucher_number"], name: "index_payments_on_tally_voucher_number", where: "(tally_voucher_number IS NOT NULL)"
     t.check_constraint "amount > 0::numeric", name: "chk_payments_amount_positive"
   end
@@ -1414,6 +1531,46 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["supplier_id"], name: "index_purchase_invoices_on_supplier_id"
   end
 
+  create_table "rejection_feedbacks", force: :cascade do |t|
+    t.bigint "payment_id", null: false
+    t.float "confidence_score"
+    t.string "rejection_reason", limit: 255
+    t.datetime "timestamp", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payment_id"], name: "idx_rejection_feedbacks_payment_id"
+    t.index ["timestamp"], name: "idx_rejection_feedbacks_timestamp"
+  end
+
+  create_table "reschedule_deliveries", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "trip_stop_id", null: false
+    t.bigint "sales_order_id", null: false
+    t.bigint "customer_id"
+    t.bigint "new_trip_stop_id"
+    t.date "original_date", null: false, comment: "Original delivery date"
+    t.date "next_retry_date", comment: "Scheduled retry date"
+    t.date "new_trip_date", comment: "Date when rescheduled trip is scheduled"
+    t.string "failure_code", comment: "Reason for delivery failure"
+    t.text "failure_notes", comment: "Additional notes about failure"
+    t.integer "attempt_count", default: 1, comment: "Number of delivery attempts"
+    t.integer "max_attempts", default: 3, comment: "Maximum retry attempts before escalation"
+    t.string "status", default: "pending", comment: "pending | rescheduled | delivered | cancelled | escalated"
+    t.datetime "last_attempted_at", comment: "When last attempt was made"
+    t.datetime "rescheduled_at", comment: "When rescheduling was processed"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "escalation_data", default: {}, null: false
+    t.jsonb "notification_data", default: {}, null: false
+    t.index ["customer_id"], name: "index_reschedule_deliveries_on_customer_id"
+    t.index ["new_trip_stop_id"], name: "index_reschedule_deliveries_on_new_trip_stop_id"
+    t.index ["next_retry_date"], name: "index_reschedule_deliveries_on_next_retry_date", where: "((status)::text = 'pending'::text)"
+    t.index ["organization_id", "status"], name: "idx_reschedule_deliveries_pending", where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'rescheduled'::character varying])::text[]))"
+    t.index ["organization_id"], name: "index_reschedule_deliveries_on_organization_id"
+    t.index ["sales_order_id"], name: "index_reschedule_deliveries_on_sales_order_id"
+    t.index ["trip_stop_id"], name: "index_reschedule_deliveries_on_trip_stop_id"
+  end
+
   create_table "retailer_price_list_assignments", force: :cascade do |t|
     t.bigint "customer_id", null: false
     t.bigint "price_list_id", null: false
@@ -1497,8 +1654,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "return_request_id"
     t.datetime "deprecated_at", comment: "Set to migration time to mark deprecation. Null = pre-deprecation row."
+    t.bigint "return_request_id"
     t.index ["condition"], name: "index_return_records_on_condition"
     t.index ["product_id"], name: "index_return_records_on_product_id"
     t.index ["reason_code"], name: "index_return_records_on_reason_code"
@@ -1628,6 +1785,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.text "einvoice_qr_code", comment: "Signed QR code from IRP"
     t.string "einvoice_status", default: "not_required"
     t.text "einvoice_error"
+    t.datetime "paid_at"
+    t.jsonb "dunning_attempts", default: [], null: false
     t.index ["branch_id"], name: "index_sales_invoices_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_invoices_on_created_by_id"
     t.index ["customer_id", "status"], name: "idx_sales_invoices_customer_status"
@@ -1636,7 +1795,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["invoice_date"], name: "index_sales_invoices_on_invoice_date"
     t.index ["irn"], name: "idx_sales_invoices_irn_unique", unique: true, where: "(irn IS NOT NULL)"
     t.index ["metadata"], name: "index_sales_invoices_on_metadata", using: :gin
+    t.index ["organization_id", "due_date", "status"], name: "idx_sales_invoices_dunning_query"
     t.index ["organization_id", "invoice_number"], name: "idx_sales_invoices_org_number", unique: true
+    t.index ["organization_id", "paid_at"], name: "idx_sales_invoices_org_paid_at"
     t.index ["organization_id", "status"], name: "idx_sales_invoices_org_status"
     t.index ["organization_id"], name: "index_sales_invoices_on_organization_id"
     t.index ["outstanding_amount"], name: "idx_sales_invoices_outstanding"
@@ -1712,6 +1873,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.datetime "picked_at"
     t.bigint "pick_confirmed_by_id"
     t.datetime "pick_confirmed_at"
+    t.datetime "rescheduled_at", comment: "When order was rescheduled due to shortage"
+    t.datetime "rescheduled_from", comment: "Original creation date before reschedule"
+    t.string "rescheduled_reason", comment: "Reason for reschedule (e.g., inventory_shortage)"
+    t.date "planned_delivery_date", comment: "Planned delivery date for rescheduled orders"
     t.index ["branch_id", "created_at"], name: "idx_sales_orders_branch_created_at"
     t.index ["branch_id"], name: "index_sales_orders_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_orders_on_created_by_id"
@@ -1723,6 +1888,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.index ["organization_id", "order_number"], name: "index_sales_orders_on_organization_id_and_order_number", unique: true
     t.index ["organization_id"], name: "index_sales_orders_on_organization_id"
     t.index ["pick_status"], name: "index_sales_orders_on_pick_status"
+    t.index ["rescheduled_at"], name: "index_sales_orders_on_rescheduled_at"
     t.index ["status"], name: "index_sales_orders_on_status"
     t.check_constraint "total_amount >= 0::numeric", name: "chk_sales_orders_total_non_negative"
   end
@@ -2034,8 +2200,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "geofence_status", default: "not_checked", comment: "within_geofence | outside_geofence | not_checked | invalid"
+    t.decimal "geofence_distance_m", precision: 10, scale: 2, comment: "Distance in meters from customer address"
+    t.datetime "geofence_validated_at", comment: "Timestamp when geofence validation was performed"
     t.index ["delivery_trip_id", "sequence"], name: "index_trip_stops_on_delivery_trip_id_and_sequence"
     t.index ["delivery_trip_id"], name: "index_trip_stops_on_delivery_trip_id"
+    t.index ["geofence_status"], name: "idx_trip_stops_geofence_anomalies", where: "((geofence_status)::text = ANY ((ARRAY['outside_geofence'::character varying, 'not_checked'::character varying])::text[]))"
     t.index ["idempotency_key"], name: "index_trip_stops_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["sales_order_id"], name: "index_trip_stops_on_sales_order_id"
     t.index ["status"], name: "index_trip_stops_on_status"
@@ -2182,6 +2352,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
   add_foreign_key "advance_payments", "payments", column: "source_payment_id"
   add_foreign_key "audit_logs", "organizations"
   add_foreign_key "audit_logs", "users", column: "actor_id"
+  add_foreign_key "auto_post_audits", "bank_transactions"
+  add_foreign_key "auto_post_audits", "payments"
+  add_foreign_key "auto_post_audits", "users", column: "actor_id"
   add_foreign_key "bank_accounts", "branches"
   add_foreign_key "bank_accounts", "organizations"
   add_foreign_key "bank_statement_imports", "bank_accounts"
@@ -2210,6 +2383,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
   add_foreign_key "billing_events", "organizations"
   add_foreign_key "billing_events", "subscriptions"
   add_foreign_key "branches", "organizations"
+  add_foreign_key "bulk_generations", "organizations"
+  add_foreign_key "bulk_generations", "users"
   add_foreign_key "collection_schedules", "branches"
   add_foreign_key "collection_schedules", "customers"
   add_foreign_key "collection_schedules", "organizations"
@@ -2301,6 +2476,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
   add_foreign_key "invitations", "organizations"
   add_foreign_key "invitations", "roles"
   add_foreign_key "invitations", "users", column: "invited_by_id"
+  add_foreign_key "invoice_generation_quarantines", "branches"
+  add_foreign_key "invoice_generation_quarantines", "organizations"
+  add_foreign_key "invoice_generation_quarantines", "sales_orders"
+  add_foreign_key "invoice_generation_quarantines", "trip_stops"
+  add_foreign_key "invoice_generation_quarantines", "users", column: "resolved_by_id"
   add_foreign_key "memberships", "branches"
   add_foreign_key "memberships", "organizations"
   add_foreign_key "memberships", "roles"
@@ -2312,10 +2492,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
   add_foreign_key "onboarding_progresses", "users"
   add_foreign_key "payment_allocations", "payments"
   add_foreign_key "payment_allocations", "sales_invoices"
+  add_foreign_key "payment_suggestions", "bank_transactions"
+  add_foreign_key "payment_suggestions", "users", column: "approved_by"
   add_foreign_key "payments", "branches"
   add_foreign_key "payments", "customers"
   add_foreign_key "payments", "organizations"
   add_foreign_key "payments", "users", column: "created_by_id"
+  add_foreign_key "payments", "users", column: "reversed_by"
   add_foreign_key "pick_list_items", "pick_lists"
   add_foreign_key "pick_list_items", "products"
   add_foreign_key "pick_lists", "branches"
@@ -2342,6 +2525,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_000019) do
   add_foreign_key "purchase_invoices", "organizations"
   add_foreign_key "purchase_invoices", "suppliers"
   add_foreign_key "purchase_invoices", "users", column: "created_by_id"
+  add_foreign_key "rejection_feedbacks", "payments"
+  add_foreign_key "reschedule_deliveries", "customers"
+  add_foreign_key "reschedule_deliveries", "organizations"
+  add_foreign_key "reschedule_deliveries", "sales_orders"
+  add_foreign_key "reschedule_deliveries", "trip_stops"
+  add_foreign_key "reschedule_deliveries", "trip_stops", column: "new_trip_stop_id"
   add_foreign_key "retailer_price_list_assignments", "customers"
   add_foreign_key "retailer_price_list_assignments", "price_lists"
   add_foreign_key "retailer_risk_snapshots", "customers"

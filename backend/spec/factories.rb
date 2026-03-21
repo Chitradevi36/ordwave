@@ -771,4 +771,8 @@ FactoryBot.define do
     end
   end
 
+  # Aliases for convenience in tests
+  factory :invoice, parent: :sales_invoice do
+  end
+
 end

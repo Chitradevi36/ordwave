@@ -5,7 +5,7 @@ class CreateRescheduleDeliveries < ActiveRecord::Migration[7.1]
       t.references :trip_stop, null: false, foreign_key: true
       t.references :sales_order, null: false, foreign_key: true
       t.references :customer, foreign_key: true
-      t.references :new_trip_stop, foreign_key: { to_table: :trip_stops }, optional: true
+      t.references :new_trip_stop, foreign_key: { to_table: :trip_stops }, null: true
       
       # Dates
       t.date :original_date, null: false, comment: 'Original delivery date'
@@ -28,8 +28,8 @@ class CreateRescheduleDeliveries < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :reschedule_deliveries, %i[trip_stop_id], unique: true
-    add_index :reschedule_deliveries, %i[organization_id status], where: "status IN ('pending', 'rescheduled')", name: 'idx_reschedule_deliveries_pending'
-    add_index :reschedule_deliveries, :next_retry_date, where: "status = 'pending'"
+    add_index :reschedule_deliveries, %i[trip_stop_id], unique: true, if_not_exists: true
+    add_index :reschedule_deliveries, %i[organization_id status], where: "status IN ('pending', 'rescheduled')", name: 'idx_reschedule_deliveries_pending', if_not_exists: true
+    add_index :reschedule_deliveries, :next_retry_date, where: "status = 'pending'", if_not_exists: true
   end
 end

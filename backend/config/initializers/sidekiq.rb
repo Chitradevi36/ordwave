@@ -5,39 +5,43 @@ SIDEKIQ_REDIS_CONFIG = {
   write_timeout:   3,
 }.freeze
 
-Sidekiq.configure_server do |config|
-  config.redis = SIDEKIQ_REDIS_CONFIG
+# Skip Sidekiq completely in development/test environments
+# These environments use inline job processing (no Redis needed)
+if !Rails.env.development? && !Rails.env.test?
+  Sidekiq.configure_server do |config|
+    config.redis = SIDEKIQ_REDIS_CONFIG
 
-  # ── Recurring jobs (sidekiq-cron) ──────────────────────────────────────────
-  config.on(:startup) do
-    schedule_file = Rails.root.join('config', 'sidekiq.yml')
-    if File.exist?(schedule_file)
-      cron_jobs = YAML.load_file(schedule_file).dig(':cron_jobs') || {}
-      Sidekiq::Cron::Job.load_from_hash(cron_jobs)
+    # ── Recurring jobs (sidekiq-cron) ──────────────────────────────────────────
+    config.on(:startup) do
+      schedule_file = Rails.root.join('config', 'sidekiq.yml')
+      if File.exist?(schedule_file)
+        cron_jobs = YAML.load_file(schedule_file).dig(':cron_jobs') || {}
+        Sidekiq::Cron::Job.load_from_hash(cron_jobs)
+      end
+    end
+
+    # ── Error handler — forwards to Sentry when available ─────────────────────
+    config.error_handlers << proc do |ex, ctx_hash|
+      if defined?(Sentry)
+        Sentry.capture_exception(ex, extra: ctx_hash)
+      else
+        Rails.logger.error("[Sidekiq] Unhandled error: #{ex.class}: #{ex.message}\n#{ex.backtrace&.first(5)&.join("\n")}")
+      end
+    end
+
+    # ── Lifecycle hooks for observability ──────────────────────────────────────
+    config.on(:startup) do
+      Rails.logger.info("[Sidekiq] Worker started — PID #{Process.pid}")
+    end
+
+    config.on(:shutdown) do
+      Rails.logger.info("[Sidekiq] Worker shutting down — PID #{Process.pid}")
     end
   end
 
-  # ── Error handler — forwards to Sentry when available ─────────────────────
-  config.error_handlers << proc do |ex, ctx_hash|
-    if defined?(Sentry)
-      Sentry.capture_exception(ex, extra: ctx_hash)
-    else
-      Rails.logger.error("[Sidekiq] Unhandled error: #{ex.class}: #{ex.message}\n#{ex.backtrace&.first(5)&.join("\n")}")
-    end
+  Sidekiq.configure_client do |config|
+    config.redis = SIDEKIQ_REDIS_CONFIG
   end
-
-  # ── Lifecycle hooks for observability ──────────────────────────────────────
-  config.on(:startup) do
-    Rails.logger.info("[Sidekiq] Worker started — PID #{Process.pid}")
-  end
-
-  config.on(:shutdown) do
-    Rails.logger.info("[Sidekiq] Worker shutting down — PID #{Process.pid}")
-  end
-end
-
-Sidekiq.configure_client do |config|
-  config.redis = SIDEKIQ_REDIS_CONFIG
 end
 
 # ── Default job options ──────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  PLANS = %w[free starter pro].freeze
+  PLANS = %w[free starter growth enterprise].freeze
 
   # Devise modules
   devise :database_authenticatable, :recoverable, :rememberable, :trackable,
@@ -37,6 +37,12 @@ class User < ApplicationRecord
 
   def role_in(organization)
     membership_for(organization)&.role
+  end
+
+  def current_organization_id
+    # Return the ID of the user's first active organization
+    # Used during login to set the initial organization context
+    organizations.active.pick(:id)
   end
 
   def soft_delete!

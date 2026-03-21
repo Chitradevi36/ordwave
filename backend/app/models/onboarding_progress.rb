@@ -1,12 +1,16 @@
 class OnboardingProgress < ApplicationRecord
-  CHECKLIST_STEPS = %w[
-    setup_details
-    add_first_product
-    configure_pricing
-    add_team_member
-    create_first_order
-    setup_payment_terms
+  # Required steps for onboarding completion
+  REQUIRED_STEPS = %w[
+    organization_setup
   ].freeze
+
+  # Optional steps - user can complete anytime
+  OPTIONAL_STEPS = %w[
+    add_products
+  ].freeze
+
+  # All available steps
+  CHECKLIST_STEPS = (REQUIRED_STEPS + OPTIONAL_STEPS).freeze
 
   belongs_to :organization
   belongs_to :user
@@ -18,7 +22,7 @@ class OnboardingProgress < ApplicationRecord
   def mark_step_complete!(step_name)
     raise ArgumentError, "Invalid step: #{step_name}" unless CHECKLIST_STEPS.include?(step_name.to_s)
 
-    self.steps[step_name.to_s] = { completed: true, completed_at: Time.current.iso8601 }
+    self.steps[step_name.to_s] = { 'completed' => true, 'completed_at' => Time.current.iso8601 }
     check_if_all_complete!
     save!
   end
@@ -29,18 +33,23 @@ class OnboardingProgress < ApplicationRecord
 
   def completion_percentage
     return 0 if steps.blank?
-    completed_count = steps.values.count { |v| v['completed'] == true }
-    (completed_count.to_f / CHECKLIST_STEPS.size * 100).round
+    # Only count required steps for completion percentage
+    required_completed = REQUIRED_STEPS.count { |step| step_completed?(step) }
+    (required_completed.to_f / REQUIRED_STEPS.size * 100).round
   end
 
   private
 
   def initialize_steps
-    self.steps = CHECKLIST_STEPS.index_with { |_| { completed: false, completed_at: nil } }
+    self.steps = CHECKLIST_STEPS.index_with { |_| { 'completed' => false, 'completed_at' => nil } }
   end
 
   def check_if_all_complete!
-    if steps.values.all? { |v| v['completed'] == true }
+    # Onboarding is complete when ALL REQUIRED steps are done
+    # Optional steps are ignored for completion check
+    all_required_done = REQUIRED_STEPS.all? { |step| step_completed?(step) }
+    
+    if all_required_done
       self.completed = true
       self.completed_at = Time.current
     end

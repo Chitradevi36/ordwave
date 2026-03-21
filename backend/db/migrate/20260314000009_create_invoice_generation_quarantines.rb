@@ -21,13 +21,13 @@ class CreateInvoiceGenerationQuarantines < ActiveRecord::Migration[7.1]
       # Status tracking
       t.string :status, default: 'quarantined', null: false, comment: 'quarantined, processing, resolved, archived'
       t.datetime :resolved_at
-      t.references :resolved_by, foreign_key: { to_table: :users }, optional: true
+      t.references :resolved_by, foreign_key: { to_table: :users }, null: true
 
       t.timestamps
     end
 
-    add_index :invoice_generation_quarantines, [:organization_id, :status]
-    add_index :invoice_generation_quarantines, [:created_at, :status]
-    add_index :invoice_generation_quarantines, :trip_stop_id, unique: true, comment: 'One quarantine per trip stop'
+    add_index :invoice_generation_quarantines, [:organization_id, :status], if_not_exists: true
+    add_index :invoice_generation_quarantines, [:created_at, :status], if_not_exists: true
+    add_index :invoice_generation_quarantines, :trip_stop_id, unique: true, comment: 'One quarantine per trip stop', if_not_exists: true
   end
 end

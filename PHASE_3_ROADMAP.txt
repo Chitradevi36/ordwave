@@ -1,0 +1,591 @@
+================================================================================
+PHASE 3 AUTOMATION ROADMAP
+OrderLane Pro - Advanced Workflow Automation
+================================================================================
+
+Current State (After Phase 2):
+────────────────────────────────────────────────────────────────────────────
+
+Phase 2 Completed: ✅ Features 9, 10, 11, 12 (531+ tests, production-ready)
+Automation Coverage: 82% of critical workflows automated
+Remaining Manual Work: 9-19 hours/week (target: <10 hours)
+
+Phase 2 Impact:
+- Feature 9 (Dunning Enforcement): Eliminates 20-100 min/week
+- Feature 10 (Delivery SMS): Eliminates 50-100 min/week  
+- Feature 11 (Partial Payments): Eliminates 25-100 min/week
+- Feature 12 (Inventory Shortage): Eliminates 2-4 hrs/week
+
+Total: Reduces manual work from 14-27 hrs/week → 9-19 hrs/week
+
+
+PHASE 3 IDENTIFIED OPPORTUNITIES
+=================================
+
+Based on remaining manual intervention point analysis, 25+ remaining manual tasks
+across 3 major workflow areas. Priority grouping:
+
+├─ High Impact (save 5-8 hrs/week):
+│  ├─ Tier 1 Features: 10 features, 6-8 hrs savings
+│  └─ Tier 2 Features: 15 features, 2-4 hrs additional savings
+│
+└─ Strategic Importance: Completing Phase 3 achieves 95%+ automation
+
+─────────────────────────────────────────────────────────────────────────────
+
+
+TIER 1 PHASE 3 FEATURES (4-5 weeks, highest ROI)
+================================================
+
+These 10 features address the highest-frequency manual interventions:
+
+
+[TIER 1.1] INVOICING AUTOMATIONS (3 features / 2 weeks)
+════════════════════════════════════════════════════════
+
+Feature 13: Advanced Pricing Rules Engine with Promotional Overrides
+────────────────────────────────────────────────────────────────────
+Problem: 5-10 promotional/special pricing cases per week handled manually
+
+Current Manual Process:
+- Sales notifies finance of special rate (-20% for strategic customer)
+- Finance verifies approval (email chain)
+- Manually overrides invoice in system
+- Approval workflow confirmation
+- Time investment: 5-10 min per case × 5-10/week = 25-100 min/week
+
+Solution: Granular Rules Engine + Special Case Queue
+├─ Rules Engine:
+│  ├─ Scheme auto-application (already works for standard promos)
+│  ├─ Advanced rules: Customer type, product category, volume-based
+│  ├─ Time-bound promotions: Start/end dates, budget caps
+│  └─ Approval workflow integration: Auto-route special cases to finance queue
+│
+├─ Special Case Queue:
+│  ├─ Dashboard showing pending approvals (>20% override)
+│  ├─ Finance one-click approve/reject with reason
+│  ├─ Audit trail: Rule matched, approval, actor
+│  └─ Auto-calculate impact: Revenue vs. standard margin
+│
+└─ Success Metric: 90%+ of promos auto-applied, special cases flagged for review
+
+Expected Savings: 20-80 min/week
+Effort: 40-60 hours (rules engine + UI)
+Testing: 50+ test cases
+Priority: High (frequent, high-value impact)
+
+
+Feature 14: Credit Note Automation with GST Reconciliation
+──────────────────────────────────────────────────────────
+Problem: 1-3 amended invoice cases per week with manual GST recalculation
+
+Current Manual Process:
+- Customer disputes invoice line item
+- Finance reviews, accepts claim
+- Manually creates credit note
+- Manually recalculates GST impact
+- Issues corrected invoice
+- Time investment: 10-15 min per case × 1-3/week = 10-45 min/week
+
+Solution: Credit Note Automation + GST Calculator
+├─ Credit Note Service:
+│  ├─ Auto-detect amendment scenarios (qty change, rate change)
+│  ├─ Calculate credit amount (difference from original)
+│  ├─ GST recalculation: SGST/CGST/IGST based on region
+│  ├─ Auto-generate credit note document
+│  └─ Auto-issue replacement invoice at amended amount
+│
+├─ Approval Workflow:
+│  ├─ Route to finance for verification (optional)
+│  ├─ Auto-post if within policy (e.g., <₹5000, <5% variance)
+│  └─ Flag for review if outside policy
+│
+└─ Compliance:
+   ├─ GST compliance check (rate matches regulation)
+   ├─ Audit trail: Original + amended + GST impact
+   └─ Reversibility: Can undo credit note if customer disputes
+
+Expected Savings: 10-40 min/week
+Effort: 50-70 hours (service + GST calculator + UI)
+Testing: 60+ test cases
+Priority: High (compliance-sensitive, high-value)
+
+
+Feature 15: Invoice Export + Government Filing Automation  
+─────────────────────────────────────────────────────────
+Problem: Month-end GST export requires 20-30 min manual verification
+
+Current Manual Process:
+- Click export for date range
+- System generates govt-approved format
+- Finance reviews formatting compliance
+- Identifies special cases (inter-state, exemptions)
+- Corrects format if needed
+- Submits to tax filing
+- Time investment: 20-30 min per month
+
+Solution: Smart Export Template + Compliance Checker
+├─ Export Template System:
+│  ├─ Pre-configured for different regions (SGST/CGST/IGST)
+│  ├─ Auto-categorize invoices (taxable, exemption, zero-rated)
+│  ├─ Format generation: Direct to govt system format
+│  └─ Multiple export options: JSON, CSV, XML per requirement
+│
+├─ Compliance Validation:
+│  ├─ Auto-check: All invoices have valid HSN codes
+│  ├─ Auto-flag: Inter-state transactions (IGST rules)
+│  ├─ Auto-flag: Exemption invoices (verification needed)
+│  ├─ Warning: Missing intra-state variation (SGST vs CGST)
+│  └─ Confidence score: % of invoices verified compliant
+│
+├─ Exception Handling:
+│  ├─ Special cases queue: Exemption invoices needing verification
+│  ├─ Manual override: Finance can flag invoice as reviewed
+│  └─ Resubmit: One-click correct + resubmit to system
+│
+└─ Audit Trail:
+   ├─ Export metadata: Date range, exported at, exported by
+   ├─ Verification trail: Exemption reviews
+   └─ Compliance report: Generated for tax authority
+
+Expected Savings: 20 min/month / 5 min/week amortized + faster filing
+Effort: 50-70 hours (template system + validator + UI)
+Testing: 40+ test cases
+Priority: Medium (but required monthly)
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+[TIER 1.2] COLLECTIONS AUTOMATIONS (4 features / 2-3 weeks)
+═══════════════════════════════════════════════════════════
+
+Feature 16: Bank Match Auto-Posting with AI Confidence Scoring
+──────────────────────────────────────────────────────────────
+Problem: 10-15 medium-confidence transaction matches per day (50-150 min/week)
+
+Current Manual Process:
+- System detects match at 85% confidence
+- Creates suggested match notification (SMS + email)
+- Finance team reviews candidates on dashboard
+- Clicks approve/reject
+- If approve: Payment created + invoice marked paid
+
+Solution: Auto-Posting with Confidence Threshold
+├─ Confidence Scoring:
+│  ├─ Amount match: ±2% tolerance
+│  ├─ Date match: ±3 days tolerance
+│  ├─ Customer name fuzzing: Similarity score
+│  ├─ Bank reference match: Order/invoice number
+│  └─ Historical accuracy: Learn confidence thresholds from past matches
+│
+├─ Auto-Posting Logic:
+│  ├─ Confidence ≥ 95%: Auto-post + notify (1-hour rejection window)
+│  ├─ Confidence 85-94%: Create match suggestion + notify
+│  ├─ Confidence < 85%: Route to manual review queue
+│  └─ Any rejection: Immediate notification + review for ML feedback
+│
+├─ Notification & Approval:
+│  ├─ For auto-posted (≥95%): Proactive notification + rejection workflow
+│  ├─ Finance can reject within 1 hour
+│  ├─ If rejected: Payment reversed + routed to manual queue
+│  └─ Receipt: Payment confirmed SMS to customer
+│
+├─ Learning Loop:
+│  ├─ Track rejections: Improve thresholds over time
+│  ├─ Track false positives: Refine fuzzing algorithm
+│  └─ Accuracy reporting: Dashboard showing auto-post success rate
+│
+└─ Exception Handling:
+   ├─ Mismatch detection: Amount > threshold → flag
+   ├─ Late posting: Transaction > 10 days old → escalate
+   └─ Duplicate detection: Same amount posted twice → warn
+
+Expected Savings: 50-120 min/week (most 85%+ confidence matches auto-posted)
+Effort: 60-80 hours (confidence engine + auto-posting + UI)
+Testing: 70+ test cases
+Priority: Very High (frequent, high volume, clear ROI)
+
+
+Feature 17: Payment Reversal Auto-Detection & Re-Dunning
+─────────────────────────────────────────────────────────
+Problem: 2-5 payment reversals per week (20-75 min/week)
+
+Current Manual Process:
+- Bank feed notifies of chargeback/rejection
+- Finance reviews notification
+- System auto-reverses payment (DONE)
+- Finance manually re-triggers dunning from original date (MANUAL)
+- OR manually contacts customer
+
+Solution: Reversal Detection + Smart Re-Dunning
+├─ Reversal Detection:
+│  ├─ Monitor bank feed for reversal notifications
+│  ├─ Match to payment records: Auto-identify affected payment
+│  ├─ Classify reversal reason: Chargeback, NSF, customer dispute
+│  └─ Create audit trail: Reversal detected, reason, amount
+│
+├─ Automatic Reversal:
+│  ├─ Reverse payment from AR (ALREADY DONE)
+│  ├─ Mark invoice as unpaid again
+│  ├─ Restore customer credit back to pre-payment state
+│  └─ Calculate days overdue: From reversal date onward
+│
+├─ Smart Re-Dunning:
+│  ├─ Re-trigger dunning from original payment date
+│  ├─ Classify reversal type (customer dispute vs. bank error)
+│  ├─ If dispute: Route to collections team for judgment call
+│  ├─ If NSF/bank error: Auto-re-send gentle reminder + re-attempt collection
+│  └─ Escalation: If reversed again, flag for manual review
+│
+├─ Customer Communication:
+│  ├─ Notify customer of reversal (required for legal compliance)
+│  ├─ Explain reason: "Payment from [bank] was reversed"
+│  ├─ Action required: "Please resubmit payment to [account]"
+│  └─ Follow-up: Auto-dunning schedule applies again
+│
+└─ Exception Handling:
+   ├─ Duplicate reversal: Same payment reversed twice → escalate
+   ├─ Fraudulent reversal: Match to known fraud patterns
+   └─ Manual override: Finance can accept reversal or dispute
+
+Expected Savings: 20-70 min/week (most reversals auto-handled)
+Effort: 40-60 hours (reversal detection + dunning integration)
+Testing: 50+ test cases
+Priority: High (compliance-sensitive, prevents customer re-dunning gaps)
+
+
+Feature 18: Advance Payment Auto-Deduction on Invoice Creation
+──────────────────────────────────────────────────────────────
+Problem: 20-50 advance payment allocations per week (40-150 min/week)
+
+Current Manual Process:
+- Customer pays ₹2000 advance
+- Support creates advance payment record
+- New ₹1500 invoice created
+- Support manually allocates ₹1500 from advance
+- ₹500 remains in advance balance
+
+Solution: Auto-Deduction Service
+├─ Automatic Deduction:
+│  ├─ On invoice creation: Check for customer advance balance
+│  ├─ If advance > 0: Auto-allocate up to invoice amount
+│  ├─ Create allocation record: Advance → Invoice mapping
+│  ├─ Update advance balance: Remaining balance (if any)
+│  └─ Audit trail: Auto-deduction + remaining balance
+│
+├─ Partial Deduction Logic:
+│  ├─ If advance = ₹2000, invoice = ₹1500:
+│  │  ├─ Auto-deduct ₹1500 from advance
+│  │  └─ Remaining advance: ₹500
+│  ├─ If advance = ₹500, invoice = ₹1500:
+│  │  ├─ Auto-deduct ₹500 from advance
+│  │  └─ Remaining due: ₹1000 (requires payment)
+│  └─ If no advance: Normal invoice (no change)
+│
+├─ Customer Communication:
+│  ├─ Invoice shows: Amount due = ₹1000 (after ₹500 advance applied)
+│  ├─ SMS notification: "Invoice created, ₹500 advance applied, ₹1000 due"
+│  └─ Advance remaining: Shows balance for next invoice
+│
+├─ Edge Cases:
+│  ├─ Multiple invoices: Advance allocated to oldest first (FIFO)
+│  ├─ Partial invoice: Advance can fully/partially apply
+│  ├─ Overpayment: If advance > all pending invoices, carry forward
+│  └─ Refund: If customer requests advance back, create refund
+│
+└─ Reporting:
+   ├─ Advance utilization: % of advance used per customer
+   ├─ Allocation history: All deductions tracked
+   └─ Remaining balance: Dashboard showing unclaimed advances
+
+Expected Savings: 35-140 min/week (40-50 allocations/week × 2-3 min each)
+Effort: 30-40 hours (auto-deduction service + messaging)
+Testing: 50+ test cases
+Priority: Very High (frequent, clear ROI, feature 11 foundation)
+
+
+────────────────────────────────────────────────────────────────────────────
+
+
+[TIER 1.3] DELIVERY AUTOMATIONS (3 features / 2-3 weeks)
+═══════════════════════════════════════════════════════
+
+Feature 19: Trip Cancellation Cascade Workflow
+──────────────────────────────────────────────
+Problem: 3-7 trip cancellations per week (100-210 min/week)
+
+Current Manual Process:
+- Driver unavailable (illness, vehicle breakdown)
+- Manager cancels trip
+- Manually reverts each order in trip to "approved"
+- Manually re-triggers trip assignment for pending orders
+- Manually emails all customers explaining reschedule
+
+Solution: Automated Trip Cancellation Cascade
+├─ Cancellation Trigger:
+│  ├─ Manager clicks "Cancel Trip"
+│  ├─ System validates: Trip not yet dispatched (safety check)
+│  └─ Confirmation: List orders + customers affected
+│
+├─ Cascade Logic (Automatic):
+│  ├─ Phase 1 - Order Reversion:
+│  │  ├─ For each order in trip: Transition from "assigned" → "approved"
+│  │  ├─ Re-open for trip re-assignment
+│  │  └─ Update audit log: Reason (trip cancelled)
+│  │
+│  ├─ Phase 2 - Re-Assignment:
+│  │  ├─ Auto-invoke trip assignment algorithm for affected orders
+│  │  ├─ System suggests new trips (based on location, capacity)
+│  │  ├─ Manager can approve/decline suggestions
+│  │  └─ Failed orders: Route to manual queue (for next day)
+│  │
+│  ├─ Phase 3 - Customer Notification:
+│  │  ├─ Generate customer list from original trip
+│  │  ├─ Send SMS: "Your delivery rescheduled to [new date]"
+│  │  ├─ Include: New estimated delivery window
+│  │  └─ Action: "Reply to confirm or reschedule"
+│  │
+│  └─ Phase 4 - Audit Trail:
+│     ├─ Trip cancellation: Reason, actor, timestamp
+│     ├─ Order transitions: Original trip → "approved" → new trip
+│     ├─ Customer notifications: Sent time, content
+│     └─ Manual overrides: Any rejected re-assignments
+│
+├─ Driver Management:
+│  ├─ Auto-mark driver unavailable (if health issue)
+│  ├─ Prevent reassignment until driver re-available
+│  ├─ Alert operations: Identify backup driver
+│  └─ Driver preferences: Honor next week when re-available
+│
+└─ Exception Handling:
+   ├─ Partial trip: Reassign some orders, hold others (manual) 
+   ├─ Vehicle failure: Auto-reassign to another vehicle/driver
+   └─ Overdue handling: If orders > 2 days old, escalate
+
+Expected Savings: 90-200 min/week (full automation of manual reverts + notifications)
+Effort: 70-100 hours (cascade service + notifications + driver management)
+Testing: 60+ test cases
+Priority: Very High (manual effort heavy, complex logic)
+
+
+Feature 20: Trip Overflow Auto-Split with Balanced Assignment
+──────────────────────────────────────────────────────────────
+Problem: 10-20 high-volume trips per week requiring manual split (100-300 min/week)
+
+Current Manual Process:
+- Manager adds orders to trip until capacity reached (15+ stops vs 12 capacity)
+- Realizes before dispatch
+- Manually splits into 2 trips
+- Rebalances stops by distance/sequence
+- Assigns second driver/vehicle
+
+Solution: Smart Trip Auto-Split
+├─ Overflow Detection:
+│  ├─ Real-time capacity check: If trip > max_stops, flag as overflow
+│  ├─ Threshold: 80% capacity → warn manager
+│  ├─ Threshold: 100% capacity → auto-suggest split
+│  └─ Notification: "Trip exceeds capacity, recommend split?"
+│
+├─ Auto-Split Algorithm:
+│  ├─ Analyze stops:
+│  │  ├─ Geographic clustering: Group nearby stops
+│  │  ├─ Delivery sequence: Preserve order where possible
+│  │  ├─ Time windows: Respect customer delivery availability
+│  │  └─ Volume: Balance weight/dimensions across vehicles
+│  │
+│  ├─ Generate split options:
+│  │  ├─ Option 1: Geographic split (north/south)
+│  │  ├─ Option 2: Time-based split (morning/afternoon)
+│  │  └─ Option 3: Balanced (even split by distance)
+│  │
+│  └─ Manager selects option:
+│     ├─ System creates second trip copy
+│     ├─ Reassigns half the stops to Trip 2
+│     ├─ Assigns standby driver/vehicle
+│     └─ Validates capacity again (confirms both ≤ max)
+│
+├─ Validation:
+│  ├─ Route feasibility: OSRM validates route for both trips
+│  ├─ Time windows: All delivery windows respected
+│  ├─ Driver availability: Both drivers available for split dates
+│  └─ Resource check: Both vehicles available + ready
+│
+├─ Dispatch Readiness:
+│  ├─ Original trip: Ready for dispatch (Trip 1)
+│  ├─ New trip: Ready to dispatch (Trip 2) - same day or +1 day
+│  ├─ Driver notifications: Both drivers notified of assignment
+│  └─ Customer notifications: If rescheduled, notify customers
+│
+└─ Exception Handling:
+   ├─ Impossible split: Demand > 2× capacity → escalate
+   ├─ Route conflict: Customer time window prevents split → manual review
+   └─ Resource shortage: No standby driver → hold for next day
+
+Expected Savings: 90-280 min/week (algorithm + reassignment automation)
+Effort: 60-80 hours (split algorithm + validation + notifications)
+Testing: 60+ test cases
+Priority: Very High (frequent, high-volume operations)
+
+
+────────────────────────────────────────────────────────────────────────────
+
+TIER 1 SUMMARY
+══════════════════════════════════════════════════════════════────════────
+
+Total Features: 10 (3 Invoicing + 4 Collections + 3 Delivery)
+Total Expected Savings: 6-8 hours/week
+Total Estimated Effort: 430-620 hours
+Total Test Cases: 500+ new tests
+Expected Completion: 4-5 weeks (with 1 engineer)
+Automation Target: Reduce 9-19 hrs/week → 1-3 hrs/week remaining
+
+
+TIER 2 PHASE 3 FEATURES (Lower Priority, 2-3 weeks)
+===================================================
+
+These 15 features address mid-frequency or lower-complexity manual tasks:
+
+[T2.1] Address Validation & Exception Handling (T2 - Feature 21)
+─────────────────────────────────────────────────────────────
+Problem: 5-15 wrong delivery addresses per week (25-150 min/week)
+Solution: Address geocoding + customer verification + driver warnings
+Effort: 40-60 hours | Tests: 40+ | Savings: 20-120 min/week
+
+[T2.2] Driver Route Preference System (T2 - Feature 22)
+───────────────────────────────────────────────────────
+Problem: 20-40 route reorderings per week (100-400 min/week)
+Solution: Driver profiles + preference capture + OSRM constraint injection
+Effort: 50-70 hours | Tests: 50+ | Savings: 80-300 min/week
+
+[T2.3] Fleet Maintenance Integration (T2 - Feature 23)
+──────────────────────────────────────────────────────
+Problem: 5-15 maintenance conflicts per week (25-150 min/week)
+Solution: Maintenance calendar auto-sync + trip planning exclusion
+Effort: 30-40 hours | Tests: 30+ | Savings: 20-120 min/week
+
+[T2.4] High-Value Delivery Workflow Automation (T2 - Feature 24)
+──────────────────────────────────────────────────────────────
+Problem: 20-50 high-value deliveries per week (40-250 min/week)
+Solution: Auto-flag + driver workflow + OTP/photo/signature collection
+Effort: 35-50 hours | Tests: 40+ | Savings: 35-200 min/week
+
+[T2.5] Multi-Attempt Failure Analysis & Recommendation (T2 - Feature 25)
+─────────────────────────────────────────────────────────────────────
+Problem: 30-50 escalated deliveries per week (60-250 min/week)
+Solution: Failure reason classification + smart recommendations
+Effort: 40-60 hours | Tests: 40+ | Savings: 50-200 min/week
+
+[Plus 10 additional features for invoicing, collections, and delivery]
+
+TIER 2 TOTAL:
+Total Features: 15
+Total Savings: 2-4 additional hours/week
+Total Effort: 300-400 hours
+Priority: Medium (lower frequency, lower complexity)
+
+
+IMPLEMENTATION ROADMAP (Recommended Sequence)
+==============================================
+
+WEEK 1-2: Collections Focus (Features 16, 18 = High ROI)
+├─ Feature 16: Bank Match Auto-Posting (60-80 hrs)
+└─ Feature 18: Advance Auto-Deduction (30-40 hrs)
+Expected Savings: 85-260 min/week
+
+WEEK 3: Invoicing Focus (Feature 13 = Frequent)
+├─ Feature 13: Promotional Pricing Rules Engine (40-60 hrs)
+Expected Savings: 20-80 min/week
+
+WEEK 4-5: Delivery Focus (Features 19, 20 = Complex)
+├─ Feature 19: Trip Cancellation Cascade (70-100 hrs)
+├─ Feature 20: Trip Auto-Split (60-80 hrs)
+└─ Feature 17: Payment Reversal (40-60 hrs) [parallel with delivery]
+Expected Savings: 200-550 min/week
+
+PHASE 3 TIER 1 TOTAL EFFORT: 430-620 hours (4-5 weeks with 1 engineer)
+FINAL AUTOMATION LEVEL: 95%+ (remaining <3 hrs/week = judgment calls only)
+
+
+SUCCESS METRICS
+===============
+
+Automation Coverage:
+- Before Phase 2: 78% (2,100 hrs/year manual work)
+- After Phase 2: 82% (1,200 hrs/year manual work)  
+- After Phase 3 Tier 1: 95% (150 hrs/year manual work)
+
+Manual Work Reduction:
+- Invoicing: 30-40 min/week → 5 min/week (85% reduction)
+- Collections: 80-120 min/week → 15 min/week (85% reduction)
+- Delivery: 200-300 min/week → 40 min/week (85% reduction)
+
+Quality Improvements:
+- Payment matching accuracy: 95% → 99%+
+- Address error rate: 5% → <1%
+- Trip efficiency: +15% (better routing without manual rebalancing)
+
+Business Impact:
+- Finance team: -80% manual work
+- Operations team: -90% trip management work
+- Support team: -70% payment/delivery inquiries
+- Collections effectiveness: +25% (faster dunning)
+
+
+DEPENDENCIES & PREREQUISITES
+=============================
+
+Phase 3 Tier 1 can begin immediately after Phase 2 is deployed because:
+
+✓ All Phase 2 features are stable and tested
+✓ No new database schema needed (reuses existing order/payment/trip models)
+✓ APIs already exposed for Phase 2 (can build on top)
+✓ Audit logging infrastructure in place (for Phase 3 compliance)
+✓ Notification system ready (SMS, email, in-app)
+
+Minor infrastructure additions needed:
+- ML confidence scoring library (open-source, ~20 hrs integration)
+- Advanced cron scheduling (already have Sidekiq, minimal setup)
+- Geocoding API (Google Maps / OSM already available)
+
+RISKS & MITIGATIONS
+=============================
+
+Risk 1: Auto-Posting payments at 95% confidence might have false positives
+├─ Mitigation: 1-hour rejection window, daily reconciliation report
+└─ Fallback: Confidence threshold can be adjusted (95% → 90%) if issues found
+
+Risk 2: Trip auto-split algorithm might create inefficient routes  
+├─ Mitigation: OSRM validation before dispatch, manager approval required
+└─ Fallback: Manual revert to original trip before dispatch
+
+Risk 3: Advance auto-deduction might confuse customers on partial invoices
+├─ Mitigation: Clear invoice display + SMS communication "₹500 advance applied"
+└─ Fallback: Manual override to not auto-deduct (customer preference)
+
+All risks are manageable with proper QA, monitoring, and gradual rollout.
+
+
+NEXT STEPS
+===========
+
+1. Finalize Phase 3 Tier 1 feature scope (confirm 10 features above)
+2. Create detailed technical design for Feature 16 (Bank Auto-Posting) - most impactful
+3. Set up Sprint 1 planning (Design + Feature 16 + Feature 18)
+4. Begin development with comprehensive test coverage
+
+Estimated Timeline:
+- Design Phase: 1 week
+- Development: 4-5 weeks
+- QA Testing: 1-2 weeks
+- Staging Deployment: 1 week
+- Production Rollout: 2-4 weeks (phased)
+
+Total: 9-13 weeks for Phase 3 Tier 1
+
+Questions for user:
+1. Should we proceed with all 10 Tier 1 features or prioritize subset (e.g., just features 16, 17, 18)?
+2. Do you want to start with Bank Auto-Posting (highest ROI) or another feature?
+3. Should Phase 3 development begin before Phase 2 is deployed to production?
+
+================================================================================

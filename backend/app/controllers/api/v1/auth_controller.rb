@@ -2,9 +2,32 @@ module Api
   module V1
     class AuthController < ActionController::API
       def login
-        user = User.active.find_by(email: params[:email])
+        # Support credentials sent either at top-level or nested under `auth`.
+        auth = params[:auth] || {}
+        email = params[:email] || auth[:email] || auth['email']
+        password = params[:password] || auth[:password] || auth['password']
 
-        unless user&.valid_password?(params[:password])
+        unless email.present? && password.present?
+          return render json: { errors: ['Email and password are required'] }, status: :bad_request
+        end
+
+        Rails.logger.debug("Auth#login params class=#{params.class} auth class=#{auth.class} email=#{email.inspect}")
+
+        begin
+          user = User.active.find_by(email: email)
+        rescue StandardError => e
+          Rails.logger.error("Auth#login user lookup error: #{e.class}: #{e.message}")
+          Rails.logger.error(params.to_unsafe_h.inspect) rescue nil
+          return render json: { errors: ['Invalid email or password'] }, status: :unauthorized
+        end
+
+        begin
+          unless user&.valid_password?(password)
+            return render json: { errors: ['Invalid email or password'] }, status: :unauthorized
+          end
+        rescue StandardError => e
+          Rails.logger.error("Auth#login error validating password: #{e.class}: #{e.message} -- params: ")
+          Rails.logger.error(params.to_unsafe_h.slice(:email, :auth)) rescue nil
           return render json: { errors: ['Invalid email or password'] }, status: :unauthorized
         end
 
@@ -99,12 +122,14 @@ module Api
 
       def serialize_user(user)
         {
-          id:         user.id,
-          email:      user.email,
-          first_name: user.first_name,
-          last_name:  user.last_name,
-          full_name:  user.full_name,
-          phone:      user.phone
+          id:                   user.id,
+          email:                user.email,
+          first_name:           user.first_name,
+          last_name:            user.last_name,
+          full_name:            user.full_name,
+          phone:                user.phone,
+          organization_id:      user.current_organization_id,
+          current_organization_id: user.current_organization_id
         }
       end
     end

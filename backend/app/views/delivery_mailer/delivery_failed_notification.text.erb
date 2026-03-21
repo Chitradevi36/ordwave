@@ -1,0 +1,21 @@
+Delivery Update
+===============
+
+Hi <%= @customer.first_name %>,
+
+Unfortunately, we couldn't deliver your order <%= @order.order_number %> on the scheduled date.
+
+We've rescheduled your delivery for:
+<%= @formatted_date %>
+
+If this date doesn't work for you, please reply to this email or text us with "DECLINE" to arrange a different delivery time.
+
+Order Details:
+- Order Number: <%= @order.order_number %>
+- Customer: <%= @customer.name %>
+- Original Scheduled Date: <%= @order.dispatched_at&.strftime('%B %d, %Y') || 'N/A' %>
+- New Scheduled Date: <%= @formatted_date %>
+
+Need immediate assistance? Contact us at <%= @organization.phone || 'support' %> or reply to this email.
+
+© <%= Date.current.year %> <%= @organization.name %>. All rights reserved.

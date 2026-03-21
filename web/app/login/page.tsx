@@ -38,9 +38,17 @@ export default function LoginPage() {
       if (response.ok) {
         // Store token — organization_id is resolved by OrgBranchProvider after login
         localStorage.setItem('auth_token', data.data.token);
-        localStorage.removeItem('organization_id');          // clear stale value so context auto-selects
-        localStorage.removeItem('orderlane_profile_cache'); // clear stale role cache from previous user
         localStorage.setItem('user', JSON.stringify(data.data.user));
+        
+        // Store organization_id from user data to prevent onboarding redirect
+        const orgId = data.data.user?.organization_id || data.data.user?.current_organization_id;
+        if (orgId) {
+          localStorage.setItem('organization_id', String(orgId));
+        } else {
+          localStorage.removeItem('organization_id');
+        }
+        
+        localStorage.removeItem('orderlane_profile_cache'); // clear stale role cache from previous user
         // Set a lightweight cookie so middleware.ts can guard server-side routing
         document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
 

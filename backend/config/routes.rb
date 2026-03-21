@@ -262,6 +262,8 @@ Rails.application.routes.draw do
           post :refresh_price
           post :pick
           post :confirm_pick
+          post :detect_shortage
+          post :resolve_shortage
           get  :lifecycle
           get  :trip_assignment_suggestions
           post :assign_to_trip
@@ -334,10 +336,17 @@ Rails.application.routes.draw do
 
       # Payments / Collections
       resources :payments, only: %i[index show create] do
+        collection do
+          get :auto_posting_status
+          get :audit_trail
+          get :auto_post_stats
+        end
         member do
           post :confirm
           post :reverse
           post :retry
+          post :reject_auto_post
+          get :confidence_breakdown
         end
       end
 
@@ -568,6 +577,10 @@ Rails.application.routes.draw do
       get  'billing/invoices',             to: 'billing#invoices'
       # Razorpay webhook — no JWT auth, verified via HMAC signature
       post 'billing/webhooks/razorpay',    to: 'webhooks/razorpay#receive'
+
+      # -- Twilio Webhooks ---------------------------------------------------
+      # Feature 10: SMS reply webhook from Twilio (incoming customer messages)
+      post 'webhooks/twilio/sms_reply',    to: 'webhooks/twilio#sms_reply'
 
     end
 

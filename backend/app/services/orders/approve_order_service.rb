@@ -9,6 +9,11 @@ module Orders
   #     reason:   "string"     # required for rejected
   #   )
   #
+  # Feature 12 Integration:
+  # If shortages are detected during approval, the response will include
+  # shortage_detection with details. Customer must resolve shortage via
+  # Inventory::ShortageResolutionService before calling approve again.
+  #
   class ApproveOrderService
     VALID_DECISIONS = %w[approved rejected].freeze
 
@@ -26,6 +31,15 @@ module Orders
     def call
       errors = validate
       return { ok: false, order: @order, errors: errors } if errors.any?
+
+      # Feature 12: Detect inventory shortages before approval
+      if @decision == 'approved'
+        shortage_detection = detect_and_handle_shortages
+        if shortage_detection[:blocked]
+          # Shortages detected - return them for customer/manager resolution
+          return shortage_detection
+        end
+      end
 
       ActiveRecord::Base.transaction do
         @order.transition_to!(@decision, reason: @reason)
@@ -80,6 +94,51 @@ module Orders
 
     private
 
+    def detect_and_handle_shortages
+      shortage_result = Inventory::ShortageDetectionService.call(
+        order:  @order,
+        branch: @order.branch,
+        actor:  @actor
+      )
+
+      if shortage_result.success? && shortage_result.has_shortage?
+        # Shortages detected - block approval and return shortage details
+        {
+          ok:               false,
+          blocked:          true,
+          order:            @order,
+          errors:           [],
+          shortage_blocked: true,
+          shortage_detection: {
+            has_shortage:        shortage_result.has_shortage?,
+            shortage_items:      serialize_shortage_items(shortage_result.shortage_items),
+            total_shortage_qty:  shortage_result.shortage_items.sum(&:shortage_qty),
+            total_shortage_value: shortage_result.total_shortage_value,
+            resolution_options:  shortage_result.resolution_options,
+            message:             "Order cannot be approved due to inventory shortages. Please resolve shortage via Inventory::ShortageResolutionService before approval."
+          }
+        }
+      end
+
+      # No shortages detected - safe to proceed with normal approval
+      { ok: true, blocked: false }
+    end
+
+    def serialize_shortage_items(shortage_items)
+      shortage_items.map do |item|
+        {
+          product_id:    item.product_id,
+          product_name:  item.product_name,
+          product_sku:   item.product_sku,
+          requested_qty: item.requested_qty,
+          available_qty: item.available_qty,
+          shortage_qty:  item.shortage_qty,
+          unit_price:    item.unit_price,
+          shortage_value: item.shortage_value
+        }
+      end
+    end
+
     def notify_on_decision
       type   = @decision == 'approved' ? 'order_approved' : 'order_rejected'
       title  = @decision == 'approved' ? "Order #{@order.order_number} approved" : "Order #{@order.order_number} rejected"
@@ -121,6 +180,13 @@ module Orders
       errs << "Invalid decision. Must be 'approved' or 'rejected'" unless VALID_DECISIONS.include?(@decision)
       errs << 'Order must be submitted or on_hold to approve or reject' unless @order.on_hold? || @order.submitted?
       errs << 'Reason is required when rejecting' if @decision == 'rejected' && @reason.blank?
+      
+      # Feature 9: Check if customer is dunning suspended (hard block)
+      if @decision == 'approved' && @order.customer&.dunning_suspended_at.present?
+        errs << "Cannot approve order: Customer account is suspended due to overdue invoices. " \
+               "Manual override required from finance team."
+      end
+      
       errs
     end
 

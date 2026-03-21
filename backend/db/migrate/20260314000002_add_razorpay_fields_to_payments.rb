@@ -3,7 +3,7 @@
 class AddRazorpayFieldsToPayments < ActiveRecord::Migration[7.1]
   def change
     # Add fields to track Razorpay payments
-    add_column :payments, :external_payment_id, :string, null: true, index: { unique: true, where: 'external_payment_id IS NOT NULL' }
+    add_column :payments, :external_payment_id, :string, null: true
     add_column :payments, :external_payload_data, :jsonb, null: true, default: {}
     add_column :payments, :external_payment_status, :string, null: true  # authorized, captured, failed, etc
     
@@ -12,5 +12,8 @@ class AddRazorpayFieldsToPayments < ActiveRecord::Migration[7.1]
 
     # Add index for finding unreconciled external payments
     add_index :payments, [:organization_id, :external_payment_status], name: 'idx_payments_org_ext_status'
+
+    # Partial unique index for external_payment_id (only when not null)
+    add_index :payments, :external_payment_id, unique: true, where: "external_payment_id IS NOT NULL"
   end
 end

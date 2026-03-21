@@ -170,8 +170,9 @@ module Delivery
         deep_link_url: "/orders/#{order.id}"
       ) if order.created_by_id.present?
 
-      # Send customer notification (email/SMS)
-      # FailedDeliveryMailer.rescheduled_notification(customer, order, @reschedule_record).deliver_later
+      # Feature 10: Enqueue SMS/Email notification to customer (async)
+      # Sends SMS with rescheduled date and option to decline via SMS reply
+      DeliveryFailureNotificationJob.perform_later(@reschedule_record.id)
     rescue => error
       Rails.logger.warn({
         service: 'Delivery::FailedDeliveryRescheduleService',

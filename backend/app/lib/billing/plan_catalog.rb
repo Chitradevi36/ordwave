@@ -67,7 +67,7 @@ module Billing
     end
 
     def self.razorpay_plan_id_for(plan_name)
-      for(plan_name)[:razorpay_plan_id]
+      CATALOG[plan_name][:razorpay_plan_id]
     end
 
     def self.all_for_display

@@ -384,9 +384,9 @@ export default function CategoriesPage() {
       <PageHeader
         title="Product Categories"
         description={`${totalCount} categor${totalCount !== 1 ? "ies" : "y"} · organise your catalogue`}
-        actions={[
+        actions={totalCount > 0 ? [
           { label: "New Category", icon: Plus, onClick: openCreate },
-        ]}
+        ] : []}
       />
 
       <ProductsSubNav active="categories" />
