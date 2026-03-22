@@ -21,7 +21,7 @@ class SendInvoiceSmsJob < ApplicationJob
   retry_on StandardError, wait: :polynomially_longer, attempts: 3
 
   # Discard silently if record is deleted
-  discard_on_record_not_found
+  discard_on ActiveRecord::RecordNotFound
 
   # @param invoice_id [Integer] SalesInvoice id
   # @param recipient_phone [String] Phone number to send to (optional, uses invoice.customer.phone)

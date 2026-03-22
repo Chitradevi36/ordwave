@@ -18,7 +18,7 @@ class SendInvoiceEmailJob < ApplicationJob
   # Discard silently on permanent failures
   discard_on Net::SMTPSyntaxError           # Invalid recipient
   discard_on Net::SMTPServerBusy            # Server overload
-  discard_on_record_not_found
+  discard_on ActiveRecord::RecordNotFound   # Invoice deleted
 
   # @param invoice_id [Integer] SalesInvoice id
   # @param recipient_email [String] Email address to send to (optional, uses invoice.customer.email)
