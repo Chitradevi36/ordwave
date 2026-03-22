@@ -4,8 +4,9 @@ module Api
   module V1
     module Webhooks
       class TwilioController < BaseController
-        skip_before_action :authenticate_request! # Webhook doesn't have JWT
+        skip_before_action :authenticate_user! # Webhook doesn't have JWT
         skip_before_action :set_current_organization # No user context
+        skip_before_action :set_current_context # No user context
 
         # Feature 10: Handle incoming SMS messages (customer replies to delivery failure notification)
         # Webhook called by Twilio when customer replies to SMS
