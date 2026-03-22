@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ANALYTICS_EVENTS, trackAuthEvent } from '@/lib/analytics';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { API_URL } from "@/lib/api/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') ?? '/dashboard';
   const [email, setEmail] = useState('');
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export default function LoginPage() {
         document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
 
         trackAuthEvent(ANALYTICS_EVENTS.LOGIN_COMPLETED);
-        router.push('/dashboard');
+        router.push(redirect);
       } else {
         const reason = data.errors?.[0] || 'Login failed';
         setError(reason);

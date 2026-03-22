@@ -112,7 +112,6 @@ export default function EditProductPage() {
 
   return (
     <AppShell breadcrumbs={[
-        { label: "Catalog", href: "/catalog" },
         { label: "Products", href: "/products" },
         { label: product.name },
         { label: "Edit" },

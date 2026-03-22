@@ -51,6 +51,14 @@ interface WorkflowSettings {
   invoice_auto_generate:            boolean;
   invoice_payment_terms_days:       string;
   invoice_prefix:                   string;
+  // Accounting sync automation
+  sync_auto_on_order_approved:      boolean;
+  sync_auto_on_order_delivered:     boolean;
+  sync_auto_on_payment_received:    boolean;
+  sync_auto_on_collection:          boolean;
+  sync_schedule_cron:               string;
+  sync_batch_size:                  string;
+  sync_include_stock_movements:     boolean;
 }
 
 const WF_DEFAULTS: WorkflowSettings = {
@@ -67,6 +75,13 @@ const WF_DEFAULTS: WorkflowSettings = {
   invoice_auto_generate:            true,
   invoice_payment_terms_days:       "30",
   invoice_prefix:                   "INV",
+  sync_auto_on_order_approved:      false,
+  sync_auto_on_order_delivered:     false,
+  sync_auto_on_payment_received:    false,
+  sync_auto_on_collection:          false,
+  sync_schedule_cron:               "disabled",
+  sync_batch_size:                  "100",
+  sync_include_stock_movements:     false,
 };
 
 // ─── Reusable sub-components ──────────────────────────────────────────────────
@@ -231,6 +246,13 @@ function OrganizationPageInner() {
             invoice_auto_generate:            Boolean(s.invoice_auto_generate      ?? WF_DEFAULTS.invoice_auto_generate),
             invoice_payment_terms_days:       String(s.invoice_payment_terms_days  ?? WF_DEFAULTS.invoice_payment_terms_days),
             invoice_prefix:                   String(s.invoice_prefix              ?? WF_DEFAULTS.invoice_prefix),
+            sync_auto_on_order_approved:      Boolean(s.sync_auto_on_order_approved      ?? WF_DEFAULTS.sync_auto_on_order_approved),
+            sync_auto_on_order_delivered:     Boolean(s.sync_auto_on_order_delivered     ?? WF_DEFAULTS.sync_auto_on_order_delivered),
+            sync_auto_on_payment_received:    Boolean(s.sync_auto_on_payment_received    ?? WF_DEFAULTS.sync_auto_on_payment_received),
+            sync_auto_on_collection:          Boolean(s.sync_auto_on_collection          ?? WF_DEFAULTS.sync_auto_on_collection),
+            sync_schedule_cron:               String(s.sync_schedule_cron           ?? WF_DEFAULTS.sync_schedule_cron),
+            sync_batch_size:                  String(s.sync_batch_size              ?? WF_DEFAULTS.sync_batch_size),
+            sync_include_stock_movements:     Boolean(s.sync_include_stock_movements     ?? WF_DEFAULTS.sync_include_stock_movements),
           });
         } else {
           setFetchError((json.errors ?? []).join(", ") || "Failed to load organization settings.");
@@ -685,6 +707,84 @@ function OrganizationPageInner() {
                       onChange={(v) => setWf("invoice_auto_generate", v)}
                     />
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="sm:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <Workflow className="h-4 w-4 text-accent" />
+                  Accounting Sync Automation
+                </CardTitle>
+                <p className="text-xs text-text-secondary mt-0.5">Automatically sync orders, deliveries, and payments to Tally and other accounting systems</p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2 mb-4">
+                  <div className="border-r border-border pr-4">
+                    <p className="text-xs font-semibold text-text-secondary mb-3 uppercase">Event Triggers</p>
+                    <div className="space-y-2">
+                      <Toggle
+                        label="Sync on Order Approved"
+                        description="Trigger sync when an order is approved"
+                        checked={wfForm.sync_auto_on_order_approved}
+                        onChange={(v) => setWf("sync_auto_on_order_approved", v)}
+                      />
+                      <Toggle
+                        label="Sync on Order Delivered"
+                        description="Trigger sync when delivery is completed"
+                        checked={wfForm.sync_auto_on_order_delivered}
+                        onChange={(v) => setWf("sync_auto_on_order_delivered", v)}
+                      />
+                      <Toggle
+                        label="Sync on Payment Received"
+                        description="Trigger sync when a payment is confirmed"
+                        checked={wfForm.sync_auto_on_payment_received}
+                        onChange={(v) => setWf("sync_auto_on_payment_received", v)}
+                      />
+                      <Toggle
+                        label="Sync on Collection"
+                        description="Trigger sync when money is collected"
+                        checked={wfForm.sync_auto_on_collection}
+                        onChange={(v) => setWf("sync_auto_on_collection", v)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-text-secondary mb-3 uppercase">Batch & Export Settings</p>
+                    <div className="space-y-3">
+                      <SelectField
+                        label="Batch Schedule"
+                        value={wfForm.sync_schedule_cron}
+                        options={[
+                          { value: "disabled",     label: "Disabled — Manual sync only" },
+                          { value: "daily_6pm",    label: "Daily at 6 PM" },
+                          { value: "twice_daily",  label: "Twice Daily (9 AM, 6 PM)" },
+                          { value: "every_4_hours", label: "Every 4 Hours" },
+                        ]}
+                        onChange={(v) => setWf("sync_schedule_cron", v)}
+                      />
+                      <Input
+                        label="Batch Size (records)"
+                        type="number"
+                        min="1"
+                        max="5000"
+                        value={wfForm.sync_batch_size}
+                        helperText="Number of records to include per export file"
+                        onChange={(e) => setWf("sync_batch_size", e.target.value)}
+                      />
+                      <Toggle
+                        label="Include Stock Movements"
+                        description="Include inventory adjustments in delivery syncs"
+                        checked={wfForm.sync_include_stock_movements}
+                        onChange={(v) => setWf("sync_include_stock_movements", v)}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-text-secondary border-t border-border pt-3">
+                  💡 <strong>How it works:</strong> Events trigger sync records every 15 minutes. Records are batched and sent to Tally as XML for review before posting. Only enabled events create sync records.
                 </div>
               </CardContent>
             </Card>

@@ -104,6 +104,11 @@ module Pricing
                       .where(branch: @branch, list_type: 'standard')
                       .date_valid(@on_date)
                       .first
+      
+      list = PriceList.active_lists
+                      .where(organization: @branch.organization, list_type: 'standard')
+                      .date_valid(@on_date)
+                      .first unless list
 
       list = PriceList.active_lists
                       .where(list_type: 'standard')

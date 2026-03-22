@@ -348643,3 +348643,50 @@ ActionController::RoutingError (uninitialized constant Api::V1::Credit):
   [1m[36mSalesOrder Load (0.4ms)[0m  [1m[34mSELECT "sales_orders".* FROM "sales_orders" WHERE "sales_orders"."deleted_at" IS NULL AND "sales_orders"."organization_id" = $1 AND "sales_orders"."branch_id" = $2 ORDER BY "sales_orders"."created_at" DESC LIMIT $3 OFFSET $4[0m  [["organization_id", 21], ["branch_id", 14], ["LIMIT", 3], ["OFFSET", 0]]
   ↳ app/controllers/api/v1/sales_orders_controller.rb:34:in `map'
 {"method":"GET","path":"/api/v1/sales_orders","format":"html","controller":"Api::V1::SalesOrdersController","action":"index","status":200,"allocations":9170,"duration":23.36,"view":0.15,"db":7.24,"request_id":"9eef6915-6e5a-4162-a64d-d6e7846b0c6f","user_id":46,"organization_id":21,"params":"{\"page\"=>\"1\", \"per_page\"=>\"3\", \"sort\"=>\"created_at_desc\", \"branch_id\"=>\"14\"}"}
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+  [1m[35m (1.2ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (2.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+  [1m[36mActiveRecord::InternalMetadata Load (14.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = $1 ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1[0m  [[nil, "environment"]]
+Migrating to AddEventTriggeredSyncFieldsToAccountingSyncRecords (20260322000001)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  [1m[35m (65.1ms)[0m  [1m[35mALTER TABLE "accounting_sync_records" ADD "trigger_type" character varying DEFAULT 'manual'[0m
+  [1m[35m (8.6ms)[0m  [1m[35mALTER TABLE "accounting_sync_records" ADD "source_type" character varying[0m
+  [1m[35m (7.5ms)[0m  [1m[35mCOMMENT ON COLUMN "accounting_sync_records"."source_type" IS 'Polymorphic type (e.g., SalesOrder, Payment)'[0m
+  [1m[35m (0.4ms)[0m  [1m[35mALTER TABLE "accounting_sync_records" ADD "source_id" bigint[0m
+  [1m[35m (0.2ms)[0m  [1m[35mCOMMENT ON COLUMN "accounting_sync_records"."source_id" IS 'Polymorphic ID'[0m
+  [1m[35m (0.3ms)[0m  [1m[35mALTER TABLE "accounting_sync_records" ADD "export_file_id" bigint[0m
+  [1m[35m (0.2ms)[0m  [1m[35mCOMMENT ON COLUMN "accounting_sync_records"."export_file_id" IS 'Associated AccountingExportFile'[0m
+  [1m[35m (0.3ms)[0m  [1m[35mALTER TABLE "accounting_sync_records" ADD "data_types" jsonb DEFAULT '[]'[0m
+  [1m[35m (0.2ms)[0m  [1m[35mCOMMENT ON COLUMN "accounting_sync_records"."data_types" IS 'Types of data to sync [invoices, payments, stock_movements]'[0m
+  [1m[35m (0.2ms)[0m  [1m[35mALTER TABLE "accounting_sync_records" ADD "synced_at" timestamp(6)[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCOMMENT ON COLUMN "accounting_sync_records"."synced_at" IS 'When sync completed successfully'[0m
+  [1m[35m (0.1ms)[0m  [1m[35mALTER TABLE "accounting_sync_records" ADD "failed_at" timestamp(6)[0m
+  [1m[35m (0.2ms)[0m  [1m[35mCOMMENT ON COLUMN "accounting_sync_records"."failed_at" IS 'When sync failed'[0m
+  [1m[35m (27.8ms)[0m  [1m[35mCREATE INDEX "idx_on_organization_id_status_trigger_type_8e35f9cb2b" ON "accounting_sync_records" ("organization_id", "status", "trigger_type")[0m
+  [1m[35m (2.2ms)[0m  [1m[35mCREATE INDEX "idx_sync_records_trigger_status" ON "accounting_sync_records" ("trigger_type", "status")[0m
+  [1m[35m (3.2ms)[0m  [1m[35mCREATE INDEX "index_accounting_sync_records_on_source_type_and_source_id" ON "accounting_sync_records" ("source_type", "source_id")[0m
+  [1m[35m (1.8ms)[0m  [1m[35mCREATE INDEX "index_accounting_sync_records_on_export_file_id" ON "accounting_sync_records" ("export_file_id")[0m
+  [1m[35m (2.9ms)[0m  [1m[35mCREATE INDEX "index_accounting_sync_records_on_trigger_type" ON "accounting_sync_records" ("trigger_type")[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.7ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260322000001') RETURNING "version"[0m
+  [1m[36mTRANSACTION (7.1ms)[0m  [1m[35mCOMMIT[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205)[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
+Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+Shutting down background worker

@@ -22,7 +22,7 @@ import { AccountantView } from "@/components/dashboard/AccountantView";
 import { WarehouseView } from "@/components/dashboard/WarehouseView";
 import { DriverView } from "@/components/dashboard/DriverView";
 import { ManagerView } from "@/components/dashboard/ManagerView";
-import { RiskiestRetailersPanel } from "@/components/dashboard/RiskiestRetailersPanel";
+// import { RiskiestRetailersPanel } from "@/components/dashboard/RiskiestRetailersPanel";
 
 // â”€â”€ Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -397,11 +397,11 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Riskiest Retailers ─────────────────────────────────────────────────── */}
-      {(!role || role === "owner" || role === "admin" || role === "manager") && (
+      {/* {(!role || role === "owner" || role === "admin" || role === "manager") && (
         <div className="mb-5">
           <RiskiestRetailersPanel />
         </div>
-      )}
+      )} */}
 
       {/* ── Recent Orders ──────────────────────────────────────────────────────── */}
       <Card>

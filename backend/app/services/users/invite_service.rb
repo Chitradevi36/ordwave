@@ -36,6 +36,7 @@ module Users
         expires_at:    72.hours.from_now
       )
 
+      puts "Generated invitation token: #{token} (digest: #{digest}) for #{@email} to join #{@organization.name} as #{role.name}"
       deliver_email(invitation, token)
 
       Result.new(success?: true, invitation: invitation, token: dev_token(token), errors: [])

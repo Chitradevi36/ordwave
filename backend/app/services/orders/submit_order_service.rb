@@ -79,7 +79,10 @@ module Orders
         # 8. Audit: state transition
         log_submission(credit_result)
 
-        # 9. Notify branch managers
+        # 9. Auto-approve immediately if approval mode is automatic with 0 edit window
+        auto_approve_immediately!(credit_result) if new_status == 'submitted'
+
+        # 10. Notify branch managers
         notify_on_submission(new_status)
 
         reloaded = @order.reload
@@ -98,6 +101,42 @@ module Orders
     end
 
     private
+
+    def auto_approve_immediately!(credit_result)
+      settings = @order.organization.settings || {}
+      approval_mode = settings['order_approval_mode']
+      edit_window_minutes = (settings['order_edit_window_minutes'] || 30).to_i
+      approval_threshold = (settings['order_approval_threshold'] || 0).to_f
+
+      should_approve = case approval_mode
+                       when 'automatic'
+                         edit_window_minutes == 0
+                       when 'above_threshold'
+                         @order.total_amount.to_f < approval_threshold && edit_window_minutes == 0
+                       else
+                         false
+                       end
+
+      return unless should_approve
+
+      # Auto-approve immediately
+      result = Orders::ApproveOrderService.call(
+        actor:    system_actor,
+        order:    @order,
+        decision: 'approved',
+        reason:   'Auto-approved on submission (edit window = 0)'
+      )
+
+      unless result[:ok]
+        Rails.logger.warn("[SubmitOrderService] Immediate auto-approval failed for order #{@order.id}: #{result[:errors].join(', ')}")
+      end
+    end
+
+    def system_actor
+      # Use the submitting user as actor for approval
+      # In a real scenario, you might want to create a "system" user
+      @actor
+    end
 
     def notify_on_submission(new_status)
       managers = User.joins(:memberships)

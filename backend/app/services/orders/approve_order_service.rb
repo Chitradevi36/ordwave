@@ -86,6 +86,9 @@ module Orders
             event:        'order.approved',
             payload:      WebhookEvents.order_payload(result[:order])
           )
+          
+          # Trigger accounting sync if enabled in workflow settings
+          trigger_accounting_sync_on_approval(result[:order])
         end
       end
     rescue ActiveRecord::RecordInvalid => e
@@ -188,6 +191,23 @@ module Orders
       end
       
       errs
+    end
+
+    def trigger_accounting_sync_on_approval(order)
+      settings = order.organization.settings || {}
+      return unless settings['sync_auto_on_order_approved'].present?
+      
+      integration = order.organization.primary_accounting_integration
+      return unless integration
+      
+      Accounting::Sync::CreateSyncRecordService.call(
+        entity: order,
+        integration: integration,
+        trigger_type: 'order_approved',
+        provider: integration.provider
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[ApproveOrderService] Accounting sync trigger failed for order #{order.id}: #{e.message}")
     end
 
     def create_pick_list_for_order(order)

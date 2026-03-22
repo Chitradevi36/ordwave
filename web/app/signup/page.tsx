@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ANALYTICS_EVENTS, trackAuthEvent } from '@/lib/analytics';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,9 @@ const PLANS = [
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get('invite_token') ?? '';
+  
   const [currentStep, setCurrentStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -208,7 +211,36 @@ export default function SignupPage() {
         document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
 
         trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { plan });
-        // Redirect to comprehensive onboarding wizard
+        
+        // If there's an invite token, accept the invitation
+        if (inviteToken) {
+          try {
+            const acceptRes = await fetch(`${API_URL}/api/v1/invitations/accept`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${data.data.token}`,
+              },
+              body: JSON.stringify({ token: inviteToken }),
+            });
+            
+            if (acceptRes.ok) {
+              const acceptData = await acceptRes.json();
+              // Update organization_id to the invited org
+              if (acceptData.data?.organization_id) {
+                localStorage.setItem('organization_id', String(acceptData.data.organization_id));
+              }
+              // Redirect to dashboard instead of onboarding
+              router.push('/dashboard');
+              return;
+            }
+          } catch (err) {
+            console.error('Failed to accept invitation:', err);
+            // Fall through to normal onboarding
+          }
+        }
+        
+        // Redirect to onboarding if no invite or accept failed
         router.push('/onboarding');
       } else {
         setError(data.errors?.[0] || 'Failed to complete signup');
