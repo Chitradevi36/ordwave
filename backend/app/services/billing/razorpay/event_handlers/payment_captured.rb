@@ -63,7 +63,7 @@ module Billing
           org = @organization
 
           begin
-            // Create notification for order creator
+            # Create notification for order creator
             owner = order.created_by
             Notifications::CreateService.call(
               organization: org,
