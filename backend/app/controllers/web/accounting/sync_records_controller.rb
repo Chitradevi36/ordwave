@@ -86,15 +86,19 @@ module Web
         scope = scope.where(accounting_integration_id: params[:integration_id]) if params[:integration_id].present?
 
         if params[:date_from].present?
-          scope = scope.where("created_at >= ?", Date.parse(params[:date_from]).beginning_of_day)
-        rescue ArgumentError
-          # ignore malformed date
+          begin
+            scope = scope.where("created_at >= ?", Date.parse(params[:date_from]).beginning_of_day)
+          rescue ArgumentError
+            # ignore malformed date
+          end
         end
 
         if params[:date_to].present?
-          scope = scope.where("created_at <= ?", Date.parse(params[:date_to]).end_of_day)
-        rescue ArgumentError
-          # ignore malformed date
+          begin
+            scope = scope.where("created_at <= ?", Date.parse(params[:date_to]).end_of_day)
+          rescue ArgumentError
+            # ignore malformed date
+          end
         end
 
         if params[:q].present?
