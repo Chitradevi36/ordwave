@@ -117,7 +117,6 @@ export default function InvoiceSettingsPage() {
       <PageHeader
         title="Invoice Settings"
         description="Configure numbering, payment terms, and invoice content"
-        backHref="/settings"
         actions={[
           { label: saving ? "Saving…" : "Save Changes", onClick: handleSave, icon: Save, disabled: saving || loading },
         ]}

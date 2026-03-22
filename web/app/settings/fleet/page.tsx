@@ -239,7 +239,7 @@ export default function FleetPage() {
             icon: <Plus className="h-4 w-4" />,
             onClick: openCreate,
           },
-        ]) : null }
+        ]) : [] }
       />
 
       {loading ? (
