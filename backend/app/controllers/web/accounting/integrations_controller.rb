@@ -107,10 +107,12 @@ module Web
                          .find(params[:id])
       end
 
-      # Params for top-level model fields (status, sync_mode)
+      # Params for top-level model fields
+      # Note: sync_mode is deprecated in Phase 1 (organization workflow settings control sync)
+      # Reserved for Phase 2 (realtime agent sync) — do not permit in UI for now
       def integration_params
         params.require(:accounting_integration)
-              .permit(:sync_mode)
+              .permit() # Empty for Phase 1 — all sync configuration at organization level
       end
 
       # Config fields are written via the config_json accessors.

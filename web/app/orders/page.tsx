@@ -755,8 +755,11 @@ function OrdersPageContent() {
   const counts  = meta?.counts  ?? {};
   const metrics = meta?.metrics;
 
+  // Calculate total count from sum of all status counts (not from total_count which changes per filter)
+  const allTabCount = Object.values(counts).reduce((sum, count) => (sum || 0) + (count || 0), 0);
+
   const tabCount = (key: string): number | undefined => {
-    if (!key)           return meta?.total_count;
+    if (!key)           return allTabCount;
     return counts[key];
   };
 

@@ -12,7 +12,7 @@ import {
   createExportFile,
   type AccountingIntegration,
 } from "@/lib/api/accounting";
-import { providerLabel } from "../_utils";
+import { providerLabel } from "../../_utils";
 
 const EXPORT_TYPES = [
   { value: "all",              label: "All (Masters + Vouchers)" },

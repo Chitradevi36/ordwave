@@ -5,7 +5,7 @@ class InvitationMailer < ApplicationMailer
     @organization = invitation.organization
     @invited_by   = invitation.invited_by
     @role         = invitation.role
-    @accept_url   = "#{ENV.fetch('WEB_APP_URL', 'http://localhost:3001')}/invite/accept?token=#{token}"
+    @accept_url   = "#{ENV.fetch('WEB_APP_URL', 'http://localhost:4400')}/invite/accept?token=#{token}"
 
     mail(
       to:      invitation.email,

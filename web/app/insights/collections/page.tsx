@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ReactNode } from "react";
 import {
   BarChart, Bar, AreaChart, Area,
   PieChart, Pie, Cell,
@@ -22,7 +22,8 @@ function fmtPct(n: number | undefined | null) {
   if (n == null) return "—";
   return `${Number(n).toFixed(1)}%`;
 }
-function shortDate(d: string) { return d ? String(d).slice(5, 10) : d; }
+function shortDate(d: any, index?: number): string { return d ? String(d).slice(5, 10) : ""; }
+function tooltipLabel(label: any, payload?: readonly any[]): ReactNode { return label ? String(label).slice(5, 10) : ""; }
 
 const PIE_COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#14b8a6", "#a855f7", "#f97316"];
 
@@ -209,7 +210,10 @@ export default function InsightsCollectionsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="period" tickFormatter={shortDate} tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} width={52} />
-                  <Tooltip formatter={(v: number) => [`₹${Number(v).toLocaleString("en-IN")}`, "Amount"]} labelFormatter={shortDate} />
+                  <Tooltip formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : undefined);
+                    return [num !== undefined && !isNaN(num) ? `₹${Number(num).toLocaleString("en-IN")}` : "-", "Amount"];
+                  }} labelFormatter={tooltipLabel} />
                   <Area type="monotone" dataKey="amount" stroke="#6366f1" fill="url(#collGrad)" strokeWidth={2} dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -230,7 +234,10 @@ export default function InsightsCollectionsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="period" tickFormatter={shortDate} tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} width={52} />
-                  <Tooltip formatter={(v: number) => `₹${Number(v).toLocaleString("en-IN")}`} labelFormatter={shortDate} />
+                  <Tooltip formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : undefined);
+                    return num !== undefined && !isNaN(num) ? `₹${Number(num).toLocaleString("en-IN")}` : "-";
+                  }} labelFormatter={tooltipLabel} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Bar dataKey="target" fill="#e2e8f0" name="Target" radius={[3, 3, 0, 0]} />
                   <Bar dataKey="actual" fill="#6366f1" name="Actual" radius={[3, 3, 0, 0]} />
@@ -260,8 +267,8 @@ export default function InsightsCollectionsPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={({ name, percent }: { name: string; percent: number }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
+                    label={({ name, percent }: { name?: string; percent?: number } = {}) =>
+                      `${name || "Unknown"}: ${((percent || 0) * 100).toFixed(1)}%`
                     }
                     labelLine={false}
                   >
@@ -269,7 +276,10 @@ export default function InsightsCollectionsPage() {
                       <Cell key={entry.mode} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `₹${Number(v).toLocaleString("en-IN")}`} />
+                  <Tooltip formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : undefined);
+                    return num !== undefined && !isNaN(num) ? `₹${Number(num).toLocaleString("en-IN")}` : "-";
+                  }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -290,7 +300,10 @@ export default function InsightsCollectionsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} />
                   <YAxis type="category" dataKey="bucket" tick={{ fontSize: 11 }} width={72} />
-                  <Tooltip formatter={(v: number) => `₹${Number(v).toLocaleString("en-IN")}`} />
+                  <Tooltip formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : undefined);
+                    return num !== undefined && !isNaN(num) ? `₹${Number(num).toLocaleString("en-IN")}` : "-";
+                  }} />
                   <Bar dataKey="value" fill="#ef4444" name="Outstanding Value" radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>

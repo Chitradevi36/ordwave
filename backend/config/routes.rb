@@ -198,6 +198,8 @@ Rails.application.routes.draw do
       resources :invitations, only: %i[index create destroy] do
         collection do
           post :accept
+          get  :validate
+          post :accept_with_signup
         end
       end
 

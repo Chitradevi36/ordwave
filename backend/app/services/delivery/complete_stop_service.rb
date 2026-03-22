@@ -196,6 +196,11 @@ module Delivery
             )
           end
 
+          # Trigger accounting sync if enabled for deliveries
+          if @outcome.in?(%w[delivered partial_delivery])
+            trigger_accounting_sync_on_delivery(@stop.reload)
+          end
+
           notify_on_stop_completion
         end
       end
@@ -467,6 +472,29 @@ module Delivery
         action:       'trip_completed',
         changes:      { status: 'completed', completed_at: trip.completed_at }
       )
+    end
+
+    def trigger_accounting_sync_on_delivery(stop)
+      order = stop.sales_order
+      settings = order.organization.settings || {}
+      return unless settings['sync_auto_on_order_delivered'].present?
+      
+      integration = order.organization.primary_accounting_integration
+      return unless integration
+      
+      # Include stock movements in data types if enabled
+      data_types = ['invoices', 'payments']
+      data_types << 'stock_movements' if settings['sync_include_stock_movements'].present?
+      
+      Accounting::Sync::CreateSyncRecordService.call(
+        entity: order,
+        integration: integration,
+        trigger_type: 'order_delivered',
+        provider: integration.provider,
+        data_types: data_types
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[CompleteStopService] Accounting sync trigger failed for order #{order.id}: #{e.message}")
     end
   end
 end

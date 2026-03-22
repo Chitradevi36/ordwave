@@ -20,9 +20,11 @@ export interface PageHeaderProps {
   subtitle?: string;
   actions?: PageAction[];
   className?: string;
+  /** Optional children shown below the title and description. */
+  children?: React.ReactNode;
 }
 
-export function PageHeader({ title, description, subtitle, actions, className }: PageHeaderProps) {
+export function PageHeader({ title, description, subtitle, actions, className, children }: PageHeaderProps) {
   const subText = description ?? subtitle;
   return (
     <div className={cn("mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between", className)}>
@@ -31,6 +33,7 @@ export function PageHeader({ title, description, subtitle, actions, className }:
         {subText && (
           <p className="mt-1 text-sm text-text-secondary break-words">{subText}</p>
         )}
+        {children}
       </div>
       {actions && actions.length > 0 && (
         <div className="flex flex-col w-full gap-2 sm:flex-row sm:w-auto sm:gap-2 md:gap-3">

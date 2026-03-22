@@ -6,6 +6,7 @@
 :queues:
   - [critical,  3]   # invoice PDFs, webhook delivery, push notifications
   - [invoicing, 3]   # auto-invoice generation from delivery stops
+  - [accounting, 2]  # accounting sync jobs and batch exports
   - [default,   2]   # most background jobs
   - [low,       1]   # exports, report generation, beat scheduling
   - [billing,   2]   # billing lifecycle jobs
@@ -86,3 +87,14 @@
     class: 'AutoAssignTripsJob'
     queue: operations
     description: 'Auto-assign all approved orders to optimal trips or create new trips'
+  auto_approve_orders:
+    cron: '*/30 * * * *'        # Every 30 minutes
+    class: 'AutoApproveOrdersJob'
+    queue: default
+    description: 'Auto-approve submitted orders when edit window expires (if approval mode is automatic)'
+
+  auto_sync_triggered_records:
+    cron: '*/15 * * * *'        # Every 15 minutes
+    class: 'Accounting::AutoSyncTriggeredRecordsJob'
+    queue: accounting
+    description: 'Process event-triggered accounting sync records and create batch exports'

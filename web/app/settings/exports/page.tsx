@@ -124,7 +124,6 @@ export default function ExportsPage() {
       <PageHeader
         title="Exports"
         description="Download CSV or Excel exports of your data"
-        backHref="/settings"
         actions={[
           {
             label: "New Export",

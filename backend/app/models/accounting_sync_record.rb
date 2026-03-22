@@ -15,6 +15,16 @@ class AccountingSyncRecord < ApplicationRecord
   # ---------------------------------------------------------------------------
   belongs_to :organization
   belongs_to :accounting_integration
+  belongs_to :source, polymorphic: true, optional: true
+
+  # Define attributes with explicit types before enums (for pre-migration support)
+  attribute :trigger_type, :string, default: 'manual'
+  attribute :source_type, :string
+  attribute :source_id, :integer
+  attribute :export_file_id, :integer
+  attribute :data_types, :json, default: []
+  attribute :synced_at, :datetime
+  attribute :failed_at, :datetime
 
   # ---------------------------------------------------------------------------
   # Enums
@@ -37,6 +47,15 @@ class AccountingSyncRecord < ApplicationRecord
     medium: "medium",
     low:    "low"
   }, _prefix: :priority
+
+  enum trigger_type: {
+    manual: 'manual',
+    order_approved: 'order_approved',
+    order_delivered: 'order_delivered',
+    payment_confirmed: 'payment_confirmed',
+    collection: 'collection',
+    scheduled: 'scheduled'
+  }, _prefix: :trigger
 
   # ---------------------------------------------------------------------------
   # Validations
@@ -165,5 +184,37 @@ class AccountingSyncRecord < ApplicationRecord
 
     self.provider     = accounting_integration.provider     if provider.blank?
     self.organization = accounting_integration.organization if organization.blank?
+  end
+
+  # ---------------------------------------------------------------------------
+  # Event-triggered sync helpers
+  # ---------------------------------------------------------------------------
+
+  # Get data types as array
+  def data_types_array
+    (data_types || []).compact
+  end
+
+  # Human-readable description for event-triggered syncs
+  def trigger_description
+    case trigger_type
+    when 'order_approved'
+      "Order ##{source_id} approved"
+    when 'order_delivered'
+      "Order ##{source_id} delivered"
+    when 'payment_confirmed'
+      "Payment ##{source_id} confirmed"
+    when 'collection'
+      "Collection created"
+    when 'scheduled'
+      "Scheduled sync"
+    else
+      "Manual sync"
+    end
+  end
+
+  # Check if ready to be processed
+  def ready_for_processing?
+    status_pending? && accounting_integration.present? && accounting_integration.active_for_sync?
   end
 end

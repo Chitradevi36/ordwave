@@ -247,7 +247,10 @@ export default function InsightsBeatPerformancePage() {
                 <Radar name="Completion %" dataKey="completion_rate" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.25} strokeWidth={2} />
                 <Tooltip
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
-                  formatter={(v: number) => [`${v.toFixed(1)}%`, "Completion"]}
+                  formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : v;
+                    return [num !== undefined && !isNaN(num) ? `${Number(num).toFixed(1)}%` : "-", "Completion"];
+                  }}
                 />
               </RadarChart>
             </ResponsiveContainer>
