@@ -282,12 +282,9 @@ export default function BillingPage() {
       <PageHeader
         title="Billing"
         subtitle="Manage your subscription and payment details"
-        actions={
-          <Button variant="ghost" size="sm" onClick={refetch} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        }
+        actions={[
+          { label: "Refresh", onClick: refetch, disabled: loading, icon: RefreshCw, variant: "ghost" }
+        ]}
       />
 
       <div className="p-6 space-y-6">
@@ -362,7 +359,7 @@ export default function BillingPage() {
                     <p className="text-sm text-destructive flex-1">
                       This will cancel your subscription at the end of the current billing period.
                     </p>
-                    <Button size="sm" variant="destructive" onClick={handleCancel} disabled={cancelLoading}>
+                    <Button size="sm" variant="danger" onClick={handleCancel} disabled={cancelLoading}>
                       {cancelLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
                       Confirm cancel
                     </Button>

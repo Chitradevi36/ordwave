@@ -187,7 +187,6 @@ export default function NotificationsSettingsPage() {
       <PageHeader
         title="Notification Settings"
         description="Control which events trigger email, push, and in-app notifications"
-        backHref="/settings"
         actions={[
           { label: saving ? "Saving…" : "Save Changes", onClick: handleSave, icon: Save, disabled: saving || loading },
         ]}

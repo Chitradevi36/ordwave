@@ -154,7 +154,6 @@ export default function TeamSettingsPage() {
       <PageHeader
         title="Team"
         description="Manage team members, roles, and invitations"
-        backHref="/settings"
         actions={[
           {
             label: "Invite Member",

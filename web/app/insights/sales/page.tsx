@@ -199,7 +199,10 @@ export default function InsightsSalesPage() {
                 />
                 <Tooltip
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
-                  formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, ""]}
+                  formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : undefined);
+                    return [num !== undefined && !isNaN(num) ? `₹${Number(num).toLocaleString("en-IN")}` : "-", ""];
+                  }}
                   labelFormatter={(l) => String(l).slice(0, 10)}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -241,7 +244,10 @@ export default function InsightsSalesPage() {
                 />
                 <Tooltip
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
-                  formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Value"]}
+                  formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : undefined);
+                    return [num !== undefined && !isNaN(num) ? `₹${Number(num).toLocaleString("en-IN")}` : "-", "Value"];
+                  }}
                 />
                 <Bar dataKey="total_value" name="Total Value" radius={[0, 3, 3, 0]}>
                   {(data?.top_retailers?.slice(0, 8) ?? []).map((_, idx) => (
@@ -283,7 +289,10 @@ export default function InsightsSalesPage() {
                 />
                 <Tooltip
                   contentStyle={{ background: "hsl(var(--surface))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
-                  formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Revenue"]}
+                  formatter={(v: any) => {
+                    const num = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : undefined);
+                    return [num !== undefined && !isNaN(num) ? `₹${Number(num).toLocaleString("en-IN")}` : "-", "Revenue"];
+                  }}
                 />
                 <Bar dataKey="total_value" name="Revenue" radius={[0, 3, 3, 0]}>
                   {(data?.top_products?.slice(0, 8) ?? []).map((_, idx) => (

@@ -89,6 +89,11 @@ module Payments
         )
 
         return result
+      end.tap do |result|
+        if result.success?
+          # Trigger accounting sync if enabled for payments
+          trigger_accounting_sync_on_payment(@payment)
+        end
       end
     rescue ActiveRecord::RecordInvalid => e
       failure([e.message])
@@ -300,6 +305,26 @@ module Payments
       )
     rescue StandardError => e
       Rails.logger.warn("[ConfirmPaymentService] Dunning suspension notification failed: #{e.message}")
+    end
+
+    def trigger_accounting_sync_on_payment(payment)
+      organization = payment.organization
+      settings = organization.settings || {}
+      return unless settings['sync_auto_on_payment_received'].present?
+      
+      integration = organization.primary_accounting_integration
+      return unless integration
+      
+      # For payments, sync all related invoices (not just one order)
+      Accounting::Sync::CreateSyncRecordService.call(
+        entity: payment,
+        integration: integration,
+        trigger_type: 'payment_confirmed',
+        provider: integration.provider,
+        data_types: ['payments', 'invoices']
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[ConfirmPaymentService] Accounting sync trigger failed for payment #{payment.id}: #{e.message}")
     end
   end
 end

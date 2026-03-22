@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ChevronLeft, Save, TestTube2, Link2, LinkOff,
+  ChevronLeft, Save, TestTube2, Link2, Link2Off,
   Plus, Trash2, CheckCircle2, XCircle, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,6 @@ import {
   type AccountingMapping,
 } from "@/lib/api/accounting";
 import { IntegrationStatusBadge, providerLabel, fmtDatetime } from "../../_utils";
-import { AgentStatus } from "./agent-status";
-import { AgentSyncQueueStats } from "./agent-sync-queue-stats";
 
 // ── Config field groups for Tally ─────────────────────────────────────────────
 
@@ -164,7 +162,6 @@ export default function IntegrationDetailPage() {
   const [integration, setIntegration] = useState<AccountingIntegration | null>(null);
   const [mappings, setMappings]   = useState<AccountingMapping[]>([]);
   const [config, setConfig]       = useState<Record<string, string>>({});
-  const [syncMode, setSyncMode]   = useState("batch_export");
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
   const [testing, setTesting]     = useState(false);
@@ -185,7 +182,6 @@ export default function IntegrationDetailPage() {
       ]);
       setIntegration(integ);
       setMappings(maps);
-      setSyncMode(integ.sync_mode);
       // Populate config from config_json
       const cfg: Record<string, string> = {};
       Object.entries(integ.config_json ?? {}).forEach(([k, v]) => {
@@ -209,7 +205,7 @@ export default function IntegrationDetailPage() {
     try {
       const updated = await updateIntegration(
         integration.id,
-        { sync_mode: syncMode, config_json: config },
+        { config_json: config },
         token,
         orgId
       );
@@ -349,7 +345,7 @@ export default function IntegrationDetailPage() {
             </Button>
           ) : (
             <Button size="sm" variant="outline" onClick={handleMarkDisconnected} className="text-text-secondary">
-              <LinkOff className="mr-1.5 h-3.5 w-3.5" />
+              <Link2Off className="mr-1.5 h-3.5 w-3.5" />
               Disconnect
             </Button>
           )}
@@ -372,21 +368,22 @@ export default function IntegrationDetailPage() {
         <div className="lg:col-span-2 space-y-5">
 
           {/* Sync mode */}
-          <Card>
+          <Card className="border-amber-200 bg-amber-50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Sync Settings</CardTitle>
+              <CardTitle className="text-base text-amber-900">Sync Configuration</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-text-secondary">Sync Mode</label>
-                <select
-                  value={syncMode}
-                  onChange={(e) => setSyncMode(e.target.value)}
-                  className="h-9 rounded-md border border-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="batch_export">Batch Export (XML file)</option>
-                  <option value="realtime_agent">Realtime Agent (Phase 2)</option>
-                </select>
+              <div className="text-sm text-amber-800 leading-relaxed">
+                <p className="mb-2">
+                  ✨ Configure automatic syncs on order approvals, deliveries, and payments at{" "}
+                  <a
+                    href="/settings/organization?tab=workflow"
+                    className="font-medium underline hover:no-underline cursor-pointer"
+                  >
+                    Organization Workflow Settings
+                  </a>{" "}
+                  → <em>Accounting Sync Automation</em>.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -428,14 +425,6 @@ export default function IntegrationDetailPage() {
 
         {/* ── Right: Summary + mappings (1/3 width) ── */}
         <div className="space-y-5">
-
-          {/* Agent status & sync queue (only for realtime_agent mode) */}
-          {syncMode === "realtime_agent" && (
-            <>
-              <AgentStatus integrationId={integration.id} />
-              <AgentSyncQueueStats integrationId={integration.id} />
-            </>
-          )}
 
           {/* Quick links */}
           <Card>

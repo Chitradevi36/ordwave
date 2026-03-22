@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_17_000004) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -114,18 +114,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_17_000004) do
     t.datetime "succeeded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "trigger_type", default: "manual"
+    t.string "source_type", comment: "Polymorphic type (e.g., SalesOrder, Payment)"
+    t.bigint "source_id", comment: "Polymorphic ID"
+    t.bigint "export_file_id", comment: "Associated AccountingExportFile"
+    t.jsonb "data_types", default: [], comment: "Types of data to sync [invoices, payments, stock_movements]"
+    t.datetime "synced_at", comment: "When sync completed successfully"
+    t.datetime "failed_at", comment: "When sync failed"
     t.index ["accounting_integration_id", "status"], name: "idx_accounting_sync_records_integration_status"
     t.index ["accounting_integration_id"], name: "index_accounting_sync_records_on_accounting_integration_id"
     t.index ["created_at"], name: "idx_accounting_sync_records_created_at"
     t.index ["entity_type", "entity_id"], name: "idx_accounting_sync_records_entity"
     t.index ["event_type"], name: "idx_accounting_sync_records_event_type"
+    t.index ["export_file_id"], name: "index_accounting_sync_records_on_export_file_id"
     t.index ["last_attempted_at"], name: "idx_accounting_sync_records_last_attempted_at"
     t.index ["organization_id", "provider"], name: "idx_accounting_sync_records_org_provider"
+    t.index ["organization_id", "status", "trigger_type"], name: "idx_on_organization_id_status_trigger_type_8e35f9cb2b"
     t.index ["organization_id", "status"], name: "idx_accounting_sync_records_org_status"
     t.index ["organization_id"], name: "index_accounting_sync_records_on_organization_id"
     t.index ["priority"], name: "idx_accounting_sync_records_priority"
     t.index ["provider", "idempotency_key"], name: "idx_accounting_sync_records_idempotency_unique", unique: true
+    t.index ["source_type", "source_id"], name: "index_accounting_sync_records_on_source_type_and_source_id"
     t.index ["status", "priority", "created_at"], name: "idx_accounting_sync_records_worker_poll"
+    t.index ["trigger_type", "status"], name: "idx_sync_records_trigger_status"
+    t.index ["trigger_type"], name: "index_accounting_sync_records_on_trigger_type"
   end
 
   create_table "active_storage_attachments", force: :cascade do |t|
@@ -1654,8 +1666,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_17_000004) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.datetime "deprecated_at", comment: "Set to migration time to mark deprecation. Null = pre-deprecation row."
     t.bigint "return_request_id"
+    t.datetime "deprecated_at", comment: "Set to migration time to mark deprecation. Null = pre-deprecation row."
     t.index ["condition"], name: "index_return_records_on_condition"
     t.index ["product_id"], name: "index_return_records_on_product_id"
     t.index ["reason_code"], name: "index_return_records_on_reason_code"

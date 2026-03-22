@@ -15,12 +15,12 @@ export default function NotFound() {
           The page you are looking for doesn't exist or has been moved.
         </p>
         <div className="flex gap-3 justify-center">
-          <Button asChild>
-            <Link href="/dashboard">Go to Dashboard</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/login">Sign in</Link>
-          </Button>
+          <Link href="/dashboard" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 bg-primary text-white hover:bg-primary-700 h-10 px-4 py-2">
+            Go to Dashboard
+          </Link>
+          <Link href="/login" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 border border-border bg-transparent hover:bg-background-subtle text-text-primary h-10 px-4 py-2">
+            Sign in
+          </Link>
         </div>
       </div>
     </div>

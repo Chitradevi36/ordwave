@@ -168,6 +168,7 @@ export interface NavChild {
   matchers: string[];
   rolesAllowed?: UserRole[];
   comingSoon?: boolean;
+  badgeKey?: string;
 }
 
 export interface NavGroup {
