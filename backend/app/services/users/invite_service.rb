@@ -57,7 +57,7 @@ module Users
     end
 
     def deliver_email(invitation, token)
-      InvitationMailer.invite(invitation: invitation, token: token).deliver_later
+      InvitationMailer.invite(invitation: invitation, token: token).deliver_now
     rescue StandardError => e
       Rails.logger.error("InvitationMailer failed: #{e.message}")
     end

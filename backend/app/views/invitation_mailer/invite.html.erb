@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background-color: #f8f9fa; padding: 20px; border-radius: 4px; margin-bottom: 20px; }
+      .content { margin: 20px 0; }
+      .button { display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; margin: 20px 0; }
+      .footer { font-size: 12px; color: #666; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; }
+      .warning { background-color: #fff3cd; padding: 12px; border-radius: 4px; margin: 20px 0; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>You're invited to OrdWave! 🎉</h2>
+      </div>
+
+      <div class="content">
+        <p>Hi <%= @invitation.email %>,</p>
+
+        <p><strong><%= @invited_by_name %></strong> has invited you to join <strong><%= @organization.name %></strong> on OrdWave as a <strong><%= @role.name %></strong>.</p>
+
+        <p>Click the button below to accept the invitation and get started:</p>
+
+        <a href="<%= @accept_url %>" class="button">Accept Invitation</a>
+
+        <p>Or copy and paste this link in your browser:</p>
+        <p><code><%= @accept_url %></code></p>
+
+        <div class="warning">
+          <strong>⏰ This invitation expires in 72 hours.</strong> Make sure to accept it before it expires.
+        </div>
+
+        <p><strong>What's included:</strong></p>
+        <ul>
+          <li>Access to <%= @organization.name %>'s OrdWave workspace</li>
+          <li>Role: <%= @role.name %></li>
+          <% if @invitation.branch %>
+            <li>Branch: <%= @invitation.branch.name %></li>
+          <% end %>
+        </ul>
+
+        <p>If you have any questions, please contact the organization administrator.</p>
+      </div>
+
+      <div class="footer">
+        <p>OrdWave • <%= @organization.name %></p>
+        <p>This is an automated invitation. Please do not reply to this email.</p>
+      </div>
+    </div>
+  </body>
+</html>

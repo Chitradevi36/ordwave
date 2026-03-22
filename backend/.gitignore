@@ -25,6 +25,7 @@
 .env
 .env.local
 .env.production
+.env.example
 
 # Ignore node_modules
 /node_modules

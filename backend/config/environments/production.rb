@@ -65,9 +65,18 @@ Rails.application.configure do
   # config.active_job.queue_name_prefix = "backend_production"
 
   config.action_mailer.perform_caching = false
-  config.action_mailer.delivery_method = :postmark
-  config.action_mailer.postmark_settings = { api_token: ENV['POSTMARK_API_TOKEN'] }
-  config.action_mailer.default_url_options = { host: ENV.fetch('APP_HOST', 'app.orderlane.app') }
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address: 'smtp.sendgrid.net',
+    port: 587,
+    authentication: :plain,
+    user_name: 'apikey',
+    password: ENV.fetch('SMTP_PASSWORD', nil),
+    enable_starttls_auto: true
+  }
+  config.action_mailer.default_options = {
+    from: ENV.fetch('MAILER_FROM_ADDRESS', 'noreply@ordwave.com')
+  }
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
 

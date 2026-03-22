@@ -1,0 +1,22 @@
+You're invited to OrdWave!
+
+Hi <%= @invitation.email %>,
+
+<%= @invited_by_name %> has invited you to join <%= @organization.name %> on OrdWave as a <%= @role.name %>.
+
+Accept this invitation by visiting:
+<%= @accept_url %>
+
+IMPORTANT: This invitation expires in 72 hours. Make sure to accept it before it expires.
+
+What's included:
+- Access to <%= @organization.name %>'s OrdWave workspace
+- Role: <%= @role.name %>
+<% if @invitation.branch %>- Branch: <%= @invitation.branch.name %>
+<% end %>
+
+If you have any questions, please contact the organization administrator.
+
+---
+OrdWave • <%= @organization.name %>
+This is an automated invitation. Please do not reply to this email.
