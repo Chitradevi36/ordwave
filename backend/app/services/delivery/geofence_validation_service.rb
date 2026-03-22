@@ -24,6 +24,9 @@ module Delivery
     # Default geofence radius: 100 meters
     DEFAULT_GEOFENCE_RADIUS_M = 100
 
+    # Earth's radius in meters (for haversine distance calculation)
+    EARTH_RADIUS_METERS = 6_371_000
+
     def self.call(**kwargs)
       new(**kwargs).call
     end
@@ -110,8 +113,6 @@ module Delivery
     # Haversine formula distance calculation
     # Returns distance in meters between two GPS points
     def haversine_distance(lat1, lon1, lat2, lon2)
-      R = 6_371_000  # Earth's radius in meters
-
       # Convert to radians
       lat1_rad = Math.atan2(Math.sin(lat1 * Math::PI / 180), Math.cos(lat1 * Math::PI / 180))
       lat2_rad = Math.atan2(Math.sin(lat2 * Math::PI / 180), Math.cos(lat2 * Math::PI / 180))
@@ -124,7 +125,7 @@ module Delivery
           Math.cos(lat1_rad) * Math.cos(lat2_rad) * (Math.sin(delta_lon / 2) ** 2)
       
       c = 2 * Math.asin(Math.sqrt(a))
-      R * c
+      EARTH_RADIUS_METERS * c
     end
 
     def organization_geofence_radius
