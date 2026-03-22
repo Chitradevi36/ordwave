@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Payment
+module Payments
   class RetryService
     def initialize(payment, initiator_type = 'customer')
       @payment = payment
@@ -107,7 +107,7 @@ module Payment
         { success: true, payment_link: link_response['short_url'] }
       rescue => error
         Rails.logger.error({
-          service: 'Payment::RetryService',
+          service: 'Payments::RetryService',
           action: 'initiate_razorpay_retry',
           payment_id: @payment.id,
           error: error.message
@@ -127,7 +127,7 @@ module Payment
       ).payment_failed_notification.deliver_later
     rescue => error
       Rails.logger.error({
-        service: 'Payment::RetryService',
+        service: 'Payments::RetryService',
         action: 'send_retry_confirmation',
         error: error.message
       }.to_json)

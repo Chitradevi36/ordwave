@@ -106,7 +106,7 @@ module Api
         @payment = policy_scope(Payment).find(params[:id])
         authorize @payment, :retry?
 
-        result = Payment::RetryService.new(@payment, 'customer').call
+        result = Payments::RetryService.new(@payment, 'customer').call
 
         if result[:success]
           render_success(result)
