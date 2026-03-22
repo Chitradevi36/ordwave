@@ -11,13 +11,13 @@ module Api
                     .page(params[:page])
                     .per(params[:per_page] || 20)
 
-        render json: imports, each_serializer: BankStatementImportSerializer,
+        render json: imports.map { |i| BankStatementImportSerializer.new(i).serialize },
                meta: pagination_meta(imports)
       end
 
       def show
         authorize @import
-        render json: @import, serializer: BankStatementImportSerializer
+        render json: BankStatementImportSerializer.new(@import).serialize
       end
 
       def create
@@ -37,7 +37,7 @@ module Api
 
         if import.save
           ProcessBankStatementImportJob.perform_later(import.id)
-          render json: import, serializer: BankStatementImportSerializer, status: :accepted
+          render json: BankStatementImportSerializer.new(import).serialize, status: :accepted
         else
           render json: { errors: import.errors.full_messages }, status: :unprocessable_entity
         end

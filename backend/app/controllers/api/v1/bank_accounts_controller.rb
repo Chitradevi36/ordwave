@@ -7,12 +7,12 @@ module Api
 
       def index
         accounts = policy_scope(BankAccount).active.order(:bank_name)
-        render json: accounts, each_serializer: BankAccountSerializer
+        render json: accounts.map { |a| BankAccountSerializer.new(a).serialize }
       end
 
       def show
         authorize @bank_account
-        render json: @bank_account, serializer: BankAccountSerializer
+        render json: BankAccountSerializer.new(@bank_account).serialize
       end
 
       def create
@@ -22,7 +22,7 @@ module Api
         authorize @bank_account
 
         if @bank_account.save
-          render json: @bank_account, serializer: BankAccountSerializer, status: :created
+          render json: BankAccountSerializer.new(@bank_account).serialize, status: :created
         else
           render json: { errors: @bank_account.errors.full_messages }, status: :unprocessable_entity
         end
@@ -32,7 +32,7 @@ module Api
         authorize @bank_account
 
         if @bank_account.update(bank_account_params)
-          render json: @bank_account, serializer: BankAccountSerializer
+          render json: BankAccountSerializer.new(@bank_account).serialize
         else
           render json: { errors: @bank_account.errors.full_messages }, status: :unprocessable_entity
         end

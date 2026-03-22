@@ -1,22 +1,21 @@
 # frozen_string_literal: true
 
-class BankTransactionMatchSerializer < ActiveModel::Serializer
-  attributes :id, :bank_transaction_id, :customer_id, :sales_invoice_id,
-             :score, :rule_code, :explanation, :selected, :created_at
-
-  attribute :customer_name do
-    object.customer&.name
-  end
-
-  attribute :invoice_number do
-    object.sales_invoice&.invoice_number
-  end
-
-  attribute :invoice_amount do
-    object.sales_invoice&.grand_total
-  end
-
-  attribute :invoice_outstanding do
-    object.sales_invoice&.outstanding_amount
+class BankTransactionMatchSerializer < BaseSerializer
+  def serialize
+    {
+      id: object.id,
+      bank_transaction_id: object.bank_transaction_id,
+      customer_id: object.customer_id,
+      sales_invoice_id: object.sales_invoice_id,
+      score: object.score,
+      rule_code: object.rule_code,
+      explanation: object.explanation,
+      selected: object.selected,
+      created_at: object.created_at,
+      customer_name: object.customer&.name,
+      invoice_number: object.sales_invoice&.invoice_number,
+      invoice_amount: object.sales_invoice&.grand_total,
+      invoice_outstanding: object.sales_invoice&.outstanding_amount
+    }
   end
 end

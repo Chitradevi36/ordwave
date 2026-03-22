@@ -1,40 +1,31 @@
 # frozen_string_literal: true
 
-class InvoiceQuarantineSerializer < ActiveModel::Serializer
-  attributes :id, :organization_id, :trip_stop_id, :sales_order_id, :branch_id,
-             :error_message, :retry_count, :last_retry_at, :status,
-             :resolved_at, :resolved_by_id, :created_at, :updated_at
-
-  attribute :days_in_quarantine do
-    object.days_in_quarantine
+class InvoiceQuarantineSerializer < BaseSerializer
+  def serialize
+    {
+      id: object.id,
+      organization_id: object.organization_id,
+      trip_stop_id: object.trip_stop_id,
+      sales_order_id: object.sales_order_id,
+      branch_id: object.branch_id,
+      error_message: object.error_message,
+      retry_count: object.retry_count,
+      last_retry_at: object.last_retry_at,
+      status: object.status,
+      resolved_at: object.resolved_at,
+      resolved_by_id: object.resolved_by_id,
+      created_at: object.created_at,
+      updated_at: object.updated_at,
+      days_in_quarantine: object.days_in_quarantine,
+      quarantine_urgent: object.quarantine_urgent?,
+      customer_name: object.customer&.name,
+      order_number: object.order_number,
+      trip_number: object.trip_number,
+      order_total: object.sales_order&.total_amount,
+      error_summary: object.error_message&.truncate(100),
+      sales_order: object.sales_order.present? ? { id: object.sales_order.id } : nil,
+      trip_stop: object.trip_stop.present? ? { id: object.trip_stop.id } : nil,
+      resolved_by: object.resolved_by.present? ? { id: object.resolved_by.id, name: object.resolved_by.name } : nil
+    }
   end
-
-  attribute :quarantine_urgent do
-    object.quarantine_urgent?
-  end
-
-  attribute :customer_name do
-    object.customer&.name
-  end
-
-  attribute :order_number do
-    object.order_number
-  end
-
-  attribute :trip_number do
-    object.trip_number
-  end
-
-  attribute :order_total do
-    object.sales_order&.total_amount
-  end
-
-  attribute :error_summary do
-    # First 100 chars of error for quick scanning
-    object.error_message&.truncate(100)
-  end
-
-  has_one :sales_order, serializer: SalesOrderBaseSerializer
-  has_one :trip_stop, serializer: TripStopSerializer
-  has_one :resolved_by, serializer: UserSerializer
 end

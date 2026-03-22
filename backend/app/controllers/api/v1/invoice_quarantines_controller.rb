@@ -29,7 +29,7 @@ module Api
 
         quarantines = quarantines.page(params[:page]).per(params[:per_page] || 25)
 
-        render json: quarantines, each_serializer: InvoiceQuarantineSerializer,
+        render json: quarantines.map { |q| InvoiceQuarantineSerializer.new(q).serialize },
                meta: pagination_meta(quarantines)
       end
 
@@ -53,7 +53,7 @@ module Api
       # GET /api/v1/invoice_quarantines/:id
       def show
         authorize @quarantine
-        render json: @quarantine, serializer: InvoiceQuarantineSerializer
+        render json: InvoiceQuarantineSerializer.new(@quarantine).serialize
       end
 
       # POST /api/v1/invoice_quarantines/:id/reprocess
@@ -68,10 +68,10 @@ module Api
 
         if result.success?
           render json: {
-            data: @quarantine.reload,
+            data: InvoiceQuarantineSerializer.new(@quarantine.reload).serialize,
             message: result.message,
             invoice: result.invoice
-          }, serializer: InvoiceQuarantineSerializer
+          }
         else
           render json: { errors: result.errors }, status: :unprocessable_entity
         end
@@ -88,7 +88,7 @@ module Api
           resolved_by: Current.user
         )
 
-        render json: @quarantine, serializer: InvoiceQuarantineSerializer
+        render json: InvoiceQuarantineSerializer.new(@quarantine).serialize
       end
 
       private

@@ -348690,3 +348690,9 @@ Shutting down background worker
 Initializing the Sentry background worker with 8 threads
 [TwilioClient] Credentials not configured. SMS sending disabled.
 Shutting down background worker
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.

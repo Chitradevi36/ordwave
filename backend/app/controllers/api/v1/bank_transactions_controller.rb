@@ -65,13 +65,13 @@ module Api
 
         txns = txns.page(params[:page]).per(params[:per_page] || 25)
 
-        render json: txns, each_serializer: BankTransactionSerializer,
+        render json: txns.map { |t| BankTransactionSerializer.new(t).serialize },
                meta: pagination_meta(txns)
       end
 
       def show
         authorize @txn
-        render json: @txn, serializer: BankTransactionSerializer
+        render json: BankTransactionSerializer.new(@txn).serialize
       end
 
       # POST /api/v1/bank_transactions/:id/quick_assign
@@ -90,9 +90,9 @@ module Api
 
         if result.success?
           render json: {
-            data: @txn.reload,
+            data: BankTransactionSerializer.new(@txn.reload).serialize,
             message: result.message
-          }, serializer: BankTransactionSerializer
+          }
         else
           render json: { errors: result.errors }, status: :unprocessable_entity
         end
@@ -114,7 +114,7 @@ module Api
         )
 
         if result.success?
-          render json: @txn.reload, serializer: BankTransactionSerializer
+          render json: BankTransactionSerializer.new(@txn.reload).serialize
         else
           render json: { errors: result.errors }, status: :unprocessable_entity
         end
@@ -160,7 +160,7 @@ module Api
           )
         end
 
-        render json: @txn.reload, serializer: BankTransactionSerializer
+        render json: BankTransactionSerializer.new(@txn.reload).serialize
       rescue ActiveRecord::RecordInvalid => e
         render json: { errors: [e.message] }, status: :unprocessable_entity
       end
@@ -175,7 +175,7 @@ module Api
           processed_at:   Time.current
         )
 
-        render json: @txn, serializer: BankTransactionSerializer
+        render json: BankTransactionSerializer.new(@txn).serialize
       end
 
       # POST /api/v1/bank_transactions/:id/retry_match
@@ -187,7 +187,7 @@ module Api
 
         result = BankReconciliation::Matcher.call(@txn, Current.organization)
 
-        render json: @txn.reload, serializer: BankTransactionSerializer,
+        render json: BankTransactionSerializer.new(@txn.reload).serialize,
                status: :ok,
                meta:   { new_status: result.status }
       end
