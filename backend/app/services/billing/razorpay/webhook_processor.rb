@@ -98,22 +98,78 @@ module Billing
         false
       end
 
-      # ── Org / Subscription resolution ──────────────────────────────────────
-
       def resolve_org_and_subscription
-        # Try to find via subscription entity
+        organization = nil
+        subscription = nil
+        event_id = @payload.dig("id").to_s
+
+        # Path 1: Direct subscription entity in payload (subscription.* events)
         sub_entity = @payload.dig("payload", "subscription", "entity")
-        rzp_sub_id = sub_entity&.fetch("id", nil)
+        if sub_entity.present?
+          rzp_sub_id  = sub_entity.fetch("id", nil)
+          notes       = sub_entity.fetch("notes", {}) || {}
+          org_id      = notes["organization_id"]
 
-        # Also check notes for organization_id (set when creating subscription)
-        notes = sub_entity&.fetch("notes", {}) || {}
-        org_id = notes["organization_id"]
+          subscription = Subscription.find_by(razorpay_subscription_id: rzp_sub_id) if rzp_sub_id.present?
+          organization = subscription&.organization || (Organization.find_by(id: org_id) if org_id.present?)
+          
+          Rails.logger.info("[WebhookProcessor] Event #{event_id}: Found org via subscription entity (org_id=#{org_id})")
+        end
 
-        subscription = Subscription.find_by(razorpay_subscription_id: rzp_sub_id) if rzp_sub_id.present?
-        organization = subscription&.organization ||
-                       (org_id.present? ? Organization.find_by(id: org_id) : nil)
+        # Path 2: Subscription ID in payment entity (payment.* events tied to subscriptions)
+        if organization.nil?
+          payment_entity = @payload.dig("payload", "payment", "entity")
+          if payment_entity.present?
+            rzp_sub_id = payment_entity.fetch("subscription_id", nil)
+            
+            if rzp_sub_id.present?
+              subscription = Subscription.find_by(razorpay_subscription_id: rzp_sub_id)
+              organization = subscription&.organization
+              Rails.logger.info("[WebhookProcessor] Event #{event_id}: Found org via payment.subscription_id (sub_id=#{rzp_sub_id})")
+            end
+          end
+        end
+
+        # Path 3: Query Razorpay API to find the subscription for this payment (last resort)
+        if organization.nil?
+          payment_entity = @payload.dig("payload", "payment", "entity")
+          if payment_entity.present?
+            payment_id = payment_entity.fetch("id", nil)
+            
+            if payment_id.present?
+              organization, subscription = find_org_via_razorpay_api(payment_id, event_id)
+            end
+          end
+        end
 
         [ organization, subscription ]
+      end
+
+      # Query Razorpay to find which subscription owns this payment
+      def find_org_via_razorpay_api(payment_id, event_id)
+        begin
+          payment = ::Razorpay::Payment.fetch(payment_id)
+          rzp_sub_id = payment.subscription_id
+          
+          if rzp_sub_id.blank?
+            Rails.logger.warn("[WebhookProcessor] Event #{event_id}: Payment #{payment_id} has no subscription_id in Razorpay API")
+            return [nil, nil]
+          end
+
+          subscription = Subscription.find_by(razorpay_subscription_id: rzp_sub_id)
+          organization = subscription&.organization
+          
+          if organization.present?
+            Rails.logger.info("[WebhookProcessor] Event #{event_id}: Found org via Razorpay API (payment=#{payment_id}, subscription=#{rzp_sub_id})")
+          else
+            Rails.logger.warn("[WebhookProcessor] Event #{event_id}: Razorpay shows subscription=#{rzp_sub_id} but not found in DB")
+          end
+          
+          [organization, subscription]
+        rescue ::Razorpay::Error => e
+          Rails.logger.error("[WebhookProcessor] Event #{event_id}: Razorpay API error fetching payment #{payment_id}: #{e.message}")
+          [nil, nil]
+        end
       end
 
       # ── Event routing ───────────────────────────────────────────────────────

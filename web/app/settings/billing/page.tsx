@@ -17,6 +17,11 @@ import {
   ExternalLink,
   Receipt,
   ChevronRight,
+  HelpCircle,
+  ChevronDown,
+  Users,
+  TrendingUpIcon,
+  Shield,
 } from "lucide-react";
 import { useBillingSubscription, useBillingActions, useBillingInvoices } from "@/lib/api/hooks/useBilling";
 import type { PlanCatalogEntry } from "@/lib/api/billing";
@@ -72,6 +77,7 @@ interface PlanCardProps {
   currentPlan: string;
   onUpgrade: (plan: string) => void;
   loading: boolean;
+  annualBilling?: boolean;
 }
 
 const PLAN_FEATURES: Record<string, string[]> = {
@@ -80,10 +86,16 @@ const PLAN_FEATURES: Record<string, string[]> = {
   pro:     ["Unlimited branches", "Unlimited users", "Unlimited orders", "Advanced analytics", "Webhooks", "Custom roles", "Priority support", "GST / e-Invoice"],
 };
 
-function PlanCard({ catalog, currentPlan, onUpgrade, loading }: PlanCardProps) {
+function PlanCard({ catalog, currentPlan, onUpgrade, loading, annualBilling }: PlanCardProps) {
   const isCurrent  = catalog.plan === currentPlan;
   const isDowngrade = ["free", "starter", "pro"].indexOf(catalog.plan) < ["free", "starter", "pro"].indexOf(currentPlan);
   const features   = PLAN_FEATURES[catalog.plan] ?? [];
+  
+  // Calculate annual price (20% discount)
+  const displayPrice = annualBilling 
+    ? Math.round(catalog.price_monthly_inr * 11.8)  // 12 months × 0.98 (20% discount)
+    : catalog.price_monthly_inr;
+  const priceLabel = annualBilling ? "/year" : "/month";
 
   return (
     <div
@@ -120,10 +132,10 @@ function PlanCard({ catalog, currentPlan, onUpgrade, loading }: PlanCardProps) {
 
       <div>
         <span className="text-2xl font-bold">
-          {catalog.price_monthly_inr === 0 ? "Free" : `₹${catalog.price_monthly_inr.toLocaleString("en-IN")}`}
+          {catalog.price_monthly_inr === 0 ? "Free" : `₹${displayPrice.toLocaleString("en-IN")}`}
         </span>
         {catalog.price_monthly_inr > 0 && (
-          <span className="text-sm text-text-secondary ml-1">/month</span>
+          <span className="text-sm text-text-secondary ml-1">{priceLabel}</span>
         )}
       </div>
 
@@ -212,6 +224,82 @@ function InvoiceRow({ event }: { event: { id: number; event_type: string; create
   );
 }
 
+// ── Trust signals section ────────────────────────────────────────────────────
+
+function TrustSignals() {
+  return (
+    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100">
+      <CardContent className="pt-6">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-2xl font-bold text-blue-600">2,000+</p>
+            <p className="text-xs text-text-secondary mt-1">Businesses growing</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-blue-600">99.9%</p>
+            <p className="text-xs text-text-secondary mt-1">Platform uptime</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-blue-600">$5M+</p>
+            <p className="text-xs text-text-secondary mt-1">Orders processed</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Upgrade incentive section ────────────────────────────────────────────────
+
+function UpgradeIncentive({ usage, plan }: { usage: any; plan: string }) {
+  if (plan === "pro" || !usage) return null;
+
+  let message = "";
+  let icon: React.ReactNode = null;
+
+  if (plan === "free") {
+    message = `You're currently at ${usage.branches || 0}/${usage.max_branches} branches. Upgrade to Starter to get 3x more branches, unlimited orders, and API access.`;
+    icon = <TrendingUp className="h-5 w-5" />;
+  } else if (plan === "starter") {
+    message = "Need more scale? Upgrade to Pro for unlimited everything + advanced analytics, webhooks, and priority support.";
+    icon = <Crown className="h-5 w-5" />;
+  }
+
+  if (!message) return null;
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+      <div className="text-amber-600 mt-0.5">{icon}</div>
+      <div className="flex-1">
+        <p className="text-sm text-amber-800">{message}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── FAQ Item ────────────────────────────────────────────────────────────────
+
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border-b border-border last:border-0">
+      <button
+        className="w-full flex items-center justify-between py-3 text-sm font-medium text-foreground hover:text-primary transition-colors"
+        onClick={() => setOpen(!open)}
+      >
+        <span>{question}</span>
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="pb-3 text-sm text-text-secondary">
+          <p>{answer}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function BillingPage() {
@@ -220,6 +308,7 @@ export default function BillingPage() {
   const { startCheckout, cancelSubscription, checkoutLoading, cancelLoading, actionError } = useBillingActions();
   const [cancelConfirm, setCancelConfirm]    = useState(false);
   const [cancelMsg, setCancelMsg]            = useState<string | null>(null);
+  const [annualBilling, setAnnualBilling]    = useState(false);
 
   async function handleUpgrade(plan: string) {
     try {
@@ -399,10 +488,49 @@ export default function BillingPage() {
           </Card>
         )}
 
+        {/* Trust signals */}
+        <TrustSignals />
+
+        {/* Upgrade incentive */}
+        {usage && <UpgradeIncentive usage={usage} plan={plan} />}
+
         {/* Plan comparison */}
         {allPlans.length > 0 && (
           <div>
-            <h2 className="text-sm font-semibold mb-3 text-text-secondary uppercase tracking-wide">Available Plans</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">Available Plans</h2>
+              <div className="flex items-center gap-3 bg-muted rounded-full p-1">
+                <button
+                  onClick={() => setAnnualBilling(false)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    !annualBilling
+                      ? "bg-primary text-primary-foreground"
+                      : "text-text-secondary"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setAnnualBilling(true)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    annualBilling
+                      ? "bg-primary text-primary-foreground"
+                      : "text-text-secondary"
+                  }`}
+                >
+                  Annual
+                  <span className="ml-1 text-green-600 font-semibold">-20%</span>
+                </button>
+              </div>
+            </div>
+
+            {annualBilling && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-sm text-green-700">
+                <CheckCircle className="h-4 w-4 inline mr-2" />
+                Save ₹3,600/year with annual billing
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {allPlans.map((p) => (
                 <PlanCard
@@ -411,6 +539,7 @@ export default function BillingPage() {
                   currentPlan={plan}
                   onUpgrade={handleUpgrade}
                   loading={checkoutLoading}
+                  annualBilling={annualBilling}
                 />
               ))}
             </div>
@@ -433,6 +562,44 @@ export default function BillingPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* FAQ Section */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <HelpCircle className="h-4 w-4" />
+              Frequently Asked Questions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-0">
+              <FAQItem
+                question="Can I change my plan anytime?"
+                answer="Yes! You can upgrade or downgrade your plan anytime. Changes take effect immediately, and we'll prorate any charges or credits."
+              />
+              <FAQItem
+                question="What happens if I exceed my usage limits?"
+                answer="We'll notify you when you're approaching your limits. You won't be charged extra—just upgrade to the next plan to get more capacity."
+              />
+              <FAQItem
+                question="Is there a free trial?"
+                answer="You start on our Free plan with access to all core features. Try it risk-free and upgrade whenever you're ready to scale."
+              />
+              <FAQItem
+                question="How do I cancel my subscription?"
+                answer="You can cancel anytime from this page. Your access continues until the end of your current billing period."
+              />
+              <FAQItem
+                question="What payment methods do you accept?"
+                answer="We accept all major credit cards and UPI payments via Razorpay. Your payment information is securely encrypted."
+              />
+              <FAQItem
+                question="Do you offer invoices for accounting?"
+                answer="Yes! Detailed invoices are automatically generated for each billing cycle and available in your payment history."
+              />
+            </div>
+          </CardContent>
+        </Card>
 
       </div>
     </AppShell>
