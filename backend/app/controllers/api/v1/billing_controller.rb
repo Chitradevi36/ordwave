@@ -13,6 +13,8 @@ module Api
       # GET /api/v1/billing/subscription
       # Returns the current subscription + plan summary + usage.
       def subscription
+        authorize current_organization, :subscription?
+
         sub = current_organization.current_subscription
         limits = PlanLimits.for(current_organization)
 
@@ -37,6 +39,8 @@ module Api
       # Params:
       #   plan (string) — "starter" or "pro"
       def checkout
+        authorize current_organization, :checkout?
+
         plan = params[:plan].to_s.downcase
 
         unless Billing::PlanCatalog.paid?(plan)
@@ -55,7 +59,8 @@ module Api
               subscription_id:    result.subscription.id,
               short_url:          result.short_url,
               plan:               plan,
-              message:            "Redirecting to payment..."
+              message:            "Payment required",
+              checkout_data:      result.checkout_data
             }
           }, status: :created
         else
@@ -66,10 +71,7 @@ module Api
       # POST /api/v1/billing/cancel
       # Cancels the active subscription.  Requires org owner.
       def cancel
-        unless current_user_is_org_owner?
-          return render json: { errors: ["Only the account owner can cancel the subscription"] },
-                        status: :forbidden
-        end
+        authorize current_organization, :cancel?
 
         sub = current_organization.subscriptions.active.last
 
@@ -107,6 +109,8 @@ module Api
       # GET /api/v1/billing/invoices
       # Returns a paginated list of billing events (payment history).
       def invoices
+        authorize current_organization, :invoices?
+
         events = current_organization.billing_events
                                      .where(event_type: %w[subscription.charged payment.captured payment.failed])
                                      .order(created_at: :desc)
@@ -118,12 +122,6 @@ module Api
       end
 
       private
-
-      def current_user_is_org_owner?
-        current_organization.memberships
-                             .where(user: current_user, role: "owner")
-                             .exists?
-      end
 
       def serialize_subscription(sub)
         {

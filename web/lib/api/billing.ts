@@ -67,6 +67,15 @@ export interface CheckoutResponse {
   short_url: string;
   plan: string;
   message: string;
+  checkout_data: {
+    subscription_id: string;
+    key_id: string;
+    amount: number;
+    currency: string;
+    description: string;
+    customer_email: string;
+    customer_name: string;
+  };
 }
 
 // ── API calls ────────────────────────────────────────────────────────────────

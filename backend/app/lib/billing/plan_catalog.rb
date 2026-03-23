@@ -24,6 +24,16 @@ module Billing
         description:        "Get started at no cost. Perfect for solo operators.",
         highlight:          false
       },
+      "growth" => {
+        display_name:       "Growth",
+        price_paise:        149_900,    # ₹1,499
+        price_monthly_inr:  1_499,
+        razorpay_plan_id:   ENV.fetch("RAZORPAY_PLAN_ID_STARTER_MONTHLY", nil),
+        billing_period:     "monthly",
+        trial_days:         0,
+        description:        "For small teams ready to scale operations.",
+        highlight:          false
+      },
       "starter" => {
         display_name:       "Starter",
         price_paise:        149_900,    # ₹1,499
