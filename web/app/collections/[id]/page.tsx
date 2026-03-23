@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { collectionEvents } from "@/lib/analytics";
 import {
   CheckCircle2,
   RotateCcw,
@@ -136,6 +137,13 @@ export default function PaymentDetailPage() {
       });
       const json = await res.json();
       if (res.ok) {
+        // Track payment recording
+        collectionEvents.recordPayment(
+          String(payment.id),
+          payment.amount,
+          payment.payment_mode,
+          ""
+        );
         fetchPayment();
       } else {
         setError(json.errors?.join(", ") ?? "Failed to confirm payment");
@@ -161,6 +169,13 @@ export default function PaymentDetailPage() {
       });
       const json = await res.json();
       if (res.ok) {
+        // Track credit transaction (reversal = debit from customer perspective)
+        collectionEvents.recordCreditTransaction(
+          String(payment.id),
+          "",
+          payment.amount,
+          "debit"
+        );
         setShowReverse(false);
         setReversalReason("");
         fetchPayment();

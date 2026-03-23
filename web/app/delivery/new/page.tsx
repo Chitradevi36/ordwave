@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { API_URL } from "@/lib/api/client";
-import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
+import { ANALYTICS_EVENTS, trackBusinessEvent, dispatchEvents } from "@/lib/analytics";
 
 import { Truck, User, Package, X, GripVertical, Plus, ChevronRight } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
@@ -132,6 +132,14 @@ export default function NewTripPage() {
           page:        "/delivery/new",
           items_count: selectedOrders.length,
         });
+        // Calculate total value of dispatch
+        const totalValue = selectedOrders.reduce((sum, o) => sum + o.total_amount, 0);
+        dispatchEvents.create(
+          String(json.data.id),
+          selectedOrders.length,
+          totalValue,
+          "dispatch"
+        );
         router.push(`/delivery/${json.data.id}`);
       } else {
         setErrors(json.errors ?? ["Failed to create trip"]);

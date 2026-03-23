@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AddBranchModal, EditBranchModal, BranchForEdit } from "@/components/add-branch-modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { engagementEvents } from "@/lib/analytics";
 import { usePincodeLookup } from "@/lib/use-pincode-lookup";
 import { API_URL } from "@/lib/api/client";
 
@@ -294,6 +295,10 @@ function OrganizationPageInner() {
         setOrg(json.data);
         setProfileForm(json.data ?? {});
         setProfileSuccess(true);
+        
+        // Track settings update
+        engagementEvents.updateSettings("organization", "profile");
+        
         setTimeout(() => setProfileSuccess(false), 3000);
       } else {
         setProfileError((json.errors ?? []).join(", ") || "Failed to save.");
@@ -322,6 +327,10 @@ function OrganizationPageInner() {
       const json = await res.json();
       if (res.ok) {
         setWfSuccess(true);
+        
+        // Track settings update
+        engagementEvents.updateSettings("organization", "workflow");
+        
         setTimeout(() => setWfSuccess(false), 3000);
       } else {
         setWfError((json.errors ?? []).join(", ") || "Failed to save.");

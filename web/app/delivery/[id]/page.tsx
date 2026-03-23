@@ -15,6 +15,7 @@ import {
   BarChart2, AlertCircle, ChevronDown, IndianRupee,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { dispatchEvents } from "@/lib/analytics";
 
 const EXCEPTION_CODES = [
   { value: "customer_not_available", label: "Customer Not Available" },
@@ -171,7 +172,15 @@ export default function TripDetailPage() {
     try {
       const res  = await fetch(`${API_URL}/api/v1/delivery_trips/${id}`, { headers: authHeaders });
       const json = await res.json();
-      if (res.ok) setTrip(json.data);
+      if (res.ok) {
+        setTrip(json.data);
+        // Track dispatch view
+        dispatchEvents.view(
+          String(json.data.id),
+          json.data.status,
+          json.data.orders?.length ?? 0
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -207,7 +216,17 @@ export default function TripDetailPage() {
       method: "POST", headers: authHeaders,
     });
     const json = await res.json();
-    if (res.ok) void fetchTrip();
+    if (res.ok) {
+      // Track dispatch status update
+      if (trip) {
+        dispatchEvents.updateStatus(
+          String(trip.id),
+          trip.status,
+          "dispatched"
+        );
+      }
+      void fetchTrip();
+    }
     else setActionError((json.errors ?? []).join(", "));
   }
 
@@ -219,7 +238,21 @@ export default function TripDetailPage() {
         method: "POST", headers: authHeaders,
       });
       const json = await res.json();
-      if (res.ok) void fetchTrip();
+      if (res.ok) {
+        // Track dispatch completion
+        if (trip && tripSummary) {
+          const deliveryTime = trip.dispatched_at
+            ? Math.floor((Date.now() - new Date(trip.dispatched_at).getTime()) / (1000 * 60 * 60))
+            : 0;
+          dispatchEvents.complete(
+            String(trip.id),
+            tripSummary.stops_count,
+            trip.total_order_value ?? 0,
+            deliveryTime
+          );
+        }
+        void fetchTrip();
+      }
       else setActionError((json.errors ?? ["Complete failed"]).join(", "));
     } finally {
       setCompletingTrip(false);
@@ -237,7 +270,18 @@ export default function TripDetailPage() {
         body:    JSON.stringify({ delivery_trip: { cancellation_reason: cancelReason } }),
       });
       const json = await res.json();
-      if (res.ok) { setShowCancel(false); void fetchTrip(); }
+      if (res.ok) {
+        // Track dispatch failure/cancellation
+        if (trip) {
+          dispatchEvents.failed(
+            String(trip.id),
+            cancelReason,
+            trip.orders?.length ?? 0
+          );
+        }
+        setShowCancel(false);
+        void fetchTrip();
+      }
       else setActionError((json.errors ?? []).join(", "));
     } finally {
       setCancelLoading(false);

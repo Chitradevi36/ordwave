@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
+import { orderEvents } from "@/lib/analytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OrderSummary {
@@ -345,6 +346,10 @@ function OrdersPageContent() {
       if (res.ok) {
         setOrders(json.data ?? []);
         setMeta(json.meta ?? null);
+        // Track search if search query is active
+        if (search && search.trim()) {
+          orderEvents.search(search, json.data?.length ?? 0);
+        }
       } else {
         showToast("error", json.errors?.[0] ?? "Failed to load orders");
       }
@@ -492,6 +497,10 @@ function OrdersPageContent() {
 
   // ─── Export CSV (current page) ───────────────────────────────────────────
   const exportCsv = () => {
+    // Track export event
+    const dateRange = dateFrom || dateTo ? `${dateFrom ?? ""} to ${dateTo ?? ""}` : "all";
+    orderEvents.export("csv", orders.length, dateRange);
+
     const hdrs = ["Order #","Customer","Branch","Status","Total (₹)","Discount (₹)","Delivery Date","Sales Rep","Created"];
     const rows = orders.map(o => [
       o.order_number, o.customer.name, o.branch.name, o.status,
@@ -928,7 +937,15 @@ function OrdersPageContent() {
           <Input
             placeholder="Search order # or customer…"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              const query = e.target.value;
+              setSearch(query);
+              setPage(1);
+              if (query.trim()) {
+                // Track search only if there's a query
+                // We'll track after results are fetched
+              }
+            }}
             className="pl-9"
           />
         </div>

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import CreatePaymentModal from "@/components/payments/create-payment-modal";
+import { collectionEvents } from "@/lib/analytics";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -184,6 +185,9 @@ export default function CollectionsPage() {
       a.download = `payments_${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+
+      // Track export event
+      collectionEvents.generateFinanceReport("collections", "all", rows.length);
     } finally {
       setExporting(false);
     }

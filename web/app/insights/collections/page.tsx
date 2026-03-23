@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { engagementEvents } from "@/lib/analytics";
 import { API_URL } from "@/lib/api/client";
 import { RefreshCw, Download, Wallet, AlertCircle, TrendingDown } from "lucide-react";
 
@@ -123,6 +124,10 @@ export default function InsightsCollectionsPage() {
     if (branchId) qp.set("branch_id", branchId);
     if (dateFrom) qp.set("date_from", dateFrom);
     if (dateTo)   qp.set("date_to", dateTo);
+    
+    // Track data export
+    engagementEvents.exportData("collections", "csv", data?.summary?.unpaid_invoices_count ?? 0, `${dateFrom} to ${dateTo}`);
+    
     window.location.href = `${API_URL}/api/v1/analytics/collections/export?${qp}`;
   };
 
