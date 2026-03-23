@@ -83,7 +83,7 @@ module Delivery
 
       # Gate check: Enforce geofence validation BEFORE marking delivered
       # If geofence enforcement enabled and delivery is far from address, require supervisor override
-      if FEATURES.geofence_validation_enabled?(@actor&.organization) &&
+      if FEATURES.geofence_validation_enabled?(@stop.delivery_trip.organization) &&
          @latitude.present? && @longitude.present? &&
          @outcome.in?(%w[delivered partial_delivery])
         geofence_error = check_geofence_requirements
