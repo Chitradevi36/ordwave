@@ -384,6 +384,8 @@ Rails.application.routes.draw do
         resources :trip_stops, only: %i[index show] do
           member do
             post :complete
+            post :send_otp, to: 'delivery_otp#send_otp'
+            post :verify_otp, to: 'delivery_otp#verify_otp'
           end
           resources :rejections, only: %i[create], controller: 'stop_rejections'
         end
