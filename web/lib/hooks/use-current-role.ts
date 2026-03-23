@@ -48,11 +48,20 @@ export function useCurrentRoleWithLoading(): { role: UserRole | undefined; loadi
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // Timeout fallback: if loading hasn't completed in 5 seconds, assume we're owner/no role
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("Role loading timed out, treating as no role restriction");
+        setRole(undefined);
+        setLoading(false);
+      }
+    }, 5000);
+
     // Wait until the context has resolved a token and org
     if (!token || !orgId) {
       // Still bootstrapping — keep loading state; role stays undefined
       setLoading(true);
-      return;
+      return () => clearTimeout(timeout);
     }
 
     setLoading(true);
@@ -62,6 +71,7 @@ export function useCurrentRoleWithLoading(): { role: UserRole | undefined; loadi
     if (cached) {
       setRole(cached);
       setLoading(false);
+      clearTimeout(timeout);
       return;
     }
 
@@ -76,8 +86,13 @@ export function useCurrentRoleWithLoading(): { role: UserRole | undefined; loadi
         setRole(match?.role as UserRole | undefined);
       })
       .catch(() => { setRole(undefined); })
-      .finally(() => setLoading(false));
-  }, [token, orgId]);
+      .finally(() => {
+        setLoading(false);
+        clearTimeout(timeout);
+      });
+
+    return () => clearTimeout(timeout);
+  }, [token, orgId, loading]);
 
   return { role, loading };
 }

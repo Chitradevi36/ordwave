@@ -189,7 +189,20 @@ export default function DashboardPage() {
   const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 3, sort: "created_at_desc" });
   const { role, loading: roleLoading } = useCurrentRoleWithLoading();
 
-  if (!isReady) return null;
+  // Show loading skeleton only while auth is hydrating
+  if (!isReady) {
+    return (
+      <AppShell title="Dashboard">
+        <div className="space-y-5">
+          <div className="h-7 w-56 rounded bg-gray-100 animate-pulse mb-4" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {[1,2,3,4,5].map(i => <KpiCardSkeleton key={i} />)}
+          </div>
+          <div className="h-64 rounded-xl bg-gray-100 animate-pulse" />
+        </div>
+      </AppShell>
+    );
+  }
 
   const orders = ordersData?.data ?? [];
 
@@ -224,24 +237,16 @@ export default function DashboardPage() {
       </div>      
       {/* â”€â”€ Alert ribbon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* ── Role-specific dashboard view ────────────────────────────────────── */}
-      {roleLoading ? (
-        // While resolving the user role, show a neutral loading skeleton
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {[1,2,3,4,5].map(i => <KpiCardSkeleton key={i} />)}
-          </div>
-          <div className="h-64 rounded-xl bg-gray-100 animate-pulse" />
-        </div>
-      ) : role === "sales_rep" ? (
-        <SalesRepView data={data} isLoading={isLoading} isError={isError} />
+      {role === "sales_rep" ? (
+        <SalesRepView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : role === "manager" ? (
-        <ManagerView data={data} isLoading={isLoading} isError={isError} />
+        <ManagerView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : role === "accountant" ? (
-        <AccountantView data={data} isLoading={isLoading} isError={isError} />
+        <AccountantView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : role === "warehouse_staff" ? (
-        <WarehouseView data={data} isLoading={isLoading} isError={isError} />
+        <WarehouseView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : role === "driver" ? (
-        <DriverView data={data} isLoading={isLoading} isError={isError} />
+        <DriverView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : (
         <>
           {!isLoading && data?.alerts && <AlertRibbon alerts={data.alerts} />}
