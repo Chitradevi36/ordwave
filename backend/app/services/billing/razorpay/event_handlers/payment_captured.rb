@@ -17,16 +17,17 @@ module Billing
           invoice_order_id = extract_order_reference(payment_data)
 
           unless invoice_order_id.present?
-            Rails.logger.warn("[PaymentCaptured] No order/invoice reference in payment #{payment_data['id']}")
+            Rails.logger.info("[PaymentCaptured] No order reference in payment #{payment_data['id']}. This is likely a subscription payment, not a sales order payment. Skipping order linking.")
+            # For subscription payments, we update subscription status in SubscriptionCharged handler instead
             return
           end
 
-          # Find the order by notes/reference
+          # Find the order by id or order_number
           order = @organization.sales_orders.find_by(id: invoice_order_id) ||
                   @organization.sales_orders.find_by(order_number: invoice_order_id)
 
           unless order.present?
-            Rails.logger.warn("[PaymentCaptured]Order #{invoice_order_id} not found for org #{@organization.id}")
+            Rails.logger.warn("[PaymentCaptured] Order #{invoice_order_id} not found for org #{@organization.id}")
             return
           end
 
@@ -55,8 +56,19 @@ module Billing
           # 2. description field
           # 3. customer email → find customer → get order
           notes = payment_data.dig('notes') || {}
-          notes['order_id'] || notes['sales_order_id'] ||
-            payment_data.dig('description')&.match(/ORDER[#:]?(\d+)/)&.[](1)
+          
+          # Try notes first
+          ref = notes['order_id'] || notes['sales_order_id']
+          return ref.to_i if ref.present?
+          
+          # Try to extract from description (e.g. "ORDER#12345 - Invoice")
+          desc = payment_data.dig('description')
+          if desc.present?
+            match = desc.match(/ORDER[#:]?(\d+)/)
+            return match[1].to_i if match.present?
+          end
+          
+          nil
         end
 
         def notify_payment_received(order, payment)

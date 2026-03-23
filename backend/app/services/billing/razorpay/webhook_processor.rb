@@ -51,7 +51,9 @@ module Billing
         organization, subscription = resolve_org_and_subscription
 
         unless organization
-          Rails.logger.warn("[WebhookProcessor] Organization not found for event #{razorpay_event_id}")
+          event_type = @payload["event"].to_s
+          Rails.logger.warn("[WebhookProcessor] Organization not found for event #{razorpay_event_id} (type=#{event_type}). This may be a payment event from an unlinked subscription or test payment.")
+          # Skip gracefully instead of failing - don't retry
           return Result.new(success?: false, error: "Organization not found", skipped: false)
         end
 
@@ -130,7 +132,30 @@ module Billing
           end
         end
 
-        # Path 3: Query Razorpay API to find the subscription for this payment (last resort)
+        # Path 3: Find organization via customer_id (for payment.* events without subscription_id)
+        if organization.nil?
+          payment_entity = @payload.dig("payload", "payment", "entity")
+          if payment_entity.present?
+            customer_id = payment_entity.fetch("customer_id", nil)
+            
+            if customer_id.present?
+              # Organization stores razorpay_customer_id — find it by that
+              organization = Organization.find_by(razorpay_customer_id: customer_id)
+              
+              if organization.present?
+                # Find most recent active/pending subscription for this org
+                subscription = organization.subscriptions
+                  .where(status: %w[active pending past_due])
+                  .order(created_at: :desc)
+                  .first
+                
+                Rails.logger.info("[WebhookProcessor] Event #{event_id}: Found org via customer_id (customer=#{customer_id}, org=#{organization.id})")
+              end
+            end
+          end
+        end
+
+        # Path 4: Query Razorpay API to find subscription from payment (last resort)
         if organization.nil?
           payment_entity = @payload.dig("payload", "payment", "entity")
           if payment_entity.present?
@@ -149,10 +174,22 @@ module Billing
       def find_org_via_razorpay_api(payment_id, event_id)
         begin
           payment = ::Razorpay::Payment.fetch(payment_id)
-          rzp_sub_id = payment.subscription_id
+          
+          # Try to extract subscription_id from payment data
+          # The payment entity might not have subscription_id as a direct method
+          rzp_sub_id = payment.respond_to?(:subscription_id) ? payment.subscription_id : payment.try(:[], :subscription_id)
           
           if rzp_sub_id.blank?
-            Rails.logger.warn("[WebhookProcessor] Event #{event_id}: Payment #{payment_id} has no subscription_id in Razorpay API")
+            # For payment.captured events on subscriptions, Razorpay might not include subscription_id
+            # Try to find subscription by looking at payment notes instead
+            notes = payment.respond_to?(:notes) ? payment.notes : payment.try(:[], :notes)
+            if notes.is_a?(Hash)
+              rzp_sub_id = notes["subscription_id"]
+            end
+          end
+          
+          if rzp_sub_id.blank?
+            Rails.logger.warn("[WebhookProcessor] Event #{event_id}: Payment #{payment_id} has no subscription_id (may not be subscription-based)")
             return [nil, nil]
           end
 
@@ -168,6 +205,9 @@ module Billing
           [organization, subscription]
         rescue ::Razorpay::Error => e
           Rails.logger.error("[WebhookProcessor] Event #{event_id}: Razorpay API error fetching payment #{payment_id}: #{e.message}")
+          [nil, nil]
+        rescue StandardError => e
+          Rails.logger.error("[WebhookProcessor] Event #{event_id}: Error querying Razorpay for payment #{payment_id}: #{e.class} — #{e.message}")
           [nil, nil]
         end
       end

@@ -47,8 +47,8 @@ gem 'devise-jwt', '~> 0.11'
 gem 'pundit', '~> 2.3'
 
 # Background jobs
-gem 'sidekiq', '~> 7.2'
-gem 'sidekiq-cron', '~> 1.12'       # recurring job scheduling
+gem 'sidekiq', '~> 6.5'      # 6.5.x is compatible with Redis 6.0.16+
+gem 'sidekiq-cron', '~> 1.12' # recurring job scheduling
 # PDF generation
 gem 'prawn', '~> 2.5'
 gem 'prawn-table', '~> 0.2'
