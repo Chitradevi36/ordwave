@@ -246,7 +246,7 @@ export default function TripDetailPage() {
             : 0;
           dispatchEvents.complete(
             String(trip.id),
-            tripSummary.stops_count,
+            tripSummary.total_stops,
             trip.total_order_value ?? 0,
             deliveryTime
           );
