@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useBillingSubscription, useBillingActions, useBillingInvoices } from "@/lib/api/hooks/useBilling";
 import type { PlanCatalogEntry } from "@/lib/api/billing";
+import { billingEvents, engagementEvents } from "@/lib/analytics";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -311,6 +312,23 @@ export default function BillingPage() {
   const [annualBilling, setAnnualBilling]    = useState(false);
 
   async function handleUpgrade(plan: string) {
+    const currentPlan = data?.subscription?.plan ?? "free";
+    
+    // Determine if it's an upgrade, downgrade, or same plan
+    const planRank: Record<string, number> = { free: 0, starter: 1, pro: 2 };
+    const fromRank = planRank[currentPlan] ?? 0;
+    const toRank = planRank[plan] ?? 0;
+    
+    if (toRank > fromRank) {
+      // Upgrade - calculate price
+      const catalogEntry = data?.plans?.find(p => p.plan === plan);
+      const price = catalogEntry?.price_monthly_inr ?? 0;
+      billingEvents.upgradePlan(currentPlan, plan, price);
+    } else if (toRank < fromRank) {
+      // Downgrade
+      billingEvents.downgradePlan(currentPlan, plan);
+    }
+    
     try {
       const result = await startCheckout(plan);
       if (result) {
@@ -328,6 +346,14 @@ export default function BillingPage() {
       setCancelConfirm(true);
       return;
     }
+    const currentPlan = data?.subscription?.plan ?? "free";
+    const subscriptionStart = data?.subscription?.created_at;
+    const daysActive = subscriptionStart 
+      ? Math.floor((Date.now() - new Date(subscriptionStart).getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+    
+    billingEvents.cancelSubscription(currentPlan, "user_initiated", daysActive);
+    
     const ok = await cancelSubscription();
     if (ok) {
       setCancelMsg("Subscription cancelled. You'll retain access until the end of your current period.");
@@ -530,6 +556,20 @@ export default function BillingPage() {
                 Save ₹3,600/year with annual billing
               </div>
             )}
+
+            {/* Track viewing plans */}
+            {(() => {
+              if (allPlans.length > 0) {
+                billingEvents.viewPlans(allPlans.map(p => ({
+                  plan: p.plan,
+                  price: p.price_monthly_inr,
+                  name: p.display_name,
+                })));
+                // Also track viewing billing settings
+                engagementEvents.viewSettings("billing");
+              }
+              return null;
+            })()}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {allPlans.map((p) => (

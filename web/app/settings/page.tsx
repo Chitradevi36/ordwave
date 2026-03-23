@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { useOrgBranch } from "@/lib/org-branch-context";
 import { AddBranchModal } from "@/components/add-branch-modal";
 import { AddOrganizationModal } from "@/components/add-organization-modal";
 import { API_URL } from "@/lib/api/client";
+import { engagementEvents } from "@/lib/analytics";
 
 function SkeletonRow() {
   return (
@@ -31,6 +32,11 @@ export default function SettingsPage() {
   const [showAddOrg,      setShowAddOrg]       = useState(false);
   const [importingBranch, setImportingBranch]  = useState(false);
   const [branchImportMsg, setBranchImportMsg]  = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Track settings view
+  useEffect(() => {
+    engagementEvents.viewSettings("general");
+  }, []);
 
   const handleBulkImportBranches = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
