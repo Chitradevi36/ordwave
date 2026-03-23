@@ -51,6 +51,8 @@ module Billing
           }
         )
 
+        Rails.logger.info("[SubscriptionCreator] Created Razorpay subscription #{rzp_subscription.id} for org #{@organization.id} (#{@organization.name}), plan=#{@plan}")
+
         # Persist a local Subscription record in "pending" state
         subscription = @organization.subscriptions.create!(
           plan:                     @plan,
@@ -59,6 +61,8 @@ module Billing
           razorpay_plan_id:         razorpay_plan_id,
           metadata:                 {}
         )
+
+        Rails.logger.info("[SubscriptionCreator] Persisted local subscription record id=#{subscription.id} with razorpay_id=#{rzp_subscription.id}")
 
         # Return subscription details for frontend Razorpay Checkout
         # The frontend will use Razorpay Checkout.js with these details
@@ -76,7 +80,7 @@ module Billing
             amount:           (plan_data[:price_monthly_inr] * 100).to_i,
             currency:         "INR",
             description:      "#{plan_data[:display_name]} Plan",
-            customer_email:   @organization.owner&.email,
+            customer_email:   @organization.memberships.find_by(role: "owner")&.user&.email,
             customer_name:    @organization.name
           }
         )
