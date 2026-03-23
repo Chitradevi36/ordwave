@@ -247,7 +247,7 @@ export default function TripDetailPage() {
           dispatchEvents.complete(
             String(trip.id),
             tripSummary.total_stops,
-            trip.total_order_value ?? 0,
+            tripSummary.total_order_value ?? 0,
             deliveryTime
           );
         }
@@ -276,7 +276,7 @@ export default function TripDetailPage() {
           dispatchEvents.failed(
             String(trip.id),
             cancelReason,
-            trip.orders?.length ?? 0
+            trip.stops?.length ?? 0
           );
         }
         setShowCancel(false);

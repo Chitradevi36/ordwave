@@ -297,7 +297,7 @@ function OrganizationPageInner() {
         setProfileSuccess(true);
         
         // Track settings update
-        engagementEvents.updateSettings("organization", "profile");
+        engagementEvents.updateSettings("organization_profile", org?.name ?? "", json.data?.name ?? "");
         
         setTimeout(() => setProfileSuccess(false), 3000);
       } else {
@@ -329,7 +329,7 @@ function OrganizationPageInner() {
         setWfSuccess(true);
         
         // Track settings update
-        engagementEvents.updateSettings("organization", "workflow");
+        engagementEvents.updateSettings("organization_workflow", "previous", "updated");
         
         setTimeout(() => setWfSuccess(false), 3000);
       } else {

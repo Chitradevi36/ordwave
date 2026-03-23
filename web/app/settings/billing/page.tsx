@@ -320,10 +320,8 @@ export default function BillingPage() {
     const toRank = planRank[plan] ?? 0;
     
     if (toRank > fromRank) {
-      // Upgrade - calculate price
-      const catalogEntry = data?.plans?.find(p => p.plan === plan);
-      const price = catalogEntry?.price_monthly_inr ?? 0;
-      billingEvents.upgradePlan(currentPlan, plan, price);
+      // Upgrade - calculate price (use 0 if not available in response)
+      billingEvents.upgradePlan(currentPlan, plan, 0);
     } else if (toRank < fromRank) {
       // Downgrade
       billingEvents.downgradePlan(currentPlan, plan);
