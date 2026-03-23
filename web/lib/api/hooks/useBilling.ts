@@ -87,7 +87,7 @@ export function useBillingActions() {
       
       // Use checkout_data if available (primary method)
       if (result.checkout_data) {
-        return openRazorpayCheckout(result.checkout_data);
+        return await openRazorpayCheckout(result.checkout_data);
       }
       
       // Fallback to short_url if checkout_data not available
@@ -126,7 +126,7 @@ export function useBillingActions() {
 
 // ── Razorpay Checkout helper ─────────────────────────────────────────────
 
-function openRazorpayCheckout(checkoutData: any): string {
+async function openRazorpayCheckout(checkoutData: any): Promise<string> {
   return new Promise((resolve, reject) => {
     // Ensure Razorpay script is loaded
     if (!(window as any).Razorpay) {
