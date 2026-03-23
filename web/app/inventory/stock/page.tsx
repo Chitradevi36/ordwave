@@ -14,6 +14,7 @@ import { Search, AlertTriangle, SlidersHorizontal, Plus, LayoutList, Grid3X3 } f
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
+import { inventoryEvents, engagementEvents } from "@/lib/analytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface InventoryBalance {
@@ -211,6 +212,17 @@ export default function StockOverviewPage() {
       setBalances(json.data ?? []);
       setTotalPages(json.meta?.total_pages ?? 1);
       setTotalCount(json.meta?.total_count ?? 0);
+
+      // Track search/filter operations
+      if (search?.trim()) {
+        inventoryEvents.searchProducts(search, json.data?.length ?? 0, "stock");
+      }
+      if (branchId || lowStock) {
+        const filters: Record<string, any> = {};
+        if (branchId) filters.branch_id = branchId;
+        if (lowStock) filters.low_stock = true;
+        inventoryEvents.filterProducts(filters, json.data?.length ?? 0);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -219,6 +231,14 @@ export default function StockOverviewPage() {
   useEffect(() => {
     setPage(1);
   }, [branchId, search, lowStock, viewMode]);
+
+  useEffect(() => {
+    // Track product catalog view on initial load
+    if (balances.length > 0 && !search && !lowStock && !branchId) {
+      const categories = [...new Set(balances.map(b => b.branch_name))];
+      inventoryEvents.viewProducts(balances.length, categories);
+    }
+  }, []);
 
   useEffect(() => { fetchBalances(); }, [fetchBalances]);
 

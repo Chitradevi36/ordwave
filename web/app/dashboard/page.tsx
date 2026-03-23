@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, ShoppingCart, TrendingUp, Wallet, AlertTriangle,
@@ -14,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { KpiCard, KpiCardSkeleton } from "@/components/dashboard/KpiCard";
 import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
 import { useDashboardData, DashboardAlert } from "@/lib/api/hooks/useDashboard";
-import { ANALYTICS_EVENTS, trackClick } from "@/lib/analytics";
+import { ANALYTICS_EVENTS, trackClick, engagementEvents } from "@/lib/analytics";
 import { useOrders } from "@/lib/api/hooks/useOrders";
 import { useCurrentRoleWithLoading } from "@/lib/hooks/use-current-role";
 import { SalesRepView } from "@/components/dashboard/SalesRepView";
@@ -188,6 +189,17 @@ export default function DashboardPage() {
   const { data, isLoading, isError, refetch } = useDashboardData();
   const { data: ordersData, isLoading: ordersLoading } = useOrders({ per_page: 3, sort: "created_at_desc" });
   const { role, loading: roleLoading } = useCurrentRoleWithLoading();
+
+  // Track dashboard view
+  useEffect(() => {
+    if (isReady && !roleLoading && role) {
+      const metricsLoaded: Record<string, number> = {
+        orders: ordersData?.data?.length ?? 0,
+        alerts: data?.alerts?.length ?? 0,
+      };
+      engagementEvents.viewDashboard("main", role ?? "user", metricsLoaded);
+    }
+  }, [isReady, roleLoading, role, ordersData, data]);
 
   // Show loading skeleton only while auth is hydrating
   if (!isReady) {

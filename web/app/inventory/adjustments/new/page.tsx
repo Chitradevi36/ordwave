@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useOrgBranch } from "@/lib/org-branch-context";
-import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
+import { ANALYTICS_EVENTS, trackBusinessEvent, inventoryEvents } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/api/client";
 
@@ -92,6 +92,28 @@ function NewAdjustmentPageContent() {
       const json = await res.json();
 
       if (res.ok) {
+        // Get product name and current balance for analytics
+        const product = products.find(p => p.id.toString() === productId);
+        const balanceRes = await fetch(
+          `${API_URL}/api/v1/inventory/balances?product_id=${productId}&branch_id=${branchId}&per_page=1`,
+          { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } }
+        );
+        const balanceJson = await balanceRes.json();
+        const currentBalance = balanceJson.data?.[0];
+        
+        // Track inventory update
+        if (product && currentBalance) {
+          const oldQty = direction === "in" 
+            ? currentBalance.qty_on_hand - qty 
+            : currentBalance.qty_on_hand + qty;
+          inventoryEvents.updateInventory(
+            productId,
+            product.name,
+            oldQty,
+            currentBalance.qty_on_hand
+          );
+        }
+
         trackBusinessEvent(ANALYTICS_EVENTS.INVENTORY_ADJUSTMENT_CREATED, {
           module: "inventory",
           page:   "/inventory/adjustments/new",

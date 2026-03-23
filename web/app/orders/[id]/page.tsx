@@ -12,6 +12,7 @@ import { useOrgBranch } from "@/lib/org-branch-context";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
 import { API_URL } from "@/lib/api/client";
+import { orderEvents } from "@/lib/analytics";
 import { LifecycleTab } from "@/components/orders/lifecycle-tab";
 import { OrderHero } from "@/components/orders/order-hero";
 import { OrderLifecycle } from "@/components/orders/order-lifecycle";
@@ -215,6 +216,13 @@ export default function OrderDetailPage() {
       setOrder(orderData);
       setPrevOrgId(orgId);
 
+      // Track order view
+      orderEvents.view(
+        String(orderData.id),
+        orderData.status,
+        orderData.total_amount
+      );
+
       // Fetch related data in parallel (trip, invoice, payment)
       // These may fail gracefully if not available
       const [tripRes, invoiceRes] = await Promise.all([
@@ -286,6 +294,9 @@ export default function OrderDetailPage() {
 
   const handleSubmit = async () => {
     setActing(true);
+    if (order) {
+      orderEvents.update(String(order.id), order.status, "submitted");
+    }
     try {
       const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}/submit`, {
         method:  "POST",
@@ -376,6 +387,10 @@ export default function OrderDetailPage() {
 
   const handleApproveSubmit = async () => {
     setActing(true);
+    if (order) {
+      const newStatus = decision === "approved" ? "approved" : "rejected";
+      orderEvents.update(String(order.id), order.status, newStatus);
+    }
     try {
       const res  = await fetch(`${API_URL}/api/v1/sales_orders/${params.id}/approve`, {
         method:  "POST",
@@ -416,10 +431,16 @@ export default function OrderDetailPage() {
     }
   };
   const handleCancelSubmit = async () => {
+    if (order) {
+      orderEvents.update(String(order.id), order.status, "cancelled");
+    }
     const ok = await postAction("cancel", { reason: cancelReason });
     if (ok) { setCancelModal(false); setCancelReason(""); }
   };
   const handleHoldSubmit = async () => {
+    if (order) {
+      orderEvents.update(String(order.id), order.status, "on_hold");
+    }
     const ok = await postAction("hold", { reason: holdReason });
     if (ok) { setHoldModal(false); setHoldReason(""); }
   };

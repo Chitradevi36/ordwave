@@ -18,6 +18,15 @@ export {
 
 export { usePageTracking } from "./usePageTracking";
 
+export {
+  orderEvents,
+  billingEvents,
+  dispatchEvents,
+  collectionEvents,
+  inventoryEvents,
+  engagementEvents,
+} from "./events";
+
 export { ANALYTICS_EVENTS, ROUTE_EVENT_MAP } from "./constants";
 export type { AnalyticsEventName } from "./constants";
 

@@ -11,6 +11,7 @@ import { Pencil, PowerOff, Search, X, Plus, Package, Upload, Download, CheckCirc
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { engagementEvents } from "@/lib/analytics";
 import { API_URL } from "@/lib/api/client";
 
 // ─── Sub-nav ──────────────────────────────────────────────────────────────────
@@ -409,10 +410,13 @@ export default function ProductsPage() {
       const name = cd.match(/filename="?([^"]+)"?/)?.[1] ?? "products_export.csv";
       a.href = url; a.download = name; a.click();
       URL.revokeObjectURL(url);
+      
+      // Track data export
+      engagementEvents.exportData("products", "csv", totalCount, "");
     } finally {
       setExporting(false);
     }
-  }, [token, orgId, search, categoryId, status, exporting]);
+  }, [token, orgId, search, categoryId, status, exporting, totalCount]);
 
   return (
     <AppShell title="Products">

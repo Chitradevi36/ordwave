@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Warehouse, ArrowLeft, TrendingUp, TrendingDown, Package, Plus, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { inventoryEvents } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/api/client";
 
@@ -129,7 +130,19 @@ export default function ProductStockDetailPage() {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then((r) => r.json())
-      .then((j) => setBalance(j.data?.[0] ?? null));
+      .then((j) => {
+        const bal = j.data?.[0] ?? null;
+        setBalance(bal);
+        // Track low stock alert if triggered
+        if (bal?.low_stock && bal?.min_qty_threshold !== null) {
+          inventoryEvents.lowStockAlert(
+            String(bal.product_id),
+            bal.product_name,
+            bal.qty_on_hand,
+            bal.min_qty_threshold
+          );
+        }
+      });
   }, [token, orgId, productId, branchId]);
 
   // Fetch movements

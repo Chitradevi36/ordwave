@@ -16,7 +16,7 @@ import {
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CreditDecisionModal, CreditResult } from "@/components/ui/credit-decision-modal";
 import { API_URL } from "@/lib/api/client";
-import { ANALYTICS_EVENTS, trackBusinessEvent } from "@/lib/analytics";
+import { ANALYTICS_EVENTS, trackBusinessEvent, orderEvents } from "@/lib/analytics";
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface CustomerOption { id: number; name: string; code: string; branch_id: number }
@@ -627,6 +627,12 @@ export default function NewOrderPage() {
           order_id:    orderId,
           items_count: validLines.length,
         });
+        orderEvents.create(
+          String(orderId),
+          customer!.name,
+          totalAmount,
+          validLines.length
+        );
       }
 
       if (andSubmit) {

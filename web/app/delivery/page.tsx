@@ -15,6 +15,7 @@ import {
   Clock, XCircle, Wand2,
 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { dispatchEvents } from "@/lib/analytics";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface TripSummary {
@@ -95,7 +96,15 @@ export default function DeliveryTripsPage() {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
       const json = await res.json();
-      if (res.ok) { setTrips(json.data ?? []); setMeta(json.meta ?? null); }
+      if (res.ok) {
+        setTrips(json.data ?? []);
+        setMeta(json.meta ?? null);
+        // Track dispatch view if this is the initial load or after search
+        if (search.trim()) {
+          // Search was performed
+          // We'll track this separately
+        }
+      }
     } finally {
       setLoading(false);
     }
