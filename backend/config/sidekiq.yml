@@ -10,6 +10,7 @@
   - [default,   2]   # most background jobs
   - [low,       1]   # exports, report generation, beat scheduling
   - [billing,   2]   # billing lifecycle jobs
+  - [emails, 2]
 
 # Dead job retention
 :dead_max_jobs: 10_000
