@@ -78,6 +78,9 @@ gem "razorpay", "~> 3.2"    # Razorpay Subscriptions + Webhooks
 # SMS / OTP
 gem "twilio-ruby", "~> 6.10"
 
+# Maps & Geocoding
+gem "google-maps-service", "~> 0.4.2"
+
 # Notifications
 gem "fcm"
 

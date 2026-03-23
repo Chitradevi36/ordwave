@@ -380,6 +380,14 @@ Rails.application.routes.draw do
           post :cancel
           post :optimize
           get  :summary
+          # ── Maps & Route Optimization ──────────────────────────────────────────
+          post :optimize_trip, path: 'optimize_trip'
+          post :calculate_distances, path: 'distances'
+          get  :get_directions, path: 'directions'
+          post :calculate_eta, path: 'eta'
+          post :geocode_address, path: 'geocode'
+          get  :reverse_geocode, path: 'reverse_geocode'
+          post :validate_address, path: 'validate_address'
         end
         resources :trip_stops, only: %i[index show] do
           member do
