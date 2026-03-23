@@ -222,9 +222,15 @@ export default function BillingPage() {
   const [cancelMsg, setCancelMsg]            = useState<string | null>(null);
 
   async function handleUpgrade(plan: string) {
-    const shortUrl = await startCheckout(plan);
-    if (shortUrl) {
-      window.open(shortUrl, "_blank");
+    try {
+      const result = await startCheckout(plan);
+      if (result) {
+        // Checkout succeeded - refetch billing data
+        setTimeout(() => refetch(), 2000);
+      }
+    } catch (e) {
+      // Error handled by startCheckout hook
+      console.error("Checkout error:", e);
     }
   }
 

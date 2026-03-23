@@ -6,6 +6,12 @@ class OrganizationPolicy < ApplicationPolicy
   def update?          = member_of_record? && owner_or_admin_of_record?
   def update_settings? = member_of_record? && owner_or_admin_of_record?
 
+  # Billing actions
+  def subscription?    = member_of_record?
+  def invoices?        = member_of_record?
+  def checkout?        = member_of_record?
+  def cancel?          = member_of_record? && owner_of_record?
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       # Return all active orgs the user has an active membership in
@@ -31,5 +37,9 @@ class OrganizationPolicy < ApplicationPolicy
 
   def owner_or_admin_of_record?
     membership_on_record&.role&.name&.in?(%w[owner admin])
+  end
+
+  def owner_of_record?
+    membership_on_record&.role&.name == "owner"
   end
 end

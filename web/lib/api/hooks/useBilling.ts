@@ -84,7 +84,19 @@ export function useBillingActions() {
     setActionError(null);
     try {
       const result = await createBillingCheckout(plan);
-      return result.short_url;
+      
+      // Use checkout_data if available (primary method)
+      if (result.checkout_data) {
+        return openRazorpayCheckout(result.checkout_data);
+      }
+      
+      // Fallback to short_url if checkout_data not available
+      if (result.short_url) {
+        window.open(result.short_url, "_blank");
+        return result.short_url;
+      }
+      
+      throw new Error("No checkout URL available");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Checkout failed";
       setActionError(msg);
@@ -110,4 +122,53 @@ export function useBillingActions() {
   }, []);
 
   return { startCheckout, cancelSubscription, checkoutLoading, cancelLoading, actionError };
+}
+
+// ── Razorpay Checkout helper ─────────────────────────────────────────────
+
+function openRazorpayCheckout(checkoutData: any): string {
+  return new Promise((resolve, reject) => {
+    // Ensure Razorpay script is loaded
+    if (!(window as any).Razorpay) {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => triggerCheckout(checkoutData, resolve, reject);
+      script.onerror = () => reject(new Error("Failed to load Razorpay Checkout"));
+      document.body.appendChild(script);
+    } else {
+      triggerCheckout(checkoutData, resolve, reject);
+    }
+  }).then(() => checkoutData.subscription_id).catch(err => {
+    throw err;
+  });
+}
+
+function triggerCheckout(checkoutData: any, resolve: any, reject: any) {
+  const options = {
+    key: checkoutData.key_id,
+    subscription_id: checkoutData.subscription_id,
+    name: "OrdWave",
+    description: checkoutData.description,
+    customer_notify: 1,
+    amount: checkoutData.amount,
+    currency: checkoutData.currency,
+    email: checkoutData.customer_email,
+    prefill: {
+      name: checkoutData.customer_name,
+      email: checkoutData.customer_email,
+    },
+    handler: (response: any) => {
+      console.log("Payment successful:", response);
+      resolve(response.razorpay_payment_id);
+    },
+    modal: {
+      ondismiss: () => {
+        reject(new Error("Payment cancelled by user"));
+      },
+    },
+  };
+
+  const rzp = new (window as any).Razorpay(options);
+  rzp.open();
 }
