@@ -4,7 +4,7 @@ require 'twilio-ruby'
 # Handles all SMS/OTP communications via Twilio
 # Supports: OTP verification, delivery notifications, payment reminders
 
-class SMSService
+class SmsService
   # ── Errors ───────────────────────────────────────────────────────────────────
   class TwilioConfigError < StandardError; end
   class SMSSendError < StandardError; end

@@ -1,4 +1,4 @@
-require 'google/maps'
+require "google_maps_service"
 
 # ── Maps Service ───────────────────────────────────────────────────────────────
 # Handles geolocation, route optimization, and distance calculations using Google Maps API
@@ -16,7 +16,7 @@ class MapsService
 
   def initialize
     validate_config!
-    @client = Google::Maps.new(key: ENV.fetch('GOOGLE_MAPS_API_KEY'))
+    @client = GoogleMapsService::Client.new(key: ENV.fetch('GOOGLE_MAPS_API_KEY'))
   end
 
   # ── Address Geocoding ──────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@
 
 module Api
   module V1
-    class DeliveryOTPController < ApplicationController
+    class DeliveryOtpController < ApplicationController
       before_action :authenticate_user!
       before_action :find_delivery_stop, only: [:send_otp, :verify_otp]
       before_action :authorize_access!
@@ -40,7 +40,7 @@ module Api
         end
 
         begin
-          sms_service = SMSService.new
+          sms_service = SmsService.new
           sms_service.send_delivery_otp(
             driver.phone_number,
             raw_otp,
@@ -62,7 +62,7 @@ module Api
             expires_in_seconds: 600,
             attempts_remaining: 5
           }
-        rescue SMSService::SMSSendError => e
+        rescue SmsService::SMSSendError => e
           Rails.logger.error("OTP send failed: #{e.message}")
           render_error("Failed to send OTP: #{e.message}", status: :service_unavailable)
         end
