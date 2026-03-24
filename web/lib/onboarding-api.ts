@@ -105,4 +105,63 @@ export const onboardingAPI = {
 
     return res.json();
   },
+
+  createCustomer: async (data: {
+    name: string;
+    phone: string;
+    area?: string;
+  }) => {
+    const headers: any = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+    };
+
+    const orgId = localStorage.getItem('organization_id');
+    if (orgId) {
+      headers[`X-Organization-Id`] = orgId;
+    }
+
+    const res = await fetch(`${API_URL}/api/v1/customers`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.errors?.[0] || 'Failed to create customer');
+    }
+
+    return res.json();
+  },
+
+  createProduct: async (data: {
+    sku: string;
+    name: string;
+    gst_rate: number;
+    hsn_code?: string;
+  }) => {
+    const headers: any = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+    };
+
+    const orgId = localStorage.getItem('organization_id');
+    if (orgId) {
+      headers[`X-Organization-Id`] = orgId;
+    }
+
+    const res = await fetch(`${API_URL}/api/v1/products`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.errors?.[0] || 'Failed to create product');
+    }
+
+    return res.json();
+  },
 };
