@@ -109,7 +109,7 @@ export const onboardingAPI = {
   createCustomer: async (data: {
     name: string;
     phone: string;
-    area?: string;
+    branch_id?: string;
   }) => {
     const headers: any = {
       'Content-Type': 'application/json',
@@ -121,25 +121,59 @@ export const onboardingAPI = {
       headers[`X-Organization-Id`] = orgId;
     }
 
+    // Get first branch if not provided
+    let branchId = data.branch_id;
+    if (!branchId) {
+      try {
+        const branchRes = await fetch(`${API_URL}/api/v1/branches`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+            'X-Organization-Id': orgId || '',
+          }
+        });
+        if (branchRes.ok) {
+          const branches = await branchRes.json();
+          branchId = branches.data?.[0]?.id;
+        }
+      } catch {
+        // Continue without branch_id if lookup fails
+      }
+    }
+
     const res = await fetch(`${API_URL}/api/v1/customers`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        customer: {
+          name: data.name,
+          phone: data.phone,
+          branch_id: branchId,
+          customer_type: 'regular',
+        }
+      }),
     });
 
     if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.errors?.[0] || 'Failed to create customer');
+      try {
+        const error = await res.json();
+        throw new Error(error.errors?.[0] || 'Failed to create customer');
+      } catch {
+        throw new Error(`Failed to create customer (${res.status}: ${res.statusText})`);
+      }
     }
 
-    return res.json();
+    try {
+      return await res.json();
+    } catch {
+      return {};
+    }
   },
 
   createProduct: async (data: {
     sku: string;
     name: string;
     gst_rate: number;
-    hsn_code?: string;
   }) => {
     const headers: any = {
       'Content-Type': 'application/json',
@@ -154,14 +188,29 @@ export const onboardingAPI = {
     const res = await fetch(`${API_URL}/api/v1/products`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        product: {
+          sku: data.sku,
+          name: data.name,
+          gst_rate: data.gst_rate,
+          status: 'active',
+        }
+      }),
     });
 
     if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.errors?.[0] || 'Failed to create product');
+      try {
+        const error = await res.json();
+        throw new Error(error.errors?.[0] || 'Failed to create product');
+      } catch {
+        throw new Error(`Failed to create product (${res.status}: ${res.statusText})`);
+      }
     }
 
-    return res.json();
+    try {
+      return await res.json();
+    } catch {
+      return {};
+    }
   },
 };

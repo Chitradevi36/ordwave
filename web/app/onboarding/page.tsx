@@ -327,17 +327,15 @@ export default function OnboardingWizardPage() {
         await onboardingAPI.createCustomer({
           name: formData.retailerName,
           phone: formData.retailerPhone,
-          area: formData.retailerArea,
         });
       }
 
       // Create product if selected and has required fields
-      if (addProduct && formData.productName && formData.productSKU && formData.productGST && formData.productHSN) {
+      if (addProduct && formData.productName && formData.productSKU && formData.productGST) {
         await onboardingAPI.createProduct({
           sku: formData.productSKU,
           name: formData.productName,
           gst_rate: parseInt(formData.productGST),
-          hsn_code: formData.productHSN,
         });
       }
 
@@ -755,26 +753,9 @@ export default function OnboardingWizardPage() {
                   <Input value={formData.productSKU} onChange={(e) => setFormData({ ...formData, productSKU: e.target.value.toUpperCase() })} placeholder="RICE-BAS-5KG" className="text-sm" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-text-primary mb-1">HSN Code *</label>
-                  <div className="relative">
-                    <Input
-                      value={formData.productHSN}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setFormData(prev => ({ ...prev, productHSN: val, ...(val === '1006' ? { productGST: '5' } : {}) }));
-                      }}
-                      placeholder="1006"
-                      className="text-sm"
-                    />
-                    {formData.productHSN && <CheckCircle2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-success" />}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-text-primary mb-1">GST Rate (%) *</label>
-                  <Input value={formData.productGST} onChange={(e) => setFormData({ ...formData, productGST: e.target.value })} placeholder="5, 12, 18, 28" disabled={formData.productHSN === '1006'} className="text-sm" />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-text-primary mb-1">GST Rate (%) *</label>
+                <Input value={formData.productGST} onChange={(e) => setFormData({ ...formData, productGST: e.target.value })} placeholder="5, 12, 18, or 28" className="text-sm" />
               </div>
             </div>
           )}
