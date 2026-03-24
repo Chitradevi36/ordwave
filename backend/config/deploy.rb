@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-lock "~> 3.19.0"
+lock "~> 3.20.0"
 
 set :repo_url, "git@github.com:Chitradevi36/orderlane_pro.git"
 set :branch, ENV.fetch("BRANCH", "main")
