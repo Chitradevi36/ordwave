@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -81,7 +82,7 @@ export default function SupplierDebitNoteDetailPage() {
 
   const [note, setNote]           = useState<DebitNoteDetail | null>(null);
   const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
+  const [error, setError]         = useState<{ status: number; message: string } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [issuing, setIssuing]     = useState(false);
   const [voidModal, setVoidModal] = useState(false);
@@ -102,11 +103,21 @@ export default function SupplierDebitNoteDetailPage() {
       const res = await fetch(`${API_URL}/api/v1/supplier_debit_notes/${params.id}`, {
         headers: authHeaders,
       });
+      if (!res.ok) {
+        const body = await res.json();
+        setError({
+          status: res.status,
+          message: body.errors?.[0] ?? "Failed to load debit note"
+        });
+        return;
+      }
       const body = await res.json();
-      if (!res.ok) throw new Error(body.errors?.join(", ") || "Failed to load debit note");
       setNote(body.data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
+      });
     } finally {
       setLoading(false);
     }
@@ -156,10 +167,19 @@ export default function SupplierDebitNoteDetailPage() {
 
   if (loading) return <AppShell><div className="p-6 text-sm text-text-secondary">Loading…</div></AppShell>;
 
-  if (error || !note) return (
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/supplier-debit-notes"
+      resourceType="Supplier Debit Note"
+    />;
+  }
+
+  if (!note) return (
     <AppShell>
       <div className="p-6 space-y-3">
-        <p className="text-sm text-destructive">{error ?? "Debit note not found"}</p>
+        <p className="text-sm text-destructive">Debit note not found</p>
         <Button variant="outline" size="sm" onClick={() => router.push("/supplier-debit-notes")}>
           Back
         </Button>

@@ -12,6 +12,7 @@ import { DataTable, Column } from "@/components/ui/data-table";
 import { Pencil, Ban, CheckCircle2, Plus, Trash2, ExternalLink } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SupplierProduct {
@@ -463,19 +464,36 @@ export default function SupplierDetailPage() {
 
   const [supplier,     setSupplier]     = useState<SupplierDetail | null>(null);
   const [loading,      setLoading]      = useState(true);
-  const [notFound,     setNotFound]     = useState(false);
+  const [error,        setError]        = useState<{ status: number; message: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchSupplier = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
-    const res  = await fetch(`${API_URL}/api/v1/suppliers/${params.id}`, {
-      headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
-    });
-    if (!res.ok) { setNotFound(true); setLoading(false); return; }
-    const json = await res.json();
-    setSupplier(json.data);
-    setLoading(false);
+    setError(null);
+    try {
+      const res  = await fetch(`${API_URL}/api/v1/suppliers/${params.id}`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setError({
+          status: res.status,
+          message: json.errors?.[0] ?? "Failed to load supplier"
+        });
+        setLoading(false);
+        return;
+      }
+      const json = await res.json();
+      setSupplier(json.data);
+    } catch (e) {
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "An error occurred"
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [token, orgId, params.id]);
 
   useEffect(() => { fetchSupplier(); }, [fetchSupplier]);
@@ -519,7 +537,16 @@ export default function SupplierDetailPage() {
     );
   }
 
-  if (notFound || !supplier) {
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/suppliers"
+      resourceType="Supplier"
+    />;
+  }
+
+  if (!supplier) {
     return (
       <AppShell title="Supplier Not Found">
         <div className="flex items-center justify-center h-48 text-text-secondary text-sm">

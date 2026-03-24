@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Tabs } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ export default function BeatDetailPage() {
 
   const [beat, setBeat]                     = useState<Beat | null>(null);
   const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<{ status: number; message: string } | null>(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
   const [visitLogs, setVisitLogs]           = useState<VisitLog[]>([]);
   const [logsLoading, setLogsLoading]       = useState(false);
@@ -73,16 +75,30 @@ export default function BeatDetailPage() {
   const fetchBeat = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
+    setError(null);
     try {
       const res  = await fetch(`/api/v1/beats/${id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
+      if (!res.ok) {
+        const data = await res.json();
+        setError({
+          status: res.status,
+          message: data.errors?.[0] ?? "Failed to load beat"
+        });
+        return;
+      }
       const data = await res.json();
       setBeat(data.data);
       setSelectedScheduleId((prev) => {
         const schedules: BeatSchedule[] = data.data?.schedules ?? [];
         if (prev && schedules.some((s: BeatSchedule) => s.id === prev)) return prev;
         return schedules[0]?.id ?? null;
+      });
+    } catch (e) {
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
       });
     } finally {
       setLoading(false);
@@ -117,6 +133,15 @@ export default function BeatDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/beats"
+      resourceType="Beat"
+    />;
   }
 
   if (!beat) {

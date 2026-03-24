@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { SupplierForm, SupplierFormData } from "@/app/suppliers/_components/supplier-form";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
@@ -14,14 +15,19 @@ export default function EditSupplierPage() {
   const [initial,  setInitial]  = useState<Partial<SupplierFormData> | null>(null);
   const [loading,  setLoading]  = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
 
   useEffect(() => {
     if (!token || !orgId || !params.id) return;
     fetch(`${API_URL}/api/v1/suppliers/${params.id}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
-      .then((r) => {
-        if (!r.ok) { setNotFound(true); return null; }
+      .then(async (r) => {
+        if (!r.ok) {
+          const json = await r.json().catch(() => ({ errors: [r.statusText] }));
+          setError({ status: r.status, message: json.errors?.[0] ?? "Failed to load supplier" });
+          return null;
+        }
         return r.json();
       })
       .then((json) => {
@@ -50,6 +56,10 @@ export default function EditSupplierPage() {
       })
       .finally(() => setLoading(false));
   }, [token, orgId, params.id]);
+
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/suppliers" resourceType="Supplier" />;
+  }
 
   if (loading) {
     return (

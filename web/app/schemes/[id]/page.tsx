@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -277,7 +278,7 @@ export default function SchemeDetailPage() {
   const router = useRouter();
   const [scheme, setScheme] = useState<SchemeDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : "";
   const orgId = typeof window !== "undefined" ? localStorage.getItem("organization_id") : "";
@@ -286,13 +287,26 @@ export default function SchemeDetailPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    setError(null);
     fetch(`${API_URL}/api/v1/schemes/${id}`, { headers })
-      .then(r => r.json())
-      .then(j => {
-        if (j.data) setScheme(j.data);
-        else setError(j.errors?.[0] ?? "Scheme not found");
+      .then(async r => {
+        if (!r.ok) {
+          const j = await r.json();
+          setError({
+            status: r.status,
+            message: j.errors?.[0] ?? "Failed to load scheme"
+          });
+          return null;
+        }
+        return r.json();
       })
-      .catch(() => setError("Failed to load scheme"))
+      .then(j => {
+        if (j && j.data) setScheme(j.data);
+      })
+      .catch(e => setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Failed to load scheme"
+      }))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -311,12 +325,21 @@ export default function SchemeDetailPage() {
     );
   }
 
-  if (error || !scheme) {
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/schemes"
+      resourceType="Scheme"
+    />;
+  }
+
+  if (!scheme) {
     return (
       <AppShell>
         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
           <AlertTriangle className="h-10 w-10 text-danger/60" />
-          <p className="text-text-secondary">{error ?? "Scheme not found"}</p>
+          <p className="text-text-secondary">Scheme not found</p>
           <Button variant="outline" onClick={() => router.push("/schemes")}>Back to Schemes</Button>
         </div>
       </AppShell>

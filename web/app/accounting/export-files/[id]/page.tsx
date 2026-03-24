@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import {
   fetchExportFile,
   downloadExportFileUrl,
@@ -80,15 +81,19 @@ export default function ExportFileDetailPage() {
   const [loading, setLoading]   = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [message, setMessage]   = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [error, setError]       = useState<{ status: number; message: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!token || !orgId || !id) return;
     setLoading(true);
+    setError(null);
     try {
       const data = await fetchExportFile(Number(id), token, orgId);
       setFile(data);
-    } catch {
-      setMessage({ type: "error", text: "Failed to load export file." });
+    } catch (err: any) {
+      const status = err?.response?.status || 500;
+      const message = err?.response?.data?.errors?.[0] ?? "Failed to load export file.";
+      setError({ status, message });
     } finally {
       setLoading(false);
     }
@@ -126,6 +131,10 @@ export default function ExportFileDetailPage() {
       setDownloading(false);
     }
   };
+
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/accounting/export-files" resourceType="Export File" />;
+  }
 
   if (loading) {
     return (

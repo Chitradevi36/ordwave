@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { CustomerForm, type CustomerFormData, type AddressRow, type ContactRow, type SalesRep } from "../../_components/CustomerForm";
 import { API_URL } from "@/lib/api/client";
@@ -21,6 +22,7 @@ export default function EditCustomerPage() {
   const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
   const [loading,   setLoading]   = useState(false);
   const [errors,    setErrors]    = useState<string[]>([]);
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -32,6 +34,12 @@ export default function EditCustomerPage() {
         fetch(`${API_URL}/api/v1/routes?per_page=100`,     { headers }),
         fetch(`${API_URL}/api/v1/users?per_page=100`,      { headers }),
       ]);
+
+      if (!custRes.ok) {
+        const json = await custRes.json().catch(() => ({ errors: [custRes.statusText] }));
+        setError({ status: custRes.status, message: json.errors?.[0] ?? "Failed to load customer" });
+        return;
+      }
 
       if (custRes.ok) {
         const json = await custRes.json();
@@ -139,12 +147,17 @@ export default function EditCustomerPage() {
       if (res.ok) {
         router.push(`/customers/${customerId}`);
       } else {
+        setError({ status: res.status, message: json.errors?.[0] ?? "Failed to save customer" });
         setErrors(json.errors ?? ["Something went wrong"]);
       }
     } finally {
       setLoading(false);
     }
   };
+
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/customers" resourceType="Customer" />;
+  }
 
   if (!initial) {
     return (

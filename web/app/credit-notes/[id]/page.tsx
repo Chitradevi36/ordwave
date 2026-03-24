@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,7 +102,7 @@ export default function CreditNoteDetailPage() {
 
   const [cn, setCn]             = useState<CreditNoteDetail | null>(null);
   const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
+  const [error, setError]       = useState<{ status: number; message: string } | null>(null);
   const [voidModal, setVoidModal] = useState(false);
   const [voidReason, setVoidReason] = useState("");
   const [saving, setSaving]     = useState(false);
@@ -123,11 +124,21 @@ export default function CreditNoteDetailPage() {
       const res = await fetch(`/api/v1/credit_notes/${params.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
-      if (!res.ok) throw new Error("Failed to load credit note");
+      if (!res.ok) {
+        const json = await res.json();
+        setError({
+          status: res.status,
+          message: json.errors?.[0] ?? "Failed to load credit note"
+        });
+        return;
+      }
       const body = await res.json();
       setCn(body.data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
+      });
     } finally {
       setLoading(false);
     }
@@ -224,11 +235,20 @@ export default function CreditNoteDetailPage() {
     );
   }
 
-  if (error || !cn) {
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/credit-notes"
+      resourceType="Credit Note"
+    />;
+  }
+
+  if (!cn) {
     return (
       <AppShell>
         <div>
-          <p className="text-danger text-sm">{error ?? "Credit note not found"}</p>
+          <p className="text-danger text-sm">Credit note not found</p>
           <Button variant="outline" className="mt-4" onClick={() => router.push("/credit-notes")}>
             Back to Credit Notes
           </Button>

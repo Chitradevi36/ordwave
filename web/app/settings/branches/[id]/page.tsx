@@ -11,6 +11,7 @@ import { ChevronRight, Save, Loader2 } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { usePincodeLookup } from "@/lib/use-pincode-lookup";
 import { API_URL } from "@/lib/api/client";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 interface BranchSettings {
   id: number;
@@ -65,7 +66,7 @@ export default function BranchSettingsPage() {
   const [saving, setSaving]   = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError]     = useState<string | null>(null);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<{ status: number; message: string } | null>(null);
 
   const { token, orgId } = useOrgBranch();
 
@@ -98,10 +99,10 @@ export default function BranchSettingsPage() {
           setBranch(json.data);
           setForm(json.data);
         } else {
-          setFetchError((json.errors ?? []).join(", ") || "Failed to load branch settings.");
+          setFetchError({ status: res.status, message: json.errors?.[0] ?? "Failed to load branch settings." });
         }
       } catch {
-        if (!cancelled) setFetchError("Network error. Please try again.");
+        if (!cancelled) setFetchError({ status: 500, message: "Network error. Please try again." });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -143,7 +144,10 @@ export default function BranchSettingsPage() {
 
   const setSetting = (key: string, value: string | number) =>
     setForm((f) => ({ ...f, settings: { ...(f.settings ?? {}), [key]: value } }));
-
+  // ── Error state ──────────────────────────────────────────────────────
+  if (fetchError) {
+    return <AccessDeniedError status={fetchError.status} message={fetchError.message} backLink="/settings" resourceType="Branch Settings" />;
+  }
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading || (!branch && !fetchError)) {
     return (
@@ -163,16 +167,6 @@ export default function BranchSettingsPage() {
     );
   }
 
-  // ── Error state ───────────────────────────────────────────────────────────
-  if (fetchError) {
-    return (
-      <AppShell title="Branch Settings">
-        <Alert variant="danger" title="Could not load branch settings" className="mt-4">
-          {fetchError}
-        </Alert>
-      </AppShell>
-    );
-  }
 
   return (
     <AppShell title="Branch Settings">

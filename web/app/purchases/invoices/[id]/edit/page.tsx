@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { PurchaseInvoiceForm, PurchaseInvoiceFormData, LineItem } from "@/app/purchases/invoices/_components/purchase-invoice-form";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
@@ -15,13 +16,19 @@ export default function EditPurchaseInvoicePage() {
   const [loading,  setLoading]  = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     const res  = await fetch(`${API_URL}/api/v1/purchase_invoices/${params.id}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     });
-    if (!res.ok) { setNotFound(true); setLoading(false); return; }
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({ errors: [res.statusText] }));
+      setError({ status: res.status, message: json.errors?.[0] ?? "Failed to load invoice" });
+      setLoading(false);
+      return;
+    }
     const json = await res.json();
     const inv  = json.data;
 
@@ -51,6 +58,10 @@ export default function EditPurchaseInvoicePage() {
   }, [token, orgId, params.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/purchases/invoices" resourceType="Invoice" />;
+  }
 
   if (loading) {
     return (

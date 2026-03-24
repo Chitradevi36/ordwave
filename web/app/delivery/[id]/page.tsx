@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { API_URL } from "@/lib/api/client";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 import {
   Truck, User, Package, CheckCircle,
@@ -116,6 +117,7 @@ export default function TripDetailPage() {
 
   const [trip, setTrip]       = useState<TripDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<{ status: number; message: string } | null>(null);
 
   const [tripSummary,        setTripSummary]        = useState<TripSummary | null>(null);
   const [summaryLoading,     setSummaryLoading]     = useState(false);
@@ -169,18 +171,29 @@ export default function TripDetailPage() {
   const fetchTrip = useCallback(async () => {
     if (!token || !orgId) return;
     setLoading(true);
+    setError(null);
     try {
       const res  = await fetch(`${API_URL}/api/v1/delivery_trips/${id}`, { headers: authHeaders });
       const json = await res.json();
-      if (res.ok) {
-        setTrip(json.data);
-        // Track dispatch view
-        dispatchEvents.view(
-          String(json.data.id),
-          json.data.status,
-          json.data.orders?.length ?? 0
-        );
+      if (!res.ok) {
+        setError({
+          status: res.status,
+          message: json.errors?.[0] ?? "Failed to load delivery trip"
+        });
+        return;
       }
+      setTrip(json.data);
+      // Track dispatch view
+      dispatchEvents.view(
+        String(json.data.id),
+        json.data.status,
+        json.data.orders?.length ?? 0
+      );
+    } catch (e) {
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "An error occurred"
+      });
     } finally {
       setLoading(false);
     }
@@ -457,6 +470,15 @@ export default function TripDetailPage() {
       <div className="text-center py-20 text-text-secondary">Loading trip…</div>
     </AppShell>
   );
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/delivery"
+      resourceType="Delivery Trip"
+    />;
+  }
 
   if (!trip) return (
     <AppShell>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AppShell } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -646,6 +647,7 @@ export default function PriceListDetailPage() {
 
   const [pl,           setPl]           = useState<PriceListDetail | null>(null);
   const [fetching,     setFetching]     = useState(true);
+  const [error,        setError]        = useState<{ status: number; message: string } | null>(null);
   const [showAdd,      setShowAdd]      = useState(false);
   const [showImport,   setShowImport]   = useState(false);
   const [editingItem,  setEditingItem]  = useState<PriceListItem | null>(null);
@@ -654,12 +656,26 @@ export default function PriceListDetailPage() {
   const load = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     setFetching(true);
+    setError(null);
     try {
       const res  = await fetch(`${API_URL}/api/v1/price_lists/${params.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
+      if (!res.ok) {
+        const json = await res.json();
+        setError({
+          status: res.status,
+          message: json.errors?.[0] ?? "Failed to load price list"
+        });
+        return;
+      }
       const json = await res.json();
-      if (res.ok) setPl(json.data);
+      setPl(json.data);
+    } catch (e) {
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
+      });
     } finally {
       setFetching(false);
     }
@@ -722,6 +738,15 @@ export default function PriceListDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/products/price-lists"
+      resourceType="Price List"
+    />;
   }
 
   if (!pl) {

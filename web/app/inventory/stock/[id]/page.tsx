@@ -14,6 +14,7 @@ import { useOrgBranch } from "@/lib/org-branch-context";
 import { inventoryEvents } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/api/client";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface BalanceSummary {
@@ -104,6 +105,7 @@ export default function ProductStockDetailPage() {
   const [mvPage,       setMvPage]       = useState(1);
   const [mvTotalPages, setMvTotalPages] = useState(1);
   const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState<{ status: number; message: string } | null>(null);
 
   // Movement filters
   const [mvType,     setMvType]     = useState("");
@@ -132,6 +134,14 @@ export default function ProductStockDetailPage() {
       .then((r) => r.json())
       .then((j) => {
         const bal = j.data?.[0] ?? null;
+        if (!bal) {
+          setError({
+            status: 404,
+            message: "Product stock not found"
+          });
+          return;
+        }
+        setError(null);
         setBalance(bal);
         // Track low stock alert if triggered
         if (bal?.low_stock && bal?.min_qty_threshold !== null) {
@@ -142,6 +152,12 @@ export default function ProductStockDetailPage() {
             bal.min_qty_threshold
           );
         }
+      })
+      .catch(() => {
+        setError({
+          status: 500,
+          message: "Failed to load product stock"
+        });
       });
   }, [token, orgId, productId, branchId]);
 
@@ -261,14 +277,27 @@ export default function ProductStockDetailPage() {
       { label: "Stock",         href: "/inventory/stock" },
       { label: balance?.product_name ?? "Product" },
     ]}>
-      <PageHeader
-        title={balance?.product_name ?? "Product Stock Detail"}
-        subtitle={balance ? `SKU: ${balance.sku} · ${balance.branch_name}` : "Loading…"}
-        actions={[
-          { label: "Back to Stock", onClick: () => router.push("/inventory/stock"), variant: "outline", icon: ArrowLeft },
-          { label: "Adjust Stock", onClick: () => router.push(`/inventory/adjustments/new?product_id=${productId}&branch_id=${branchId}`), icon: Plus },
-        ]}
-      />
+      {error && (
+        <div className="mb-6">
+          <AccessDeniedError
+            status={error.status}
+            message={error.message}
+            backLink="/inventory/stock"
+            resourceType="Stock"
+          />
+        </div>
+      )}
+
+      {!error && (
+        <PageHeader
+          title={balance?.product_name ?? "Product Stock Detail"}
+          subtitle={balance ? `SKU: ${balance.sku} · ${balance.branch_name}` : "Loading…"}
+          actions={[
+            { label: "Back to Stock", onClick: () => router.push("/inventory/stock"), variant: "outline", icon: ArrowLeft },
+            { label: "Adjust Stock", onClick: () => router.push(`/inventory/adjustments/new?product_id=${productId}&branch_id=${branchId}`), icon: Plus },
+          ]}
+        />
+      )}
 
       {/* ── Tabs ── */}
       <div className="flex gap-1 border-b mb-6">

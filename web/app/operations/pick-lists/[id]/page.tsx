@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
@@ -63,6 +64,7 @@ export default function PickListDetailPage() {
 
   const [pickList, setPickList] = useState<PickListDetail | null>(null);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<{ status: number; message: string } | null>(null);
   const [acting, setActing]     = useState(false);
   const [qtyInputs, setQtyInputs] = useState<Record<number, string>>({});
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -75,22 +77,32 @@ export default function PickListDetailPage() {
   const fetchPickList = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
+    setError(null);
     try {
       const res  = await fetch(`${API_URL}/api/v1/pick_lists/${params.id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
-      const json = await res.json();
-      if (res.ok) {
-        setPickList(json.data);
-        // Prefill qty inputs with qty_requested
-        const inputs: Record<number, string> = {};
-        (json.data.items ?? []).forEach((item: PickListItem) => {
-          inputs[item.id] = String(item.qty_requested);
+      if (!res.ok) {
+        const json = await res.json();
+        setError({
+          status: res.status,
+          message: json.errors?.[0] ?? "Failed to load pick list"
         });
-        setQtyInputs(inputs);
-      } else {
-        showToast("error", json.errors?.[0] ?? "Failed to load pick list");
+        return;
       }
+      const json = await res.json();
+      setPickList(json.data);
+      // Prefill qty inputs with qty_requested
+      const inputs: Record<number, string> = {};
+      (json.data.items ?? []).forEach((item: PickListItem) => {
+        inputs[item.id] = String(item.qty_requested);
+      });
+      setQtyInputs(inputs);
+    } catch (e) {
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
+      });
     } finally {
       setLoading(false);
     }
@@ -179,6 +191,15 @@ export default function PickListDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/operations/pick-lists"
+      resourceType="Pick List"
+    />;
   }
 
   if (!pickList) return null;

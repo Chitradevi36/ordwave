@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { RotateCcw, CheckCircle, XCircle, ClipboardCheck, FileText } from "lucide-react";
 
 const STATUS_VARIANT: Record<string, "secondary" | "warning" | "default" | "success" | "danger" | "outline"> = {
@@ -40,7 +41,7 @@ export default function ReturnDetailPage() {
   const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState("summary");
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [error, setError]         = useState<{ status: number; message: string } | null>(null);
 
   // Modal state
   const [cancelModal, setCancelModal]   = useState(false);
@@ -59,9 +60,17 @@ export default function ReturnDetailPage() {
   const fetchReturn = useCallback(async () => {
     if (!token || !orgId) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/v1/return_requests/${id}`, { headers: headers() });
-      if (!res.ok) throw new Error("Not found");
+      if (!res.ok) {
+        const body = await res.json();
+        setError({
+          status: res.status,
+          message: body.errors?.[0] ?? "Failed to load return request"
+        });
+        return;
+      }
       const body = await res.json();
       setRr(body.data);
       // Init QC lines from return lines
@@ -82,7 +91,10 @@ export default function ReturnDetailPage() {
         );
       }
     } catch (err) {
-      setError("Failed to load return request");
+      setError({
+        status: 500,
+        message: err instanceof Error ? err.message : "An error occurred"
+      });
     } finally {
       setLoading(false);
     }
@@ -106,7 +118,10 @@ export default function ReturnDetailPage() {
       setRr(data.data);
       return true;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError({
+        status: 500,
+        message: err instanceof Error ? err.message : "An error occurred"
+      });
       return false;
     } finally {
       setActionLoading(false);
@@ -135,7 +150,7 @@ export default function ReturnDetailPage() {
   };
 
   const handleCancel = async () => {
-    if (!cancelReason.trim()) { setError("Cancellation reason is required"); return; }
+    if (!cancelReason.trim()) { setError({ status: 400, message: "Cancellation reason is required" }); return; }
     const ok = await postAction("cancel", { reason: cancelReason });
     if (ok) { setCancelModal(false); setCancelReason(""); }
   };
@@ -155,7 +170,10 @@ export default function ReturnDetailPage() {
       fetchReturn();
       setCreditModal(false);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError({
+        status: 500,
+        message: err instanceof Error ? err.message : "An error occurred"
+      });
     } finally {
       setActionLoading(false);
     }
@@ -176,6 +194,15 @@ export default function ReturnDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/returns"
+      resourceType="Return Request"
+    />;
   }
 
   if (!rr) {

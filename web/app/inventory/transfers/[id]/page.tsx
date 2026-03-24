@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, Column } from "@/components/ui/data-table";
@@ -144,7 +145,7 @@ export default function TransferDetailPage() {
 
   const [transfer,           setTransfer]           = useState<TransferDetail | null>(null);
   const [isLoading,          setIsLoading]          = useState(false);
-  const [apiErrors,          setApiErrors]          = useState<string[]>([]);
+  const [error,              setError]              = useState<{ status: number; message: string } | null>(null);
 
   // Modals
   const [dispatchOpen,       setDispatchOpen]       = useState(false);
@@ -164,6 +165,7 @@ export default function TransferDetailPage() {
   // Cancel state
   const [cancelReason,       setCancelReason]       = useState("");
   const [isCancelling,       setIsCancelling]       = useState(false);
+  const [cancelError,        setCancelError]        = useState<string[]>([]);
 
   const fetchTransfer = useCallback(async () => {
     if (!token || !orgId) return;
@@ -172,7 +174,11 @@ export default function TransferDetailPage() {
       const res = await fetch(`${API_URL}/api/v1/stock_transfers/${params.id}`,
         { headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId } });
       const json = await res.json();
-      if (res.ok) setTransfer(json.data);
+      if (!res.ok) {
+        setError({ status: res.status, message: json.errors?.[0] ?? "Failed to load transfer" });
+        return;
+      }
+      setTransfer(json.data);
     } finally { setIsLoading(false); }
   }, [token, orgId, params.id]);
 
@@ -293,7 +299,7 @@ export default function TransferDetailPage() {
         setCancelOpen(false);
         await fetchTransfer();
       } else {
-        setApiErrors(json.errors ?? ["Cancel failed"]);
+        setCancelError(json.errors ?? ["Cancel failed"]);
       }
     } finally { setIsCancelling(false); }
   };
@@ -525,6 +531,10 @@ export default function TransferDetailPage() {
     { key: "received",   label: "Received",   date: transfer.received_at,   done: !!transfer.received_at },
   ];
 
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/inventory/transfers" resourceType="Stock Transfer" />;
+  }
+
   return (
     <AppShell breadcrumbs={[
         { label: "Operations", href: "/operations" },
@@ -597,12 +607,6 @@ export default function TransferDetailPage() {
           </div>
         ))}
       </div>
-
-      {apiErrors.length > 0 && (
-        <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-          {apiErrors.map((e, i) => <p key={i}>{e}</p>)}
-        </div>
-      )}
 
       <Tabs items={tabItems} defaultValue="summary" />
 

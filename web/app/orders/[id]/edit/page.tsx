@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -123,6 +124,7 @@ export default function EditOrderPage() {
   const [pageLoading,  setPageLoading]  = useState(true);
   const [orderNumber,  setOrderNumber]  = useState<string>("");
   const [notFound,     setNotFound]     = useState(false);
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
 
   // Order header
   const [customerQuery,   setCustomerQuery]   = useState("");
@@ -199,7 +201,11 @@ export default function EditOrderPage() {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
       .then(async r => {
-        if (r.status === 404) { setNotFound(true); return null; }
+        if (!r.ok) {
+          const json = await r.json().catch(() => ({ errors: [r.statusText] }));
+          setError({ status: r.status, message: json.errors?.[0] ?? "Failed to load order" });
+          return null;
+        }
         return r.json();
       })
       .then(json => {
@@ -578,6 +584,10 @@ export default function EditOrderPage() {
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/orders" resourceType="Order" />;
+  }
+
   if (pageLoading) {
     return (
       <AppShell>
