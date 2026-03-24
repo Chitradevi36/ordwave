@@ -1,0 +1,248 @@
+<!-- E-Waybill Template -->
+<!-- GST-compliant electronic waybill for India -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 15px;
+        border-bottom: 3px solid #1f3a93;
+        padding-bottom: 10px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 20px;
+        color: #1f3a93;
+      }
+      .header p {
+        margin: 5px 0;
+        font-size: 12px;
+      }
+      .ewaybill-badge {
+        display: inline-block;
+        background-color: #1f3a93;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-top: 5px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .info-box {
+        padding: 10px;
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+      }
+      .info-box h3 {
+        margin: 0 0 5px 0;
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+      }
+      .info-box p {
+        margin: 3px 0;
+        font-size: 12px;
+      }
+      .qr-section {
+        text-align: center;
+        padding: 15px;
+        margin: 15px 0;
+        background-color: #f0f0f0;
+        border: 2px solid #1f3a93;
+      }
+      .qr-section p {
+        margin: 0 0 10px 0;
+        font-size: 11px;
+        font-weight: bold;
+      }
+      .qr-placeholder {
+        width: 150px;
+        height: 150px;
+        background-color: #e0e0e0;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: #999;
+        border: 1px dashed #ccc;
+      }
+      .shipment-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .shipment-table th {
+        background-color: #1f3a93;
+        color: white;
+        padding: 8px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .shipment-table td {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+        font-size: 12px;
+      }
+      .vehicle-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 15px 0;
+      }
+      .vehicle-info {
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+      .vehicle-info h4 {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        color: #1f3a93;
+        font-weight: bold;
+      }
+      .vehicle-info p {
+        margin: 5px 0;
+        font-size: 12px;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
+        font-size: 10px;
+        color: #999;
+      }
+      .warning {
+        padding: 10px;
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        margin: 15px 0;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>ELECTRONIC WAYBILL (e-Waybill)</h1>
+        <p>GST-Compliant Document for Inter-State Movement of Goods</p>
+        <div class="ewaybill-badge">
+          EWB #: <%= trip_id %>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="info-box">
+          <h3>Dispatch Details</h3>
+          <p><strong>Date:</strong> <%= Time.now.strftime('%d/%m/%Y') %></p>
+          <p><strong>From Location:</strong> <%= origin[:city] %>, <%= origin[:state] %></p>
+          <p><strong>From GSTIN:</strong> <%= organization[:gst_number] || 'N/A' %></p>
+        </div>
+        <div class="info-box">
+          <h3>Delivery Details</h3>
+          <p><strong>To Location:</strong> <%= destination[:city] %>, <%= destination[:state] %></p>
+          <p><strong>To GSTIN:</strong> <%= customer[:gst_number] || 'Unregistered' %></p>
+          <p><strong>Validity:</strong> 1 Day</p>
+        </div>
+      </div>
+
+      <div class="qr-section">
+        <p>QR Code (for GST Verification)</p>
+        <div class="qr-placeholder">
+          [QR Code Here]
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="info-box">
+          <h3>Shipper</h3>
+          <p><strong><%= organization[:name] %></strong></p>
+          <p><%= organization[:address] %></p>
+          <p><strong>GSTIN:</strong> <%= organization[:gst_number] %></p>
+        </div>
+        <div class="info-box">
+          <h3>Consignee</h3>
+          <p><strong><%= customer[:name] %></strong></p>
+          <p><%= customer[:address] %></p>
+          <p><strong>GSTIN:</strong> <%= customer[:gst_number] || 'N/A' %></p>
+        </div>
+      </div>
+
+      <table class="shipment-table">
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th>HSN Code</th>
+            <th>Qty</th>
+            <th>Tax Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% items.each do |item| %>
+            <tr>
+              <td><%= item[:description] %></td>
+              <td><%= item[:hsn_code] || 'N/A' %></td>
+              <td><%= item[:quantity] %> <%= item[:unit] %></td>
+              <td><%= item[:tax_rate] %>%</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <div class="vehicle-section">
+        <div class="vehicle-info">
+          <h4>Vehicle Information</h4>
+          <p><strong>Reg. Number:</strong> <%= vehicle[:registration_number] %></p>
+          <p><strong>Type:</strong> <%= vehicle[:vehicle_type] %></p>
+          <p><strong>Driver Name:</strong> <%= driver[:name] %></p>
+          <p><strong>Driver License:</strong> <%= driver[:license_number] || 'N/A' %></p>
+        </div>
+        <div class="vehicle-info">
+          <h4>Transit Details</h4>
+          <p><strong>Mode:</strong> Road</p>
+          <p><strong>Distance:</strong> <%= total_distance %> km</p>
+          <p><strong>Est. Transit Time:</strong> <%= total_duration %></p>
+          <p><strong>Eway Bill Validity:</strong> 1 Day from issue</p>
+        </div>
+      </div>
+
+      <div class="warning">
+        <strong>⚠️ Important:</strong> This e-Waybill is valid for one day from the date of issue. The vehicle carrying goods must be within the prescribed route. Any deviation or delay may result in penalties under GST rules. This document must be carried during transit.
+      </div>
+
+      <div class="footer">
+        <p>
+          This is a computer-generated e-Waybill. No signature or seal is required.
+        </p>
+        <p>
+          Generated on <%= Time.now.strftime('%d %b %Y at %H:%M') %> | System ID: WB-<%= Time.now.strftime('%Y%m%d%H%M%S') %>
+        </p>
+        <p>
+          For verification and status, visit: https://ewaybillgst.gov.in
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

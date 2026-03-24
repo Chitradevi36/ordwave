@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+  enable_extension "uuid-ossp"
 
   create_table "accounting_agents", force: :cascade do |t|
     t.bigint "organization_id", null: false
@@ -166,6 +167,37 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "admin_audit_logs", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "admin_user_id", null: false
+    t.bigint "approved_by_id"
+    t.string "action_type", null: false
+    t.string "resource_type", null: false
+    t.bigint "resource_id"
+    t.string "resource_name"
+    t.jsonb "changes", default: {}, null: false
+    t.jsonb "before_values", default: {}, null: false
+    t.jsonb "after_values", default: {}, null: false
+    t.string "reason"
+    t.string "ip_address"
+    t.string "user_agent"
+    t.string "session_id"
+    t.string "status", default: "completed", null: false
+    t.datetime "approved_at"
+    t.string "approval_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action_type"], name: "index_admin_audit_logs_on_action_type"
+    t.index ["admin_user_id", "created_at"], name: "index_admin_audit_logs_on_admin_user_id_and_created_at"
+    t.index ["admin_user_id"], name: "index_admin_audit_logs_on_admin_user_id"
+    t.index ["approved_by_id"], name: "index_admin_audit_logs_on_approved_by_id"
+    t.index ["organization_id", "created_at"], name: "index_admin_audit_logs_on_organization_id_and_created_at"
+    t.index ["organization_id"], name: "index_admin_audit_logs_on_organization_id"
+    t.index ["resource_type", "action_type"], name: "index_admin_audit_logs_on_resource_type_and_action_type"
+    t.index ["resource_type"], name: "index_admin_audit_logs_on_resource_type"
+    t.index ["status", "created_at"], name: "index_admin_audit_logs_on_status_and_created_at"
   end
 
   create_table "advance_payments", force: :cascade do |t|
@@ -691,6 +723,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
     t.bigint "overridden_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "otp_sent_at"
+    t.integer "otp_attempts", default: 0
+    t.string "otp_proof_type"
+    t.index ["otp_sent_at"], name: "index_delivery_proofs_on_otp_sent_at"
     t.index ["proof_type"], name: "index_delivery_proofs_on_proof_type"
     t.index ["trip_stop_id"], name: "index_delivery_proofs_on_trip_stop_id"
   end
@@ -755,6 +791,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
     t.index ["organization_id"], name: "index_device_tokens_on_organization_id"
     t.index ["user_id", "token"], name: "idx_device_tokens_user_token", unique: true
     t.index ["user_id"], name: "index_device_tokens_on_user_id"
+  end
+
+  create_table "documents", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "reference_id"
+    t.string "document_type", null: false
+    t.string "filename", null: false
+    t.string "status", default: "generated", null: false
+    t.integer "size_bytes", null: false
+    t.string "file_hash"
+    t.binary "content", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "generated_by_user_id"
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_type"], name: "index_documents_on_document_type"
+    t.index ["generated_by_user_id"], name: "index_documents_on_generated_by_user_id"
+    t.index ["organization_id", "created_at"], name: "index_documents_on_organization_id_and_created_at"
+    t.index ["organization_id", "document_type"], name: "index_documents_on_organization_id_and_document_type"
+    t.index ["organization_id", "reference_id"], name: "index_documents_on_organization_id_and_reference_id"
+    t.index ["organization_id"], name: "index_documents_on_organization_id"
+    t.index ["status", "created_at"], name: "idx_documents_status_created_at"
+    t.index ["status"], name: "index_documents_on_status"
   end
 
   create_table "ewaybill_requests", force: :cascade do |t|
@@ -1978,6 +2038,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
     t.index ["status"], name: "index_schemes_on_status"
   end
 
+  create_table "sms_logs", force: :cascade do |t|
+    t.string "phone_number", null: false
+    t.text "message_body", null: false
+    t.string "message_type"
+    t.string "twilio_sid", null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_sms_logs_on_created_at"
+    t.index ["message_type"], name: "index_sms_logs_on_message_type"
+    t.index ["phone_number"], name: "index_sms_logs_on_phone_number"
+    t.index ["twilio_sid"], name: "index_sms_logs_on_twilio_sid", unique: true
+  end
+
   create_table "stock_movements", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.bigint "branch_id", null: false
@@ -2358,6 +2433,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
   add_foreign_key "accounting_sync_records", "organizations"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "admin_audit_logs", "organizations"
+  add_foreign_key "admin_audit_logs", "users", column: "admin_user_id"
+  add_foreign_key "admin_audit_logs", "users", column: "approved_by_id"
   add_foreign_key "advance_payments", "branches"
   add_foreign_key "advance_payments", "customers"
   add_foreign_key "advance_payments", "organizations"
@@ -2442,6 +2520,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_22_000001) do
   add_foreign_key "delivery_trips", "vehicles"
   add_foreign_key "device_tokens", "organizations"
   add_foreign_key "device_tokens", "users"
+  add_foreign_key "documents", "organizations"
+  add_foreign_key "documents", "users", column: "generated_by_user_id"
   add_foreign_key "ewaybill_requests", "organizations"
   add_foreign_key "ewaybill_requests", "sales_invoices"
   add_foreign_key "expected_payment_references", "customers"

@@ -380,10 +380,20 @@ Rails.application.routes.draw do
           post :cancel
           post :optimize
           get  :summary
+          # ── Maps & Route Optimization ──────────────────────────────────────────
+          post :optimize_trip, path: 'optimize_trip'
+          post :calculate_distances, path: 'distances'
+          get  :get_directions, path: 'directions'
+          post :calculate_eta, path: 'eta'
+          post :geocode_address, path: 'geocode'
+          get  :reverse_geocode, path: 'reverse_geocode'
+          post :validate_address, path: 'validate_address'
         end
         resources :trip_stops, only: %i[index show] do
           member do
             post :complete
+            post :send_otp, to: 'delivery_otp#send_otp'
+            post :verify_otp, to: 'delivery_otp#verify_otp'
           end
           resources :rejections, only: %i[create], controller: 'stop_rejections'
         end
@@ -584,6 +594,19 @@ Rails.application.routes.draw do
       # Feature 10: SMS reply webhook from Twilio (incoming customer messages)
       post 'webhooks/twilio/sms_reply',    to: 'webhooks/twilio#sms_reply'
 
+      # -- Document Generation -----------------------------------------------
+      resources :documents, only: %i[index show] do
+        collection do
+          post :generate
+          post :batch_generate
+          get  :statistics
+        end
+        member do
+          get  :download
+          patch :regenerate
+          delete :archive, path: 'archive'
+        end
+      end
     end
 
     namespace :v2 do

@@ -52,6 +52,8 @@ gem 'sidekiq-cron', '~> 1.12' # recurring job scheduling
 # PDF generation
 gem 'prawn', '~> 2.5'
 gem 'prawn-table', '~> 0.2'
+gem 'wicked_pdf', '~> 2.1'
+gem 'wkhtmltopdf-binary', '~> 0.12'
 
 
 # API
@@ -74,6 +76,12 @@ gem "rack-attack", "~> 6.7"
 
 # Billing / Payments
 gem "razorpay", "~> 3.2"    # Razorpay Subscriptions + Webhooks
+
+# SMS / OTP
+gem "twilio-ruby", "~> 6.10"
+
+# Maps & Geocoding
+gem "google_maps_service", "~> 0.4.2"
 
 # Notifications
 gem "fcm"
@@ -101,6 +109,10 @@ group :development, :test do
   gem 'rspec-rails', '~> 6.1'
   gem 'factory_bot_rails'
   gem 'faker'
+  gem 'capistrano', '~> 3.19', require: false
+  gem 'capistrano-rvm', require: false
+  gem 'capistrano-bundler', require: false
+  gem 'capistrano-rails', require: false
 end
 
 group :test do

@@ -1,0 +1,235 @@
+<!-- Waybill Template -->
+<!-- Used for delivery tracking -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      .container {
+        background: white;
+        padding: 25px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #28a745;
+        padding-bottom: 10px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+        color: #28a745;
+      }
+      .trip-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f0f8f5;
+        border: 1px solid #28a745;
+      }
+      .info-box {
+        border-right: 1px solid #ccc;
+      }
+      .info-box:last-child {
+        border-right: none;
+      }
+      .info-box h3 {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        margin: 0 0 5px 0;
+      }
+      .info-box p {
+        margin: 0;
+        font-size: 14px;
+        font-weight: bold;
+      }
+      .stops-section {
+        margin-bottom: 25px;
+      }
+      .stops-section h2 {
+        font-size: 14px;
+        color: #28a745;
+        margin: 15px 0 10px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #28a745;
+      }
+      .stop {
+        padding: 12px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+        border-left: 4px solid #28a745;
+      }
+      .stop-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .stop-number {
+        background-color: #28a745;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .stop-status {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .stop-details p {
+        margin: 4px 0;
+        font-size: 13px;
+      }
+      .stop-distance {
+        font-size: 12px;
+        color: #666;
+      }
+      .origin-info {
+        padding: 12px;
+        margin-bottom: 15px;
+        background-color: #e8f5e9;
+        border-left: 4px solid #4caf50;
+      }
+      .origin-info h3 {
+        font-size: 12px;
+        color: #2e7d32;
+        margin: 0 0 5px 0;
+      }
+      .origin-info p {
+        margin: 3px 0;
+        font-size: 13px;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 2px solid #ddd;
+      }
+      .summary-item {
+        padding: 10px;
+        background-color: #f0f8f5;
+      }
+      .summary-item h4 {
+        margin: 0 0 5px 0;
+        font-size: 12px;
+        color: #666;
+      }
+      .summary-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #28a745;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        font-size: 11px;
+        color: #999;
+      }
+      .barcode {
+        text-align: center;
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border: 1px dashed #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Delivery Waybill</h1>
+      </div>
+
+      <div class="trip-info">
+        <div class="info-box">
+          <h3>Trip ID</h3>
+          <p><%= trip_id %></p>
+        </div>
+        <div class="info-box">
+          <h3>Driver</h3>
+          <p><%= driver[:name] %></p>
+          <p style="font-size: 12px; font-weight: normal;"><%= driver[:phone] %></p>
+        </div>
+        <div class="info-box">
+          <h3>Vehicle</h3>
+          <p><%= vehicle[:registration_number] %></p>
+          <p style="font-size: 12px; font-weight: normal;"><%= vehicle[:vehicle_type] %></p>
+        </div>
+      </div>
+
+      <div class="stops-section">
+        <div class="origin-info">
+          <h3>Origin Depot</h3>
+          <p><strong><%= origin[:name] %></strong></p>
+          <p><%= origin[:address] %></p>
+          <p><strong>Departure Time:</strong> <%= departure_time %></p>
+        </div>
+
+        <h2>Delivery Stops (<%= stops.length %>)</h2>
+
+        <% stops.each_with_index do |stop, idx| %>
+          <div class="stop">
+            <div class="stop-header">
+              <span class="stop-number">Stop <%= idx + 1 %></span>
+              <span class="stop-status"><%= stop[:status] || 'Pending' %></span>
+            </div>
+            <div class="stop-details">
+              <p><strong><%= stop[:customer_name] %></strong></p>
+              <p><%= stop[:address] %></p>
+              <p class="stop-distance">
+                <strong>Distance from previous:</strong> <%= stop[:distance_from_previous] || 'N/A' %> km
+              </p>
+              <p><strong>Contact:</strong> <%= stop[:phone] %></p>
+              <% if stop[:special_instructions] %>
+                <p><strong>Instructions:</strong> <%= stop[:special_instructions] %></p>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="summary">
+        <div class="summary-item">
+          <h4>Total Stops</h4>
+          <div class="summary-value"><%= stops.length %></div>
+        </div>
+        <div class="summary-item">
+          <h4>Total Distance</h4>
+          <div class="summary-value"><%= total_distance %> km</div>
+        </div>
+        <div class="summary-item">
+          <h4>Estimated Duration</h4>
+          <div class="summary-value"><%= total_duration %> hrs</div>
+        </div>
+        <div class="summary-item">
+          <h4>Total Items</h4>
+          <div class="summary-value"><%= total_items || 'N/A' %></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Generated on <%= Time.now.strftime('%d %b %Y at %H:%M') %></p>
+        <p>Please keep this waybill for record purposes</p>
+      </div>
+    </div>
+  </body>
+</html>

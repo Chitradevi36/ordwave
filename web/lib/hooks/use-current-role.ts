@@ -92,7 +92,7 @@ export function useCurrentRoleWithLoading(): { role: UserRole | undefined; loadi
       });
 
     return () => clearTimeout(timeout);
-  }, [token, orgId, loading]);
+  }, [token, orgId]);
 
   return { role, loading };
 }

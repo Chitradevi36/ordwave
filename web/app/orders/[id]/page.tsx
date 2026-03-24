@@ -152,6 +152,7 @@ export default function OrderDetailPage() {
   const [trip, setTrip]       = useState<TripInfo | null>(null);
   const [invoice, setInvoice] = useState<InvoiceInfo | null>(null);
   const [payment, setPayment] = useState<PaymentInfo | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [prevOrgId, setPrevOrgId] = useState<string | null>(null);
 
@@ -256,6 +257,45 @@ export default function OrderDetailPage() {
             setPayment(paymentJson.data[0]);
           }
         }
+      }
+
+      // Fetch documents for this order and its invoices
+      try {
+        const allDocuments = [];
+        
+        // 1. Fetch documents linked to the order itself
+        console.log('[Documents] Fetching by order ID:', params.id);
+        const orderDocsRes = await fetch(`${API_URL}/api/v1/documents?reference_id=${params.id}`, { headers });
+        const orderDocsJson = await orderDocsRes.json();
+        
+        if (orderDocsRes.ok && orderDocsJson.data && Array.isArray(orderDocsJson.data)) {
+          console.log('[Documents] Found', orderDocsJson.data.length, 'documents for order');
+          allDocuments.push(...orderDocsJson.data);
+        }
+        
+        // 2. If invoices exist, fetch documents linked to those invoices
+        if (invoice) {
+          console.log('[Documents] Fetching by invoice ID:', invoice.id);
+          const invoiceDocsRes = await fetch(`${API_URL}/api/v1/documents?reference_id=${invoice.id}`, { headers });
+          const invoiceDocsJson = await invoiceDocsRes.json();
+          
+          if (invoiceDocsRes.ok && invoiceDocsJson.data && Array.isArray(invoiceDocsJson.data)) {
+            console.log('[Documents] Found', invoiceDocsJson.data.length, 'documents for invoice');
+            allDocuments.push(...invoiceDocsJson.data);
+          }
+        }
+        
+        // Deduplicate by ID and set
+        const uniqueDocuments = Array.from(
+          new Map(allDocuments.map(doc => [doc.id, doc])).values()
+        );
+        
+        if (uniqueDocuments.length > 0) {
+          console.log('[Documents] Total unique documents:', uniqueDocuments.length);
+          setDocuments(uniqueDocuments);
+        }
+      } catch (docsErr) {
+        console.error('[Documents] Failed to fetch documents:', docsErr);
       }
     } finally {
       setLoading(false);
@@ -445,6 +485,96 @@ export default function OrderDetailPage() {
     if (ok) { setHoldModal(false); setHoldReason(""); }
   };
 
+  // ── Document Download & Preview ────────────────────────────────────────────
+  const handleDocumentDownload = async (docId: string, token: string | null) => {
+    try {
+      if (!token) {
+        showToast("error", "Authentication required");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/documents/${docId}/download`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-Organization-Id": orgId!,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData?.errors?.[0] || `HTTP ${response.status}`;
+        console.error("Download error:", errorMsg);
+        showToast("error", `Download failed: ${errorMsg}`);
+        return;
+      }
+
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        showToast("error", "Document is empty");
+        return;
+      }
+
+      const contentDisposition = response.headers.get('content-disposition');
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `document-${docId}.pdf`;
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      showToast("success", "Document downloaded");
+    } catch (error) {
+      console.error("Download error:", error);
+      showToast("error", `Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleDocumentPreview = async (docId: string, token: string | null) => {
+    try {
+      if (!token) {
+        showToast("error", "Authentication required");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/documents/${docId}/download`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-Organization-Id": orgId!,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData?.errors?.[0] || `HTTP ${response.status}`;
+        console.error("Preview error:", errorMsg);
+        showToast("error", `Preview failed: ${errorMsg}`);
+        return;
+      }
+
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        showToast("error", "Document is empty");
+        return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+      // Cleanup after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+      showToast("success", "Opening document in new tab");
+    } catch (error) {
+      console.error("Preview error:", error);
+      showToast("error", `Preview failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -557,13 +687,14 @@ export default function OrderDetailPage() {
       label: "Documents",
       content: (
         <DocumentsPanel
-          documents={[
-            { id: String(order.id), type: "order" as const, name: `${order.order_number}.pdf` },
-            ...(invoice ? [{ id: String(invoice.id), type: "invoice" as const, name: `INV-${invoice.invoice_number}.pdf`, createdAt: invoice.created_at }] : []),
-            ...(trip?.pod_url ? [{ id: String(trip.id), type: "pod" as const, name: `POD-${trip.trip_number}.pdf` }] : []),
-          ]}
-          onDownload={(id) => {}}
-          onPreview={(id) => {}}
+          documents={documents.map((doc: any) => ({
+            id: doc.id,
+            type: doc.type === 'invoice' ? 'invoice' : doc.type === 'delivery_receipt' ? 'pod' : 'order',
+            name: doc.filename,
+            createdAt: doc.created_at,
+          }))}
+          onDownload={(docId) => handleDocumentDownload(docId, token)}
+          onPreview={(docId) => handleDocumentPreview(docId, token)}
         />
       ),
     },
