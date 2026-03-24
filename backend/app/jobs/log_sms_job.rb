@@ -1,14 +1,14 @@
 # ── Background Job: Log SMS Messages ───────────────────────────────────────────
 # Stores SMS delivery logs for audit trail and troubleshooting
 
-class LogSMSJob
+class LogSmsJob
   include Sidekiq::Job
 
   sidekiq_options retry: 2, dead: true
 
   def perform(phone_number:, message_body:, twilio_sid:, message_type: nil, **metadata)
     begin
-      SMSLog.create!(
+      SmsLog.create!(
         phone_number: phone_number,
         message_body: message_body.to_s[0...160], # Store first 160 chars
         message_type: message_type,

@@ -13,7 +13,7 @@ set :app_subdir, "backend"
 set :bundle_gemfile, -> { release_path.join("backend", "Gemfile") }
 set :bundle_path, -> { shared_path.join("bundle") }
 set :bundle_without, %w[development test].join(" ")
-set :bundle_flags, "--deployment"
+set :bundle_flags, ""
 
 set :rails_env, "production"
 

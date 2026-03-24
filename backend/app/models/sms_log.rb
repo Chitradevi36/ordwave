@@ -11,7 +11,7 @@
 #  sent_at           :datetime         when SMS was sent
 #  created_at        :datetime
 
-class SMSLog < ApplicationRecord
+class SmsLog < ApplicationRecord
   self.table_name = 'sms_logs'
 
   # ── Validations ────────────────────────────────────────────────────────────────

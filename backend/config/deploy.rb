@@ -6,7 +6,7 @@ set :repo_url, "git@github.com:Chitradevi36/orderlane_pro.git"
 set :branch, ENV.fetch("BRANCH", "main")
 
 # do not use pty as a workaround for RVM
-set :pty, false
+set :pty, true
 
 set :format, :airbrussh
 set :format_options, truncate: false
@@ -16,7 +16,9 @@ set :keep_releases, 5
 
 # SSH
 set :ssh_options, {
-  forward_agent: true,
+  user: "deploy",
+  keys: %w[/home/deploy/.ssh/id_ed25519],
+  forward_agent: false,
   auth_methods: %w[publickey]
 }
 
@@ -45,3 +47,7 @@ namespace :deploy do
 end
 
 before "deploy:starting", "deploy:validate"
+
+# Disable default Rails asset tasks (monorepo / API-only)
+Rake::Task["deploy:assets:precompile"].clear_actions
+Rake::Task["deploy:compile_assets"].clear_actions rescue nil

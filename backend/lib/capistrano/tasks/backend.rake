@@ -40,18 +40,8 @@ namespace :backend do
     on roles(:db) do
       within backend_path do
         with rails_env: fetch(:rails_env), bundle_gemfile: fetch(:bundle_gemfile) do
+          info "Running DB migrations..."
           execute :bundle, :exec, :rails, "db:migrate"
-        end
-      end
-    end
-  end
-
-  desc "Precompile assets"
-  task :assets_precompile do
-    on roles(:web) do
-      within backend_path do
-        with rails_env: fetch(:rails_env), bundle_gemfile: fetch(:bundle_gemfile) do
-          execute :bundle, :exec, :rails, "assets:precompile"
         end
       end
     end
@@ -60,14 +50,14 @@ namespace :backend do
   desc "Restart Puma"
   task :restart_puma do
     on roles(:app) do
-      execute :sudo, :systemctl, :restart, fetch(:backend_puma_service)
+      execute :sudo, "/bin/systemctl", :restart, fetch(:backend_puma_service)
     end
   end
 
   desc "Restart Sidekiq"
   task :restart_sidekiq do
     on roles(:app) do
-      execute :sudo, :systemctl, :restart, fetch(:backend_sidekiq_service)
+      execute :sudo, "/bin/systemctl", :restart, fetch(:backend_sidekiq_service)
     end
   end
 end
@@ -77,7 +67,6 @@ before "deploy:check:linked_files", "backend:check_shared"
 namespace :deploy do
   after :updated, "backend:bundle_install"
   after :updated, "backend:migrate"
-  after :updated, "backend:assets_precompile"
   after :published, "backend:restart_puma"
   after :published, "backend:restart_sidekiq"
 end
