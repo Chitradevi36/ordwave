@@ -319,6 +319,41 @@ export default function OnboardingWizardPage() {
     router.push('/dashboard?demo=true');
   };
 
+  const handleQuickStart = async () => {
+    setLoading(true);
+    try {
+      // Create retailer if selected and has required fields
+      if (addRetailer && formData.retailerName && formData.retailerPhone) {
+        await onboardingAPI.createCustomer({
+          name: formData.retailerName,
+          phone: formData.retailerPhone,
+          area: formData.retailerArea,
+        });
+      }
+
+      // Create product if selected and has required fields
+      if (addProduct && formData.productName && formData.productSKU && formData.productGST && formData.productHSN) {
+        await onboardingAPI.createProduct({
+          sku: formData.productSKU,
+          name: formData.productName,
+          gst_rate: parseInt(formData.productGST),
+          hsn_code: formData.productHSN,
+        });
+      }
+
+      // Move to completion step
+      setStep(step + 1);
+      window.scrollTo(0, 0);
+    } catch (error) {
+      console.error('Quick start error:', error);
+      alert((error as Error).message || 'Failed to create retailer/product. You can add them later from the dashboard.');
+      // Still proceed to dashboard even if retailer/product creation fails
+      setStep(step + 1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleComplete = () => {
     trackOnboardingEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, 5, 'complete');
     setShowConfetti(true);
@@ -751,11 +786,11 @@ export default function OnboardingWizardPage() {
           <ArrowLeft className="mr-2 w-4 h-4" />Back
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleNext}>
+          <Button variant="outline" onClick={() => setStep(step + 1)}>
             Skip
           </Button>
-          <Button onClick={handleNext}>
-            Go to Dashboard
+          <Button onClick={handleQuickStart} disabled={loading}>
+            {loading ? 'Creating...' : 'Go to Dashboard'}
             <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
         </div>
