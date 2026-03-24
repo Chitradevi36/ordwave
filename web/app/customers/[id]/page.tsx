@@ -19,6 +19,7 @@ import {
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
 import { RiskWidget } from "@/components/customers/risk-widget";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Address {
@@ -1242,6 +1243,7 @@ export default function CustomerDetailPage() {
 
   const [customer, setCustomer]   = useState<CustomerDetail | null>(null);
   const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<{ status: number; message: string } | null>(null);
   const [deleting, setDeleting]   = useState(false);
   const [blocking, setBlocking]   = useState(false);
 
@@ -1249,12 +1251,25 @@ export default function CustomerDetailPage() {
     const fetch_ = async () => {
       if (!token || !orgId) return;
       setLoading(true);
+      setError(null);
       try {
         const res  = await fetch(`${API_URL}/api/v1/customers/${customerId}?include=recent_orders,recent_payments`, {
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         });
         const json = await res.json();
-        if (res.ok) setCustomer(json.data);
+        if (!res.ok) {
+          setError({
+            status: res.status,
+            message: json.errors?.[0] ?? "Failed to load customer"
+          });
+          return;
+        }
+        setCustomer(json.data);
+      } catch (e) {
+        setError({
+          status: 500,
+          message: e instanceof Error ? e.message : "An error occurred"
+        });
       } finally {
         setLoading(false);
       }
@@ -1302,6 +1317,15 @@ export default function CustomerDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/customers"
+      resourceType="Customer"
+    />;
   }
 
   if (!customer) {

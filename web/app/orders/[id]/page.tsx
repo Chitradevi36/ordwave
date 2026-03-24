@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
@@ -154,6 +155,7 @@ export default function OrderDetailPage() {
   const [payment, setPayment] = useState<PaymentInfo | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<{ status: number; message: string } | null>(null);
   const [prevOrgId, setPrevOrgId] = useState<string | null>(null);
 
   // Modals
@@ -188,6 +190,7 @@ export default function OrderDetailPage() {
   const fetch_ = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
+    setError(null);  // Clear any previous errors
     try {
       const headers = {
         Authorization: `Bearer ${token}`,
@@ -199,14 +202,22 @@ export default function OrderDetailPage() {
       const orderJson = await orderRes.json();
       
       if (!orderRes.ok) {
+        // Set error state for proper error handling
+        setError({
+          status: orderRes.status,
+          message: orderJson.errors?.[0] ?? `Order not found (${orderRes.status})`
+        });
+        
         // If order not found (404) and organization changed, redirect to orders list
         if (orderRes.status === 404) {
           if (prevOrgId && prevOrgId !== orgId) {
             showToast("error", "Order not found in this organization");
-            router.push("/orders");
+            setTimeout(() => router.push("/orders"), 2000);
             return;
           }
           showToast("error", "Order not found");
+        } else if (orderRes.status === 403) {
+          showToast("error", "You don't have permission to view this order");
         } else {
           showToast("error", orderJson.errors?.[0] ?? "Failed to load order");
         }
@@ -583,6 +594,10 @@ export default function OrderDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/orders" resourceType="Order" />;
   }
 
   if (!order) return null;

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Tabs } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -317,20 +318,36 @@ export default function PurchaseInvoiceDetailPage() {
 
   const [invoice,       setInvoice]       = useState<InvoiceDetail | null>(null);
   const [loading,       setLoading]       = useState(true);
-  const [notFound,      setNotFound]      = useState(false);
+  const [error,         setError]         = useState<{ status: number; message: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [showCancel,    setShowCancel]    = useState(false);
 
   const fetchInvoice = useCallback(async () => {
     if (!token || !orgId || !params.id) return;
     setLoading(true);
-    const res  = await fetch(`${API_URL}/api/v1/purchase_invoices/${params.id}`, {
-      headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
-    });
-    if (!res.ok) { setNotFound(true); setLoading(false); return; }
-    const json = await res.json();
-    setInvoice(json.data);
-    setLoading(false);
+    setError(null);
+    try {
+      const res  = await fetch(`${API_URL}/api/v1/purchase_invoices/${params.id}`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setError({
+          status: res.status,
+          message: json.errors?.[0] ?? "Failed to load purchase invoice"
+        });
+        return;
+      }
+      const json = await res.json();
+      setInvoice(json.data);
+    } catch (e) {
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [token, orgId, params.id]);
 
   useEffect(() => { fetchInvoice(); }, [fetchInvoice]);
@@ -345,6 +362,31 @@ export default function PurchaseInvoiceDetailPage() {
     if (res.ok) fetchInvoice();
     setActionLoading(false);
   };
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="flex items-center justify-center h-64 text-text-secondary">Loading…</div>
+      </AppShell>
+    );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/purchases/invoices"
+      resourceType="Purchase Invoice"
+    />;
+  }
+
+  if (!invoice) {
+    return (
+      <AppShell>
+        <div className="flex items-center justify-center h-64 text-text-secondary">Invoice not found</div>
+      </AppShell>
+    );
+  }
 
   const handleCancel = async (reason: string) => {
     if (!token || !orgId || !invoice) return;
@@ -372,7 +414,12 @@ export default function PurchaseInvoiceDetailPage() {
     );
   }
 
-  if (notFound || !invoice) {
+  if (error) {
+    const { status, message } = error;
+    return <AccessDeniedError status={status} message={message} backLink="/purchases/invoices" resourceType="Purchase Invoice" />;
+  }
+
+  if (!invoice) {
     return (
       <AppShell title="Not Found">
         <div className="flex items-center justify-center h-48 text-text-secondary text-sm">

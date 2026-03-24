@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { ProductForm, ProductCategory, UnitsOfMeasure, type ProductFormData } from "../../_components/ProductForm";
 import { API_URL } from "@/lib/api/client";
@@ -35,19 +36,24 @@ export default function EditProductPage() {
   const [loading,    setLoading]    = useState(false);
   const [fetching,   setFetching]   = useState(true);
   const [errors,     setErrors]     = useState<string[]>([]);
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
 
   useEffect(() => {
     if (!token || !orgId || !params.id) return;
     const headers = { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId };
     setFetching(true);
     Promise.all([
-      fetch(`${API_URL}/api/v1/products/${params.id}`,           { headers }).then((r) => r.json()),
+      fetch(`${API_URL}/api/v1/products/${params.id}`,           { headers }).then((r) => r.ok ? r.json() : r.json().then(j => { throw { status: r.status, message: j.errors?.[0] ?? r.statusText }; })),
       fetch(`${API_URL}/api/v1/product_categories?per_page=100`, { headers }).then((r) => r.json()),
       fetch(`${API_URL}/api/v1/units_of_measure?per_page=100`,   { headers }).then((r) => r.json()),
     ]).then(([prod, cats, uomList]) => {
       if (prod.data)    setProduct(prod.data);
       if (cats.data)    setCategories(cats.data);
       if (uomList.data) setUoms(uomList.data);
+    }).catch((err) => {
+      if (err && err.status) {
+        setError({ status: err.status, message: err.message });
+      }
     }).finally(() => setFetching(false));
   }, [token, orgId, params.id]);
 
@@ -69,12 +75,17 @@ export default function EditProductPage() {
       if (res.ok) {
         router.push("/products");
       } else {
+        setError({ status: res.status, message: json.errors?.[0] ?? "Failed to save product" });
         setErrors(json.errors ?? ["Something went wrong"]);
       }
     } finally {
       setLoading(false);
     }
   };
+
+  if (error) {
+    return <AccessDeniedError status={error.status} message={error.message} backLink="/products" resourceType="Product" />;
+  }
 
   if (fetching) {
     return (

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Mail, Phone, UserX } from "lucide-react";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { API_URL } from "@/lib/api/client";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 
 interface UserDetail {
   id: number;
@@ -45,6 +46,7 @@ export default function UserDetailPage() {
   const [user, setUser]         = useState<UserDetail | null>(null);
   const [loading, setLoading]   = useState(false);
   const [deactivating, setDeactivating] = useState(false);
+  const [error, setError]       = useState<{ status: number; message: string } | null>(null);
 
   const { token, orgId } = useOrgBranch();
 
@@ -52,12 +54,22 @@ export default function UserDetailPage() {
     const fetchUser = async () => {
       if (!token || !orgId) return;
       setLoading(true);
+      setError(null);
       try {
         const res  = await fetch(`${API_URL}/api/v1/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
         });
+        if (!res.ok) {
+          const json = await res.json();
+          setError({
+            status: res.status,
+            message: json.errors?.[0] ?? "Failed to load user"
+          });
+          setLoading(false);
+          return;
+        }
         const json = await res.json();
-        if (res.ok) setUser(json.data);
+        setUser(json.data);
       } finally {
         setLoading(false);
       }
@@ -90,6 +102,15 @@ export default function UserDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/users"
+      resourceType="User"
+    />;
   }
 
   if (!user) {

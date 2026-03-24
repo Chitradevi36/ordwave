@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import {
   Package, Edit, Archive, Tag, List, BarChart2,
   ShoppingCart, Building2, CheckCircle, AlertTriangle, XCircle,
@@ -238,15 +239,32 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
 
   useEffect(() => {
     if (!token || !orgId) return;
     setLoading(true);
+    setError(null);
     fetch(`${API_URL}/api/v1/products/${productId}`, {
       headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
     })
-      .then((r) => r.json())
-      .then((j) => { if (j.data) setProduct(j.data); })
+      .then((r) => {
+        if (!r.ok) {
+          return r.json().then((j) => {
+            setError({
+              status: r.status,
+              message: j.errors?.[0] ?? "Failed to load product"
+            });
+          });
+        }
+        return r.json().then((j) => { if (j.data) setProduct(j.data); });
+      })
+      .catch((e) => {
+        setError({
+          status: 500,
+          message: e instanceof Error ? e.message : "An error occurred"
+        });
+      })
       .finally(() => setLoading(false));
   }, [productId, token, orgId]);
 
@@ -257,6 +275,15 @@ export default function ProductDetailPage() {
       </div>
     </AppShell>
   );
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/products"
+      resourceType="Product"
+    />;
+  }
 
   if (!product) return (
     <AppShell title="Products">

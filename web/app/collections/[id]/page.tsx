@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui";
@@ -100,6 +101,7 @@ export default function PaymentDetailPage() {
 
   const [payment, setPayment]           = useState<PaymentDetail | null>(null);
   const [loading, setLoading]           = useState(true);
+  const [loadError, setLoadError]       = useState<{ status: number; message: string } | null>(null);
   const [activeTab, setActiveTab]       = useState<"summary" | "allocations" | "activity">("summary");
   const [showReverse, setShowReverse]   = useState(false);
   const [reversalReason, setReversalReason] = useState("");
@@ -109,12 +111,26 @@ export default function PaymentDetailPage() {
   const fetchPayment = useCallback(async () => {
     if (!token || !orgId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch(`/api/v1/payments/${id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
+      if (!res.ok) {
+        const json = await res.json();
+        setLoadError({
+          status: res.status,
+          message: json.errors?.[0] ?? "Failed to load payment"
+        });
+        return;
+      }
       const json = await res.json();
-      if (res.ok) setPayment(json.data);
+      setPayment(json.data);
+    } catch (e) {
+      setLoadError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
+      });
     } finally {
       setLoading(false);
     }
@@ -195,6 +211,15 @@ export default function PaymentDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (loadError) {
+    return <AccessDeniedError
+      status={loadError.status}
+      message={loadError.message}
+      backLink="/collections"
+      resourceType="Collection"
+    />;
   }
 
   if (!payment) {

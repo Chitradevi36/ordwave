@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Download, Ban, CheckCircle2, ExternalLink, FileCheck, Truck, Eye } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -125,7 +126,7 @@ export default function SalesInvoiceDetailPage() {
 
   const [invoice, setInvoice]         = useState<InvoiceDetail | null>(null);
   const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
+  const [error, setError]             = useState<{ status: number; message: string } | null>(null);
   const [voidModal, setVoidModal]     = useState(false);
   const [voidReason, setVoidReason]   = useState("");
   const [saving, setSaving]           = useState(false);
@@ -157,11 +158,21 @@ export default function SalesInvoiceDetailPage() {
           "X-Organization-Id": orgId,
         },
       });
-      if (!res.ok) throw new Error("Failed to load invoice");
+      if (!res.ok) {
+        const body = await res.json();
+        setError({
+          status: res.status,
+          message: body.errors?.[0] ?? "Failed to load sales invoice"
+        });
+        return;
+      }
       const body = await res.json();
       setInvoice(body.data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "An error occurred"
+      });
     } finally {
       setLoading(false);
     }
@@ -308,11 +319,20 @@ export default function SalesInvoiceDetailPage() {
     );
   }
 
-  if (error || !invoice) {
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/sales-invoices"
+      resourceType="Sales Invoice"
+    />;
+  }
+
+  if (!invoice) {
     return (
       <AppShell>
         <div className="p-6 space-y-3">
-          <p className="text-sm text-destructive">{error ?? "Invoice not found"}</p>
+          <p className="text-sm text-destructive">Invoice not found</p>
           <Button variant="outline" size="sm" onClick={() => router.push("/sales-invoices")}>
             Back to Invoices
           </Button>

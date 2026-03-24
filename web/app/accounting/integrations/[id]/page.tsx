@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import {
   ChevronLeft, Save, TestTube2, Link2, Link2Off,
   Plus, Trash2, CheckCircle2, XCircle, Loader2,
@@ -163,6 +164,7 @@ export default function IntegrationDetailPage() {
   const [mappings, setMappings]   = useState<AccountingMapping[]>([]);
   const [config, setConfig]       = useState<Record<string, string>>({});
   const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<{ status: number; message: string } | null>(null);
   const [saving, setSaving]       = useState(false);
   const [testing, setTesting]     = useState(false);
   const [toast, setToast]         = useState<{ type: ToastType; message: string } | null>(null);
@@ -175,6 +177,7 @@ export default function IntegrationDetailPage() {
   const load = useCallback(async () => {
     if (!token || !orgId || !id) return;
     setLoading(true);
+    setError(null);
     try {
       const [integ, maps] = await Promise.all([
         fetchIntegration(Number(id), token, orgId),
@@ -188,8 +191,13 @@ export default function IntegrationDetailPage() {
         cfg[k] = v ?? "";
       });
       setConfig(cfg);
-    } catch {
-      showToast("error", "Failed to load integration.");
+    } catch (e: unknown) {
+      const status = (e as { response?: { status?: number } })?.response?.status ?? 500;
+      const message = (e as { message?: string })?.message ?? "Failed to load integration.";
+      setError({
+        status,
+        message
+      });
     } finally {
       setLoading(false);
     }
@@ -295,6 +303,15 @@ export default function IntegrationDetailPage() {
         ))}
       </div>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/accounting/integrations"
+      resourceType="Integration"
+    />;
   }
 
   if (!integration) return null;

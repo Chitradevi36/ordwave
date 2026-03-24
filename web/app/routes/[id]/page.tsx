@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout";
+import { AccessDeniedError } from "@/components/errors/access-denied-error";
 import { Tabs } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,6 +166,7 @@ export default function RouteDetailPage() {
 
   const [route, setRoute]           = useState<Route | null>(null);
   const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState<{ status: number; message: string } | null>(null);
 
   // Inline edit state
   const [editing, setEditing]       = useState(false);
@@ -199,13 +201,26 @@ export default function RouteDetailPage() {
   const fetchRoute = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
+    setError(null);
     try {
       const res  = await fetch(`/api/v1/routes/${id}`, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
-      if (!res.ok) { setRoute(null); return; }
+      if (!res.ok) {
+        const data = await res.json();
+        setError({
+          status: res.status,
+          message: data.errors?.[0] ?? "Failed to load route"
+        });
+        return;
+      }
       const data = await res.json();
       setRoute(data.data);
+    } catch (e) {
+      setError({
+        status: 500,
+        message: e instanceof Error ? e.message : "Unknown error"
+      });
     } finally {
       setLoading(false);
     }
@@ -333,6 +348,15 @@ export default function RouteDetailPage() {
         </div>
       </AppShell>
     );
+  }
+
+  if (error) {
+    return <AccessDeniedError
+      status={error.status}
+      message={error.message}
+      backLink="/routes"
+      resourceType="Route"
+    />;
   }
 
   if (!route) {
