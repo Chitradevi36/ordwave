@@ -1,0 +1,196 @@
+<!-- Delivery Receipt Template -->
+<!-- Proof of delivery for customer -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      .container {
+        background: white;
+        padding: 25px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #007bff;
+        padding-bottom: 10px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #007bff;
+      }
+      .receipt-number {
+        font-size: 18px;
+        color: #666;
+        margin-top: 5px;
+      }
+      .delivery-status {
+        padding: 15px;
+        margin: 15px 0;
+        background-color: #d4edda;
+        border: 2px solid #28a745;
+        border-radius: 5px;
+        text-align: center;
+      }
+      .delivery-status h2 {
+        margin: 0;
+        color: #28a745;
+        font-size: 20px;
+      }
+      .delivery-status p {
+        margin: 5px 0 0 0;
+        font-size: 12px;
+        color: #155724;
+      }
+      .section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .section h3 {
+        margin: 0 0 10px 0;
+        font-size: 13px;
+        color: #666;
+        text-transform: uppercase;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 5px;
+      }
+      .section p {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+      .section strong {
+        color: #007bff;
+      }
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+      .items-table th {
+        background-color: #f0f0f0;
+        padding: 8px;
+        text-align: left;
+        font-size: 12px;
+        border-bottom: 2px solid #ddd;
+      }
+      .items-table td {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+      }
+      .signature-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #ddd;
+      }
+      .signature-box {
+        text-align: center;
+        width: 45%;
+      }
+      .signature-line {
+        border-top: 2px solid #333;
+        margin-top: 30px;
+        padding-top: 5px;
+        font-size: 12px;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        font-size: 11px;
+        color: #999;
+      }
+      .checkmark {
+        color: #28a745;
+        font-size: 48px;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>DELIVERY RECEIPT</h1>
+        <div class="receipt-number">Receipt #: <%= stop_id %></div>
+      </div>
+
+      <div class="delivery-status">
+        <div class="checkmark">✓</div>
+        <h2>Delivered Successfully</h2>
+        <p>on <%= Time.now.strftime('%d %b %Y at %H:%M %p') %></p>
+      </div>
+
+      <div class="section">
+        <h3>Delivery Details</h3>
+        <p><strong>Customer:</strong> <%= customer[:name] %></p>
+        <p><strong>Address:</strong> <%= customer[:address] %></p>
+        <p><strong>Phone:</strong> <%= customer[:phone] %></p>
+        <p><strong>Received By:</strong> <%= verified_by %></p>
+        <p><strong>Delivery Time:</strong> <%= Time.now.strftime('%d %b %Y at %H:%M %p') %></p>
+      </div>
+
+      <div class="section">
+        <h3>Items Delivered</h3>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% items.each do |item| %>
+              <tr>
+                <td><%= item[:description] %></td>
+                <td><%= item[:quantity] %> <%= item[:unit] %></td>
+                <td style="color: #28a745; font-weight: bold;">✓ Delivered</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if special_notes %>
+        <div class="section">
+          <h3>Special Notes</h3>
+          <p><%= special_notes %></p>
+        </div>
+      <% end %>
+
+      <div class="signature-section">
+        <div class="signature-box">
+          <div class="signature-line">
+            <strong>Customer Signature</strong>
+          </div>
+        </div>
+        <div class="signature-box">
+          <div class="signature-line">
+            <strong>Driver Signature</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>This receipt confirms delivery of the above items.</p>
+        <p>Generated on <%= Time.now.strftime('%d %b %Y at %H:%M') %></p>
+      </div>
+    </div>
+  </body>
+</html>

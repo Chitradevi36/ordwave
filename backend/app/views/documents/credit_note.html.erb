@@ -1,0 +1,255 @@
+<!-- Credit Note Template -->
+<!-- Issued for returns and adjustments -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+        background-color: #f9f9f9;
+      }
+      .container {
+        background: white;
+        padding: 40px;
+        max-width: 850px;
+        margin: 0 auto;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        border-bottom: 2px solid #dc3545;
+        padding-bottom: 20px;
+      }
+      .company-info h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #dc3545;
+      }
+      .note-meta {
+        text-align: right;
+      }
+      .note-meta p {
+        margin: 5px 0;
+        font-weight: bold;
+      }
+      .credit-number {
+        font-size: 18px;
+        color: #dc3545;
+      }
+      .credit-badge {
+        display: inline-block;
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      .details {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+      }
+      .section {
+        flex: 1;
+      }
+      .section h3 {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .section p {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+      .reason-section {
+        padding: 15px;
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+        margin-bottom: 30px;
+      }
+      .reason-section h3 {
+        margin: 0 0 10px 0;
+        font-size: 13px;
+        color: #721c24;
+      }
+      .reason-section p {
+        margin: 0;
+        font-size: 14px;
+        color: #721c24;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+      th {
+        background-color: #f0f0f0;
+        padding: 12px;
+        text-align: left;
+        font-weight: bold;
+        border-bottom: 2px solid #ddd;
+      }
+      td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+      }
+      tr:last-child td {
+        border-bottom: 2px solid #ddd;
+      }
+      .text-right { text-align: right; }
+      .total-section {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 40px;
+      }
+      .total-box {
+        width: 300px;
+      }
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+      }
+      .total-row.final {
+        background-color: #f8d7da;
+        font-weight: bold;
+        font-size: 16px;
+        border: 2px solid #dc3545;
+        padding: 12px;
+      }
+      .reference-row {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      .reference-col {
+        flex: 1;
+      }
+      .reference-col h4 {
+        margin: 0 0 5px 0;
+        font-size: 12px;
+        color: #666;
+      }
+      .reference-col p {
+        margin: 0;
+        font-size: 14px;
+        font-weight: bold;
+      }
+      .footer {
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+        margin-top: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="company-info">
+          <h1><%= organization[:name] %></h1>
+          <p><%= organization[:address] %></p>
+          <p><%= organization[:phone] %> | <%= organization[:email] %></p>
+          <% if organization[:gst_number] %>
+            <p>GST: <%= organization[:gst_number] %></p>
+          <% end %>
+        </div>
+        <div class="note-meta">
+          <div class="credit-badge">CREDIT NOTE</div>
+          <p class="credit-number"><%= credit_note_id %></p>
+          <p><strong>Date:</strong> <%= Time.now.strftime('%d %b %Y') %></p>
+          <p><strong>Reference:</strong> <%= reference_id || 'N/A' %></p>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="section">
+          <h3>Issued To</h3>
+          <p><strong><%= customer[:name] %></strong></p>
+          <p><%= customer[:address] %></p>
+          <p><%= customer[:city] %>, <%= customer[:state] %> <%= customer[:zip] %></p>
+          <% if customer[:gst_number] %>
+            <p><strong>GST:</strong> <%= customer[:gst_number] %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="reason-section">
+        <h3>Reason for Credit Note</h3>
+        <p><%= reason %></p>
+      </div>
+
+      <% if items && items.length > 0 %>
+        <table>
+          <thead>
+            <tr>
+              <th>Item Description</th>
+              <th class="text-right">Qty</th>
+              <th class="text-right">Unit Price</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% items.each do |item| %>
+              <tr>
+                <td><%= item[:description] %></td>
+                <td class="text-right"><%= item[:quantity] %> <%= item[:unit] %></td>
+                <td class="text-right">₹ <%= number_with_precision(item[:unit_price], precision: 2) %></td>
+                <td class="text-right">₹ <%= number_with_precision(item[:amount], precision: 2) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+
+      <div class="total-section">
+        <div class="total-box">
+          <% if subtotal %>
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span>₹ <%= number_with_precision(subtotal, precision: 2) %></span>
+            </div>
+          <% end %>
+          <% if tax_amount && tax_amount > 0 %>
+            <div class="total-row">
+              <span>Tax (GST @ <%= tax_rate %>%):</span>
+              <span>₹ <%= number_with_precision(tax_amount, precision: 2) %></span>
+            </div>
+          <% end %>
+          <div class="total-row final">
+            <span>Credit Amount:</span>
+            <span>₹ <%= number_with_precision(amount, precision: 2) %></span>
+          </div>
+        </div>
+      </div>
+
+      <% if notes %>
+        <div class="reference-row">
+          <div class="reference-col">
+            <h4>Additional Notes</h4>
+            <p><%= notes %></p>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="footer">
+        <p>This credit note is valid for 30 days from the date of issue.</p>
+        <p>This is a computer-generated document. No signature required.</p>
+        <p>Document generated on <%= Time.now.strftime('%d %b %Y at %H:%M') %></p>
+      </div>
+    </div>
+  </body>
+</html>

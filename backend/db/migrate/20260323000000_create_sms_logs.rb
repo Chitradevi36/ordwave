@@ -1,4 +1,4 @@
-class CreateSMSLogs < ActiveRecord::Migration[7.1]
+class CreateSmsLogs < ActiveRecord::Migration[7.1]
   def change
     create_table :sms_logs do |t|
       t.string :phone_number, null: false

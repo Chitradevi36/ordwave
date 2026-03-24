@@ -37,6 +37,9 @@ class SalesInvoice < ApplicationRecord
   validate :due_date_after_invoice_date, if: -> { due_date.present? && invoice_date.present? }
   validate :immutable_when_issued,        on: :update
 
+  # ── Callbacks ─────────────────────────────────────────────────────────────
+  after_commit :generate_invoice_document, if: :just_issued?
+
   # ── Scopes ───────────────────────────────────────────────────────────────
   scope :not_deleted,    -> { where(deleted_at: nil) }
   scope :for_org,        ->(org) { where(organization: org) }
@@ -125,6 +128,19 @@ class SalesInvoice < ApplicationRecord
   end
 
   private
+
+  def just_issued?
+    saved_change_to_status?(from: nil, to: "issued") || 
+    saved_change_to_status?(from: "draft", to: "issued")
+  end
+
+  def generate_invoice_document
+    # Enqueue async job to generate PDF document
+    GenerateInvoiceDocumentJob.perform_later(id)
+  rescue => e
+    # Log error but don't fail the transaction
+    Rails.logger.error("[SalesInvoice] Failed to enqueue document generation: #{e.message}")
+  end
 
   def due_date_after_invoice_date
     errors.add(:due_date, 'must be on or after invoice date') if due_date < invoice_date

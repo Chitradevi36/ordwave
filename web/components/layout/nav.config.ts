@@ -297,40 +297,49 @@ export const GROUPED_NAV: NavGroup[] = [
   {
     key: "dispatch",
     label: "Dispatch",
+    href: "/delivery",
     icon: Truck,
-    matchers: ["/delivery", "/operations", "/returns", "/delivery/exceptions"],
+    matchers: ["/delivery"],
     rolesAllowed: ["owner", "admin", "manager", "driver", "warehouse_staff"],
-    children: [
-      {
-        key: "trips",
-        label: "Trips",
-        href: "/delivery",
-        matchers: ["/delivery"],
-        badgeKey: "activeTrips",
-      },
-      {
-        key: "operations",
-        label: "Operations",
-        href: "/operations",
-        matchers: ["/operations"],
-        rolesAllowed: ["owner", "admin", "manager", "warehouse_staff"],
-      },
-      // {
-      //   key: "exceptions",
-      //   label: "Exceptions",
-      //   href: "/delivery/exceptions",
-      //   matchers: ["/delivery/exceptions"],
-      //   badgeKey: "deliveryExceptions",
-      // },
-      {
-        key: "returns",
-        label: "Returns",
-        href: "/returns",
-        matchers: ["/returns"],
-        badgeKey: "pendingReturns",
-      },
-    ],
   },
+
+  // {
+  //   key: "dispatch",
+  //   label: "Dispatch",
+  //   icon: Truck,
+  //   matchers: ["/delivery", "/operations", "/returns", "/delivery/exceptions"],
+  //   rolesAllowed: ["owner", "admin", "manager", "driver", "warehouse_staff"],
+  //   children: [
+  //     {
+  //       key: "trips",
+  //       label: "Trips",
+  //       href: "/delivery",
+  //       matchers: ["/delivery"],
+  //       badgeKey: "activeTrips",
+  //     },
+  //     // {
+  //     //   key: "operations",
+  //     //   label: "Operations",
+  //     //   href: "/operations",
+  //     //   matchers: ["/operations"],
+  //     //   rolesAllowed: ["owner", "admin", "manager", "warehouse_staff"],
+  //     // },
+  //     // {
+  //     //   key: "exceptions",
+  //     //   label: "Exceptions",
+  //     //   href: "/delivery/exceptions",
+  //     //   matchers: ["/delivery/exceptions"],
+  //     //   badgeKey: "deliveryExceptions",
+  //     // },
+  //     // {
+  //     //   key: "returns",
+  //     //   label: "Returns",
+  //     //   href: "/returns",
+  //     //   matchers: ["/returns"],
+  //     //   badgeKey: "pendingReturns",
+  //     // },
+  //   ],
+  // },
 
   {
     key: "finance",

@@ -45,3 +45,24 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|fonts).*)',
   ],
 };
+
+/**
+ * Error Page Helper Utilities
+ * Use these functions to redirect to friendly error pages with context
+ */
+
+export function createErrorPageUrl(options: {
+  resource?: string;
+  reason?: string;
+  userRole?: string;
+  suggestedAction?: string;
+}): string {
+  const params = new URLSearchParams();
+  
+  if (options.resource) params.append('resource', options.resource);
+  if (options.reason) params.append('reason', options.reason);
+  if (options.userRole) params.append('role', options.userRole);
+  if (options.suggestedAction) params.append('action', options.suggestedAction);
+
+  return `/errors/403?${params.toString()}`;
+}

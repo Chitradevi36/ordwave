@@ -1,0 +1,208 @@
+<!-- Sales Invoice Template -->
+<!-- Used for billing customers -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+        background-color: #f9f9f9;
+      }
+      .container {
+        background: white;
+        padding: 40px;
+        max-width: 850px;
+        margin: 0 auto;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 20px;
+      }
+      .company-info h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #007bff;
+      }
+      .invoice-meta {
+        text-align: right;
+      }
+      .invoice-meta p {
+        margin: 5px 0;
+        font-weight: bold;
+      }
+      .invoice-number {
+        font-size: 18px;
+        color: #007bff;
+      }
+      .details {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+      }
+      .section {
+        flex: 1;
+      }
+      .section h3 {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .section p {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+      }
+      th {
+        background-color: #f0f0f0;
+        padding: 12px;
+        text-align: left;
+        font-weight: bold;
+        border-bottom: 2px solid #ddd;
+      }
+      td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+      }
+      tr:last-child td {
+        border-bottom: 2px solid #ddd;
+      }
+      .text-right { text-align: right; }
+      .total-section {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 40px;
+      }
+      .total-box {
+        width: 300px;
+      }
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+      }
+      .total-row.final {
+        background-color: #f0f0f0;
+        font-weight: bold;
+        font-size: 18px;
+        border: 2px solid #007bff;
+        padding: 12px;
+      }
+      .footer {
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+        margin-top: 40px;
+      }
+      .stamp {
+        text-align: center;
+        color: #ccc;
+        font-size: 48px;
+        opacity: 0.1;
+        transform: rotate(-45deg);
+        position: absolute;
+        top: 50%;
+        right: 10%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="company-info">
+          <h1><%= organization[:name] %></h1>
+          <p><%= organization[:address] %></p>
+          <p><%= organization[:phone] %> | <%= organization[:email] %></p>
+          <% if organization[:gst_number] %>
+            <p>GST: <%= organization[:gst_number] %></p>
+          <% end %>
+        </div>
+        <div class="invoice-meta">
+          <p class="invoice-number">INVOICE</p>
+          <p><strong>Invoice #:</strong> <%= invoice_id %></p>
+          <p><strong>Date:</strong> <%= Time.now.strftime('%d %b %Y') %></p>
+          <p><strong>Due Date:</strong> <%= due_date || Time.now.strftime('%d %b %Y') %></p>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="section">
+          <h3>Bill To</h3>
+          <p><strong><%= customer[:name] %></strong></p>
+          <p><%= customer[:address] %></p>
+          <p><%= customer[:city] %>, <%= customer[:state] %> <%= customer[:zip] %></p>
+          <p><strong>Phone:</strong> <%= customer[:phone] %></p>
+          <% if customer[:gst_number] %>
+            <p><strong>GST:</strong> <%= customer[:gst_number] %></p>
+          <% end %>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th class="text-right">Qty</th>
+            <th class="text-right">Unit Price</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% items.each do |item| %>
+            <tr>
+              <td><%= item[:description] %></td>
+              <td class="text-right"><%= item[:quantity] %> <%= item[:unit] %></td>
+              <td class="text-right">₹ <%= number_with_precision(item[:unit_price], precision: 2) %></td>
+              <td class="text-right">₹ <%= number_with_precision(item[:amount], precision: 2) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <div class="total-section">
+        <div class="total-box">
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>₹ <%= number_with_precision(subtotal, precision: 2) %></span>
+          </div>
+          <% if tax_amount && tax_amount > 0 %>
+            <div class="total-row">
+              <span>Tax (GST @ <%= tax_rate %>%):</span>
+              <span>₹ <%= number_with_precision(tax_amount, precision: 2) %></span>
+            </div>
+          <% end %>
+          <% if discount_amount && discount_amount > 0 %>
+            <div class="total-row">
+              <span>Discount:</span>
+              <span>-₹ <%= number_with_precision(discount_amount, precision: 2) %></span>
+            </div>
+          <% end %>
+          <div class="total-row final">
+            <span>Total Amount Due:</span>
+            <span>₹ <%= number_with_precision(amount, precision: 2) %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>This is a computer-generated invoice. No signature required.</p>
+        <p>Document generated on <%= Time.now.strftime('%d %b %Y at %H:%M') %></p>
+      </div>
+    </div>
+  </body>
+</html>

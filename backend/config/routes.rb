@@ -594,6 +594,19 @@ Rails.application.routes.draw do
       # Feature 10: SMS reply webhook from Twilio (incoming customer messages)
       post 'webhooks/twilio/sms_reply',    to: 'webhooks/twilio#sms_reply'
 
+      # -- Document Generation -----------------------------------------------
+      resources :documents, only: %i[index show] do
+        collection do
+          post :generate
+          post :batch_generate
+          get  :statistics
+        end
+        member do
+          get  :download
+          patch :regenerate
+          delete :archive, path: 'archive'
+        end
+      end
     end
 
     namespace :v2 do
