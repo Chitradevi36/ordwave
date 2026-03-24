@@ -31,7 +31,7 @@ append :linked_dirs,
        "backend/storage",
        "backend/public/system"
 
-server "BACKEND_EC2_PUBLIC_IP_OR_DNS",
+server "127.0.0.1",
   user: "deploy",
   roles: %w[app web db],
   primary: true
