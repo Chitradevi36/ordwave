@@ -47,6 +47,8 @@ Rails.application.routes.draw do
       get  'onboarding',               to: 'onboarding#show'
       post 'onboarding/setup',         to: 'onboarding#setup'
       post 'onboarding/complete_step', to: 'onboarding#complete_step'
+      post 'onboarding/quick_create_customer', to: 'onboarding#quick_create_customer'
+      post 'onboarding/quick_create_product', to: 'onboarding#quick_create_product'
 
       # Current user profile (both singular and plural path accepted)
       get  'profile',                  to: 'profiles#show'
