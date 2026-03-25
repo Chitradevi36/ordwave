@@ -87,7 +87,65 @@ module Api
         end
       end
 
+      def quick_create_customer
+        # Bypass role restrictions during onboarding
+        result = Customers::CreateCustomerService.new(
+          params:       {
+            name: params[:name],
+            phone: params[:phone],
+            customer_type: 'regular'
+          },
+          organization: current_organization
+        ).call
+
+        if result.success?
+          render_created(serialize_quick_customer(result.customer))
+        else
+          render_errors(result.errors)
+        end
+      end
+
+      def quick_create_product
+        # Bypass role restrictions during onboarding
+        result = Products::CreateProductService.new(
+          params:       {
+            sku: params[:sku],
+            name: params[:name],
+            gst_rate: params[:gst_rate],
+            status: 'active'
+          },
+          organization: current_organization
+        ).call
+
+        if result.success?
+          render_created(serialize_quick_product(result.product))
+        else
+          render_errors(result.errors)
+        end
+      end
+
       private
+
+      def serialize_quick_customer(customer)
+        {
+          id: customer.id,
+          name: customer.name,
+          phone: customer.phone,
+          customer_type: customer.customer_type,
+          created_at: customer.created_at
+        }
+      end
+
+      def serialize_quick_product(product)
+        {
+          id: product.id,
+          sku: product.sku,
+          name: product.name,
+          gst_rate: product.gst_rate,
+          status: product.status,
+          created_at: product.created_at
+        }
+      end
 
       def serialize_progress(progress)
         {

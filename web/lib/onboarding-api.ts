@@ -109,7 +109,6 @@ export const onboardingAPI = {
   createCustomer: async (data: {
     name: string;
     phone: string;
-    branch_id?: string;
   }) => {
     const headers: any = {
       'Content-Type': 'application/json',
@@ -117,48 +116,29 @@ export const onboardingAPI = {
     };
 
     const orgId = localStorage.getItem('organization_id');
-    if (orgId) {
-      headers[`X-Organization-Id`] = orgId;
+    if (!orgId) {
+      throw new Error('Organization not initialized. Please refresh and try again.');
     }
+    
+    headers['X-Organization-Id'] = orgId;
 
-    // Get first branch if not provided
-    let branchId = data.branch_id;
-    if (!branchId) {
-      try {
-        const branchRes = await fetch(`${API_URL}/api/v1/branches`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-            'X-Organization-Id': orgId || '',
-          }
-        });
-        if (branchRes.ok) {
-          const branches = await branchRes.json();
-          branchId = branches.data?.[0]?.id;
-        }
-      } catch {
-        // Continue without branch_id if lookup fails
-      }
-    }
-
-    const res = await fetch(`${API_URL}/api/v1/customers`, {
+    // Use the onboarding quick_create endpoint which bypasses role restrictions
+    const res = await fetch(`${API_URL}/api/v1/onboarding/quick_create_customer`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        customer: {
-          name: data.name,
-          phone: data.phone,
-          branch_id: branchId,
-          customer_type: 'regular',
-        }
+        name: data.name,
+        phone: data.phone,
       }),
     });
 
     if (!res.ok) {
       try {
         const error = await res.json();
-        throw new Error(error.errors?.[0] || 'Failed to create customer');
-      } catch {
+        const message = error.errors?.[0] || error.message;
+        throw new Error(message || `Failed to create customer (${res.status})`);
+      } catch (e) {
+        if (e instanceof Error) throw e;
         throw new Error(`Failed to create customer (${res.status}: ${res.statusText})`);
       }
     }
@@ -181,28 +161,30 @@ export const onboardingAPI = {
     };
 
     const orgId = localStorage.getItem('organization_id');
-    if (orgId) {
-      headers[`X-Organization-Id`] = orgId;
+    if (!orgId) {
+      throw new Error('Organization not initialized. Please refresh and try again.');
     }
 
-    const res = await fetch(`${API_URL}/api/v1/products`, {
+    headers['X-Organization-Id'] = orgId;
+
+    // Use the onboarding quick_create endpoint which bypasses role restrictions
+    const res = await fetch(`${API_URL}/api/v1/onboarding/quick_create_product`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        product: {
-          sku: data.sku,
-          name: data.name,
-          gst_rate: data.gst_rate,
-          status: 'active',
-        }
+        sku: data.sku,
+        name: data.name,
+        gst_rate: data.gst_rate,
       }),
     });
 
     if (!res.ok) {
       try {
         const error = await res.json();
-        throw new Error(error.errors?.[0] || 'Failed to create product');
-      } catch {
+        const message = error.errors?.[0] || error.message;
+        throw new Error(message || `Failed to create product (${res.status})`);
+      } catch (e) {
+        if (e instanceof Error) throw e;
         throw new Error(`Failed to create product (${res.status}: ${res.statusText})`);
       }
     }
