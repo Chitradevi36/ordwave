@@ -185,7 +185,7 @@ class DeliveryEscalationActionJob
 
     notified_date = Date.parse(record.escalation_data['last_notification_sent_at'])
     notified_date == Date.current
-  rescue
+  rescue StandardError
     false
   end
 

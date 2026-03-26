@@ -72,4 +72,14 @@ Rails.application.configure do
 
   # Use synchronous job processing in development (no Redis needed)
   config.active_job.queue_adapter = :inline
+
+  # ── Bullet: detect N+1 queries ──────────────────────────────────────────
+  config.after_initialize do
+    Bullet.enable        = true
+    Bullet.alert         = false  # no JS alert pop-ups
+    Bullet.bullet_logger = true   # log/bullet.log
+    Bullet.console       = true   # browser console warnings
+    Bullet.rails_logger  = true   # Rails.logger output
+    Bullet.add_footer    = true   # footer badge in HTML responses
+  end
 end

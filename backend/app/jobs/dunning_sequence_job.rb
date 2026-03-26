@@ -7,7 +7,7 @@ class DunningSequenceJob
     Organization.where("dunning_config->>'enabled' = ?", 'true').find_each do |organization|
       process_organization(organization)
     end
-  rescue => error
+  rescue StandardError => error
     log_error("DunningSequenceJob failed", error)
     raise error # Sidekiq will retry
   end
@@ -21,7 +21,7 @@ class DunningSequenceJob
                 .find_each do |invoice|
       process_invoice(invoice, organization)
     end
-  rescue => error
+  rescue StandardError => error
     log_error("Error processing organization #{organization.id}", error)
   end
 
@@ -51,7 +51,7 @@ class DunningSequenceJob
 
     # Handle suspension action if configured
     handle_suspension_action(invoice, dunning_step, organization) if dunning_step == 'day_10'
-  rescue => error
+  rescue StandardError => error
     log_error("Error processing invoice #{invoice.id}", error)
   end
 
@@ -79,23 +79,30 @@ class DunningSequenceJob
   end
 
   def already_sent_today?(invoice, dunning_step)
-    attempts = invoice.dunning_attempts || {}
-    
+    attempts = invoice.dunning_attempts
+    # Schema default is [] (Array) but record_attempt writes Hash.
+    # Normalise to Hash to handle both legacy arrays and current format.
+    attempts = {} unless attempts.is_a?(Hash)
+    return false if attempts.empty?
+
     attempts.values.any? do |attempt|
       attempt.is_a?(Hash) &&
         attempt['type'] == dunning_step &&
         attempt['sent_at'].present? &&
-        Time.parse(attempt['sent_at']).date == Date.current
+        Time.parse(attempt['sent_at']).to_date == Date.current
     end
-  rescue => error
+  rescue StandardError => error
     log_error("Error checking sent status for invoice #{invoice.id}", error)
     true # Skip if we can't determine status
   end
 
   def exceeded_monthly_limit?(invoice, dunning_step)
     max_reminders = invoice.organization.dunning_config&.dig('max_reminders_per_month')&.to_i || 3
-    
-    attempts = invoice.dunning_attempts || {}
+
+    attempts = invoice.dunning_attempts
+    attempts = {} unless attempts.is_a?(Hash)
+    return false if attempts.empty?
+
     this_month = attempts.values.select do |attempt|
       next false unless attempt.is_a?(Hash)
       next false unless attempt['sent_at'].present?
@@ -105,7 +112,7 @@ class DunningSequenceJob
     end
 
     this_month.count >= max_reminders
-  rescue => error
+  rescue StandardError => error
     log_error("Error checking monthly limit for invoice #{invoice.id}", error)
     false
   end
@@ -123,7 +130,7 @@ class DunningSequenceJob
       # Wrap-around case: e.g., 10 PM to 8 AM
       current_hour >= quiet_start || current_hour < quiet_end
     end
-  rescue => error
+  rescue StandardError => error
     log_error("Error checking quiet hours", error)
     false # Send email if we can't determine quiet hours
   end
@@ -140,16 +147,18 @@ class DunningSequenceJob
     when 'day_10'
       DunningMailer.final_notice(invoice, organization, customer, days_overdue).deliver_later
     end
-  rescue => error
+  rescue StandardError => error
     log_error("Error sending dunning email for invoice #{invoice.id}, step #{dunning_step}", error)
     raise error # Let Sidekiq retry the entire job
   end
 
   def record_attempt(invoice, dunning_step)
-    attempts = invoice.dunning_attempts || {}
-    
+    attempts = invoice.dunning_attempts
+    # Normalise: schema default is [] but we always store as Hash.
+    attempts = {} unless attempts.is_a?(Hash)
+
     # Create a unique key for this attempt
-    attempt_key = "#{dunning_step}_#{Date.current.to_s}"
+    attempt_key = "#{dunning_step}_#{Date.current}"
     
     attempts[attempt_key] = {
       'day' => (Date.current - invoice.due_date).to_i,
@@ -160,7 +169,7 @@ class DunningSequenceJob
     }
     
     invoice.update_columns(dunning_attempts: attempts, updated_at: Time.current)
-  rescue => error
+  rescue StandardError => error
     log_error("Error recording dunning attempt for invoice #{invoice.id}", error)
     # Don't raise - we sent the email, just couldn't record it
   end
@@ -195,7 +204,7 @@ class DunningSequenceJob
         triggered_by: 'DunningSequenceJob'
       }
     )
-  rescue => error
+  rescue StandardError => error
     log_error("Error handling suspension for invoice #{invoice.id}", error)
     # Don't raise - we already sent the final notice
   end

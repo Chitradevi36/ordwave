@@ -10,6 +10,8 @@ export const onboardingAPI = {
     state?: string;
     gst_number?: string;
     contact_phone?: string;
+    pan?: string;
+    business_type?: string;
   }) => {
     const res = await fetch(`${API_URL}/api/v1/onboarding/create`, {
       method: 'POST',
@@ -122,7 +124,6 @@ export const onboardingAPI = {
     
     headers['X-Organization-Id'] = orgId;
 
-    // Use the onboarding quick_create endpoint which bypasses role restrictions
     const res = await fetch(`${API_URL}/api/v1/onboarding/quick_create_customer`, {
       method: 'POST',
       headers,
@@ -139,14 +140,19 @@ export const onboardingAPI = {
         throw new Error(message || `Failed to create customer (${res.status})`);
       } catch (e) {
         if (e instanceof Error) throw e;
-        throw new Error(`Failed to create customer (${res.status}: ${res.statusText})`);
+        const text = await res.text();
+        throw new Error(`Failed to create customer (${res.status}: ${res.statusText}) - ${text.substring(0, 100)}`);
       }
     }
 
     try {
-      return await res.json();
-    } catch {
-      return {};
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      // If response isn't JSON but status is ok, assume success
+      const text = await res.text();
+      console.warn('Non-JSON response from quick_create_customer:', text);
+      return { data: { id: null, message: 'Customer created' } };
     }
   },
 
@@ -167,7 +173,6 @@ export const onboardingAPI = {
 
     headers['X-Organization-Id'] = orgId;
 
-    // Use the onboarding quick_create endpoint which bypasses role restrictions
     const res = await fetch(`${API_URL}/api/v1/onboarding/quick_create_product`, {
       method: 'POST',
       headers,
@@ -185,14 +190,19 @@ export const onboardingAPI = {
         throw new Error(message || `Failed to create product (${res.status})`);
       } catch (e) {
         if (e instanceof Error) throw e;
-        throw new Error(`Failed to create product (${res.status}: ${res.statusText})`);
+        const text = await res.text();
+        throw new Error(`Failed to create product (${res.status}: ${res.statusText}) - ${text.substring(0, 100)}`);
       }
     }
 
     try {
-      return await res.json();
-    } catch {
-      return {};
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      // If response isn't JSON but status is ok, assume success
+      const text = await res.text();
+      console.warn('Non-JSON response from quick_create_product:', text);
+      return { data: { id: null, message: 'Product created' } };
     }
   },
 };

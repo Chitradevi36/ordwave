@@ -107,14 +107,20 @@ module Credit
       @outstanding ||= @account.current_balance.to_f
     end
 
+    # Projected outstanding AFTER the current order is accepted.
+    # This is the correct value to compare against the credit limit.
+    def projected_outstanding
+      @projected_outstanding ||= outstanding + @order_total
+    end
+
     def outstanding_pct
       return 0.0 if @account.credit_limit.to_f.zero?
-      (outstanding / @account.credit_limit.to_f) * 100
+      (projected_outstanding / @account.credit_limit.to_f) * 100
     end
 
     def outstanding_exceeds_margin?
       return false if @account.credit_limit.to_f.zero?
-      outstanding > @account.credit_limit.to_f * (1 + @policy.hard_block_margin_pct.to_f / 100)
+      projected_outstanding > @account.credit_limit.to_f * (1 + @policy.hard_block_margin_pct.to_f / 100)
     end
 
     def overdue_in_soft_hold_band?
@@ -137,7 +143,7 @@ module Credit
       {
         credit_limit:       @account.credit_limit,
         outstanding:        outstanding,
-        available:          [@account.credit_limit.to_f - outstanding, 0].max,
+        available:          [@account.credit_limit.to_f - projected_outstanding, 0].max,
         overdue_days:       overdue_days,
         overdue_bucket:     @account.overdue_bucket,
         outstanding_pct:    outstanding_pct.round(2),

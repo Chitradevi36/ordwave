@@ -506,7 +506,8 @@ module Api
       def signed_pdf_url(inv)
         Rails.application.routes.url_helpers
              .rails_blob_url(inv.pdf_document, expires_in: 1.hour, disposition: 'inline')
-      rescue
+      rescue StandardError => e
+        Rails.logger.warn("[SalesInvoicesController] signed_pdf_url error: #{e.message}")
         nil
       end
     end

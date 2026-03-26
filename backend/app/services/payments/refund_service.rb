@@ -70,46 +70,106 @@ module Payments
     end
 
     def refund_razorpay_payment(payment)
-      # TODO: Implement Razorpay refund API call
-      # 1. Call Razorpay refund endpoint with payment_id
-      # 2. Create refund record in system
-      # 3. Send customer notification
-      # 4. Create audit log
-      
+      refund_amount = calculate_refund_amount
+
+      unless payment.external_payment_id.present?
+        return failure("No Razorpay payment_id recorded for payment #{payment.payment_number}")
+      end
+
       begin
-        refund_amount = calculate_refund_amount
-
-        # Placeholder: In production, call Razorpay API here
-        # response = RazorpayClient.create_refund(
-        #   payment_id: payment.external_payment_id,
-        #   amount: (refund_amount * 100).to_i,
-        #   notes: { reason: @reason, order_id: @order.id }
-        # )
-
-        success(
-          refund_payment_id: "refund-#{Time.current.to_i}",
-          refund_amount: refund_amount
+        # Call Razorpay Refund API
+        razorpay_refund = ::Razorpay::Payment.new(payment.external_payment_id).create_refund(
+          amount: (refund_amount * 100).to_i, # Razorpay expects paise
+          notes:  {
+            reason:         @reason,
+            order_id:       @order.id,
+            order_number:   @order.order_number,
+            organization:   @organization.name,
+            initiated_at:   Time.current.iso8601
+          }
         )
-      rescue StandardError => error
-        failure("Razorpay refund failed: #{error.message}")
+
+        # Persist a refund payment record locally
+        refund_payment = @organization.payments.create!(
+          customer:              @order.customer,
+          amount:                refund_amount,
+          payment_mode:          'razorpay',
+          status:                'confirmed',
+          payment_type:          'refund',
+          payment_number:        "RFD-#{Time.current.strftime('%Y%m%d%H%M%S')}",
+          external_payment_id:   razorpay_refund.id,
+          received_date:         Date.current,
+          notes:                 "Razorpay refund for order #{@order.order_number}: #{@reason}"
+        )
+
+        # Recalculate credit after refund
+        if @order.customer.credit_account
+          RecalculateCreditAccountJob.perform_later(@order.customer.credit_account.id)
+        end
+
+        Rails.logger.info(
+          "[Payments::RefundService] Razorpay refund #{razorpay_refund.id} " \
+          "created for ₹#{refund_amount} on payment #{payment.payment_number}"
+        )
+
+        success(refund_payment_id: refund_payment.id, refund_amount: refund_amount)
+      rescue ::Razorpay::Error => e
+        Rails.logger.error("[Payments::RefundService] Razorpay API error: #{e.message}")
+        failure("Razorpay refund failed: #{e.message}")
       end
     end
 
     def refund_to_bank_account(payment)
-      # TODO: Implement bank transfer refund
-      # 1. Create reverse bank transfer record
-      # 2. Queue for payment (daily batch at 6 PM)
-      # 3. Mark as "refund_pending"
-      # 4. Notify customer
-      
-      failure("Bank refunds still in development - notify customer manually")
+      refund_amount = calculate_refund_amount
+
+      # Create a refund payment record marked as pending — finance team
+      # processes bank transfers in a daily batch.
+      refund_payment = @organization.payments.create!(
+        customer:         @order.customer,
+        amount:           refund_amount,
+        payment_mode:     payment.payment_mode,
+        status:           'refund_pending',
+        payment_type:     'refund',
+        payment_number:   "RFD-#{Time.current.strftime('%Y%m%d%H%M%S')}",
+        received_date:    Date.current,
+        notes:            "Bank transfer refund for order #{@order.order_number}: #{@reason}. " \
+                          "Original payment: #{payment.payment_number}"
+      )
+
+      # Recalculate credit
+      if @order.customer.credit_account
+        RecalculateCreditAccountJob.perform_later(@order.customer.credit_account.id)
+      end
+
+      Rails.logger.info(
+        "[Payments::RefundService] Bank refund record #{refund_payment.payment_number} " \
+        "created for ₹#{refund_amount} (pending batch transfer)"
+      )
+
+      success(refund_payment_id: refund_payment.id, refund_amount: refund_amount)
     end
 
     def mark_cash_refund(payment)
-      # Cash is physical, mark as "refund_pending"
-      # Daily reconciliation will account for it
-      
-      failure("Cash refunds still in development - notify customer manually")
+      refund_amount = calculate_refund_amount
+
+      refund_payment = @organization.payments.create!(
+        customer:         @order.customer,
+        amount:           refund_amount,
+        payment_mode:     'cash',
+        status:           'refund_pending',
+        payment_type:     'refund',
+        payment_number:   "RFD-#{Time.current.strftime('%Y%m%d%H%M%S')}",
+        received_date:    Date.current,
+        notes:            "Cash refund for order #{@order.order_number}: #{@reason}. " \
+                          "To be reconciled during daily cash handover."
+      )
+
+      Rails.logger.info(
+        "[Payments::RefundService] Cash refund record #{refund_payment.payment_number} " \
+        "created for ₹#{refund_amount} (pending cash reconciliation)"
+      )
+
+      success(refund_payment_id: refund_payment.id, refund_amount: refund_amount)
     end
 
     def calculate_refund_amount

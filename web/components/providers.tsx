@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import { OrgBranchProvider } from "@/lib/org-branch-context";
 import { UpgradeBannerListener } from "@/components/ui/upgrade-banner";
 import { usePageTracking } from "@/lib/analytics";
@@ -30,6 +31,12 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <OrgBranchProvider>
         <AnalyticsProvider>
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            toastOptions={{ className: "text-sm" }}
+          />
           <UpgradeBannerListener />
           {children}
         </AnalyticsProvider>

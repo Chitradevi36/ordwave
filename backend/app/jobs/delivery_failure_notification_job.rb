@@ -115,7 +115,7 @@ class DeliveryFailureNotificationJob
 
     notified_at = Time.parse(reschedule.notification_data['failure_notification_sent_at'])
     notified_at.to_date == Date.current
-  rescue
+  rescue StandardError
     false
   end
 

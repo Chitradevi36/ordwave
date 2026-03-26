@@ -101,12 +101,13 @@ module Api
 
       def generate_jwt(user)
         jti = SecureRandom.uuid
+        expiry_seconds = Devise::JWT.config.expiration_time || 4.hours.to_i
         payload = {
           sub:   user.id,
           aud:   'user',
           email: user.email,
           jti:   jti,
-          exp:   24.hours.from_now.to_i,
+          exp:   expiry_seconds.seconds.from_now.to_i,
           iat:   Time.current.to_i
         }
         JWT.encode(payload, jwt_secret, 'HS256')

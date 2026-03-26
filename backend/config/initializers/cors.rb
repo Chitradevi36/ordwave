@@ -24,7 +24,12 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
                      .map(&:strip)
                      .reject(&:empty?)
 
-    origins(*(default_origins + env_origins).uniq, /\Ahttp:\/\/localhost:\d+\z/)
+    allowed = (default_origins + env_origins).uniq
+    # Only allow arbitrary localhost ports in development/test.
+    # In production, only explicitly listed origins are permitted.
+    allowed << /\Ahttp:\/\/localhost:\d+\z/ if Rails.env.development? || Rails.env.test?
+
+    origins(*allowed)
 
     resource '*',
       headers: :any,
