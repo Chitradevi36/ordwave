@@ -1,65 +1,58 @@
-import useSWR from 'swr'
-import type { BankStatementImport, PaginatedResponse } from '@/types/bankReconciliation'
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? ''
-
-function authHeaders(contentType?: string): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('auth_token')
-  const orgId = localStorage.getItem('organization_id')
-  return {
-    Authorization: `Bearer ${token ?? ''}`,
-    ...(contentType ? { 'Content-Type': contentType } : {}),
-    ...(orgId ? { 'X-Organization-Id': orgId } : {}),
-  }
-}
-
-async function fetcher<T>(url: string): Promise<T> {
-  const res = await fetch(`${API}${url}`, { headers: authHeaders() })
-  if (!res.ok) throw new Error(`API error ${res.status}`)
-  return res.json()
-}
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../client";
+import { useOrgBranch } from "@/lib/org-branch-context";
+import type { BankStatementImport, PaginatedResponse } from "@/types/bankReconciliation";
 
 export function useBankStatementImports(params: { bank_account_id?: number; page?: number } = {}) {
-  const qs = new URLSearchParams(
-    Object.entries(params)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, String(v)])
-  ).toString()
-
-  return useSWR<PaginatedResponse<BankStatementImport>>(
-    `/api/v1/bank_statement_imports?${qs}`,
-    fetcher
-  )
+  const { orgId } = useOrgBranch();
+  return useQuery<PaginatedResponse<BankStatementImport>>({
+    queryKey: ["bank_statement_imports", params, orgId],
+    queryFn: async () => {
+      const qp: Record<string, string | number> = {};
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined) qp[k] = v as string | number;
+      });
+      const { data } = await apiClient.get<PaginatedResponse<BankStatementImport>>(
+        "/api/v1/bank_statement_imports",
+        { params: qp }
+      );
+      return data;
+    },
+    staleTime: 30_000,
+    enabled: !!orgId,
+  });
 }
 
 export function useBankStatementImport(id: number | null) {
-  return useSWR<{ data: BankStatementImport }>(
-    id ? `/api/v1/bank_statement_imports/${id}` : null,
-    fetcher
-  )
+  const { orgId } = useOrgBranch();
+  return useQuery<{ data: BankStatementImport }>({
+    queryKey: ["bank_statement_import", id, orgId],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: BankStatementImport }>(
+        `/api/v1/bank_statement_imports/${id}`
+      );
+      return data;
+    },
+    enabled: !!orgId && !!id,
+  });
 }
 
-export async function uploadBankStatement(
-  bankAccountId: number,
-  file: File
-): Promise<BankStatementImport> {
-  const form = new FormData()
-  form.append('file', file)
-  form.append('bank_account_id', String(bankAccountId))
-
-  // Note: do NOT set Content-Type here — browser sets multipart boundary automatically
-  const res = await fetch(`${API}/api/v1/bank_statement_imports`, {
-    method: 'POST',
-    headers: authHeaders(),   // includes Authorization + X-Organization-Id
-    body: form,
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(
-      (body as { errors?: string[] }).errors?.join(', ') ?? `Upload failed ${res.status}`
-    )
-  }
-  const json = await res.json()
-  return json.data ?? json
+export function useUploadBankStatement() {
+  const qc = useQueryClient();
+  return useMutation<BankStatementImport, Error, { bankAccountId: number; file: File }>({
+    mutationFn: async ({ bankAccountId, file }) => {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("bank_account_id", String(bankAccountId));
+      const { data } = await apiClient.post<{ data: BankStatementImport }>(
+        "/api/v1/bank_statement_imports",
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      return data.data ?? (data as unknown as BankStatementImport);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bank_statement_imports"] });
+    },
+  });
 }

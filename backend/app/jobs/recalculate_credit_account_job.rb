@@ -26,13 +26,13 @@ class RecalculateCreditAccountJob < ApplicationJob
     # Sum outstanding (issued + partially_paid)
     total_outstanding = invoices
                           .where(status: %w[issued partially_paid])
-                          .sum("total_amount - COALESCE(amount_paid, 0)")
+                          .sum("total_amount - COALESCE(paid_amount, 0)")
 
     # Overdue: outstanding invoices past their due_date
     overdue = invoices
                 .where(status: %w[issued partially_paid])
                 .where("due_date < ?", Date.current)
-                .sum("total_amount - COALESCE(amount_paid, 0)")
+                .sum("total_amount - COALESCE(paid_amount, 0)")
 
     account.update!(
       current_balance: total_outstanding,

@@ -38,6 +38,17 @@ module FEATURES
     false
   end
 
+  # ── Onboarding ───────────────────────────────────────────────────────────
+
+  def self.onboarding_reminder_enabled?(organization = nil)
+    if organization.present?
+      override = organization.settings&.dig('feature_flags', 'onboarding_reminder')
+      return override unless override.nil?
+    end
+    # Global default: enabled (sends friendly reminder 48h after onboarding)
+    true
+  end
+
   # ── Collections & Dunning ────────────────────────────────────────────────
 
   def self.dunning_sequence_enabled?(organization = nil)

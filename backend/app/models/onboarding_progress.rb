@@ -18,6 +18,7 @@ class OnboardingProgress < ApplicationRecord
   validates :organization_id, uniqueness: { scope: :user_id }
 
   before_create :initialize_steps
+  after_save :handle_completion, if: :completed_just_now?
 
   def mark_step_complete!(step_name)
     raise ArgumentError, "Invalid step: #{step_name}" unless CHECKLIST_STEPS.include?(step_name.to_s)
@@ -53,5 +54,19 @@ class OnboardingProgress < ApplicationRecord
       self.completed = true
       self.completed_at = Time.current
     end
+  end
+
+  def completed_just_now?
+    completed? && completed_changed? && saved_changes['completed']&.first == false
+  end
+
+  def handle_completion
+    # Send congratulations email immediately
+    OnboardingMailer.onboarding_complete(user, organization).deliver_later
+
+    # Schedule reminder email for 48 hours later if they haven't added an order
+    SendOnboardingReminderJob.set(wait: 48.hours).perform_later(organization.id)
+
+    Rails.logger.info("[OnboardingProgress] Onboarding complete for org #{organization.id}. Reminder scheduled for 48 hours.")
   end
 end

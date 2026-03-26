@@ -81,7 +81,7 @@ module Payments
         confidence: confidence,
         breakdown: breakdown_hash
       })
-    rescue => e
+    rescue StandardError => e
       failure("Error calculating confidence: #{e.message}")
     end
 
@@ -101,7 +101,8 @@ module Payments
       else
         0
       end
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] score_amount_match error: #{e.message}")
       0
     end
 
@@ -120,7 +121,8 @@ module Payments
       else
         0
       end
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] score_date_match error: #{e.message}")
       0
     end
 
@@ -143,7 +145,8 @@ module Payments
       else
         0
       end
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] score_customer_match error: #{e.message}")
       0
     end
 
@@ -158,7 +161,8 @@ module Payments
       match_found = references.any? { |ref| @bank_transaction.reference.to_s.upcase.include?(ref.to_s.upcase) }
 
       match_found ? @configuration['reference_weight'].to_i : 0
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] score_reference_match error: #{e.message}")
       0
     end
 
@@ -238,7 +242,8 @@ module Payments
         'suggestion_threshold' => 85,
         'rejection_window_minutes' => 60
       }
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] load_default_configuration error: #{e.message}")
       {
         'amount_tolerance_pct' => 2.0,
         'date_tolerance_days' => 3,
@@ -261,7 +266,8 @@ module Payments
       else
         "Difference: ₹#{amount_diff.round(2)} (#{pct_diff}%)"
       end
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] amount_description error: #{e.message}")
       "Amount analysis unavailable"
     end
 
@@ -276,7 +282,8 @@ module Payments
       else
         "±#{date_diff} days"
       end
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] date_description error: #{e.message}")
       "Date analysis unavailable"
     end
 
@@ -288,7 +295,8 @@ module Payments
       
       pct = (similarity * 100).round(0)
       "#{pct}% fuzzy match"
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] customer_description error: #{e.message}")
       "Customer analysis unavailable"
     end
 
@@ -304,7 +312,8 @@ module Payments
       else
         "No reference match"
       end
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[ConfidenceScorerService] reference_description error: #{e.message}")
       "Reference analysis unavailable"
     end
   end

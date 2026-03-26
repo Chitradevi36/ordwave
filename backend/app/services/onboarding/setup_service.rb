@@ -27,8 +27,8 @@ module Onboarding
           # Update first branch details
           update_first_branch if @branch_details.present?
           
-          # Store operating model in org metadata (if we add jsonb field later)
-          # For now, it's just tracked in the workflow
+          # Store business type and operating model in org settings
+          update_organization_settings if @business_type.present? || @operating_model.present?
           
           Result.new(success?: true, organization: @organization.reload, errors: [])
         end
@@ -68,6 +68,16 @@ module Onboarding
 
       unless branch.update(branch_attrs)
         raise "Failed to update branch: #{branch.errors.full_messages.join(', ')}"
+      end
+    end
+
+    def update_organization_settings
+      new_settings = @organization.settings || {}
+      new_settings['business_type'] = @business_type if @business_type.present?
+      new_settings['operating_model'] = @operating_model if @operating_model.present?
+
+      unless @organization.update(settings: new_settings)
+        raise "Failed to update organization settings: #{@organization.errors.full_messages.join(', ')}"
       end
     end
   end

@@ -36,7 +36,7 @@ export function ReviewDrawer({ txn, onClose, onSaved }: Props) {
   const retryMut    = useRetryMatch(txn.id)
 
   const isBusy =
-    confirmMut.isMutating || advanceMut.isMutating || ignoreMut.isMutating || retryMut.isMutating
+    confirmMut.isPending || advanceMut.isPending || ignoreMut.isPending || retryMut.isPending
 
   function getErrorMsg(err: unknown) {
     if (err instanceof Error) return err.message
@@ -44,22 +44,22 @@ export function ReviewDrawer({ txn, onClose, onSaved }: Props) {
   }
 
   async function handleConfirm() {
-    await confirmMut.trigger({ allocations })
+    await confirmMut.mutateAsync({ allocations })
     onSaved()
   }
 
   async function handleAdvance() {
-    await advanceMut.trigger({ customer_id: Number(customerId) })
+    await advanceMut.mutateAsync({ customer_id: Number(customerId) })
     onSaved()
   }
 
   async function handleIgnore() {
-    await ignoreMut.trigger({})
+    await ignoreMut.mutateAsync()
     onSaved()
   }
 
   async function handleRetry() {
-    await retryMut.trigger({})
+    await retryMut.mutateAsync()
     onSaved()
   }
 

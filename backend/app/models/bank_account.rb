@@ -10,6 +10,9 @@ class BankAccount < ApplicationRecord
   has_many :bank_statement_imports, dependent: :destroy
   has_many :bank_transactions,      dependent: :destroy
 
+  # ── Encrypted attributes (Rails 7 Active Record Encryption) ──────────────
+  encrypts :account_number_full, deterministic: false
+
   # ── Validations ──────────────────────────────────────────────────────────
   validates :bank_name,             presence: true
   validates :account_name,          presence: true

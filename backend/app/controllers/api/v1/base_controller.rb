@@ -80,8 +80,22 @@ module Api
       def resolve_organization
         org_id = request.headers['X-Organization-Id']
         return nil if org_id.blank?
+        return nil unless current_user
 
-        Organization.active.find_by(id: org_id)
+        org = Organization.active.find_by(id: org_id)
+        return nil unless org
+
+        # CRITICAL: Verify the current user actually has a membership in this org.
+        # Without this check, any authenticated user could access any org's data
+        # by spoofing the X-Organization-Id header.
+        unless current_user.memberships.exists?(organization: org)
+          Rails.logger.warn(
+            "[SECURITY] User##{current_user.id} attempted to access Organization##{org.id} without membership"
+          )
+          return nil
+        end
+
+        org
       end
 
       def current_membership

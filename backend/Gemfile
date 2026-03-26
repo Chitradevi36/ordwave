@@ -118,11 +118,15 @@ end
 group :test do
   gem 'shoulda-matchers', '~> 6.0'
   gem 'database_cleaner-active_record'
+  gem 'webmock', '~> 3.23'         # Prevent real HTTP calls in tests (Razorpay, Twilio, FCM, etc.)
+  gem 'simplecov', '~> 0.22', require: false  # Code coverage reporting
 end
 
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem "spring"
   gem 'letter_opener', '~> 1.10'
+  gem 'bullet', '~> 7.1'            # Detect N+1 queries in development
+  gem 'brakeman', '~> 6.1', require: false  # Static security analysis
 end
 

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+  </head>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #f9fafb; margin: 0; padding: 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; padding: 40px 0;">
+      <tr>
+        <td align="center">
+          <table width="480" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; padding: 40px;">
+            <tr>
+              <td>
+                <!-- Logo / Brand -->
+                <p style="margin: 0 0 24px; font-size: 16px; font-weight: 700; color: #059669;">
+                  Orderlane
+                </p>
+
+                <!-- Emoji + Greeting -->
+                <div style="margin: 0 0 24px;">
+                  <p style="margin: 0 0 4px; font-size: 32px;">📦</p>
+                  <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 600; color: #111827;">
+                    Ready for your first order?
+                  </h2>
+                  <p style="margin: 0; font-size: 14px; color: #6b7280;">
+                    Hi <%= @first_name %>,
+                  </p>
+                </div>
+
+                <!-- Main Content -->
+                <p style="margin: 0 0 20px; font-size: 15px; color: #374151; line-height: 1.5;">
+                  It's been 48 hours since you set up <strong><%= @organization.name %></strong> on Orderlane! 🚀
+                </p>
+
+                <p style="margin: 0 0 20px; font-size: 15px; color: #374151; line-height: 1.5;">
+                  Your organization is all set up and ready to go, but we noticed you haven't added your first order yet. This is where the real magic begins!
+                </p>
+
+                <!-- What to do section -->
+                <div style="background: #f3faf8; border-left: 4px solid #059669; padding: 16px; margin: 0 0 24px; border-radius: 4px;">
+                  <p style="margin: 0 0 12px; font-size: 13px; font-weight: 600; color: #059669; text-transform: uppercase;">
+                    Next Steps
+                  </p>
+                  <ol style="margin: 0; padding-left: 20px; color: #374151;">
+                    <li style="margin: 0 0 8px; font-size: 14px;">Add your first retailer/customer</li>
+                    <li style="margin: 0 0 8px; font-size: 14px;">Create your product catalog</li>
+                    <li style="margin: 0 0 0; font-size: 14px;">Create and send your first sales order</li>
+                  </ol>
+                </div>
+
+                <!-- Benefits -->
+                <p style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #111827; text-transform: uppercase;">
+                  Once you create that first order, you'll unlock:
+                </p>
+                <ul style="margin: 0 0 24px; padding-left: 20px; color: #374151;">
+                  <li style="margin: 0 0 6px; font-size: 14px;">✓ Real-time inventory tracking</li>
+                  <li style="margin: 0 0 6px; font-size: 14px;">✓ Automatic invoice generation</li>
+                  <li style="margin: 0 0 6px; font-size: 14px;">✓ Payment tracking & reminders</li>
+                  <li style="margin: 0 0 6px; font-size: 14px;">✓ Performance analytics & insights</li>
+                </ul>
+
+                <!-- CTA Button -->
+                <table cellpadding="0" cellspacing="0" style="margin: 0 0 24px;">
+                  <tr>
+                    <td>
+                      <a href="<%= @dashboard_link %>" style="display: inline-block; background: #059669; color: #ffffff; padding: 12px 32px; border-radius: 6px; font-weight: 600; font-size: 15px; text-decoration: none; text-align: center;">
+                        Go to Dashboard →
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Support -->
+                <p style="margin: 0; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                  Have questions? Reply to this email or contact our support team at <a href="mailto:support@orderlane.pro" style="color: #059669; text-decoration: none;">support@orderlane.pro</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

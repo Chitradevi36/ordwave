@@ -353618,3 +353618,17 @@ Shutting down background worker
 [Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
 Initializing the Sentry background worker with 8 threads
 [TwilioClient] Credentials not configured. SMS sending disabled.
+[dotenv] Set [36mDATABASE_URL[0m, [36mFRONTEND_URL[0m, [36mJWT_SECRET[0m, [36mRAILS_ENV[0m, [36mREDIS_URL[0m
+[dotenv] Loaded [33m.env[0m
+[dotenv] Loaded [33m.env[0m
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+Shutting down background worker
+[dotenv] Set [36mDATABASE_URL[0m, [36mFRONTEND_URL[0m, [36mJWT_SECRET[0m, [36mRAILS_ENV[0m, [36mREDIS_URL[0m
+[dotenv] Loaded [33m.env[0m
+[dotenv] Loaded [33m.env[0m
+[Sentry::MetricEventBuffer] Initialized buffer with max_items=1000, flush_interval=5s
+Initializing the Sentry background worker with 8 threads
+[TwilioClient] Credentials not configured. SMS sending disabled.
+Shutting down background worker

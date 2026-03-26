@@ -16,7 +16,9 @@ module Api
           city: params[:city],
           state: params[:state],
           gst_number: params[:gst_number],
-          contact_phone: params[:contact_phone]
+          contact_phone: params[:contact_phone],
+          pan: params[:pan],
+          business_type: params[:business_type]
         ).call
 
         if result.success?
@@ -89,13 +91,21 @@ module Api
 
       def quick_create_customer
         # Bypass role restrictions during onboarding
+        # Get the primary branch for this organization
+        branch = current_organization.branches.first
+        unless branch
+          render_errors(['No branch found. Please complete organization setup first.'], status: :unprocessable_entity)
+          return
+        end
+
         result = Customers::CreateCustomerService.new(
           params:       {
             name: params[:name],
             phone: params[:phone],
             customer_type: 'regular'
           },
-          organization: current_organization
+          organization: current_organization,
+          branch_id:    branch.id
         ).call
 
         if result.success?

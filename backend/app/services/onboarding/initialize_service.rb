@@ -2,7 +2,7 @@ module Onboarding
   class InitializeService
     Result = Struct.new(:success?, :organization, :membership, :token, :errors, keyword_init: true)
 
-    def initialize(user:, org_name:, branch_name:, branch_code:, city: nil, state: nil, gst_number: nil, contact_phone: nil)
+    def initialize(user:, org_name:, branch_name:, branch_code:, city: nil, state: nil, gst_number: nil, contact_phone: nil, pan: nil, business_type: nil)
       @user = user
       @org_name = org_name
       @branch_name = branch_name
@@ -11,6 +11,8 @@ module Onboarding
       @state = state
       @gst_number = gst_number
       @contact_phone = contact_phone
+      @pan = pan
+      @business_type = business_type
     end
 
     def call
@@ -40,9 +42,11 @@ module Onboarding
             city:          @city,
             state:         @state,
             gst_number:    @gst_number,
+            pan:           @pan,
             contact_email: @user.email,
             contact_phone: @contact_phone,
-            active:        true
+            active:        true,
+            settings:      { business_type: @business_type }.compact
           )
 
           # Create first branch

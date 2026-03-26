@@ -316,7 +316,8 @@ module Payments
         'customer_fuzzy_minimum' => 0.80,
         'reference_weight' => 15
       }
-    rescue
+    rescue StandardError => e
+      Rails.logger.warn("[PaymentAutoPostService] load_configuration error: #{e.message}")
       {
         'auto_post_threshold' => 95,
         'suggestion_threshold' => 85,

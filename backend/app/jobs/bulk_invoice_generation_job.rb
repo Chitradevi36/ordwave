@@ -19,8 +19,10 @@
 class BulkInvoiceGenerationJob < ApplicationJob
   queue_as :invoicing
 
-  # Retry on transient errors but don't discard to avoid losing tracking record
-  retry_on StandardError, wait: :polynomially_longer, attempts: 3
+  # Do NOT retry the entire job — each order is processed independently with
+  # its own error handling inside the loop. Retrying the whole job risks
+  # creating duplicate invoices for already-processed orders.
+  discard_on StandardError
 
   def perform(organization_id:, order_ids:, user_id:, session_id:)
     org   = Organization.find(organization_id)

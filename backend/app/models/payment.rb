@@ -146,9 +146,9 @@ class Payment < ApplicationRecord
         status:  'paid'
       )
 
-      # Cascade: if all invoice lines paid, mark order as paid
+      # Cascade: if all invoices paid, mark order as paid
       if invoice.sales_order.present?
-        if invoice.sales_order.invoices.all? { |inv| inv.paid_at.present? }
+        if invoice.sales_order.sales_invoices.all? { |inv| inv.paid_at.present? }
           invoice.sales_order.update!(status: 'paid')
         end
       end

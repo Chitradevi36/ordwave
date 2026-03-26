@@ -176,6 +176,11 @@ module Payments
         invoice   = row[:invoice]
         allocated = row[:allocated]
 
+        # Lock the invoice row to prevent concurrent payment confirmations
+        # from double-allocating to the same invoice.
+        invoice.lock!
+        invoice.reload
+
         PaymentAllocation.create!(
           payment:          @payment,
           sales_invoice:    invoice,

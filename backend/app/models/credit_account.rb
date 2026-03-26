@@ -22,6 +22,8 @@ class CreditAccount < ApplicationRecord
   validates :current_balance,  numericality: true
   validates :available_credit, numericality: true
   validates :overdue_amount,   numericality: { greater_than_or_equal_to: 0 }
+  validates :customer_id, uniqueness: { scope: :organization_id,
+                                        message: "already has a credit account in this organization" }
 
   def credit_available?
     available_credit > 0

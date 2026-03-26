@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useBankStatementImports, uploadBankStatement } from '@/lib/api/hooks/useBankStatementImports'
+import { useBankStatementImports, useUploadBankStatement } from '@/lib/api/hooks/useBankStatementImports'
 import { useBankAccounts } from '@/lib/api/hooks/useBankAccounts'
 import type { BankStatementImport } from '@/types/bankReconciliation'
 import { Button } from '@/components/ui/button'
@@ -37,15 +37,16 @@ export function ImportScreen({ onClose, onImported }: Props) {
   const effectiveAccountId =
     selectedAccountId ?? (accounts.length > 0 ? accounts[0].id : null)
 
-  const { data, isLoading, mutate } = useBankStatementImports(
+  const { data, isLoading } = useBankStatementImports(
     effectiveAccountId ? { bank_account_id: effectiveAccountId, page: 1 } : {}
   )
 
   const imports = data?.data ?? []
 
+  const uploadMutation = useUploadBankStatement()
+
   const fileRef                = useRef<HTMLInputElement>(null)
   const [dragging, setDragging]       = useState(false)
-  const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
   async function handleFile(file: File | undefined) {
@@ -59,15 +60,11 @@ export function ImportScreen({ onClose, onImported }: Props) {
       return
     }
     setUploadError(null)
-    setUploading(true)
     try {
-      await uploadBankStatement(effectiveAccountId, file)
-      await mutate()
+      await uploadMutation.mutateAsync({ bankAccountId: effectiveAccountId, file })
       onImported()
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
-    } finally {
-      setUploading(false)
     }
   }
 
@@ -127,7 +124,7 @@ export function ImportScreen({ onClose, onImported }: Props) {
                 d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
             <p className="text-sm font-medium text-text-secondary">
-              {uploading ? 'Uploading…' : 'Drop file here or click to browse'}
+              {uploadMutation.isPending ? 'Uploading…' : 'Drop file here or click to browse'}
             </p>
             <p className="mt-1 text-xs text-text-secondary">
               CSV, XLSX, or text-based PDF · HDFC, ICICI, Axis, SBI formats supported

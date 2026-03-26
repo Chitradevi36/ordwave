@@ -3,6 +3,14 @@ require_relative '../config/environment'
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'rspec/rails'
 require 'factory_bot_rails'
+require 'webmock/rspec'
+
+# Auto-require all files under spec/support/
+Dir[Rails.root.join('spec', 'support', '**', '*.rb')].each { |f| require f }
+
+# Block all real HTTP connections in tests. External services (Razorpay, Twilio,
+# Google Maps, FCM, Sentry) must be stubbed explicitly.
+WebMock.disable_net_connect!(allow_localhost: true)
 
 begin
   ActiveRecord::Migration.maintain_test_schema!
@@ -17,6 +25,8 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
 
   config.include FactoryBot::Syntax::Methods
+  config.include AuthHelpers, type: :request
+  config.include ApiHelpers,  type: :request
 
   Shoulda::Matchers.configure do |matchers_config|
     matchers_config.integrate do |with|

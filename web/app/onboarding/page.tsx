@@ -267,6 +267,8 @@ export default function OnboardingWizardPage() {
           state: formData.state,
           gst_number: formData.gstin,
           contact_phone: user.phone || '',
+          pan: formData.pan || undefined,
+          business_type: formData.businessType || undefined,
         });
         if (!initResult.data?.organization?.id) {
           alert('Failed to create organization');

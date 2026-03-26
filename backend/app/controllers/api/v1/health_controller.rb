@@ -60,7 +60,7 @@ module Api
         stats = Sidekiq::Stats.new
         workers = Sidekiq::Workers.new.count
         "running (#{workers} worker#{workers == 1 ? '' : 's'}, #{stats.enqueued} enqueued)"
-      rescue
+      rescue StandardError
         "running"
       end
 
