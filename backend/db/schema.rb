@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
@@ -511,6 +511,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
     t.boolean "watchlist", default: false, null: false
     t.string "overdue_bucket_cached"
     t.index ["branch_id"], name: "index_credit_accounts_on_branch_id"
+    t.index ["customer_id", "organization_id"], name: "idx_credit_accounts_customer_org_unique", unique: true
     t.index ["customer_id"], name: "index_credit_accounts_on_customer_id"
     t.index ["organization_id", "customer_id"], name: "idx_credit_accounts_overdue", where: "(current_balance > (0)::numeric)"
     t.index ["organization_id"], name: "index_credit_accounts_on_organization_id"
@@ -1815,9 +1816,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
     t.decimal "cess_rate", precision: 5, scale: 2, default: "0.0"
     t.decimal "cess_amount", precision: 14, scale: 2, default: "0.0"
     t.index ["product_id"], name: "idx_sil_product_id"
-    t.index ["product_id"], name: "index_sales_invoice_lines_on_product_id"
     t.index ["sales_invoice_id"], name: "idx_sil_invoice_id"
-    t.index ["sales_invoice_id"], name: "index_sales_invoice_lines_on_sales_invoice_id"
     t.index ["source_sales_order_line_id"], name: "idx_sil_order_line_id"
     t.index ["source_trip_stop_id"], name: "idx_sil_stop_id"
   end
@@ -1858,7 +1857,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
     t.string "einvoice_status", default: "not_required"
     t.text "einvoice_error"
     t.datetime "paid_at"
-    t.jsonb "dunning_attempts", default: [], null: false
+    t.jsonb "dunning_attempts", default: {}, null: false
     t.index ["branch_id"], name: "index_sales_invoices_on_branch_id"
     t.index ["created_by_id"], name: "index_sales_invoices_on_created_by_id"
     t.index ["customer_id", "status"], name: "idx_sales_invoices_customer_status"
@@ -1903,8 +1902,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
     t.string "hsn_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "delivered_qty", default: 0, null: false
-    t.integer "returned_qty", default: 0, null: false
+    t.decimal "delivered_qty", precision: 14, scale: 3, default: "0.0", null: false
+    t.decimal "returned_qty", precision: 14, scale: 3, default: "0.0", null: false
     t.decimal "invoiced_qty", precision: 14, scale: 3, default: "0.0", null: false
     t.decimal "scheme_discount_pct", precision: 5, scale: 2, default: "0.0"
     t.jsonb "scheme_tags", default: []
@@ -1927,7 +1926,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
     t.string "credit_decision"
     t.jsonb "credit_snapshot", default: {}
     t.jsonb "credit_reasons", default: []
-    t.decimal "total_amount", precision: 14, scale: 2, default: "0.0"
+    t.decimal "total_amount", precision: 14, scale: 2, default: "0.0", null: false
     t.decimal "discount_amount", precision: 14, scale: 2, default: "0.0"
     t.datetime "submitted_at"
     t.datetime "approved_at"
@@ -2327,8 +2326,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
     t.string "plan", default: "starter", null: false
+    t.string "oauth_provider", comment: "OAuth provider (google, microsoft, apple, etc)"
+    t.string "oauth_uid", comment: "Unique identifier from OAuth provider"
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["oauth_provider", "oauth_uid"], name: "idx_users_oauth_provider_uid", unique: true, where: "(oauth_provider IS NOT NULL)"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
@@ -2510,6 +2512,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
   add_foreign_key "delivery_proofs", "trip_stops"
   add_foreign_key "delivery_proofs", "users", column: "overridden_by_id"
   add_foreign_key "delivery_rejections", "products"
+  add_foreign_key "delivery_rejections", "return_requests"
   add_foreign_key "delivery_rejections", "sales_orders"
   add_foreign_key "delivery_rejections", "trip_stops"
   add_foreign_key "delivery_rejections", "users", column: "rejected_by_id"
@@ -2563,6 +2566,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
   add_foreign_key "inventory_reservations", "branches"
   add_foreign_key "inventory_reservations", "organizations"
   add_foreign_key "inventory_reservations", "products"
+  add_foreign_key "inventory_reservations", "sales_order_lines"
   add_foreign_key "inventory_reservations", "sales_orders"
   add_foreign_key "invitations", "branches"
   add_foreign_key "invitations", "organizations"
@@ -2653,6 +2657,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
   add_foreign_key "sales_order_freebies", "products"
   add_foreign_key "sales_order_freebies", "sales_orders"
   add_foreign_key "sales_order_freebies", "schemes"
+  add_foreign_key "sales_order_lines", "price_lists"
   add_foreign_key "sales_order_lines", "products"
   add_foreign_key "sales_order_lines", "sales_orders"
   add_foreign_key "sales_orders", "branches"
@@ -2674,6 +2679,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_24_000001) do
   add_foreign_key "stock_movements", "branches"
   add_foreign_key "stock_movements", "organizations"
   add_foreign_key "stock_movements", "products"
+  add_foreign_key "stock_movements", "sales_order_lines", column: "reference_line_id"
+  add_foreign_key "stock_movements", "users", column: "created_by_id"
   add_foreign_key "stock_transfer_lines", "products"
   add_foreign_key "stock_transfer_lines", "stock_transfers"
   add_foreign_key "stock_transfers", "branches", column: "destination_branch_id"

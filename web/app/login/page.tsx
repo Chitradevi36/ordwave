@@ -9,19 +9,24 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { API_URL } from "@/lib/api/client";
+import GoogleAuthSection from './google-auth-section';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/dashboard';
   const [email, setEmail] = useState('');
-
-  useEffect(() => {
-    trackAuthEvent(ANALYTICS_EVENTS.LOGIN_PAGE_VIEWED);
-  }, []);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      trackAuthEvent(ANALYTICS_EVENTS.LOGIN_PAGE_VIEWED);
+    } catch (e) {
+      console.warn('Analytics not available');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +89,9 @@ export default function LoginPage() {
                 {error}
               </Alert>
             )}
+
+            {/* Google OAuth Section */}
+            <GoogleAuthSection />
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">

@@ -25,9 +25,10 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       # API Auth (JWT)
-      post   'auth/login',   to: 'auth#login'
-      delete 'auth/logout',  to: 'auth#logout'
-      post   'auth/refresh', to: 'auth#refresh'
+      post   'auth/login',         to: 'auth#login'
+      post   'auth/google_login',  to: 'auth#google_login'
+      delete 'auth/logout',        to: 'auth#logout'
+      post   'auth/refresh',       to: 'auth#refresh'
 
       # Signup flow
       post 'signup/initiate',     to: 'signup#initiate'

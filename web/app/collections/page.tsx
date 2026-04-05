@@ -125,7 +125,7 @@ export default function CollectionsPage() {
   const [showImport, setShowImport]       = useState(false);
 
   const txnStatusParam = TXN_TABS.find((t) => t.key === activeTxnTab)?.status;
-  const { data: txnData, isLoading: txnLoading, mutate: txnMutate } = useBankTransactions({
+  const { data: txnData, isLoading: txnLoading, refetch: txnRefetch } = useBankTransactions({
     status: txnStatusParam,
     page:   txnPage,
     per_page: 25,
@@ -490,13 +490,13 @@ export default function CollectionsPage() {
         <ReviewDrawer
           txn={selectedTxn}
           onClose={() => setSelectedTxn(null)}
-          onSaved={() => { setSelectedTxn(null); txnMutate(); }}
+          onSaved={() => { setSelectedTxn(null); txnRefetch(); }}
         />
       )}
       {showImport && (
         <ImportScreen
           onClose={() => setShowImport(false)}
-          onImported={() => { setShowImport(false); txnMutate(); }}
+          onImported={() => { setShowImport(false); txnRefetch(); }}
         />
       )}
     </>

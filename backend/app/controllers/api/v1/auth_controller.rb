@@ -58,6 +58,60 @@ module Api
         head :no_content
       end
 
+      def google_login
+        # Receive Google ID token from frontend
+        # Verify token and authenticate/create user
+        id_token = params[:id_token] || params.dig(:auth, :id_token)
+        
+        unless id_token.present?
+          return render json: { errors: ['Google ID token required'] }, status: :bad_request
+        end
+
+        begin
+          # Verify Google token and extract user data
+          oauth_data = GoogleOauth::TokenVerifyService.call(id_token: id_token)
+          
+          # Find or link user by OAuth credentials
+          user = User.find_or_create_from_oauth(
+            provider: 'google',
+            uid: oauth_data[:sub],
+            email: oauth_data[:email],
+            name: oauth_data[:name]
+          )
+
+          unless user
+            return render json: { 
+              errors: ['User not found. Please ask an administrator to add you to the system.'],
+              hint: 'oauth_user_not_found'
+            }, status: :unauthorized
+          end
+
+          unless user.active? && !user.deleted?
+            return render json: { errors: ['User account is inactive'] }, status: :forbidden
+          end
+
+          # Generate JWT
+          token = generate_jwt(user)
+          
+          # Update sign-in tracking
+          user.update_tracked_fields!(request)
+
+          render json: {
+            data: {
+              token: token,
+              user: serialize_user(user)
+            }
+          }, status: :ok
+
+        rescue GoogleOauth::TokenInvalidError => e
+          Rails.logger.warn("Google OAuth login failed: #{e.message}")
+          render json: { errors: ['Invalid Google token'] }, status: :unauthorized
+        rescue StandardError => e
+          Rails.logger.error("Google OAuth login error: #{e.class} #{e.message}")
+          render json: { errors: ['Authentication failed'] }, status: :internal_server_error
+        end
+      end
+
       def refresh
         token = extract_token
         unless token

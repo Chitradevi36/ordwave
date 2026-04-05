@@ -23,9 +23,63 @@ class User < ApplicationRecord
   # Scopes
   scope :active,      -> { where(active: true, deleted_at: nil) }
   scope :not_deleted, -> { where(deleted_at: nil) }
+  scope :find_by_oauth, ->(provider, uid) { find_by(oauth_provider: provider, oauth_uid: uid) }
 
   # Normalizations
   before_validation { self.email = email.to_s.downcase.strip }
+
+  # Class method to find or create user from OAuth provider
+  # Auto-creates new users on first OAuth login (v2+)
+  # For existing users without OAuth, links their email to OAuth credentials
+  def self.find_or_create_from_oauth(provider:, uid:, email:, name:)
+    # First try to find by OAuth credentials
+    user = find_by(oauth_provider: provider, oauth_uid: uid)
+    return user if user.present?
+
+    # If no OAuth user found, check if email exists
+    # If email exists, link the OAuth credentials
+    user = find_by(email: email&.downcase&.strip)
+    if user.present?
+      user.update!(oauth_provider: provider, oauth_uid: uid)
+      return user
+    end
+
+    # Auto-create new user from OAuth provider
+    # Split name into first_name and last_name
+    first_name, last_name = split_name(name)
+    
+    create!(
+      email: email&.downcase&.strip,
+      first_name: first_name,
+      last_name: last_name,
+      oauth_provider: provider,
+      oauth_uid: uid,
+      active: true,
+      plan: 'free', # Default plan for new OAuth users
+      phone: nil,   # Optional, not from OAuth
+      password: SecureRandom.hex(16),
+      password_confirmation: SecureRandom.hex(16)
+    )
+  rescue ActiveRecord::RecordInvalid => e
+    # Handle edge case: email was created between check and create
+    user = find_by(email: email&.downcase&.strip)
+    return user if user.present?
+    raise e
+  end
+
+  # Helper to split full name into first and last name
+  # Handles various formats: "John Doe", "John", "John M Doe", etc.
+  private_class_method def self.split_name(full_name)
+    parts = full_name&.strip&.split(/\s+/) || []
+    case parts.length
+    when 0
+      ['User', 'OAuth']
+    when 1
+      [parts[0], '']
+    else
+      [parts[0], parts.drop(1).join(' ')]
+    end
+  end
 
   def full_name
     "#{first_name} #{last_name}".strip

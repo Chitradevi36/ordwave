@@ -42,6 +42,7 @@ gem 'rack-cors'
 # Auth
 gem 'devise', '~> 4.9'
 gem 'devise-jwt', '~> 0.11'
+gem 'google-auth-library-ruby', '~> 9001.0'  # Google OAuth token verification
 
 # Authorization
 gem 'pundit', '~> 2.3'
