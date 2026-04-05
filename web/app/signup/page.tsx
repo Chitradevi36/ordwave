@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Mail, Lock, User, Check } from 'lucide-react';
 import { API_URL } from "@/lib/api/client";
+import GoogleAuthSection from '@/app/login/google-auth-section';
 
 type Step = 'email' | 'otp' | 'password' | 'profile';
 
@@ -296,6 +297,9 @@ export default function SignupPage() {
                   We'll send you a verification code
                 </p>
               </div>
+
+              {/* Google OAuth Section */}
+              <GoogleAuthSection />
 
               <div>
                 <Input
