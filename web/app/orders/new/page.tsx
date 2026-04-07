@@ -356,14 +356,34 @@ export default function NewOrderPage() {
   }, [token, orgId]);
 
   const selectProduct = (lineKey: string, product: ProductOption) => {
-    setLines(prev => prev.map(l =>
-      l._key === lineKey
-        ? { ...l, product, productQuery: `${product.sku} — ${product.name}`, productOpen: false }
-        : l
-    ));
-    markDirty();
-    const line = lines.find(l => l._key === lineKey);
-    resolvePrice(lineKey, product.id, line?.qty ?? "1");
+    // Check if this product already exists in any other line
+    const existingLine = lines.find(l => l.product?.id === product.id && l._key !== lineKey);
+    
+    if (existingLine) {
+      // Product already exists in another line - merge quantities
+      const currentLineQty = parseFloat(lines.find(l => l._key === lineKey)?.qty || "1") || 1;
+      const existingQty = parseFloat(existingLine.qty) || 0;
+      const mergedQty = currentLineQty + existingQty;
+      
+      // Update the existing line with merged quantity and remove the current empty line
+      setLines(prev => prev
+        .map(l => l._key === existingLine._key ? { ...l, qty: String(mergedQty) } : l)
+        .filter(l => l._key !== lineKey)
+      );
+      markDirty();
+      showToast("success", `Merged ${currentLineQty} qty to existing ${product.name} line (now ${mergedQty} total)`);
+      resolvePrice(existingLine._key, product.id, String(mergedQty));
+    } else {
+      // Product doesn't exist yet - select it normally
+      setLines(prev => prev.map(l =>
+        l._key === lineKey
+          ? { ...l, product, productQuery: `${product.sku} — ${product.name}`, productOpen: false }
+          : l
+      ));
+      markDirty();
+      const line = lines.find(l => l._key === lineKey);
+      resolvePrice(lineKey, product.id, line?.qty ?? "1");
+    }
   };
 
   const updateLine = (lineKey: string, field: keyof OrderLine, value: string) => {
