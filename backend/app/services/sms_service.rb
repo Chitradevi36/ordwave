@@ -62,6 +62,24 @@ class SmsService
     })
   end
 
+  # ── Send Login OTP ─────────────────────────────────────────────────────────────
+  # Sends OTP to user's phone for login verification
+  #
+  # @param phone_number [String] User's phone number
+  # @param otp_code [String] 6-digit OTP
+  # @return [String] Twilio message SID
+  def send_login_otp(phone_number, otp_code)
+    message = format(
+      OTP_MESSAGE_TEMPLATE,
+      context: "login",
+      otp: otp_code
+    )
+
+    send_sms(phone_number, message, {
+      message_type: 'login_otp'
+    })
+  end
+
   # ── Send Delivery Alert ────────────────────────────────────────────────────────
   # Notifies driver that a new trip/delivery is assigned
   #
@@ -138,7 +156,7 @@ class SmsService
       )
 
       # Log SMS in background job
-      LogSMSJob.perform_later(
+      LogSmsJob.perform_later(
         phone_number: phone_number,
         message_body: message,
         twilio_sid: response.sid,

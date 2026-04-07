@@ -54,8 +54,8 @@ export function useGoogleLogin(): UseGoogleLoginReturn {
           toast.success("Signed in successfully!");
           trackAuthEvent(ANALYTICS_EVENTS.LOGIN_COMPLETED);
 
-          // Redirect to dashboard
-          router.push("/dashboard");
+          // Force full page reload to clear React Query cache and prevent stale user data
+          window.location.href = '/dashboard';
         } else {
           const errorMessage = result.error || "Sign-in failed";
 

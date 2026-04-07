@@ -18,7 +18,7 @@ class SmsLog < ApplicationRecord
   validates :phone_number, :message_body, :twilio_sid, presence: true
   validates :twilio_sid, uniqueness: true
   validates :message_type, inclusion: {
-    in: %w[delivery_otp registration_otp delivery_alert payment_reminder custom],
+    in: %w[delivery_otp registration_otp login_otp delivery_alert payment_reminder custom],
     message: "%{value} is not a valid message type"
   }
 
