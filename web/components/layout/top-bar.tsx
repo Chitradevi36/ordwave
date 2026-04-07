@@ -267,9 +267,11 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user");
       localStorage.removeItem("organization_id");
+      localStorage.removeItem("orderlane_profile_cache");
       // Clear auth presence cookie used by middleware
       document.cookie = 'auth_present=; path=/; max-age=0; SameSite=Lax';
-      router.push("/login");
+      // Force full page reload to clear all caches including React Query
+      window.location.href = "/login";
     }
   }, [router]);
 

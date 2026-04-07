@@ -27,6 +27,8 @@ Rails.application.routes.draw do
       # API Auth (JWT)
       post   'auth/login',         to: 'auth#login'
       post   'auth/google_login',  to: 'auth#google_login'
+      post   'auth/request_otp',   to: 'auth#request_otp'
+      post   'auth/verify_otp',    to: 'auth#verify_otp'
       delete 'auth/logout',        to: 'auth#logout'
       post   'auth/refresh',       to: 'auth#refresh'
 

@@ -5,30 +5,38 @@ module Api
         # Support credentials sent either at top-level or nested under `auth`.
         auth = params[:auth] || {}
         email = params[:email] || auth[:email] || auth['email']
+        phone = params[:phone] || auth[:phone] || auth['phone']
         password = params[:password] || auth[:password] || auth['password']
 
-        unless email.present? && password.present?
-          return render json: { errors: ['Email and password are required'] }, status: :bad_request
+        unless (email.present? || phone.present?) && password.present?
+          return render json: { errors: ['Email/phone and password are required'] }, status: :bad_request
         end
 
-        Rails.logger.debug("Auth#login params class=#{params.class} auth class=#{auth.class} email=#{email.inspect}")
+        Rails.logger.debug("Auth#login params class=#{params.class} auth class=#{auth.class} email=#{email.inspect} phone=#{phone.inspect}")
 
         begin
-          user = User.active.find_by(email: email)
+          # Find user by email or phone
+          if email.present?
+            user = User.active.find_by(email: email)
+          elsif phone.present?
+            # Normalize phone for lookup (remove non-digits)
+            normalized_phone = phone.gsub(/\D/, '')
+            user = User.active.find_by(phone: normalized_phone)
+          end
         rescue StandardError => e
           Rails.logger.error("Auth#login user lookup error: #{e.class}: #{e.message}")
           Rails.logger.error(params.to_unsafe_h.inspect) rescue nil
-          return render json: { errors: ['Invalid email or password'] }, status: :unauthorized
+          return render json: { errors: ['Invalid credentials'] }, status: :unauthorized
         end
 
         begin
           unless user&.valid_password?(password)
-            return render json: { errors: ['Invalid email or password'] }, status: :unauthorized
+            return render json: { errors: ['Invalid credentials'] }, status: :unauthorized
           end
         rescue StandardError => e
           Rails.logger.error("Auth#login error validating password: #{e.class}: #{e.message} -- params: ")
-          Rails.logger.error(params.to_unsafe_h.slice(:email, :auth)) rescue nil
-          return render json: { errors: ['Invalid email or password'] }, status: :unauthorized
+          Rails.logger.error(params.to_unsafe_h.slice(:email, :phone, :auth)) rescue nil
+          return render json: { errors: ['Invalid credentials'] }, status: :unauthorized
         end
 
         # Generate JWT
@@ -56,6 +64,57 @@ module Api
         head :no_content
       rescue JWT::DecodeError
         head :no_content
+      end
+
+      def request_otp
+        # Request OTP for email or phone number login
+        identifier = params[:identifier]
+        
+        unless identifier.present?
+          return render json: { errors: ['Email or phone number required'] }, status: :bad_request
+        end
+
+        result = Auth::RequestOtpService.new(identifier: identifier).call
+
+        if result.success?
+          render json: {
+            data: {
+              request_id: result.otp_request.request_id,
+              identifier_type: result.otp_request.identifier_type.to_s,
+              message: 'OTP code sent to your email'
+            }
+          }, status: :ok
+        else
+          render json: { errors: result.errors }, status: :unprocessable_entity
+        end
+      end
+
+      def verify_otp
+        # Verify OTP and login user
+        identifier = params[:identifier]
+        code = params[:code]
+        request_id = params[:request_id]
+
+        unless identifier.present? && code.present? && request_id.present?
+          return render json: { errors: ['Identifier, code, and request_id are required'] }, status: :bad_request
+        end
+
+        result = Auth::VerifyOtpService.new(
+          identifier: identifier,
+          code: code,
+          request_id: request_id
+        ).call
+
+        if result.success?
+          render json: {
+            data: {
+              token: result.token,
+              user: result.user
+            }
+          }, status: :ok
+        else
+          render json: { errors: result.errors }, status: :unauthorized
+        end
       end
 
       def google_login

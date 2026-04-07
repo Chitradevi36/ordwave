@@ -24,3 +24,28 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
 }
+
+/* Hide browser's native password visibility icons - Chrome, Safari */
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  right: 0 !important;
+}
+
+/* For Edge and Chrome - hide the reveal password button */
+input::-webkit-textfield-decoration-container,
+input::-webkit-contacts-auto-fill-button {
+  -webkit-appearance: none !important;
+  display: none !important;
+}
+
+/* General approach */
+input[type="password"] {
+  -webkit-appearance: textfield;
+  appearance: textfield;
+}

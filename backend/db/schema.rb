@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_07_000005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
@@ -1240,6 +1240,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
     t.index ["jti"], name: "index_jwt_denylist_on_jti", unique: true
   end
 
+  create_table "login_attempts", force: :cascade do |t|
+    t.bigint "user_id", comment: "null if account not found"
+    t.string "identifier_type", null: false, comment: "password, otp, google, magic_link"
+    t.string "identifier", null: false, comment: "email, phone, or oauth provider"
+    t.boolean "success", default: false, null: false
+    t.string "failure_reason", comment: "wrong_password, otp_expired, account_locked, user_not_found, etc"
+    t.inet "ip_address", comment: "IPv4 or IPv6 address of login attempt"
+    t.string "user_agent", comment: "Browser/device information"
+    t.string "fingerprint", comment: "Device fingerprint for risk detection"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["identifier_type", "identifier", "created_at"], name: "idx_login_attempts_identifier_time"
+    t.index ["ip_address", "success", "created_at"], name: "idx_login_attempts_ip_success"
+    t.index ["user_id", "created_at"], name: "idx_login_attempts_user_time"
+    t.index ["user_id", "success", "created_at"], name: "idx_login_failed_attempts", where: "(success = false)"
+    t.index ["user_id"], name: "index_login_attempts_on_user_id"
+  end
+
   create_table "memberships", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "organization_id", null: false
@@ -1323,6 +1341,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
     t.index ["razorpay_customer_id"], name: "index_organizations_on_razorpay_customer_id", unique: true, where: "(razorpay_customer_id IS NOT NULL)"
     t.index ["settings"], name: "index_organizations_on_settings", using: :gin
     t.index ["slug"], name: "index_organizations_on_slug", unique: true
+  end
+
+  create_table "otp_requests", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "request_id", null: false
+    t.string "identifier", null: false, comment: "Email or phone number being verified"
+    t.integer "identifier_type", default: 0, null: false, comment: "0=email, 1=phone"
+    t.string "otp_code", null: false
+    t.integer "otp_attempts", default: 0, null: false
+    t.datetime "otp_sent_at"
+    t.boolean "verified", default: false, null: false
+    t.datetime "verified_at"
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["identifier", "identifier_type"], name: "index_otp_requests_on_identifier_and_identifier_type"
+    t.index ["identifier_type"], name: "index_otp_requests_on_identifier_type"
+    t.index ["request_id"], name: "index_otp_requests_on_request_id", unique: true
+    t.index ["user_id"], name: "index_otp_requests_on_user_id"
   end
 
   create_table "payment_allocations", force: :cascade do |t|
@@ -1423,9 +1460,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
     t.boolean "completed", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "auth_channel", default: "email"
+    t.string "phone_number", limit: 10
     t.index ["email"], name: "index_pending_registrations_on_email", unique: true
     t.index ["expires_at"], name: "index_pending_registrations_on_expires_at"
     t.index ["otp_code"], name: "index_pending_registrations_on_otp_code"
+    t.index ["phone_number", "auth_channel"], name: "index_pending_registrations_on_phone_number_and_auth_channel"
   end
 
   create_table "pick_list_items", force: :cascade do |t|
@@ -2307,6 +2347,39 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
     t.index ["symbol"], name: "index_units_of_measures_on_symbol", unique: true
   end
 
+  create_table "user_identities", force: :cascade do |t|
+    t.integer "identity_type", default: 0, null: false, comment: "0=password, 1=phone_otp, 2=email_magic_link, 3=google_oauth"
+    t.bigint "user_id", null: false
+    t.string "provider_id", null: false, comment: "username/email/phone/oauth_uid depending on identity_type"
+    t.string "provider_name", comment: "google, microsoft, apple, etc. Only for OAuth identities"
+    t.datetime "verified_at"
+    t.datetime "last_used_at"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["identity_type", "provider_id"], name: "idx_user_identity_discovery"
+    t.index ["user_id", "identity_type", "provider_id"], name: "idx_user_identity_uniqueness", unique: true
+    t.index ["user_id", "verified_at"], name: "idx_user_verified_identities"
+    t.index ["user_id"], name: "index_user_identities_on_user_id"
+  end
+
+  create_table "user_phone_verifications", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "phone_number", limit: 10, null: false
+    t.string "otp_code", limit: 6
+    t.datetime "otp_sent_at"
+    t.datetime "otp_verified_at"
+    t.integer "otp_attempts", default: 0
+    t.boolean "is_primary", default: false
+    t.boolean "verified", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["phone_number", "otp_code"], name: "index_user_phone_verifications_on_phone_number_and_otp_code"
+    t.index ["phone_number"], name: "index_user_phone_verifications_on_phone_number"
+    t.index ["user_id", "phone_number"], name: "index_user_phone_verifications_on_user_id_and_phone_number", unique: true
+    t.index ["user_id"], name: "index_user_phone_verifications_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.string "encrypted_password", null: false
@@ -2328,8 +2401,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
     t.string "plan", default: "starter", null: false
     t.string "oauth_provider", comment: "OAuth provider (google, microsoft, apple, etc)"
     t.string "oauth_uid", comment: "Unique identifier from OAuth provider"
+    t.boolean "phone_verified", default: false
+    t.datetime "phone_verified_at"
+    t.integer "preferred_auth_method", default: 0
+    t.datetime "locked_until", comment: "When account lockout expires"
+    t.integer "failed_login_count", default: 0, comment: "Tracks failed login attempts in current window"
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["locked_until"], name: "idx_users_locked_until"
     t.index ["oauth_provider", "oauth_uid"], name: "idx_users_oauth_provider_uid", unique: true, where: "(oauth_provider IS NOT NULL)"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
@@ -2577,6 +2656,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
   add_foreign_key "invoice_generation_quarantines", "sales_orders"
   add_foreign_key "invoice_generation_quarantines", "trip_stops"
   add_foreign_key "invoice_generation_quarantines", "users", column: "resolved_by_id"
+  add_foreign_key "login_attempts", "users"
   add_foreign_key "memberships", "branches"
   add_foreign_key "memberships", "organizations"
   add_foreign_key "memberships", "roles"
@@ -2586,6 +2666,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "onboarding_progresses", "organizations"
   add_foreign_key "onboarding_progresses", "users"
+  add_foreign_key "otp_requests", "users"
   add_foreign_key "payment_allocations", "payments"
   add_foreign_key "payment_allocations", "sales_invoices"
   add_foreign_key "payment_suggestions", "bank_transactions"
@@ -2707,6 +2788,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_26_150001) do
   add_foreign_key "tier_price_list_assignments", "price_lists"
   add_foreign_key "trip_stops", "delivery_trips"
   add_foreign_key "trip_stops", "sales_orders"
+  add_foreign_key "user_identities", "users"
+  add_foreign_key "user_phone_verifications", "users"
   add_foreign_key "vehicles", "organizations"
   add_foreign_key "vehicles", "users", column: "default_driver_id"
   add_foreign_key "visit_logs", "beat_schedules"
