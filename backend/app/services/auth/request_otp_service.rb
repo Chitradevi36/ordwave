@@ -92,7 +92,7 @@ module Auth
         case @identifier_type
         when :email
           # Send OTP via email
-          AuthMailer.send_otp(user, otp_request.otp_code).deliver_later
+          AuthMailer.send_otp(user, otp_request.otp_code).deliver_now
         when :phone
           # Send OTP via SMS
           SmsService.new.send_login_otp(otp_request.identifier, otp_request.otp_code)
