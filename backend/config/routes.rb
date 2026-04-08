@@ -587,6 +587,20 @@ Rails.application.routes.draw do
         end
       end
 
+      # -- GST Credentials & Registrations (TIER 1, 2, 3) ----
+      namespace :gst do
+        # TIER 1: IRP Credentials (org-level)
+        resource :credentials, only: [:show] do
+          post :test_connection, on: :collection
+        end
+
+        # TIER 2: State-Level GSTIN Registrations
+        resources :registrations, only: [:index, :create, :destroy]
+
+        # TIER 3: Branch-Level Overrides
+        resources :branch_overrides, only: [:index, :create, :destroy]
+      end
+
       # -- Billing (Razorpay) ------------------------------------------------
       get  'billing/subscription',         to: 'billing#subscription'
       post 'billing/checkout',             to: 'billing#checkout'

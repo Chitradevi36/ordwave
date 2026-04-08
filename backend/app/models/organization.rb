@@ -75,6 +75,48 @@ class Organization < ApplicationRecord
     update!(update_attrs)
   end
 
+  # ── GST Configuration (Three-Tier) ────────────────────────────────────────
+  # TIER 1: Organization-level IRP API credentials
+  # TIER 2: State-level GSTIN registration
+  # TIER 3: Branch-level GSTIN overrides (in Branch model)
+
+  def gst_credentials_configured?
+    settings.dig("gst_credentials", "irp_username").present? &&
+      settings.dig("gst_credentials", "irp_password").present?
+  end
+
+  def gst_irp_username
+    settings.dig("gst_credentials", "irp_username")
+  end
+
+  def gst_irp_password
+    settings.dig("gst_credentials", "irp_password")
+  end
+
+  def gst_irp_environment
+    settings.dig("gst_credentials", "irp_environment") || "sandbox"
+  end
+
+  # TIER 2: State-level GSTIN registrations
+  def gst_state_registrations
+    settings.dig("gst_state_registrations") || {}
+  end
+
+  def gst_for_state(state_code)
+    gst_state_registrations.dig(state_code.to_s, "gstin")
+  end
+
+  def gstin_for_branch(branch)
+    # Three-tier lookup: override > state > org
+    override_gstin = branch.gst_override_gstin
+    return override_gstin if override_gstin.present?
+
+    state_gstin = gst_for_state(branch.state_code)
+    return state_gstin if state_gstin.present?
+
+    gst_number
+  end
+
   # Callbacks
   before_validation :generate_slug, on: :create, if: -> { slug.blank? }
 
