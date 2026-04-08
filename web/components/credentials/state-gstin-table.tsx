@@ -257,7 +257,7 @@ export function StateGstinTable() {
               </Button>
               <Button 
                 onClick={handleSave} 
-                disabled={!selectedState || !gstin || !username || (selectedState && !stateRegistrations[selectedState] && !password)}
+                disabled={!!(!selectedState || !gstin || !username || (selectedState && !stateRegistrations[selectedState] && !password))}
               >
                 Save
               </Button>
