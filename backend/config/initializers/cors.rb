@@ -16,7 +16,9 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       'https://ordwave.com',
       'https://app.ordwave.com',
       'https://www.app.ordwave.com',
-      'https://www.ordwave.com'
+      'https://www.ordwave.com',
+      'https://api.ordwave.com',
+      'https://www.api.ordwave.com'
     ]
 
     env_origins = ENV.fetch('CORS_ALLOWED_ORIGINS', '')

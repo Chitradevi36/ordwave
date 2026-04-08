@@ -80,6 +80,12 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
 
+  # Configure default URL options for generating URLs in mailers and ActiveStorage
+  config.default_url_options = {
+    host: ENV.fetch('APP_HOST', 'localhost:3000'),
+    protocol: ENV.fetch('RAILS_ENV') == 'production' ? 'https' : 'http'
+  }
+
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true
