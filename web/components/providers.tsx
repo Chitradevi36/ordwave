@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "sonner";
@@ -22,6 +22,22 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   );
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('[OrdWave OAuth Debug]', {
+        hasClientId: !!googleClientId,
+        clientIdLength: googleClientId?.length || 0,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+      });
+      
+      if (!googleClientId) {
+        console.error('❌ NEXT_PUBLIC_GOOGLE_CLIENT_ID environment variable is NOT SET');
+        console.error('Set it in your deployment platform (Vercel/AWS/etc) and redeploy');
+      }
+    }
+  }, [googleClientId]);
 
   return (
     <QueryClientProvider client={queryClient}>

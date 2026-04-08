@@ -27,12 +27,13 @@ const nextConfig = {
               key: 'Content-Security-Policy',
               value: [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com",
                 "style-src 'self' 'unsafe-inline'",
                 "img-src 'self' data: blob: https:",
                 "font-src 'self' data:",
-                "connect-src 'self' https://www.google-analytics.com https://analytics.google.com " +
+                "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://accounts.google.com https://oauth2.googleapis.com " +
                   (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'),
+                "frame-src https://accounts.google.com",
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",
