@@ -33,10 +33,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   
   // OTP flow
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [otpCode, setOtpCode] = useState('');
   const [otpRequestId, setOtpRequestId] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   // UI state
   const [error, setError] = useState('');
@@ -179,8 +178,7 @@ export default function LoginPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const otp = otpDigits.join('');
-    if (!otp || otp.length !== 6) {
+    if (!otpCode || otpCode.length !== 6) {
       setError('Please enter the 6-digit code');
       return;
     }
@@ -192,7 +190,7 @@ export default function LoginPage() {
       const response = await fetch(`${API_URL}/api/v1/auth/verify_otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, code: otp, request_id: otpRequestId }),
+        body: JSON.stringify({ identifier, code: otpCode, request_id: otpRequestId }),
       });
 
       const data = await response.json();
@@ -234,57 +232,14 @@ export default function LoginPage() {
     setIdentifierType('unknown');
     setPassword('');
     setShowPassword(false);
-    setOtpDigits(['', '', '', '', '', '']);
+    setOtpCode('');
     setOtpRequestId('');
     setOtpSent(false);
     setError('');
     setValidationError('');
   };
 
-  // ==================== OTP DIGIT HANDLING ====================
-  const handleOtpDigitChange = (index: number, value: string) => {
-    // Only allow digits
-    const digit = value.replace(/\D/g, '');
 
-    if (digit.length > 1) {
-      // If pasting multiple digits, fill remaining boxes
-      const pastedDigits = digit.slice(0, 6).split('');
-      const newDigits = [...otpDigits];
-      pastedDigits.forEach((d, i) => {
-        if (index + i < 6) {
-          newDigits[index + i] = d;
-        }
-      });
-      setOtpDigits(newDigits);
-      // Focus last filled digit or box 6
-      const lastIndex = Math.min(index + pastedDigits.length - 1, 5);
-      otpRefs.current[lastIndex]?.focus();
-    } else if (digit === '') {
-      // Backspace
-      const newDigits = [...otpDigits];
-      newDigits[index] = '';
-      setOtpDigits(newDigits);
-    } else {
-      // Single digit entered
-      const newDigits = [...otpDigits];
-      newDigits[index] = digit;
-      setOtpDigits(newDigits);
-
-      // Auto-focus next box
-      if (index < 5) {
-        otpRefs.current[index + 1]?.focus();
-      }
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && otpDigits[index] === '') {
-      // Move to previous box on backspace if current is empty
-      if (index > 0) {
-        otpRefs.current[index - 1]?.focus();
-      }
-    }
-  };
 
   // ==================== RENDER: MAIN LOGIN PAGE ====================
   return (
@@ -367,28 +322,22 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-3">
+                  <label className="block text-sm font-medium text-slate-900 mb-2">
                     6-digit code
                   </label>
-                  <div className="flex gap-2 justify-center mb-2">
-                    {otpDigits.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={(el) => {
-                          if (el) otpRefs.current[index] = el;
-                        }}
-                        type="text"
-                        inputMode="numeric"
-                        value={digit}
-                        onChange={(e) => handleOtpDigitChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        maxLength={1}
-                        disabled={loading}
-                        className="w-12 h-12 text-center text-2xl font-semibold border-2 border-slate-300 rounded-lg focus:border-slate-900 focus:outline-none focus:ring-0 disabled:bg-slate-100 disabled:text-slate-400"
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-500 text-center">
+                  <Input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="Enter 6-digit code"
+                    required
+                    disabled={loading}
+                    className="text-center text-2xl tracking-widest border-slate-300 focus:border-slate-900"
+                    maxLength={6}
+                    inputMode="numeric"
+                    autoFocus
+                  />
+                  <p className="text-xs text-slate-500 text-center mt-2">
                     Check your {identifierType === 'phone' ? 'SMS' : 'email'} for the code
                   </p>
                 </div>
@@ -396,7 +345,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={loading || otpDigits.join('').length !== 6}
+                  disabled={loading || otpCode.length !== 6}
                 >
                   {loading ? 'Verifying...' : 'Verify Code'}
                 </Button>
@@ -404,7 +353,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setOtpDigits(['', '', '', '', '', '']);
+                    setOtpCode('');
                     setError('');
                   }}
                   disabled={loading}
