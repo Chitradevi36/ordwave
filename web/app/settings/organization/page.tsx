@@ -11,13 +11,16 @@ import {
   ChevronRight, Save, Loader2,
   GitBranch, Plus, MapPin, Pencil,
   ShoppingCart, Truck, RotateCcw, CreditCard, ClipboardCheck,
-  Building2, Workflow,
+  Building2, Workflow, Lock,
 } from "lucide-react";
 import { AddBranchModal, EditBranchModal, BranchForEdit } from "@/components/add-branch-modal";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { engagementEvents } from "@/lib/analytics";
 import { usePincodeLookup } from "@/lib/use-pincode-lookup";
 import { API_URL } from "@/lib/api/client";
+import { GstCredentialsForm } from "@/components/credentials/gst-credentials-form";
+import { StateGstinTable } from "@/components/credentials/state-gstin-table";
+import { BranchOverrideTable } from "@/components/credentials/branch-override-table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OrgProfile {
@@ -173,6 +176,7 @@ function SelectField({ label, value, options, onChange }: {
 const TABS = [
   { key: "profile",  label: "Profile",  icon: Building2 },
   { key: "workflow", label: "Workflow", icon: Workflow },
+  { key: "gst",      label: "GST Credentials", icon: Lock },
   { key: "branches", label: "Branches", icon: GitBranch },
 ] as const;
 type TabKey = typeof TABS[number]["key"];
@@ -399,6 +403,10 @@ function OrganizationPageInner() {
           <Button size="sm" onClick={saveWorkflow} isLoading={wfSaving}>
             <Save className="mr-1.5 h-3.5 w-3.5" /> Save
           </Button>
+        )}
+        {activeTab === "gst" && (
+          // GST tab - no save button needed (auto-saves)
+          <></>
         )}
       </div>
 
@@ -805,6 +813,15 @@ function OrganizationPageInner() {
             </Button>
           </div> */}
         </>
+      )}
+
+      {/* ── Branches tab ─────────────────────────────────────────────────────── */}
+      {activeTab === "gst" && (
+        <div className="space-y-4">
+          <GstCredentialsForm />
+          <StateGstinTable />
+          <BranchOverrideTable />
+        </div>
       )}
 
       {/* ── Branches tab ─────────────────────────────────────────────────────── */}

@@ -33,4 +33,33 @@ class Branch < ApplicationRecord
     settings_will_change!
     update!(settings: settings.merge(key.to_s => value))
   end
+
+  # ── GST Configuration (TIER 3: Branch-level overrides) ──────────────────────
+
+  def gst_override_gstin
+    settings.dig("gst_override", "branch_gstin")
+  end
+
+  def effective_gstin
+    # Three-tier hierarchy: override > state > org
+    override_gstin = gst_override_gstin
+    return override_gstin if override_gstin.present?
+
+    state_gstin = organization.gst_for_state(state_code)
+    return state_gstin if state_gstin.present?
+
+    organization.gst_number
+  end
+
+  def using_state_gstin?
+    gst_override_gstin.blank? && organization.gst_for_state(state_code).present?
+  end
+
+  def using_override_gstin?
+    gst_override_gstin.present?
+  end
+
+  def using_org_gstin?
+    gst_override_gstin.blank? && organization.gst_for_state(state_code).blank?
+  end
 end

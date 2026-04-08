@@ -12,6 +12,14 @@ class OrganizationPolicy < ApplicationPolicy
   def checkout?        = member_of_record?
   def cancel?          = member_of_record? && owner_of_record?
 
+  # GST Credentials (TIER 1)
+  def manage_gst_credentials? = member_of_record? && owner_or_admin_of_record?
+  def view_gst_credentials?   = member_of_record?
+
+  # GST Registrations (TIER 2)
+  def manage_gst_registrations? = member_of_record? && owner_or_admin_of_record?
+  def view_gst_registrations?   = member_of_record?
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       # Return all active orgs the user has an active membership in

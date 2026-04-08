@@ -90,7 +90,11 @@ module Gst
     def build_einvoice_payload
       inv  = @invoice
       org  = inv.organization
+      branch = inv.branch
       cust = inv.customer
+
+      # Use three-tier GSTIN lookup: branch override > state > org
+      seller_gstin = branch.effective_gstin || GSTIN
 
       {
         Version: "1.1",
@@ -101,7 +105,7 @@ module Gst
           Dt:   inv.invoice_date.strftime("%d/%m/%Y")
         },
         SellerDtls: {
-          Gstin:  GSTIN,
+          Gstin:  seller_gstin,
           TrdNm:  org.name,
           Addr1:  org.address_line1,
           Addr2:  org.address_line2,
