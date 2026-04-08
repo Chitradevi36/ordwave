@@ -9,7 +9,7 @@ import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import { AccessDeniedError } from "@/components/errors/access-denied-error";
-import { Download, Ban, CheckCircle2, ExternalLink, FileCheck, Truck, Eye } from "lucide-react";
+import { Download, Ban, CheckCircle2, ExternalLink, FileCheck, Truck, Eye, Printer, ZoomIn, ZoomOut, X, Loader } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -68,6 +68,7 @@ interface InvoiceDetail {
   has_pdf:           boolean;
   pdf_url:           string | null;
   einvoice_status:   string | null;
+  einvoice_error:    string | null;
   irn:               string | null;
   ack_number:        string | null;
   ack_datetime:      string | null;
@@ -135,6 +136,8 @@ export default function SalesInvoiceDetailPage() {
   const [einvoiceLoading, setEinvoiceLoading] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [previewUrl, setPreviewUrl]         = useState<string | null>(null);
+  const [pdfZoom, setPdfZoom]               = useState(120);
+  const [viewMode, setViewMode]             = useState<"detail" | "command-center">("detail");
   const [activeTab, setActiveTab]     = useState<"summary" | "lines" | "tax" | "activity" | "linked">("summary");
 
   // e-Waybill state
@@ -180,130 +183,301 @@ export default function SalesInvoiceDetailPage() {
 
   useEffect(() => { fetchInvoice(); }, [fetchInvoice]);
 
+  // ── Debug Helper Setup ──
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any)._invoiceDebug = {
+        invoice,
+        token: token ? `${token.substring(0, 30)}...` : null,
+        orgId,
+        hasAuth: !!(token && orgId),
+        invoiceId: invoice?.id,
+        status: invoice?.status,
+        pdfUrl: invoice?.pdf_url,
+        pdfGenerated: invoice?.pdf_generated_at,
+        irn: invoice?.irn,
+        ewaybill: invoice?.ewaybill_number,
+        get diagnose() {
+          const issues = [];
+          if (!token) issues.push('❌ No auth token')
+          if (!orgId) issues.push('❌ No org ID')
+          if (!invoice) issues.push('❌ Invoice not loaded')
+          if (invoice?.status === 'draft') issues.push('⚠️ Invoice is draft - some actions disabled')
+          if (!invoice?.pdf_url && invoice?.pdf_generated_at) issues.push('⚠️ PDF generated but no URL')
+          if (issues.length === 0) issues.push('✅ All conditions OK')
+          return issues;
+        }
+      };
+      if (invoice) {
+        console.log('%c🔍 Invoice Debug Info Ready', 'color: blue; font-weight: bold;')
+        console.log('Access via: window._invoiceDebug')
+        console.log('Diagnostics:', (window as any)._invoiceDebug.diagnose);
+      }
+    }
+  }, [invoice, token, orgId]);
+
+  // ── Keyboard Shortcuts ──
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (viewMode === "command-center") {
+          setViewMode("detail");
+          setShowPdfPreview(false);
+          setPreviewUrl(null);
+        } else if (showPdfPreview) {
+          setShowPdfPreview(false);
+          setPreviewUrl(null);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showPdfPreview, viewMode]);
+
   const handleDownloadPdf = async () => {
-    if (!invoice || !token || !orgId) return;
+    if (!invoice || !token || !orgId) {
+      console.error('❌ handleDownloadPdf: missing auth', { invoice: !!invoice, token: !!token, orgId: !!orgId });
+      return;
+    }
+    console.log('🔵 handleDownloadPdf: starting', { id: invoice.id });
     setPdfLoading(true);
     setActionError(null);
     try {
-      const res = await fetch(`/api/v1/sales_invoices/${invoice.id}/pdf`, {
+      const url = `/api/v1/sales_invoices/${invoice.id}/pdf`;
+      console.log('🔵 GET', url);
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
+      console.log(`🔵 Response: ${res.status} ${res.statusText}`);
       const body = await res.json();
+      console.log('🔵 Response body:', body);
       if (!res.ok) throw new Error(body.errors?.join(", ") || "PDF generation failed");
       if (body.data?.download_url) {
+        console.log('✅ Download URL received:', body.data.download_url);
         window.open(body.data.download_url, "_blank");
-        // Refresh to show updated pdf_generated_at
         fetchInvoice();
       }
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error('❌ handleDownloadPdf error:', msg, e);
+      setActionError(msg);
     } finally {
       setPdfLoading(false);
     }
   };
 
   const handlePreviewPdf = async () => {
-    if (!invoice || !token || !orgId) return;
-    // Use already-fetched pdf_url if available; otherwise fetch it
-    if (invoice.pdf_url) {
-      setPreviewUrl(invoice.pdf_url);
-      setShowPdfPreview(true);
+    if (!invoice || !token || !orgId) {
+      console.error('❌ handlePreviewPdf: missing auth', { invoice: !!invoice, token: !!token, orgId: !!orgId });
       return;
     }
+    console.log('🔵 handlePreviewPdf: starting', { id: invoice.id });
     setPdfLoading(true);
     setActionError(null);
     try {
-      const res  = await fetch(`/api/v1/sales_invoices/${invoice.id}/pdf`, {
+      const url = `/api/v1/sales_invoices/${invoice.id}/pdf`;
+      console.log('🔵 GET', url);
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
       });
+      console.log(`🔵 Response: ${res.status} ${res.statusText}`);
       const body = await res.json();
+      console.log('🔵 Response body:', body);
       if (!res.ok) throw new Error(body.errors?.join(", ") || "PDF generation failed");
       if (body.data?.download_url) {
-        setPreviewUrl(body.data.download_url);
-        setShowPdfPreview(true);
+        console.log('✅ PDF URL received:', body.data.download_url);
+        // Fetch the PDF as a blob and create a local object URL
+        const pdfRes = await fetch(body.data.download_url);
+        if (!pdfRes.ok) throw new Error(`Failed to fetch PDF: ${pdfRes.statusText}`);
+        const blob = await pdfRes.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        console.log('✅ Created blob URL for preview');
+        setPreviewUrl(blobUrl);
+        setViewMode("command-center");
         fetchInvoice();
       }
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error('❌ handlePreviewPdf error:', msg, e);
+      setActionError(msg);
     } finally {
       setPdfLoading(false);
     }
   };
 
+  const handlePrintPdf = () => {
+    if (previewUrl) {
+      const printWindow = window.open(previewUrl, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          printWindow.print();
+        });
+      }
+    }
+  };
+
+  // ── Command Center Helper Functions ──
+  const getPaymentStatus = () => {
+    if (!invoice) return { status: "—", color: "text-slate-500", bg: "bg-slate-100" };
+    if (invoice.status === "void") return { status: "Voided", color: "text-red-700", bg: "bg-red-100" };
+    if (invoice.status === "draft") return { status: "Draft", color: "text-amber-700", bg: "bg-amber-100" };
+    
+    const dueDate = invoice.due_date ? new Date(invoice.due_date) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (dueDate) {
+      if (dueDate < today) return { status: "Overdue", color: "text-red-700", bg: "bg-red-100" };
+      const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysUntilDue <= 3) return { status: `Due in ${daysUntilDue} days`, color: "text-orange-700", bg: "bg-orange-100" };
+      return { status: "On Track", color: "text-green-700", bg: "bg-green-100" };
+    }
+    return { status: "Issued", color: "text-blue-700", bg: "bg-blue-100" };
+  };
+
+  const getTimelineEvents = () => {
+    if (!invoice) return [];
+    const events = [];
+    
+    if (invoice.created_at) events.push({ date: invoice.created_at, label: "Invoice Created", icon: "📝" });
+    if (invoice.issued_at) events.push({ date: invoice.issued_at, label: "Issued", icon: "✓" });
+    if (invoice.pdf_generated_at) events.push({ date: invoice.pdf_generated_at, label: "PDF Generated", icon: "📄" });
+    if (invoice.irn_generated_at) events.push({ date: invoice.irn_generated_at, label: "IRN Generated", icon: "🔐" });
+    if (invoice.ewaybill_generated_at) events.push({ date: invoice.ewaybill_generated_at, label: "E-Way Bill Created", icon: "🚚" });
+    if (invoice.voided_at) events.push({ date: invoice.voided_at, label: "Voided", icon: "✕" });
+    
+    return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+
   const handleVoid = async () => {
-    if (!invoice || !voidReason.trim()) return;
+    if (!invoice || !voidReason.trim()) {
+      console.error('❌ handleVoid: missing invoice or reason', { invoice: !!invoice, reason: voidReason.trim() });
+      return;
+    }
+    console.log('🔵 handleVoid: starting', { id: invoice.id, reason: voidReason });
     setSaving(true);
     setActionError(null);
     try {
-      const res = await fetch(`/api/v1/sales_invoices/${invoice.id}/void`, {
+      const url = `/api/v1/sales_invoices/${invoice.id}/void`;
+      const payload = { reason: voidReason };
+      console.log('🔵 POST', url, payload);
+      const res = await fetch(url, {
         method:  "POST",
         headers: {
           Authorization:       `Bearer ${token}`,
           "X-Organization-Id": orgId!,
           "Content-Type":      "application/json",
         },
-        body: JSON.stringify({ reason: voidReason }),
+        body: JSON.stringify(payload),
       });
+      console.log(`🔵 Response: ${res.status} ${res.statusText}`);
       const body = await res.json();
+      console.log('🔵 Response body:', body);
       if (!res.ok) throw new Error(body.errors?.join(", ") || "Void failed");
+      console.log('✅ Void successful');
       setInvoice(body.data);
       setVoidModal(false);
       setVoidReason("");
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error('❌ handleVoid error:', msg, e);
+      setActionError(msg);
     } finally {
       setSaving(false);
     }
   };
 
   const handleGenerateEwaybill = async () => {
-    if (!invoice || !token || !orgId) return;
+    if (!invoice || !token || !orgId) {
+      console.error('❌ handleGenerateEwaybill: missing auth', { invoice: !!invoice, token: !!token, orgId: !!orgId });
+      return;
+    }
+    
+    // Validate required fields
+    if (!ewayVehicle.trim()) {
+      setEwayError('Vehicle number is required');
+      console.warn('❌ handleGenerateEwaybill: vehicle_number is empty');
+      return;
+    }
+    
+    if (!ewayTransId.trim()) {
+      setEwayError('Transporter GSTIN/ID is required');
+      console.warn('❌ handleGenerateEwaybill: transporter_id is empty');
+      return;
+    }
+    
+    console.log('🔵 handleGenerateEwaybill: starting', { id: invoice.id, mode: ewayMode });
     setEwayLoading(true);
     setEwayError(null);
     try {
-      const res = await fetch(`/api/v1/sales_invoices/${invoice.id}/ewaybill`, {
+      const url = `/api/v1/sales_invoices/${invoice.id}/ewaybill`;
+      const payload = {
+        transport_mode:   ewayMode,
+        vehicle_number:   ewayVehicle,
+        transporter_name: ewayTransporter,
+        transporter_id:   ewayTransId,
+        distance_km:      ewayDistance ? Number(ewayDistance) : undefined,
+      };
+      console.log('🔵 POST', url, payload);
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "X-Organization-Id": orgId,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          transport_mode:   ewayMode,
-          vehicle_number:   ewayVehicle,
-          transporter_name: ewayTransporter,
-          transporter_id:   ewayTransId,
-          distance_km:      ewayDistance ? Number(ewayDistance) : undefined,
-        }),
+        body: JSON.stringify(payload),
       });
+      console.log(`🔵 Response: ${res.status} ${res.statusText}`);
       const body = await res.json();
+      console.log('🔵 Response body:', body);
       if (!res.ok) throw new Error(body.errors?.join(", ") || "E-Way Bill generation failed");
+      console.log('✅ E-Way Bill generation successful');
       setInvoice(body.data);
       setEwayModal(false);
+      // Reset form
+      setEwayVehicle("");
+      setEwayTransporter("");
+      setEwayTransId("");
+      setEwayDistance("");
+      setEwayMode("1");
     } catch (e) {
-      setEwayError(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error('❌ handleGenerateEwaybill error:', msg, e);
+      setEwayError(msg);
     } finally {
       setEwayLoading(false);
     }
   };
 
   const handleGenerateEinvoice = async () => {
-    if (!invoice || !token || !orgId) return;
+    if (!invoice || !token || !orgId) {
+      console.error('❌ handleGenerateEinvoice: missing auth', { invoice: !!invoice, token: !!token, orgId: !!orgId });
+      return;
+    }
+    console.log('🔵 handleGenerateEinvoice: starting', { id: invoice.id });
     setEinvoiceLoading(true);
     setActionError(null);
     try {
-      const res = await fetch(`/api/v1/sales_invoices/${invoice.id}/einvoice`, {
+      const url = `/api/v1/sales_invoices/${invoice.id}/einvoice`;
+      console.log('🔵 POST', url);
+      const res = await fetch(url, {
         method:  "POST",
         headers: {
           Authorization:       `Bearer ${token}`,
           "X-Organization-Id": orgId,
         },
       });
+      console.log(`🔵 Response: ${res.status} ${res.statusText}`);
       const body = await res.json();
+      console.log('🔵 Response body:', body);
       if (!res.ok) throw new Error(body.errors?.join(", ") || "e-Invoice generation failed");
+      console.log('✅ e-Invoice generation successful');
       setInvoice(body.data);
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error('❌ handleGenerateEinvoice error:', msg, e);
+      setActionError(msg);
     } finally {
       setEinvoiceLoading(false);
     }
@@ -347,13 +521,13 @@ export default function SalesInvoiceDetailPage() {
   const isEwaybillable   = invoice.status === "issued" && !invoice.ewaybill_number;
 
   const headerActions = [
-    {
-      label:    pdfLoading ? "Loading…" : "Preview PDF",
-      onClick:  handlePreviewPdf,
-      variant:  "outline" as const,
-      icon:     Eye,
-      disabled: pdfLoading || isDraft,
-    },
+    // {
+    //   label:    pdfLoading ? "Loading…" : "Preview PDF",
+    //   onClick:  handlePreviewPdf,
+    //   variant:  "outline" as const,
+    //   icon:     Eye,
+    //   disabled: pdfLoading || isDraft,
+    // },
     {
       label:    pdfLoading ? "Generating…" : invoice.pdf_generated_at ? "Download PDF" : "Generate PDF",
       onClick:  handleDownloadPdf,
@@ -900,7 +1074,7 @@ export default function SalesInvoiceDetailPage() {
             </Button>
             <Button
               size="sm"
-              disabled={ewayLoading}
+              disabled={ewayLoading || !ewayVehicle.trim() || !ewayTransId.trim()}
               onClick={handleGenerateEwaybill}
             >
               <Truck className="h-3.5 w-3.5 mr-1.5" />
@@ -910,37 +1084,215 @@ export default function SalesInvoiceDetailPage() {
         </div>
       </Modal>
 
-      {/* ── PDF Preview Modal ── */}
-      {showPdfPreview && previewUrl && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black/60">
-          <div className="flex items-center justify-between px-4 py-3 bg-card border-b shadow-sm">
-            <h2 className="text-sm font-semibold">
-              Invoice Preview — {invoice.invoice_number}
-            </h2>
-            <div className="flex items-center gap-2">
+      {/* ── Invoice Command Center ── */}
+      {viewMode === "command-center" && previewUrl && (
+        <div className="fixed inset-0 z-50 overflow-hidden bg-white flex flex-col">
+          {/* Header */}
+          <div className="border-b border-slate-200 bg-white px-8 py-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                  {invoice?.invoice_number}
+                </h1>
+                <div className="flex items-center gap-4">
+                  <div>
+                    {(() => {
+                      const status = getPaymentStatus();
+                      return (
+                        <Badge className={`${status.bg} ${status.color} border-0 font-semibold`}>
+                          {status.status}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    Invoice Date: <span className="font-semibold">{fmtDate(invoice?.invoice_date)}</span>
+                  </p>
+                  {invoice?.due_date && (
+                    <p className="text-sm text-slate-600">
+                      Due Date: <span className="font-semibold">{fmtDate(invoice?.due_date)}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => window.open(previewUrl, "_blank")}
+                variant="ghost"
+                className="text-slate-500 hover:text-slate-700"
+                onClick={() => {
+                  setViewMode("detail");
+                  setShowPdfPreview(false);
+                  setPreviewUrl(null);
+                }}
               >
-                <Download className="h-4 w-4 mr-1.5" />
-                Download
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => { setShowPdfPreview(false); setPreviewUrl(null); }}
-              >
-                Close
+                <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <iframe
-              src={previewUrl}
-              className="w-full h-full border-0"
-              title={`Invoice ${invoice.invoice_number} Preview`}
-            />
+
+          {/* Main Content */}
+          <div className="flex-1 overflow-hidden flex">
+            {/* Left Column: PDF Viewer (60%) */}
+            <div className="flex-1 bg-slate-50 overflow-auto border-r border-slate-200 flex flex-col">
+              {/* PDF Toolbar */}
+              <div className="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPdfZoom(Math.max(50, pdfZoom - 10))}
+                    disabled={pdfZoom <= 50}
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium text-slate-700 min-w-[60px] text-center">
+                    {pdfZoom}%
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPdfZoom(Math.min(200, pdfZoom + 10))}
+                    disabled={pdfZoom >= 200}
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  <div className="h-6 w-px bg-slate-300 mx-1" />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPdfZoom(120)}
+                  >
+                    Fit Width
+                  </Button>
+                </div>
+              </div>
+
+              {/* PDF Content */}
+              <div className="flex-1 overflow-auto flex items-center justify-center p-8">
+                {previewUrl ? (
+                  <div className="bg-white rounded-lg shadow-md" style={{ width: `${pdfZoom}%`, maxWidth: '100%' }}>
+                    <embed
+                      src={previewUrl}
+                      type="application/pdf"
+                      className="w-full rounded"
+                      style={{ minHeight: '600px' }}
+                      title={`Invoice ${invoice?.invoice_number}`}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader className="h-8 w-8 animate-spin text-slate-400" />
+                    <p className="text-slate-500">Loading PDF...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Financial Summary & Actions (40%) */}
+            <div className="w-2/5 bg-gradient-to-br from-slate-50 to-slate-100 border-l border-slate-200 overflow-y-auto sticky top-0 flex flex-col">
+              <div className="p-6 space-y-6 flex-1">
+                {/* Financial Summary */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Amount Summary</h3>
+                  
+                  <div className="bg-white rounded-lg p-4 border border-slate-200">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-slate-600">Total Amount</span>
+                      <span className="text-2xl font-bold text-slate-900">{fmt(invoice?.grand_total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-t border-slate-200">
+                      <span className="text-slate-600 text-sm">Subtotal</span>
+                      <span className="text-slate-900 font-medium">{fmt(invoice?.subtotal || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-slate-600 text-sm">Tax</span>
+                      <span className="text-slate-900 font-medium">{fmt(invoice?.tax_total || 0)}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border border-slate-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-slate-600 text-sm">Paid</span>
+                      <span className="text-lg font-bold text-green-700">₹0.00</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600 text-sm">Outstanding</span>
+                      <span className="text-lg font-bold text-red-700">{fmt(invoice?.grand_total || 0)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Primary CTA */}
+                <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+                  💳 Record Payment
+                </button>
+
+                {/* Customer Info */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-900">Customer</h4>
+                  <div className="bg-white rounded p-3 border border-slate-200">
+                    <p className="font-semibold text-slate-900">{invoice?.customer?.name}</p>
+                    <p className="text-sm text-slate-600">{invoice?.customer?.code}</p>
+                    {invoice?.customer?.gstin && (
+                      <p className="text-xs text-slate-500 mt-1">GSTIN: {invoice?.customer?.gstin}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Branch Info */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-900">From</h4>
+                  <div className="bg-white rounded p-3 border border-slate-200">
+                    <p className="font-semibold text-slate-900">{invoice?.branch?.name}</p>
+                    <p className="text-sm text-slate-600">{invoice?.branch?.code}</p>
+                  </div>
+                </div>
+
+                {/* Secondary Actions */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-900">Quick Actions</h4>
+                  <div className="space-y-2">
+                    <button className="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                      📬 Send Reminder
+                    </button>
+                    <button className="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                      💬 Share via WhatsApp
+                    </button>
+                    <button className="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-3 rounded-lg transition-colors text-sm">
+                      📋 Create Credit Note
+                    </button>
+                  </div>
+                </div>
+
+                {/* Download Button */}
+                <button
+                  onClick={() => previewUrl && window.open(previewUrl, "_blank")}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </button>
+              </div>
+
+              {/* Timeline */}
+              <div className="border-t border-slate-200 p-6 bg-white">
+                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">Timeline</h4>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {getTimelineEvents().map((event, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <div className="text-lg flex-shrink-0">{event.icon}</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-slate-900">{event.label}</p>
+                        <p className="text-xs text-slate-500">{fmtDatetime(event.date)}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {getTimelineEvents().length === 0 && (
+                    <p className="text-sm text-slate-500 text-center py-4">No events yet</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

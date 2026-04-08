@@ -256,10 +256,16 @@ module Api
       def void_invoice
         authorize @invoice, :void?
 
+        # Validate required parameters
+        reason = params[:reason].to_s.strip
+        if reason.blank?
+          return render_errors(['Void reason is required'])
+        end
+
         result = Invoice::VoidService.call(
           actor:   current_user,
           invoice: @invoice,
-          reason:  params[:reason]
+          reason:  reason
         )
 
         if result.success?
@@ -308,6 +314,18 @@ module Api
       def ewaybill
         authorize @invoice, :ewaybill?
 
+        # Validate required parameters
+        vehicle_number = params[:vehicle_number].to_s.strip
+        transporter_id = params[:transporter_id].to_s.strip
+        
+        if vehicle_number.blank?
+          return render_errors(['Vehicle number is required'])
+        end
+        
+        if transporter_id.blank?
+          return render_errors(['Transporter GSTIN/ID is required'])
+        end
+
         existing = @invoice.ewaybill_requests.order(:created_at).last
         if existing&.status == 'generated'
           return render_errors(['E-waybill has already been generated for this invoice'])
@@ -320,9 +338,9 @@ module Api
         result = Gst::EwaybillService.generate(
           sales_invoice:    @invoice,
           transport_mode:   params[:transport_mode].presence || 'road',
-          vehicle_number:   params[:vehicle_number],
+          vehicle_number:   vehicle_number,
           distance_km:      params[:distance_km],
-          transporter_id:   params[:transporter_id],
+          transporter_id:   transporter_id,
           transporter_name: params[:transporter_name]
         )
 
@@ -427,6 +445,7 @@ module Api
           pdf_generated_at:  inv.pdf_generated_at,
           has_pdf:           inv.pdf_document.attached?,
           einvoice_status:   inv.einvoice_status,
+          einvoice_error:    inv.einvoice_error,
           irn:               inv.irn,
           ack_number:        inv.ack_number,
           ack_datetime:      inv.ack_datetime,
@@ -505,7 +524,13 @@ module Api
 
       def signed_pdf_url(inv)
         Rails.application.routes.url_helpers
-             .rails_blob_url(inv.pdf_document, expires_in: 1.hour, disposition: 'inline')
+             .rails_blob_url(
+               inv.pdf_document, 
+               expires_in: 1.hour, 
+               disposition: 'inline',
+               host: ENV.fetch('APP_HOST', 'localhost:3000'),
+               protocol: Rails.env.production? ? 'https' : 'http'
+             )
       rescue StandardError => e
         Rails.logger.warn("[SalesInvoicesController] signed_pdf_url error: #{e.message}")
         nil
