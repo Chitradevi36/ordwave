@@ -235,7 +235,7 @@ module Api
       end
 
       def serialize_user(user)
-        {
+        data = {
           id:                   user.id,
           email:                user.email,
           first_name:           user.first_name,
@@ -245,6 +245,21 @@ module Api
           organization_id:      user.current_organization_id,
           current_organization_id: user.current_organization_id
         }
+
+        # Attach membership info for current organization if present
+        if defined?(user.memberships) && user.respond_to?(:memberships)
+          membership = user.memberships.active.find_by(organization_id: user.current_organization_id)
+          if membership
+            data[:membership] = {
+              id: membership.id,
+              role: { id: membership.role_id, name: membership.role&.name },
+              branch: { id: membership.branch_id, name: membership.branch&.name },
+              status: membership.status
+            }
+          end
+        end
+
+        data
       end
     end
   end

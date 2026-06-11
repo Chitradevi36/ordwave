@@ -4,7 +4,7 @@ module Customers
   # Imports Customer records from an uploaded CSV file for the given organisation.
   #
   # Expected CSV columns (case-insensitive headers):
-  #   name*, code*, channel, tier, customer_type, status, phone, email,
+  #   name*, code*, channel, tier, customer_type, status, phone*, email,
   #   gstin, pan, credit_limit, credit_days, credit_block_rule, opening_balance,
   #   visit_frequency, branch_code*, route_code, tags
   #  (* required)
@@ -112,6 +112,10 @@ module Customers
 
       tags = row['tags'].to_s.split(',').map(&:strip).reject(&:blank?)
 
+      # Phone is required for each customer import and must be a 10-digit number
+      phone_val = row['phone'].to_s.strip.presence
+      return [nil, "phone is required and must be a 10-digit number"] unless phone_val && phone_val.match?(/\A[0-9]{10}\z/)
+
       attrs = {
         name:               row['name'].to_s.strip,
         code:               row['code'].to_s.strip,
@@ -119,7 +123,7 @@ module Customers
         tier:               row['tier'].to_s.strip.presence,
         customer_type:      row['customer_type'].to_s.strip.presence,
         status:             row['status'].to_s.strip.presence || 'active',
-        phone:              row['phone'].to_s.strip.presence,
+        phone:              phone_val,
         email:              row['email'].to_s.strip.downcase.presence,
         gstin:              row['gstin'].to_s.strip.upcase.presence,
         pan:                row['pan'].to_s.strip.upcase.presence,

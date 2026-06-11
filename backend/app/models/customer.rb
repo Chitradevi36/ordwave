@@ -46,6 +46,10 @@ class Customer < ApplicationRecord
   validates :name,   presence: true, length: { maximum: 150 }
   validates :code,   presence: true,
                      uniqueness: { scope: :organization_id, message: 'has already been taken for this organization' }
+  # Phone must be provided when creating a new retailer and follow the 10-digit format
+  validates :phone, presence: true, on: :create
+  validates :phone, format: { with: /\A[0-9]{10}\z/, message: 'must be a 10-digit number' }, allow_blank: true
+  validates :phone, uniqueness: { scope: :organization_id, message: 'has already been taken for this organization' }, allow_blank: true
   validates :status, inclusion: { in: STATUSES }
   validates :channel, inclusion: { in: CHANNELS }, allow_blank: true
   validates :tier,    inclusion: { in: TIERS },    allow_blank: true
@@ -94,6 +98,16 @@ class Customer < ApplicationRecord
   scope :dup_by_name,  ->(val, org_id) { not_deleted.where(organization_id: org_id).where('LOWER(name) = LOWER(?)', val) }
   scope :dup_by_phone, ->(val, org_id) { not_deleted.where(organization_id: org_id).where(phone: val) }
   scope :dup_by_gstin, ->(val, org_id) { not_deleted.where(organization_id: org_id).where(gstin: val) }
+
+  # Normalize optional fields: store empty GSTIN/PAN as NULL so unique partial indexes behave correctly
+  before_validation :normalize_optional_identifiers
+
+  private
+
+  def normalize_optional_identifiers
+    self.gstin = nil if gstin.present? && gstin.strip == ""
+    self.pan   = nil if pan.present? && pan.strip == ""
+  end
 
   def soft_delete!
     update!(deleted_at: Time.current, status: 'inactive')

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_07_000005) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_08_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
@@ -2081,14 +2081,29 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_07_000005) do
     t.string "phone_number", null: false
     t.text "message_body", null: false
     t.string "message_type"
-    t.string "twilio_sid", null: false
+    t.string "twilio_sid"
     t.jsonb "metadata", default: {}
     t.datetime "sent_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "template_key", comment: "DLT template key from registry"
+    t.string "dlt_template_id", comment: "MSG91 DLT template ID"
+    t.string "dlt_principal_entity_id", comment: "TRAI DLT principal entity ID"
+    t.string "sms_origin", comment: "SMS classification: transactional or promotional"
+    t.string "msg91_request_id"
+    t.string "provider", default: "twilio"
+    t.datetime "delivered_at"
+    t.string "status", default: "sent"
     t.index ["created_at"], name: "index_sms_logs_on_created_at"
+    t.index ["delivered_at"], name: "index_sms_logs_on_delivered_at"
+    t.index ["dlt_template_id", "created_at"], name: "idx_sms_logs_dlt_template_created"
+    t.index ["dlt_template_id"], name: "idx_sms_logs_dlt_template_id"
     t.index ["message_type"], name: "index_sms_logs_on_message_type"
+    t.index ["msg91_request_id"], name: "index_sms_logs_on_msg91_request_id"
     t.index ["phone_number"], name: "index_sms_logs_on_phone_number"
+    t.index ["provider"], name: "index_sms_logs_on_provider"
+    t.index ["sms_origin"], name: "idx_sms_logs_sms_origin"
+    t.index ["template_key"], name: "idx_sms_logs_template_key"
     t.index ["twilio_sid"], name: "index_sms_logs_on_twilio_sid", unique: true
   end
 
