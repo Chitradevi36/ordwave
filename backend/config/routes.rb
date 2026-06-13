@@ -106,6 +106,7 @@ Rails.application.routes.draw do
           post :deactivate
           get  :credit_usage
           get  :timeline
+          get  :dashboard
           # Credit Intelligence Engine
           get  'risk_profile',            to: 'retailer_risk#show'
           post 'risk_profile/recompute',  to: 'retailer_risk#recompute'

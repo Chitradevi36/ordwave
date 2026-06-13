@@ -3,7 +3,7 @@ class SalesOrderPolicy < ApplicationPolicy
   def show?   = member? && within_scope?
 
   def create?
-    member? && (manager_above? || sales_rep?)
+    member? && (manager_above? || sales_rep? || role_name == 'customer')
   end
 
   def update?
@@ -82,6 +82,9 @@ class SalesOrderPolicy < ApplicationPolicy
         membership = @user.membership_for(@organization)
         base.where(branch_id: membership&.branch_id)
       elsif role_name == 'sales_rep'
+        base.by_created_by(@user.id)
+      elsif role_name == 'customer'
+        # Customer users should only see orders they created
         base.by_created_by(@user.id)
       elsif role_name == 'warehouse_staff'
         membership = @user.membership_for(@organization)

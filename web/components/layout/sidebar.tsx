@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, X, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, LogOut, LayoutDashboard, ShoppingCart } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import Link from "next/link";
 
@@ -317,7 +317,25 @@ function SidebarBody({
 }) {
   const pathname = usePathname();
   const role = useCurrentRole();
-  const groups = filterGroupedNavForRole(role);
+  // For `customer` role show a simplified navigation (dashboard + orders)
+  const groups = role === "customer" ? [
+    {
+      key: "home",
+      label: "Home",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      matchers: ["/dashboard"],
+    },
+    {
+      key: "sales",
+      label: "Sales",
+      icon: ShoppingCart,
+      matchers: ["/orders"],
+      children: [
+        { key: "orders", label: "Orders", href: "/orders", matchers: ["/orders"] },
+      ],
+    },
+  ] : filterGroupedNavForRole(role);
   const isCollapsed = collapsed && !isMobile;
 
   // Single accordion: track which group key is open

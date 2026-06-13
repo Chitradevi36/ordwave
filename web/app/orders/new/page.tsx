@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
 
 import { Button } from "@/components/ui/button";
@@ -163,6 +163,7 @@ const PRICE_SOURCE_COLOR: Record<string, string> = {
 export default function NewOrderPage() {
   const router = useRouter();
   const { token, orgId } = useOrgBranch();
+  const searchParams = useSearchParams();
 
   // Order header
   const [customerQuery,   setCustomerQuery]   = useState("");
@@ -240,6 +241,29 @@ export default function NewOrderPage() {
       .then(r => r.json())
       .then(j => { if (j.data) setBranches(j.data); });
   }, [token, orgId]);
+
+  // Prefill when `customer_id` query param is present (from dashboard Create Order link)
+  useEffect(() => {
+    const cid = searchParams?.get?.("customer_id");
+    if (!cid || !token || !orgId || customer) return;
+    const id = Number(cid);
+    if (!id) return;
+
+    fetch(`${API_URL}/api/v1/customers/${id}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Organization-Id": orgId },
+    })
+      .then(r => r.json())
+      .then(j => {
+        const data = j.data;
+        if (!data) return;
+        const c: CustomerOption = { id: data.id, name: data.name, code: data.code || String(data.id), branch_id: data.branch_id };
+        // Use existing selectCustomer logic to populate recent orders / credit etc.
+        selectCustomer(c);
+        setCustomerQuery(`${c.name} (${c.code})`);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, token, orgId]);
 
   // â”€â”€ Customer search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const searchCustomers = useCallback((q: string) => {

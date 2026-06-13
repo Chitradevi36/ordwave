@@ -1,4 +1,124 @@
 module Orders
+  # Creates or updates a draft SalesOrder. Does not run credit checks or submit the order.
+  #
+  # Usage:
+  #   Orders::DraftUpsertService.call(actor: current_user, params: params_hash, organization: org, branch: branch)
+  #
+  class DraftUpsertService
+    def self.call(**kwargs)
+      new(**kwargs).call
+    end
+
+    def initialize(actor:, params:, organization:, branch:)
+      @actor        = actor
+      @params       = params.is_a?(ActionController::Parameters) ? params.to_h.symbolize_keys : params
+      @organization = organization
+      @branch       = branch
+    end
+
+    def call
+      if @params[:id].present?
+        update_draft
+      else
+        create_draft
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      { ok: false, order: nil, errors: [e.message] }
+    end
+
+    private
+
+    def create_draft
+      order = SalesOrder.new(
+        organization: @organization,
+        branch:       @branch,
+        created_by:   @actor
+      )
+
+      assign_attrs(order, @params)
+
+      ActiveRecord::Base.transaction do
+        order.save!
+        order.recalculate_totals!
+
+        # If actor is a customer, run a credit precheck so we can surface warnings
+        if customer_actor? && order.lines.present?
+          credit_account = order.customer&.credit_account
+          credit_result = Credit::PrecheckService.call(
+            credit_account: credit_account,
+            product_ids:    order.lines.map(&:product_id),
+            order_total:    order.total_amount.to_f,
+            branch:         @branch
+          )
+
+          # Persist snapshot as a preview so frontend can show potential issues
+          order.update_columns(
+            credit_snapshot: (credit_result[:metrics] || {}),
+            credit_reasons:  (credit_result[:reasons] || [])
+          )
+
+          # Enforce hard block policy at draft-time for customer actors: prevent save
+          if credit_result[:decision] == Credit::CreditEngine::DECISION_BLOCKED && order.customer&.credit_block_rule == 'hard_block'
+            raise ActiveRecord::RecordInvalid.new(order), 'Order blocked by credit policy'
+          end
+        end
+
+        { ok: true, order: order.reload, errors: [] }
+      end
+    end
+
+    def update_draft
+      order = SalesOrder.where(id: @params[:id], organization_id: @organization.id).first
+      return { ok: false, order: nil, errors: ['Order not found'] } unless order
+      return { ok: false, order: order, errors: ['Order is not editable'] } unless order.editable?
+
+      assign_attrs(order, @params)
+
+      ActiveRecord::Base.transaction do
+        order.save!
+        order.recalculate_totals!
+
+        if customer_actor? && order.lines.present?
+          credit_account = order.customer&.credit_account
+          credit_result = Credit::PrecheckService.call(
+            credit_account: credit_account,
+            product_ids:    order.lines.map(&:product_id),
+            order_total:    order.total_amount.to_f,
+            branch:         @branch
+          )
+
+          order.update_columns(
+            credit_snapshot: (credit_result[:metrics] || {}),
+            credit_reasons:  (credit_result[:reasons] || [])
+          )
+
+          if credit_result[:decision] == Credit::CreditEngine::DECISION_BLOCKED && order.customer&.credit_block_rule == 'hard_block'
+            raise ActiveRecord::RecordInvalid.new(order), 'Order blocked by credit policy'
+          end
+        end
+
+        { ok: true, order: order.reload, errors: [] }
+      end
+    end
+
+    def customer_actor?
+      return false unless @actor.respond_to?(:membership_for)
+      role = @actor.membership_for(@organization)&.name || @actor.membership_for(@organization)&.role&.name
+      role == 'customer' || @actor.memberships.active.exists?(organization: @organization, role: Role.find_by(name: 'customer'))
+    end
+
+    # Assign allowed attributes and nested lines (if provided)
+    def assign_attrs(order, attrs)
+      permitted = attrs.slice(:customer_id, :delivery_date, :notes, :idempotency_key)
+      order.assign_attributes(permitted)
+
+      if attrs[:lines_attributes].present?
+        order.lines_attributes = attrs[:lines_attributes]
+      end
+    end
+  end
+end
+module Orders
   # Creates or updates a draft SalesOrder with its lines.
   #
   # Usage:
