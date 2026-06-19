@@ -662,7 +662,9 @@ export function CustomerForm({
   const canSubmit =
     !!form.branch_id &&
     !loading &&
-    Object.keys(validationErrors).length === 0;
+    Object.keys(validationErrors).length === 0 &&
+    // When creating a new customer, require phone to be present
+    (!isCreate || (form.phone && form.phone.trim().length > 0));
 
   // ── Dup badge helper ────────────────────────────────────────────────────────
   const dupBadge = (field: "name" | "phone" | "gstin", result: DupResult | null) => {
@@ -731,8 +733,9 @@ export function CustomerForm({
           </SelectField>
 
           <div className="space-y-1">
-            <FieldLabel text="Phone" />
+            <FieldLabel text="Phone" required={isCreate} />
             <Input
+              required={isCreate}
               value={form.phone}
               onChange={(e) => handlePhoneChange(e.target.value)}
               placeholder="+91 9876543210"

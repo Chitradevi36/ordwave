@@ -1,5 +1,5 @@
 class Role < ApplicationRecord
-  NAMES = %w[owner admin manager sales_rep warehouse_staff accountant driver].freeze
+  NAMES = %w[owner admin manager sales_rep warehouse_staff accountant driver customer].freeze
 
   # Associations
   has_many :memberships
@@ -29,4 +29,5 @@ class Role < ApplicationRecord
   def manager?   = name == 'manager'
   def sales_rep? = name == 'sales_rep'
   def driver?    = name == 'driver'
+  def customer?  = name == 'customer'
 end

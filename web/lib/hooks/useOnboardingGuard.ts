@@ -19,9 +19,13 @@ export function useOnboardingGuard(): boolean {
       // Get stored data
       const token = localStorage.getItem('auth_token');
       const orgId = localStorage.getItem('organization_id');
+      const storedUser = localStorage.getItem('user');
+      const userObj = storedUser ? JSON.parse(storedUser) : null;
 
       // If user is logged in but no organization, redirect to onboarding
-      if (token && !orgId) {
+      // EXCEPTION: if user has a membership with role 'customer' (retailer contact), skip onboarding
+      const hasCustomerMembership = userObj && userObj.membership && userObj.membership.role && userObj.membership.role.name === 'customer';
+      if (token && !orgId && !hasCustomerMembership) {
         // Redirect and don't set ready
         router.replace('/onboarding');
         setHasChecked(true);

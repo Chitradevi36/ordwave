@@ -10,6 +10,7 @@ import { useOrgBranch } from "@/lib/org-branch-context";
 import { apiClient } from "@/lib/api/client";
 import { CommandPalette } from "@/components/global/CommandPalette";
 import { NotificationsPanel } from "@/components/global/NotificationsPanel";
+import { useUnreadCount } from "@/lib/api/hooks/useNotifications";
 import { useCurrentRole } from "@/lib/hooks/use-current-role";
 import { filterCreateActionsForRole } from "@/components/layout/nav.config";
 import { ANALYTICS_EVENTS, trackClick } from "@/lib/analytics";
@@ -238,6 +239,7 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const router = useRouter();
   const role = useCurrentRole();
+  const unreadCount = useUnreadCount();
 
   const {
     orgId, branchId, organizations, branches, orgsLoading, branchesLoading,
@@ -294,7 +296,8 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
             </h1>
           )}
           {/* Org / Branch switchers */}
-          <div className="hidden sm:flex items-center gap-2">
+          {role !== "customer" && (
+            <div className="hidden sm:flex items-center gap-2">
             <SwitcherDropdown
               icon={Building2}
               label="Organization"
@@ -315,7 +318,8 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
               allLabel="All Branches"
               footerAction={{ label: "New Branch", onClick: () => setShowAddBranch(true) }}
             />
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Center: Search/Command Palette */}
@@ -337,10 +341,17 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
         {/* Right actions */}
         <div className="flex items-center gap-2">
           {/* + Create */}
-          <CreateDropdown />
+          {role !== "customer" && <CreateDropdown />}
 
-          {/* Notifications */}
-          <NotificationsPanel />
+          {/* Notifications (panel + compact unread badge) */}
+          <div className="relative">
+            <NotificationsPanel />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 hidden sm:inline-flex w-5 h-5 bg-red-500 rounded-full text-[10px] font-semibold text-white items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </div>
 
           {/* User menu */}
           <UserMenu onLogout={handleLogout} />

@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   PLANS = %w[free starter growth enterprise].freeze
+  AUTH_CHANNELS = %w[email phone google].freeze
 
   # Devise modules
   devise :database_authenticatable, :recoverable, :rememberable, :trackable,
@@ -10,12 +11,13 @@ class User < ApplicationRecord
   has_many :organizations,          through: :memberships
   has_many :branches,               through: :memberships
   has_many :sent_invitations,       class_name: 'Invitation', foreign_key: :invited_by_id, dependent: :destroy
+  has_many :phone_verifications,    dependent: :destroy
 
   # Validations
   validates :email,      presence: true, uniqueness: { case_sensitive: false },
                          format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :first_name, presence: true, length: { maximum: 50 }
-  validates :last_name,  presence: true, length: { maximum: 50 }
+  validates :last_name,  length: { maximum: 50 }
   validates :phone,      format: { with: /\A[6-9]\d{9}\z/, message: 'must be a valid 10-digit Indian mobile number' },
                          allow_blank: true
   validates :plan,       presence: true, inclusion: { in: PLANS }
@@ -24,6 +26,9 @@ class User < ApplicationRecord
   scope :active,      -> { where(active: true, deleted_at: nil) }
   scope :not_deleted, -> { where(deleted_at: nil) }
   scope :find_by_oauth, ->(provider, uid) { find_by(oauth_provider: provider, oauth_uid: uid) }
+
+  # Enum for preferred authentication channel
+  enum preferred_auth_method: { email: 'email', phone: 'phone', google: 'google' }, _prefix: :auth_via
 
   # Normalizations
   before_validation { self.email = email.to_s.downcase.strip }
@@ -83,6 +88,27 @@ class User < ApplicationRecord
 
   def full_name
     "#{first_name} #{last_name}".strip
+  end
+
+  # Phone verification helper methods
+  def primary_phone
+    phone_verifications.order(created_at: :desc).find_by(is_primary: true)&.phone_number
+  end
+
+  def verified_phones
+    phone_verifications.where(verified: true).pluck(:phone_number)
+  end
+
+  def has_verified_phone?
+    phone_verified? && phone_verified_at.present?
+  end
+
+  def mark_phone_verified!(phone_number = nil)
+    update!(
+      phone_verified: true,
+      phone_verified_at: Time.current,
+      phone: phone_number  # Update phone field if provided
+    )
   end
 
   def membership_for(organization)

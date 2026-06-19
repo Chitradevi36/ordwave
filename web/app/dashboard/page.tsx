@@ -23,6 +23,7 @@ import { AccountantView } from "@/components/dashboard/AccountantView";
 import { WarehouseView } from "@/components/dashboard/WarehouseView";
 import { DriverView } from "@/components/dashboard/DriverView";
 import { ManagerView } from "@/components/dashboard/ManagerView";
+import CustomerView from "@/components/dashboard/CustomerView";
 // import { RiskiestRetailersPanel } from "@/components/dashboard/RiskiestRetailersPanel";
 
 // â”€â”€ Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -259,6 +260,8 @@ export default function DashboardPage() {
         <WarehouseView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : role === "driver" ? (
         <DriverView data={data} isLoading={isLoading || roleLoading} isError={isError} />
+      ) : role === "customer" ? (
+        <CustomerView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : (
         <>
           {!isLoading && data?.alerts && <AlertRibbon alerts={data.alerts} />}

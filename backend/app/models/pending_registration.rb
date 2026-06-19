@@ -3,8 +3,10 @@ class PendingRegistration < ApplicationRecord
   OTP_EXPIRY = 10.minutes
   MAX_OTP_ATTEMPTS = 5
 
-  validates :email, presence: true, uniqueness: true,
-                    format: { with: URI::MailTo::EMAIL_REGEXP }
+  validate :email_or_phone_present
+  validates :email, uniqueness: true, allow_nil: true,
+                    format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email.present? }
+  validates :phone, uniqueness: true, allow_nil: true
   validates :current_step, inclusion: { in: STEPS }
 
   scope :active, -> { where(completed: false).where('expires_at > ?', Time.current) }
@@ -17,6 +19,10 @@ class PendingRegistration < ApplicationRecord
     self.otp_sent_at = Time.current
     self.otp_attempts = 0
     save!
+  end
+
+  def identifier
+    email.presence || phone.presence
   end
 
   def verify_otp(code)
@@ -42,6 +48,14 @@ class PendingRegistration < ApplicationRecord
   def store_data!(hash)
     self.data = data.merge(hash.deep_stringify_keys)
     save!
+  end
+
+  private
+
+  def email_or_phone_present
+    unless email.present? || phone.present?
+      errors.add(:base, 'Either email or phone must be present')
+    end
   end
 
   def mark_completed!

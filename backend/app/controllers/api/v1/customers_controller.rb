@@ -155,6 +155,18 @@ module Api
         render_success(usage)
       end
 
+      # GET /api/v1/customers/:id/dashboard
+      def dashboard
+        customer = find_customer
+        authorize customer, :show?
+
+        branch_id = params[:branch_id].presence || customer.branch_id
+        branch = current_organization.branches.find(branch_id)
+
+        payload = Customers::DashboardService.call(customer: customer, branch: branch)
+        render_success(payload)
+      end
+
       def check_duplicate
         authorize Customer.new(organization: current_organization), :index?
         field      = params[:field].to_s

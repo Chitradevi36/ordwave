@@ -11,12 +11,21 @@ module Users
     end
 
     def call
+      # Enforce presence of phone for user creation to ensure sign-in via phone is possible
+      if @phone.to_s.strip.empty?
+        return Result.new(success?: false, user: nil, errors: ['phone is required'])
+      end
+
+      unless @phone.to_s.strip.match?(/\A[0-9]{10}\z/)
+        return Result.new(success?: false, user: nil, errors: ['phone must be a 10-digit number'])
+      end
+
       user = User.new(
         email:      @email,
         password:   @password,
         first_name: @first_name,
         last_name:  @last_name,
-        phone:      @phone,
+        phone:      @phone.to_s.strip,
         active:     true
       )
 

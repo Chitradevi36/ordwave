@@ -497,18 +497,67 @@ function OrdersPageContent() {
 
   // ─── Export CSV (current page) ───────────────────────────────────────────
   const exportCsv = () => {
-    // Track export event
     const dateRange = dateFrom || dateTo ? `${dateFrom ?? ""} to ${dateTo ?? ""}` : "all";
-    orderEvents.export("csv", orders.length, dateRange);
 
-    const hdrs = ["Order #","Customer","Branch","Status","Total (₹)","Discount (₹)","Delivery Date","Sales Rep","Created"];
-    const rows = orders.map(o => [
-      o.order_number, o.customer.name, o.branch.name, o.status,
-      o.total_amount, o.discount_amount, o.delivery_date ?? "",
-      o.created_by?.name ?? "", new Date(o.created_at).toLocaleDateString("en-IN"),
-    ]);
+    const hdrs = [
+      "Order #",
+      "Customer",
+      "Branch",
+      "Product Name",
+      "Product Code",
+      "Quantity",
+      "Item Price (₹)",
+      "Item Discount (₹)",
+      "Status",
+      "Delivery Date",
+      "Sales Rep",
+      "Created",
+    ];
+
+    const rows = orders.flatMap(o => {
+      const items = (o as any).line_items || (o as any).items || [];
+      if (!items || items.length === 0) {
+        return [[
+          o.order_number,
+          o.customer.name,
+          o.branch.name,
+          "",
+          "",
+          "",
+          o.status,
+          o.total_amount,
+          o.discount_amount,
+          o.delivery_date ?? "",
+          o.created_by?.name ?? "",
+          new Date(o.created_at).toLocaleDateString("en-IN"),
+        ]];
+      }
+
+      return items.map((it: any) => {
+        const itemPrice = it.unit_price ?? it.price ?? it.rate ?? (it.product && it.product.price) ?? "";
+        const itemDiscount = it.discount_amount ?? it.item_discount ?? it.discount ?? it.line_discount ?? "";
+        return [
+          o.order_number,
+          o.customer.name,
+          o.branch.name,
+          it.product_name || it.name || (it.product && it.product.name) || "",
+          it.product_code || it.code || (it.product && it.product.code) || "",
+          it.quantity ?? it.qty ?? it.quantity_ordered ?? "",
+          itemPrice,
+          itemDiscount,
+          o.status,
+          o.delivery_date ?? "",
+          o.created_by?.name ?? "",
+          new Date(o.created_at).toLocaleDateString("en-IN"),
+        ];
+      });
+    });
+
+    // Track export event (rows exported)
+    orderEvents.export("csv", rows.length, dateRange);
+
     const csv = [hdrs, ...rows]
-      .map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+      .map((r: any[]) => r.map((v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
       .join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     const a = document.createElement("a"); a.href = url; a.download = "orders.csv"; a.click();
