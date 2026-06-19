@@ -20,6 +20,24 @@ import { API_URL } from "@/lib/api/client";
 import { orderEvents } from "@/lib/analytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+interface LineItem {
+  unit_price?: number;
+  price?: number;
+  rate?: number;
+  product?: { price?: number; name?: string; code?: string };
+  product_name?: string;
+  name?: string;
+  product_sku?: string;
+  code?: string;
+  quantity?: number;
+  qty?: number;
+  quantity_ordered?: number;
+  discount_amount?: number;
+  item_discount?: number;
+  discount?: number;
+  line_discount?: number;
+}
+
 interface OrderSummary {
   id: number;
   order_number: string;
@@ -35,6 +53,10 @@ interface OrderSummary {
   customer: { id: number; name: string; code: string };
   branch: { id: number; name: string };
   created_by: { id: number; name: string };
+  // possible shapes for order line items returned by the API
+  line_items?: LineItem[];
+  lines?: LineItem[];
+  items?: LineItem[];
 }
 
 interface StatusCounts {
@@ -514,8 +536,8 @@ function OrdersPageContent() {
       "Created",
     ];
 
-    const rows = orders.flatMap(o => {
-      const items = (o as any).line_items || (o as any).items || [];
+    const rows = orders.flatMap((o: OrderSummary) => {
+      const items: LineItem[] = o.line_items ?? o.lines ?? o.items ?? [];
       if (!items || items.length === 0) {
         return [[
           o.order_number,
@@ -524,24 +546,24 @@ function OrdersPageContent() {
           "",
           "",
           "",
+          "",
+          "",
           o.status,
-          o.total_amount,
-          o.discount_amount,
           o.delivery_date ?? "",
           o.created_by?.name ?? "",
           new Date(o.created_at).toLocaleDateString("en-IN"),
         ]];
       }
 
-      return items.map((it: any) => {
-        const itemPrice = it.unit_price ?? it.price ?? it.rate ?? (it.product && it.product.price) ?? "";
+      return items.map((it: LineItem) => {
+        const itemPrice = it.unit_price ?? it.price ?? it.rate ?? it.product?.price ?? "";
         const itemDiscount = it.discount_amount ?? it.item_discount ?? it.discount ?? it.line_discount ?? "";
         return [
           o.order_number,
           o.customer.name,
           o.branch.name,
-          it.product_name || it.name || (it.product && it.product.name) || "",
-          it.product_code || it.code || (it.product && it.product.code) || "",
+          it.product_name || it.name || it.product?.name || "",
+          it.product_sku || it.name || it.product?.sku || "",
           it.quantity ?? it.qty ?? it.quantity_ordered ?? "",
           itemPrice,
           itemDiscount,
