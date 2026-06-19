@@ -24,7 +24,7 @@ interface LineItem {
   unit_price?: number;
   price?: number;
   rate?: number;
-  product?: { price?: number; name?: string; code?: string };
+  product?: { price?: number; name?: string; code?: string, sku?: string };
   product_name?: string;
   name?: string;
   product_sku?: string;
