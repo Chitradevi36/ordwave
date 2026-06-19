@@ -26,12 +26,12 @@ module Api
           today_value:       today_scope.sum(:total_amount).to_f.round(0)
         }
 
-        scope  = base_scope.includes(:customer, :branch, :created_by, :lines)
+        scope  = base_scope.includes(:customer, :branch, :created_by, lines: :product)
         scope  = apply_filters(scope)
         orders = paginate(apply_sort(scope))
 
         render_success(
-          orders.map { |o| serialize_order(o) },
+          orders.map { |o| serialize_order(o, detailed: true) },
           meta: pagination_meta(orders).merge(counts: counts, metrics: metrics)
         )
       end
