@@ -6,13 +6,16 @@ class LogSmsJob
 
   sidekiq_options retry: 2, dead: true
 
-  def perform(phone_number:, message_body:, twilio_sid:, message_type: nil, **metadata)
+  def perform(phone_number:, message_body:, twilio_sid: nil, msg91_request_id: nil, dlt_template_id: nil, dlt_principal_entity_id: nil, message_type: nil, **metadata)
     begin
       SmsLog.create!(
         phone_number: phone_number,
         message_body: message_body.to_s[0...160], # Store first 160 chars
         message_type: message_type,
         twilio_sid: twilio_sid,
+        msg91_request_id: msg91_request_id,
+        dlt_template_id: dlt_template_id,
+        dlt_principal_entity_id: dlt_principal_entity_id,
         metadata: metadata,
         sent_at: Time.current
       )

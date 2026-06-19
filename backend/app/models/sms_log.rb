@@ -15,8 +15,10 @@ class SmsLog < ApplicationRecord
   self.table_name = 'sms_logs'
 
   # ── Validations ────────────────────────────────────────────────────────────────
-  validates :phone_number, :message_body, :twilio_sid, presence: true
-  validates :twilio_sid, uniqueness: true
+  validates :phone_number, :message_body, presence: true
+  validates :twilio_sid, uniqueness: true, allow_nil: true
+  validates :msg91_request_id, uniqueness: true, allow_nil: true
+  validate :must_have_provider_id
   validates :message_type, inclusion: {
     in: %w[delivery_otp registration_otp login_otp delivery_alert payment_reminder custom],
     message: "%{value} is not a valid message type"
@@ -34,5 +36,11 @@ class SmsLog < ApplicationRecord
 
   def set_sent_at
     self.sent_at ||= Time.current
+  end
+
+  def must_have_provider_id
+    unless twilio_sid.present? || msg91_request_id.present?
+      errors.add(:base, 'Either twilio_sid or msg91_request_id must be present')
+    end
   end
 end

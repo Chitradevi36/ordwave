@@ -2,13 +2,19 @@ module Signup
   class VerifyOtpService
     Result = Struct.new(:success?, :pending_registration, :errors, keyword_init: true)
 
-    def initialize(email:, otp_code:)
-      @email    = email.to_s.downcase.strip
+    def initialize(identifier:, otp_code:)
+      @raw_identifier = identifier.to_s.strip
+      @email = normalize_email(@raw_identifier)
+      @phone = normalize_phone(@raw_identifier)
       @otp_code = otp_code.to_s
     end
 
     def call
-      pending = PendingRegistration.active.find_by(email: @email)
+      pending = if @email.present?
+                  PendingRegistration.active.find_by(email: @email)
+                elsif @phone.present?
+                  PendingRegistration.active.find_by(phone: @phone)
+                end
 
       unless pending
         return Result.new(
@@ -31,6 +37,20 @@ module Signup
                     end
         Result.new(success?: false, pending_registration: pending, errors: [error_msg])
       end
+    end
+
+    private
+
+    def normalize_email(value)
+      val = value.to_s.strip
+      return nil unless val.match?(/\A[^\s@]+@[^\s@]+\.[^\s@]+\z/)
+      val.downcase
+    end
+
+    def normalize_phone(value)
+      digits = value.to_s.gsub(/\D/, '')
+      return nil unless digits.match?(/\A[6-9]\d{9}\z/)
+      digits
     end
   end
 end

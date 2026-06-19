@@ -4,13 +4,14 @@ module Api
       # No auth required for signup flow
 
       def initiate
-        result = Signup::InitiateService.new(email: params[:email]).call
+        identifier = params[:identifier] || params[:email] || params[:phone]
+        result = Signup::InitiateService.new(identifier: identifier).call
 
         if result.success?
           render json: {
             data: {
-              email:        result.pending_registration.email,
-              message:      'OTP sent to your email',
+              identifier:   result.pending_registration.identifier,
+              message:      result.pending_registration.email.present? ? 'OTP sent to your email' : 'OTP sent to your phone',
               otp_code:     Rails.env.development? ? result.pending_registration.otp_code : nil,
               current_step: result.pending_registration.current_step
             }
@@ -21,22 +22,20 @@ module Api
       end
 
       def verify_otp
-        result = Signup::VerifyOtpService.new(
-          email:    params[:email],
-          otp_code: params[:otp_code]
-        ).call
+      identifier = params[:identifier] || params[:email] || params[:phone]
+      result = Signup::VerifyOtpService.new(identifier: identifier, otp_code: params[:otp_code]).call
 
-        if result.success?
-          render json: {
-            data: {
-              email:        result.pending_registration.email,
-              current_step: result.pending_registration.current_step,
-              message:      'OTP verified successfully'
-            }
-          }, status: :ok
-        else
-          render json: { errors: result.errors }, status: :unprocessable_entity
-        end
+      if result.success?
+        render json: {
+          data: {
+            identifier:   result.pending_registration.identifier,
+            current_step: result.pending_registration.current_step,
+            message:      'OTP verified successfully'
+          }
+        }, status: :ok
+      else
+        render json: { errors: result.errors }, status: :unprocessable_entity
+      end
       end
 
       def set_password

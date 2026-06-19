@@ -59,6 +59,7 @@ export default function SignupPage() {
   
   const [currentStep, setCurrentStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -86,12 +87,20 @@ export default function SignupPage() {
       const response = await fetch(`${API_URL}/api/v1/signup/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ identifier }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // store returned identifier if provided by server
+        if (data.data?.identifier) {
+          const id = data.data.identifier;
+          // if it's an email-like identifier, prefill email state for later steps
+          if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)) {
+            setEmail(id);
+          }
+        }
         if (data.data.otp_code) {
           console.log('DEV OTP:', data.data.otp_code);
         }
@@ -116,7 +125,7 @@ export default function SignupPage() {
       const response = await fetch(`${API_URL}/api/v1/signup/verify_otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp_code: otpCode }),
+        body: JSON.stringify({ identifier: identifier || email, otp_code: otpCode }),
       });
 
       const data = await response.json();
@@ -290,12 +299,12 @@ export default function SignupPage() {
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-50 rounded-full mb-4">
                   <Mail className="w-6 h-6 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-text-primary mb-2">
-                  What's your email?
-                </h2>
-                <p className="text-sm text-text-secondary">
-                  We'll send you a verification code
-                </p>
+                  <h2 className="text-xl font-semibold text-text-primary mb-2">
+                    What's your email or mobile?
+                  </h2>
+                  <p className="text-sm text-text-secondary">
+                    We'll send you a verification code via email or SMS
+                  </p>
               </div>
 
               {/* Google OAuth Section */}
@@ -303,10 +312,10 @@ export default function SignupPage() {
 
               <div>
                 <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Email or phone (eg. +91 98765 43210)"
                   required
                   disabled={loading}
                   className="text-base"
@@ -339,7 +348,7 @@ export default function SignupPage() {
                   Check your email
                 </h2>
                 <p className="text-sm text-text-secondary">
-                  We sent a 6-digit code to <strong>{email}</strong>
+                  We sent a 6-digit code to <strong>{identifier || email}</strong>
                 </p>
               </div>
 
@@ -367,7 +376,7 @@ export default function SignupPage() {
                 onClick={() => setCurrentStep('email')}
                 className="w-full text-sm text-text-secondary hover:text-primary"
               >
-                Change email address
+                Change contact
               </button>
             </form>
           )}

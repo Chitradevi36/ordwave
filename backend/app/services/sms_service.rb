@@ -1,4 +1,7 @@
 require 'twilio-ruby'
+require 'net/http'
+require 'uri'
+require 'cgi'
 
 # ── SMS Service ────────────────────────────────────────────────────────────────
 # Handles all SMS/OTP communications via Twilio
@@ -15,12 +18,18 @@ class SmsService
   PAYMENT_REMINDER_TEMPLATE = "Payment due: ₹%{amount} for invoice %{invoice_number}. Pay now: %{payment_link}"
 
   def initialize
+    @provider = (ENV['SMS_PROVIDER'] || 'twilio').downcase
     validate_config!
-    @client = Twilio::REST::Client.new(
-      ENV.fetch('TWILIO_ACCOUNT_SID'),
-      ENV.fetch('TWILIO_AUTH_TOKEN')
-    )
-    @from_number = ENV.fetch('TWILIO_PHONE_NUMBER')
+
+    if @provider == 'twilio'
+      @client = Twilio::REST::Client.new(
+        ENV.fetch('TWILIO_ACCOUNT_SID'),
+        ENV.fetch('TWILIO_AUTH_TOKEN')
+      )
+      @from_number = ENV.fetch('TWILIO_PHONE_NUMBER')
+    else
+      @from_number = ENV.fetch('MSG91_SENDER_ID', nil)
+    end
   end
 
   # ── Send OTP for Delivery Proof ────────────────────────────────────────────────
@@ -147,23 +156,51 @@ class SmsService
     begin
       # Ensure phone number has country code
       phone_number = normalise_phone_number(phone_number)
+      if @provider == 'msg91'
+        # Determine DLT/template params for MSG91 when available
+        dlt_template = case metadata[:message_type]
+                       when 'login_otp' then ENV['DLT_TEMPLATE_OTP_LOGIN']
+                       when 'registration_otp' then ENV['DLT_TEMPLATE_OTP_REGISTRATION']
+                       when 'delivery_otp' then ENV['DLT_TEMPLATE_OTP_DELIVERY']
+                       else nil
+                       end
 
-      # Send SMS
-      response = @client.messages.create(
-        from: @from_number,
-        to: phone_number,
-        body: message
-      )
+        dlt_principal = ENV['DLT_PRINCIPAL_ENTITY_ID']
 
-      # Log SMS in background job
-      LogSmsJob.perform_later(
-        phone_number: phone_number,
-        message_body: message,
-        twilio_sid: response.sid,
-        **metadata
-      )
+        msg91_id = send_via_msg91(
+          phone_number,
+          message,
+          metadata.merge(dlt_template_id: dlt_template, dlt_principal_entity_id: dlt_principal)
+        )
 
-      response.sid
+        LogSmsJob.perform_later(
+          phone_number: phone_number,
+          message_body: message,
+          msg91_request_id: msg91_id,
+          dlt_template_id: dlt_template,
+          dlt_principal_entity_id: dlt_principal,
+          **metadata
+        )
+
+        msg91_id
+      else
+        # Default: Twilio
+        response = @client.messages.create(
+          from: @from_number,
+          to: phone_number,
+          body: message
+        )
+
+        # Log SMS in background job
+        LogSmsJob.perform_later(
+          phone_number: phone_number,
+          message_body: message,
+          twilio_sid: response.sid,
+          **metadata
+        )
+
+        response.sid
+      end
     rescue Twilio::REST::TwilioError => e
       error_msg = "Failed to send SMS to #{phone_number}: #{e.message}"
       Rails.logger.error(error_msg)
@@ -175,16 +212,76 @@ class SmsService
     end
   end
 
+  # Send SMS via MSG91 HTTP API (simple sendhttp.php approach)
+  # Returns request id/string on success
+  def send_via_msg91(phone_number, message, metadata = {})
+    auth_key = ENV.fetch('MSG91_AUTH_KEY', nil)
+    sender = ENV.fetch('MSG91_SENDER_ID', nil)
+    route = ENV.fetch('MSG91_ROUTE', '4') # transactional by default
+
+    raise SMSSendError, 'MSG91_AUTH_KEY not configured' unless auth_key
+    raise SMSSendError, 'MSG91_SENDER_ID not configured' unless sender
+
+    # MSG91 expects mobiles as comma-separated without +, ensure digits only
+    mobiles = phone_number.gsub(/[^0-9]/, '')
+
+    params = {
+      authkey: auth_key,
+      mobiles: mobiles,
+      message: message,
+      sender: sender,
+      route: route
+    }
+
+    # Include DLT/template details when provided
+    if metadata[:dlt_template_id].present?
+      params[:dlt_template_id] = metadata[:dlt_template_id]
+    end
+
+    if metadata[:dlt_principal_entity_id].present?
+      params[:dlt_principal_entity_id] = metadata[:dlt_principal_entity_id]
+    end
+
+    uri = URI.parse('https://control.msg91.com/api/sendhttp.php')
+    res = Net::HTTP.post_form(uri, params)
+
+    unless res.is_a?(Net::HTTPSuccess)
+      raise SMSSendError, "MSG91 HTTP error: #{res.code} #{res.message}"
+    end
+
+    body = res.body.to_s.strip
+    # MSG91 returns a request id or error text; return body as request id
+    Rails.logger.info("MSG91 send response (#{res.code}): #{body} | dlt_template=#{params[:dlt_template_id]} dlt_principal=#{params[:dlt_principal_entity_id]}")
+    body
+  end
+
   # ── Validate Configuration ─────────────────────────────────────────────────────
   # Ensures all required Twilio env vars are set
   def validate_config!
-    required_keys = %w[TWILIO_ACCOUNT_SID TWILIO_AUTH_TOKEN TWILIO_PHONE_NUMBER]
-    missing_keys = required_keys.reject { |key| ENV[key].present? }
+    provider = (ENV['SMS_PROVIDER'] || 'twilio').downcase
 
-    if missing_keys.any?
-      raise TwilioConfigError,
-            "Missing SMS configuration: #{missing_keys.join(', ')}\n" \
-            "Add to .env: #{missing_keys.map { |k| "#{k}=..." }.join(', ')}"
+    case provider
+    when 'twilio'
+      required_keys = %w[TWILIO_ACCOUNT_SID TWILIO_AUTH_TOKEN TWILIO_PHONE_NUMBER]
+      missing_keys = required_keys.reject { |key| ENV[key].present? }
+
+      if missing_keys.any?
+        raise TwilioConfigError,
+              "Missing SMS configuration: #{missing_keys.join(', ')}\n" \
+              "Add to .env: #{missing_keys.map { |k| "#{k}=..." }.join(', ')}"
+      end
+    when 'msg91'
+      required_keys = %w[MSG91_AUTH_KEY MSG91_SENDER_ID]
+      missing_keys = required_keys.reject { |key| ENV[key].present? }
+
+      if missing_keys.any?
+        raise TwilioConfigError,
+              "Missing MSG91 configuration: #{missing_keys.join(', ')}\n" \
+              "Add to .env: #{missing_keys.map { |k| "#{k}=..." }.join(', ')}"
+      end
+    else
+      # Unknown provider — default to Twilio configuration
+      Rails.logger.warn("Unknown SMS_PROVIDER '#{provider}', expecting 'twilio' or 'msg91'")
     end
   end
 
