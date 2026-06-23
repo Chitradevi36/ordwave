@@ -2,116 +2,139 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Features",
-  description: "Explore OrdWave features for order management, retailer CRM, credit control, inventory, delivery tracking, collections, GST invoicing, and analytics.",
+  title: "Product Features",
+  description: "Explore OrdWave modules — order management, inventory, credit, collections, delivery, analytics, and mobile apps for FMCG distributors.",
 };
 
-const features = [
+const modules = [
   {
-    title: "Order Management",
-    detail: "Move orders from booking to dispatch with clean workflow states and fewer operational misses.",
+    name: "Order Management",
+    headline: "From order booking to dispatch — without WhatsApp and Excel chaos",
+    body: "Capture, validate, approve, and dispatch orders through a structured workflow. Apply credit checks and inventory verification before every order goes out.",
+    bullets: ["Live order pipeline with stage tracking","Retailer-level order history","Credit and inventory gate before dispatch","Dispatch confirmation with status updates"],
+    kpi: "28% faster order processing",
   },
   {
-    title: "Retailer CRM",
-    detail: "Track outlet profile, route, payment behavior, and engagement context for smarter sales execution.",
+    name: "Inventory Management",
+    headline: "Know exactly what stock you have at every branch in real time",
+    body: "Monitor SKU-level stock movement across branches, trigger low-stock alerts, and manage transfers with full traceability.",
+    bullets: ["Branch-wise real-time stock levels","Low-stock and near-zero alerts","Inter-branch transfer management","Stock movement history per SKU"],
+    kpi: "22% reduction in stockouts",
   },
   {
-    title: "Credit Control",
-    detail: "Apply rule-based credit checks so teams can approve confidently and avoid high-risk exposure.",
+    name: "Credit Management",
+    headline: "Stop risky orders before they hit your cash flow",
+    body: "Automate credit limit enforcement and aging-based hold logic so every order is reviewed against current exposure before approval.",
+    bullets: ["Credit limit and aging policy config","Auto-hold on limit breach","Manager approval workflow","Retailer-wise credit scorecard"],
+    kpi: "30% reduction in bad debt",
   },
   {
-    title: "Inventory Management",
-    detail: "Keep branch-level stock accurate with transfer visibility, alerts, and real-time inventory checks.",
+    name: "Collections",
+    headline: "Prioritize the right dues and collect faster",
+    body: "Give finance teams a clear view of overdue accounts with aging buckets, rep assignments, and one-click follow-up actions.",
+    bullets: ["Aging-based priority queue","Rep-wise assignment and tracking","Payment recording and reconciliation","Collection trend analytics"],
+    kpi: "33% faster cash recovery",
   },
   {
-    title: "Delivery Tracking",
-    detail: "See trip progress and stop-level status to resolve delays early and improve fulfillment quality.",
+    name: "Delivery Management",
+    headline: "Live trip visibility from dispatch to doorstep",
+    body: "Plan routes, assign trips, and track deliveries in real time with stop-level status and proof-of-delivery confirmation.",
+    bullets: ["Route-wise trip planning","Live dispatch and stop tracking","POD photo and signature capture","Delayed trip alerts"],
+    kpi: "95%+ on-time delivery rate",
   },
   {
-    title: "Payments and Collections",
-    detail: "Centralize dues and collection status so finance teams act faster with clearer follow-up priorities.",
+    name: "Analytics",
+    headline: "Decision-ready dashboards for founders and managers",
+    body: "See sales, credit, collections, and branch performance at a glance with role-specific dashboards that update in real time.",
+    bullets: ["Owner KPI command center","Branch comparison reports","Sales rep performance scorecards","Weekly trend summaries"],
+    kpi: "5x faster operational decisions",
   },
   {
-    title: "GST-ready Invoicing",
-    detail: "Generate compliant invoices quickly with workflows built for Indian distributor operations.",
-  },
-  {
-    title: "Reports and Analytics",
-    detail: "Turn daily operations into decision-ready visibility across sales, credit, collections, and branch performance.",
+    name: "Mobile Applications",
+    headline: "Apps for sales, delivery, and collections that work offline",
+    body: "Field teams get purpose-built offline-first apps that sync seamlessly when connectivity returns — zero data loss.",
+    bullets: ["Sales Rep App — offline order capture","Driver App — route and POD","Collection App — payment and receipt","Auto-sync on reconnect"],
+    kpi: "40% faster field execution",
   },
 ];
 
 export default function FeaturesPage() {
   return (
     <>
-      <section className="gradient-mesh border-b border-border/60">
+      <section className="gradient-mesh border-b border-[#E2E8F0]">
         <div className="section-shell section-gap">
           <span className="pill">Feature depth</span>
-          <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">
-            Everything your distribution team needs, from order capture to collections
+          <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">
+            Complete product modules for enterprise distribution operations
           </h1>
-          <p className="mt-4 max-w-3xl text-text-secondary">
-            OrdWave unifies sales, finance, warehouse, and dispatch workflows so operations run with less manual follow-up
-            and better decision visibility.
+          <p className="mt-4 max-w-3xl text-[#475569]">
+            Purpose-built modules that cover your entire order-to-cash cycle — from field order capture to overdue recovery.
           </p>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="premium-card p-4">
-              <p className="text-xs text-text-secondary">Order errors reduced</p>
-              <p className="mt-1 text-2xl font-bold text-primary">24%</p>
-            </div>
-            <div className="premium-card p-4">
-              <p className="text-xs text-text-secondary">Collection follow-up speed</p>
-              <p className="mt-1 text-2xl font-bold text-primary">+31%</p>
-            </div>
-            <div className="premium-card p-4">
-              <p className="text-xs text-text-secondary">Dispatch visibility</p>
-              <p className="mt-1 text-2xl font-bold text-primary">Real-time</p>
-            </div>
-            <div className="premium-card p-4">
-              <p className="text-xs text-text-secondary">Branch operations</p>
-              <p className="mt-1 text-2xl font-bold text-primary">Unified</p>
-            </div>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {modules.map(m=>(
+              <span key={m.name} className="pill">{m.name}</span>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="section-shell section-gap">
-        <div className="mb-8 flex flex-wrap gap-2">
-          <span className="pill">Built for Indian distributors</span>
-          <span className="pill">GST-ready workflows</span>
-          <span className="pill">Credit-first operations</span>
-          <span className="pill">Offline-ready field teams</span>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          {features.map((feature) => (
-            <div key={feature.title} className="premium-card p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Module</p>
-              <h2 className="mt-1 text-xl font-semibold">{feature.title}</h2>
-              <p className="mt-2 text-sm text-text-secondary">{feature.detail}</p>
-              <ul className="mt-4 space-y-1.5 text-sm text-text-primary">
-                <li>• Faster day-to-day execution</li>
-                <li>• Better team-level accountability</li>
-                <li>• Clear business impact tracking</li>
-              </ul>
-              <div className="mt-5">
-                <Link href="/request-demo" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">Book a Demo</Link>
+        <div className="space-y-8">
+          {modules.map((mod, idx) => (
+            <div key={mod.name} className={`card p-8 grid gap-8 lg:grid-cols-2 lg:items-center ${idx % 2 === 1 ? "lg:grid-flow-dense" : ""}`}>
+              <div className={idx % 2 === 1 ? "lg:col-start-2" : ""}>
+                <span className="pill">{mod.name}</span>
+                <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#0F172A]">{mod.headline}</h2>
+                <p className="mt-3 text-[#475569]">{mod.body}</p>
+                <ul className="mt-5 space-y-2">
+                  {mod.bullets.map(b=>(
+                    <li key={b} className="flex items-center gap-2.5 text-sm text-[#475569]">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#52B788]" />{b}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-5 flex items-center gap-4">
+                  <span className="inline-flex rounded-full bg-[#DCFCE7] px-3 py-1 text-xs font-semibold text-[#166534]">{mod.kpi}</span>
+                  <Link href="/request-demo" className="text-sm font-semibold text-[#1B4332] hover:underline underline-offset-4">Book Demo →</Link>
+                </div>
+              </div>
+              {/* Module preview */}
+              <div className={`rounded-xl border border-[#E2E8F0] bg-[#F8FAF8] p-5 ${idx % 2 === 1 ? "lg:col-start-1" : ""}`}>
+                <p className="text-xs font-semibold text-[#64748B] mb-3">{mod.name} — Live View</p>
+                <div className="space-y-2">
+                  <div className="h-3 w-3/4 rounded bg-[#1B4332]/15" />
+                  <div className="h-3 w-full rounded bg-[#1B4332]/10" />
+                  <div className="h-3 w-5/6 rounded bg-[#1B4332]/10" />
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="rounded-lg bg-white border border-[#E2E8F0] p-3">
+                      <div className="h-2 w-full rounded bg-[#E2E8F0] mb-1.5" />
+                      <div className="h-5 w-10 rounded bg-[#1B4332]/25" />
+                    </div>
+                    <div className="rounded-lg bg-white border border-[#E2E8F0] p-3">
+                      <div className="h-2 w-full rounded bg-[#E2E8F0] mb-1.5" />
+                      <div className="h-5 w-10 rounded bg-[#52B788]/40" />
+                    </div>
+                    <div className="rounded-lg bg-white border border-[#E2E8F0] p-3">
+                      <div className="h-2 w-full rounded bg-[#E2E8F0] mb-1.5" />
+                      <div className="h-5 w-10 rounded bg-[#0369A1]/30" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="section-shell pb-16 sm:pb-20">
-        <div className="premium-card bg-primary p-8 text-white sm:p-10">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Want to see these modules in your workflow?</h2>
-          <p className="mt-3 max-w-2xl text-sm text-white/90 sm:text-base">
-            Book a live walkthrough and get a role-based demo for sales, finance, warehouse, and dispatch teams.
+      <section className="section-shell pb-20">
+        <div className="gradient-dark rounded-3xl p-10 text-center">
+          <h2 className="text-3xl font-bold text-white sm:text-4xl">See every module in action with your own data</h2>
+          <p className="mt-3 text-[#94A3B8] max-w-xl mx-auto">
+            Book a guided product walkthrough for your sales, warehouse, finance, and dispatch teams.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/request-demo" className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary">Book a Demo</Link>
-            <Link href="/pricing" className="rounded-lg border border-white/60 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</Link>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Link href="/request-demo" className="btn-primary px-7 py-2.5">Book Demo</Link>
+            <Link href="/pricing" className="inline-flex items-center rounded-xl border border-white/20 px-7 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</Link>
           </div>
         </div>
       </section>

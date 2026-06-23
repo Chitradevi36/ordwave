@@ -1,448 +1,654 @@
+// REBUILT
+
+"use client";
 import Link from "next/link";
+import { useState } from "react";
 
-const painPoints = [
-  {
-    title: "Excel-based order tracking",
-    text: "Multiple sheets across branches cause version conflicts, late dispatches, and missed commitments.",
-  },
-  {
-    title: "WhatsApp order confusion",
-    text: "Order details get buried in chats, creating rework, dispatch mistakes, and blame across teams.",
-  },
-  {
-    title: "Manual collections follow-up",
-    text: "Finance teams spend hours calling retailers without clear prioritization and aging visibility.",
-  },
-  {
-    title: "Inventory mismatch",
-    text: "Branch stock is inaccurate during high velocity movement, causing stockouts and canceled orders.",
-  },
-  {
-    title: "Credit leakage",
-    text: "Orders get approved without policy checks, increasing overdue risk and hurting working capital.",
-  },
+/* ─── Data ── */
+const trustMetrics = [
+	{ value: "2M+",      label: "Orders Processed" },
+	{ value: "500K+",    label: "Deliveries Completed" },
+	{ value: "300+",     label: "Branches Managed" },
+	{ value: "₹180Cr+",  label: "Collection Value" },
 ];
 
-const industrySolutions = [
-  "FMCG Distribution",
-  "Rice Distribution",
-  "Pharma Distribution",
-  "Electrical Distribution",
-  "Wholesale Distribution",
-  "Multi Branch Operations",
+const challenges = [
+	{ icon: "📋", title: "Manual Order Taking",     before: "Sales reps taking orders via calls and WhatsApp",        after: "Structured digital order capture with auto-validation" },
+	{ icon: "📦", title: "Inventory Mismatch",      before: "Stock levels unknown until physical count",              after: "Real-time branch-wise inventory with low-stock alerts" },
+	{ icon: "💸", title: "Outstanding Collections", before: "Finance teams chasing dues with no clear priority list", after: "Aging-based priority with one-click follow-up actions" },
+	{ icon: "🚚", title: "Delivery Delays",         before: "No visibility on trip progress until calls",             after: "Live dispatch board with stop-level delivery status" },
+	{ icon: "⚠️", title: "Credit Risk",             before: "Orders approved without checking credit limits",         after: "Automated credit gates before every order approval" },
+	{ icon: "🏢", title: "Branch Visibility",       before: "Owner blind to what each branch is doing",              after: "Unified command center across all branches and teams" },
 ];
 
-const productFeatures = [
-  {
-    title: "Order Management",
-    text: "Capture orders from field teams, apply workflow states, and prevent execution drop-offs from booking to dispatch.",
-    bullets: ["Live order pipeline", "Retailer-level order history", "Status-wise team accountability"],
-  },
-  {
-    title: "Credit & Collections",
-    text: "Apply credit rules before dispatch and track overdue recovery with branch-wise and rep-wise visibility.",
-    bullets: ["Limit and aging checks", "Collections prioritization", "Escalation workflow"],
-  },
-  {
-    title: "Inventory Management",
-    text: "Monitor stock movement in real time, reduce mismatch, and improve fill rates across SKUs and branches.",
-    bullets: ["Branch stock visibility", "Low-stock alerts", "Transfer and adjustment logs"],
-  },
-  {
-    title: "Delivery Management",
-    text: "Plan dispatches, track route progress, and reduce delayed deliveries with on-field updates.",
-    bullets: ["Dispatch board", "Trip progress tracking", "Proof-of-delivery updates"],
-  },
-  {
-    title: "Reports & Analytics",
-    text: "Give founders and managers decision-ready visibility across revenue, overdue exposure, and operational throughput.",
-    bullets: ["Owner KPI dashboard", "Branch comparison", "Daily team scorecards"],
-  },
+const whyCards = [
+	{ icon: "📱", title: "Offline Sales App",      outcome: "40% faster order capture",        body: "Sales reps book orders even without internet. Syncs instantly on reconnect." },
+	{ icon: "🏢", title: "Multi-Branch Control",   outcome: "One view across every branch",    body: "Owner dashboard consolidates KPIs from all branches in real time." },
+	{ icon: "🛡️", title: "Credit Risk Engine",     outcome: "Reduce bad debt by up to 30%",   body: "Automated credit limit checks, aging alerts, and approval workflows." },
+	{ icon: "📦", title: "Real-Time Inventory",    outcome: "Eliminate stockouts",             body: "Live SKU-level stock with movement history and reorder triggers." },
+	{ icon: "🗺️", title: "Route Planning",         outcome: "20% more outlets per rep",       body: "Smart route assignments with outlet coverage and visit tracking." },
+	{ icon: "🚚", title: "Delivery Tracking",      outcome: "95%+ on-time delivery",          body: "Trip-wise dispatch board with live progress and POD confirmation." },
+	{ icon: "💰", title: "Collection Management",  outcome: "25% more overdue in 30 days",    body: "Prioritized collection lists, payment recording, and auto-reconciliation." },
+	{ icon: "📊", title: "Business Analytics",     outcome: "5x faster decisions",            body: "Role-specific dashboards for owners, managers, and field teams." },
 ];
 
-const workflow = ["Sales Rep", "Order", "Credit Check", "Approval", "Warehouse", "Delivery", "Invoice", "Collection"];
-
-const screenCards = [
-  { name: "Owner Dashboard", details: "Revenue, overdue, branch health, and daily execution KPIs in one command view." },
-  { name: "Order Pipeline", details: "See each order stage from booking to dispatch with pending-action clarity." },
-  { name: "Retailer CRM", details: "Track payment behavior, order trends, and outstanding by retailer account." },
-  { name: "Inventory Dashboard", details: "Monitor SKU stock by branch with critical alerts and movement history." },
-  { name: "Collection Dashboard", details: "Prioritize dues by age, rep, and amount to improve cash conversion." },
-  { name: "Driver Mobile App", details: "Route-wise delivery list with status updates and completion confirmation." },
+const industries = [
+	{ name: "FMCG Distribution",       desc: "High-volume beat operations with retailer CRM and credit control.", icon: "🛒" },
+	{ name: "Rice Distribution",       desc: "SKU-level stock tracking for bulk staple distributor workflows.",   icon: "🌾" },
+	{ name: "Pharma Distribution",     desc: "Batch tracking, expiry management, and compliant invoicing.",      icon: "💊" },
+	{ name: "Electronics Distribution",desc: "Serialized stock, warranty dispatch, and route-wise delivery.",   icon: "⚡" },
+	{ name: "Wholesale Distribution",  desc: "Multi-category order management with trade credit workflows.",    icon: "🏪" },
+	{ name: "Multi-Branch Networks",   desc: "Central governance with branch-level execution autonomy.",        icon: "🏢" },
 ];
 
-const benefitKpis = [
-  { metric: "28%", label: "Faster order processing" },
-  { metric: "33%", label: "Improved collection follow-up" },
-  { metric: "22%", label: "Lower inventory mismatch" },
-  { metric: "19%", label: "Reduction in credit exceptions" },
+const workflowSteps = [
+	{ step: "Retailer",             bg: "#EFF7F2", color: "#1B4332" },
+	{ step: "Order",                bg: "#E0F2FE", color: "#0369A1" },
+	{ step: "Credit Check",         bg: "#FEF9C3", color: "#713F12" },
+	{ step: "Approval",             bg: "#DCFCE7", color: "#166534" },
+	{ step: "Inventory Allocation", bg: "#EFF7F2", color: "#1B4332" },
+	{ step: "Dispatch",             bg: "#F0F9FF", color: "#0C4A6E" },
+	{ step: "Delivery",             bg: "#EFF7F2", color: "#166534" },
+	{ step: "Collection",           bg: "#DCFCE7", color: "#166534" },
 ];
 
-const trustItems = ["GST Ready", "Multi Branch", "Mobile + Web", "Secure Cloud", "Daily Backups", "Role Based Access"];
+const mobileApps = [
+	{ name: "Sales Rep App",  icon: "📱", desc: "Offline-ready order booking, retailer profile, and target tracking for field sales.",     features: ["Offline order capture","Retailer outlet CRM","Daily target visibility","Route-wise navigation"] },
+	{ name: "Driver App",     icon: "🚚", desc: "Route-optimized delivery list with stop-level status and proof-of-delivery capture.",      features: ["Trip assignment","Stop-level navigation","POD photo capture","Return management"] },
+	{ name: "Collection App", icon: "💰", desc: "Prioritized dues list with payment recording, receipt generation, and reconciliation.",    features: ["Aging-based priority","Multi-mode payment","Digital receipt","Reconciliation sync"] },
+];
+
+const testimonials = [
+	{ company: "PrimeKart Distributors", person: "Rajesh Kumar", role: "Managing Director", quote: "OrdWave replaced our Excel chaos with one control center. Collections improved by 30% in the first 60 days.", outcome: "30% faster collections" },
+	{ company: "Lakshmi Traders",        person: "Suresh Nair",  role: "Operations Head",   quote: "We manage 4 branches now with total clarity. The owner dashboard gives me the pulse of the business every morning.", outcome: "4 branches unified" },
+	{ company: "Agro Foods Network",     person: "Meena Pillai", role: "Finance Manager",   quote: "Credit controls alone saved us from three bad debtors this quarter. The system flagged them before dispatch.", outcome: "3 bad debts prevented" },
+];
+
+const comparisons = [
+	{ cap: "Centralized Order Workflow",  excel: "Manual",  tally: "Partial",  ow: "Full" },
+	{ cap: "Credit Policy Enforcement",   excel: "None",    tally: "Limited",  ow: "Automated" },
+	{ cap: "Multi-Branch Visibility",     excel: "None",    tally: "Limited",  ow: "Real-time" },
+	{ cap: "Collection Prioritization",   excel: "Manual",  tally: "Basic",    ow: "Aging-based" },
+	{ cap: "Delivery Tracking",           excel: "None",    tally: "None",     ow: "Live GPS" },
+	{ cap: "Role-Based Access",           excel: "None",    tally: "Basic",    ow: "Granular" },
+	{ cap: "Mobile Apps",                 excel: "None",    tally: "None",     ow: "Yes — Offline" },
+	{ cap: "GST-Ready Invoicing",         excel: "Manual",  tally: "Yes",      ow: "Auto" },
+	{ cap: "Business Analytics",          excel: "None",    tally: "Basic",    ow: "Real-time" },
+];
 
 const faqs = [
-  {
-    q: "How quickly can we go live?",
-    a: "Most teams start with one branch and core workflows, then expand branch by branch within weeks.",
-  },
-  {
-    q: "Is OrdWave suitable for super stockists and wholesale networks?",
-    a: "Yes. OrdWave supports high-volume order handling, multi-branch operations, and role-based execution.",
-  },
-  {
-    q: "Do you support GST invoicing and Indian workflows?",
-    a: "Yes. OrdWave is built for Indian distribution workflows, including GST-ready invoicing and branch operations.",
-  },
-  {
-    q: "Can we onboard sales, warehouse, and finance teams together?",
-    a: "Yes. The platform is role-based, so each team gets dedicated workflows with shared operational visibility.",
-  },
+	{ q: "How quickly can we go live?",                          a: "Most teams are fully live within 2 weeks. We provide onboarding support for sales, warehouse, and finance teams." },
+	{ q: "Does OrdWave work offline?",                          a: "Yes. The Sales Rep App and Driver App work offline and sync automatically when connectivity is restored." },
+	{ q: "Is it suitable for super stockists and wholesalers?", a: "Absolutely. OrdWave handles high-volume operations, multi-tier pricing, and trade credit workflows." },
+	{ q: "How is OrdWave different from Tally or Excel?",       a: "Tally and Excel handle accounting. OrdWave is an operational execution system for orders, dispatch, delivery, and collections." },
+	{ q: "Do you support GST invoicing?",                       a: "Yes. All invoices are GST-compliant with GSTIN, HSN codes, and e-invoice support for Indian distributors." },
 ];
 
+/* ─── Section 1: Hero ── */
 export function HeroSection() {
-  return (
-    <section className="gradient-mesh relative overflow-hidden border-b border-border/60">
-      <div className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 left-0 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
-
-      <div className="section-shell grid gap-12 py-16 sm:py-20 lg:grid-cols-2 lg:items-center lg:py-24">
-        <div className="animate-fade-up">
-          <span className="pill">Enterprise OMS for distributors and wholesalers</span>
-          <h1 className="mt-4 text-4xl font-bold leading-[1.04] tracking-tight text-text-primary sm:text-5xl lg:text-6xl">
-            Grow Your Distribution Business Without Excel, WhatsApp &amp; Credit Chaos
-          </h1>
-          <p className="mt-5 max-w-xl text-base text-text-secondary sm:text-lg">
-            Manage orders, inventory, collections, deliveries, GST invoicing and multi-branch operations from one platform.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/request-demo" className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(27,67,50,0.28)] transition-all hover:-translate-y-[1px] hover:bg-primary-700">
-              Start Free Trial
-            </Link>
-            <Link href="/request-demo" className="rounded-lg border border-border bg-white px-5 py-3 text-sm font-semibold transition-colors hover:bg-background-subtle">
-              Book Demo
-            </Link>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-2.5">
-            <span className="pill">Built for FMCG and wholesale teams</span>
-            <span className="pill">Founder-level visibility</span>
-            <span className="pill">Role-based execution</span>
-          </div>
-        </div>
-
-        <div className="premium-card animate-float relative overflow-hidden p-6 sm:p-7">
-          <div className="absolute right-0 top-0 h-24 w-24 rounded-bl-3xl bg-primary/10" />
-          <div className="relative">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold">OrdWave Owner Console</p>
-              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">Live</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border bg-background-subtle p-3">
-                <p className="text-xs text-text-secondary">Order Pipeline</p>
-                <p className="mt-1 text-xl font-bold">312</p>
-              </div>
-              <div className="rounded-xl border border-border bg-background-subtle p-3">
-                <p className="text-xs text-text-secondary">Overdue Amount</p>
-                <p className="mt-1 text-xl font-bold">₹24.6L</p>
-              </div>
-              <div className="rounded-xl border border-border bg-background-subtle p-3">
-                <p className="text-xs text-text-secondary">Fill Rate</p>
-                <p className="mt-1 text-sm font-semibold text-primary">93.4%</p>
-              </div>
-              <div className="rounded-xl border border-border bg-background-subtle p-3">
-                <p className="text-xs text-text-secondary">Credit Holds</p>
-                <p className="mt-1 text-sm font-semibold text-amber-700">14 retailers</p>
-              </div>
-            </div>
-            <div className="mt-4 rounded-xl border border-border p-3">
-              <p className="text-xs font-semibold text-text-secondary">Dispatch Status</p>
-              <div className="mt-2 grid h-20 grid-cols-6 items-end gap-1.5">
-                {[32, 48, 56, 66, 74, 84].map((value) => (
-                  <div key={value} className="rounded-t bg-primary/70" style={{ height: `${value}%` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+	return (
+		<section className="gradient-hero relative overflow-hidden border-b border-[#E2E8F0]">
+			<div className="pointer-events-none absolute -top-32 right-0 h-96 w-96 rounded-full bg-[#52B788]/10 blur-3xl" />
+			<div className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#1B4332]/5 blur-3xl" />
+			<div className="section-shell grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-2 lg:py-28">
+				<div className="animate-fade-up">
+					<span className="pill">Enterprise Distribution Management Software</span>
+					<h1 className="mt-5 text-4xl font-bold leading-[1.06] tracking-tight text-[#0F172A] sm:text-5xl lg:text-6xl">
+						Run Your Entire Distribution Business{" "}
+						<span className="text-[#1B4332]">From One Platform</span>
+					</h1>
+					<p className="mt-5 text-base leading-relaxed text-[#475569] sm:text-lg max-w-xl">
+						Manage orders, inventory, credit, collections, dispatch, delivery, and analytics across every branch in real time.
+					</p>
+					<div className="mt-8 flex flex-wrap gap-3">
+						<Link href="/request-demo" className="btn-primary text-base px-6 py-3">Start Free Trial</Link>
+						<Link href="/request-demo" className="btn-secondary text-base px-6 py-3">Book Demo</Link>
+					</div>
+					<div className="mt-7 flex flex-wrap gap-2">
+						{["GST-ready","Offline mobile apps","Multi-branch","Onboarding included"].map(t=>(
+							<span key={t} className="pill">{t}</span>
+						))}
+					</div>
+				</div>
+				<div className="animate-fade-up delay-200 animate-float">
+					<div className="screen-chrome">
+						<div className="screen-bar">
+							<div className="screen-dot bg-[#FF5F57]" />
+							<div className="screen-dot bg-[#FEBC2E]" />
+							<div className="screen-dot bg-[#28C840]" />
+							<span className="ml-3 text-xs text-[#94A3B8]">OrdWave — Owner Console</span>
+						</div>
+						<div className="bg-white p-5">
+							<div className="grid grid-cols-4 gap-2.5 mb-4">
+								{[
+									{label:"Orders Today",value:"312",delta:"+14%",up:true},
+									{label:"Overdue",value:"₹24.6L",delta:"7 retailers",up:false},
+									{label:"Fill Rate",value:"93.4%",delta:"+2.1%",up:true},
+									{label:"Dispatched",value:"289",delta:"today",up:true},
+								].map(k=>(
+									<div key={k.label} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAF8] p-2.5">
+										<p className="text-[10px] text-[#64748B]">{k.label}</p>
+										<p className="text-base font-bold text-[#0F172A]">{k.value}</p>
+										<p className={`text-[10px] font-semibold ${k.up?"text-[#166534]":"text-[#92400E]"}`}>{k.delta}</p>
+									</div>
+								))}
+							</div>
+							<div className="rounded-xl border border-[#E2E8F0] overflow-hidden mb-4">
+								<div className="bg-[#F8FAF8] px-3 py-2 border-b border-[#E2E8F0]">
+									<p className="text-xs font-semibold text-[#475569]">Live Order Pipeline</p>
+								</div>
+								<table className="min-w-full text-xs">
+									<thead><tr className="bg-[#F8FAF8]">
+										<th className="px-3 py-2 text-left text-[10px] text-[#64748B] font-semibold">Retailer</th>
+										<th className="px-3 py-2 text-left text-[10px] text-[#64748B] font-semibold">Amount</th>
+										<th className="px-3 py-2 text-left text-[10px] text-[#64748B] font-semibold">Status</th>
+									</tr></thead>
+									<tbody>
+										{[
+											{r:"Fresh Mart",a:"₹42,100",s:"Approved",sc:"bg-[#DCFCE7] text-[#166534]"},
+											{r:"Kannan Stores",a:"₹27,900",s:"Credit Hold",sc:"bg-[#FEF3C7] text-[#92400E]"},
+											{r:"Sai Traders",a:"₹18,200",s:"Delivered",sc:"bg-[#DCFCE7] text-[#166534]"},
+										].map(row=>(
+											<tr key={row.r} className="border-t border-[#E2E8F0]">
+												<td className="px-3 py-2 font-medium text-[#0F172A]">{row.r}</td>
+												<td className="px-3 py-2 text-[#475569]">{row.a}</td>
+												<td className="px-3 py-2"><span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.sc}`}>{row.s}</span></td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+							<div className="rounded-xl border border-[#E2E8F0] p-3">
+								<p className="text-xs font-semibold text-[#475569] mb-2">Collection Trend (7d)</p>
+								<div className="flex items-end gap-1.5 h-12">
+									{[35,48,42,60,55,72,84].map((v,i)=>(
+										<div key={i} className="flex-1 rounded-t bg-[#52B788]/70" style={{height:`${v}%`}} />
+									))}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	);
 }
 
-export function PainPointsSection() {
-  return (
-    <section className="section-shell section-gap">
-      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Customer pain points</h2>
-      <p className="mt-3 max-w-3xl text-text-secondary">
-        Most distribution teams lose margin and speed due to fragmented tools. OrdWave replaces that chaos with one control layer.
-      </p>
-      <div className="mt-9 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {painPoints.map((point) => (
-          <div key={point.title} className="premium-card animate-fade-up p-6">
-            <p className="text-sm font-semibold text-text-primary">{point.title}</p>
-            <p className="mt-2 text-sm text-text-secondary">{point.text}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+/* ─── Section 2: Trusted By ── */
+export function TrustedBySection() {
+	return (
+		<section className="border-b border-[#E2E8F0] bg-white py-12">
+			<div className="section-shell">
+				<p className="mb-8 text-center text-[11px] font-semibold uppercase tracking-widest text-[#94A3B8]">
+					Trusted by distribution teams across India
+				</p>
+				<div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+					{trustMetrics.map(m=>(
+						<div key={m.label} className="text-center">
+							<p className="text-2xl font-bold text-[#1B4332] sm:text-3xl">{m.value}</p>
+							<p className="mt-1 text-xs text-[#64748B]">{m.label}</p>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	);
 }
 
-export function IndustrySolutionsSection() {
-  return (
-    <section className="soft-grid bg-background-subtle section-gap">
-      <div className="section-shell">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Industry solutions</h2>
-        <p className="mt-3 max-w-3xl text-text-secondary">Purpose-built workflows for distributor categories with different operational complexity.</p>
-        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {industrySolutions.map((solution) => (
-            <div key={solution} className="premium-card p-6">
-              <p className="text-lg font-semibold text-text-primary">{solution}</p>
-              <p className="mt-2 text-sm text-text-secondary">Configured for order-to-cash control, branch operations, and distributor-grade execution.</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+/* ─── Section 3: Challenges ── */
+export function ChallengesSection() {
+	return (
+		<section className="bg-[#F8FAF8] section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="max-w-2xl">
+					<span className="pill">Distributor challenges</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Problems OrdWave eliminates</h2>
+					<p className="mt-3 text-base text-[#475569]">Every growing distributor hits the same operational ceiling. OrdWave breaks through it.</p>
+				</div>
+				<div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{challenges.map(c=>(
+						<div key={c.title} className="card p-6">
+							<div className="mb-3 text-2xl">{c.icon}</div>
+							<h3 className="text-base font-semibold text-[#0F172A]">{c.title}</h3>
+							<div className="mt-4 space-y-2.5">
+								<div className="rounded-lg bg-[#FFF1F2] px-3 py-2 text-xs text-[#9F1239]">
+									<span className="font-semibold">Before: </span>{c.before}
+								</div>
+								<div className="rounded-lg bg-[#F0FDF4] px-3 py-2 text-xs text-[#166534]">
+									<span className="font-semibold">With OrdWave: </span>{c.after}
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	);
 }
 
-export function ProductFeaturesSection() {
-  return (
-    <section className="section-shell section-gap">
-      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Product features</h2>
-      <p className="mt-3 max-w-3xl text-text-secondary">Operational modules built to improve daily execution and business control for founders and managers.</p>
-
-      <div className="mt-9 grid gap-4 lg:grid-cols-2">
-        {productFeatures.map((feature) => (
-          <div key={feature.title} className="premium-card p-6 sm:p-7">
-            <h3 className="text-xl font-semibold">{feature.title}</h3>
-            <p className="mt-2 text-sm text-text-secondary">{feature.text}</p>
-            <ul className="mt-4 space-y-1.5 text-sm text-text-primary">
-              {feature.bullets.map((bullet) => (
-                <li key={bullet}>• {bullet}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+/* ─── Section 4: Product Overview ── */
+export function ProductOverviewSection() {
+	return (
+		<section className="section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="max-w-2xl">
+					<span className="pill">Product overview</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Every module your distribution business needs</h2>
+					<p className="mt-3 text-base text-[#475569]">From order capture to collection closure — one connected platform.</p>
+				</div>
+				<div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{[
+						{mod:"Order Management",    desc:"Structured order flow from booking to dispatch with credit and stock checks.",  kpi:"28% faster processing"},
+						{mod:"Inventory Management",desc:"Branch-wise real-time stock with transfer, alert, and adjustment workflows.", kpi:"22% less mismatch"},
+						{mod:"Credit & Collections",desc:"Automated credit gates and aging-based collection priority lists.",            kpi:"33% faster recovery"},
+						{mod:"Delivery Management", desc:"Trip planning, live dispatch tracking, and POD confirmation.",                 kpi:"95%+ on-time rate"},
+						{mod:"Business Analytics",  desc:"Owner and manager dashboards with sales, credit, and branch KPIs.",           kpi:"5x faster decisions"},
+						{mod:"Mobile Applications", desc:"Offline-first apps for sales reps, drivers, and collection agents.",          kpi:"40% faster field ops"},
+					].map(m=>(
+						<div key={m.mod} className="card p-6 flex flex-col">
+							<h3 className="text-base font-semibold text-[#0F172A]">{m.mod}</h3>
+							<p className="mt-2 text-sm text-[#475569] flex-1">{m.desc}</p>
+							<span className="mt-4 inline-flex rounded-full bg-[#DCFCE7] px-2.5 py-1 text-xs font-semibold text-[#166534] self-start">{m.kpi}</span>
+						</div>
+					))}
+				</div>
+				<div className="mt-10 text-center">
+					<Link href="/features" className="btn-secondary px-6 py-2.5">Explore all features →</Link>
+				</div>
+			</div>
+		</section>
+	);
 }
 
-export function HowOrdWaveWorksSection() {
-  return (
-    <section className="bg-background-subtle section-gap">
-      <div className="section-shell">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">How OrdWave works</h2>
-        <p className="mt-3 max-w-3xl text-text-secondary">One connected flow from order booking to collections closure.</p>
-
-        <div className="mt-9 flex flex-wrap items-center gap-2">
-          {workflow.map((step, index) => (
-            <div key={step} className="flex items-center gap-2">
-              <div className="premium-card px-4 py-2.5 text-sm font-semibold text-text-primary">{step}</div>
-              {index < workflow.length - 1 ? <span className="text-primary">→</span> : null}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+/* ─── Section 5: Why OrdWave ── */
+export function WhyOrdWaveSection() {
+	return (
+		<section className="bg-grid bg-[#F8FAF8] section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="max-w-2xl">
+					<span className="pill">Why choose OrdWave</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Built for how distributors actually work</h2>
+					<p className="mt-3 text-base text-[#475569]">Not a generic ERP. Not a basic billing tool. A purpose-built execution system.</p>
+				</div>
+				<div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+					{whyCards.map(c=>(
+						<div key={c.title} className="card p-6">
+							<div className="mb-3 text-3xl">{c.icon}</div>
+							<h3 className="text-sm font-semibold text-[#0F172A]">{c.title}</h3>
+							<p className="mt-2 text-xs text-[#475569]">{c.body}</p>
+							<p className="mt-3 text-xs font-bold text-[#1B4332]">{c.outcome}</p>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	);
 }
 
-export function ProductScreensShowcaseSection() {
-  return (
-    <section className="section-shell section-gap">
-      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Product screens showcase</h2>
-      <p className="mt-3 max-w-3xl text-text-secondary">Realistic dashboard illustrations representing daily distributor workflows across teams.</p>
-
-      <div className="mt-9 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {screenCards.map((screen) => (
-          <div key={screen.name} className="premium-card overflow-hidden p-5">
-            <div className="rounded-xl border border-border bg-background-subtle p-3">
-              <div className="mb-2 h-2.5 w-20 rounded bg-primary/25" />
-              <div className="space-y-2">
-                <div className="h-2.5 w-full rounded bg-primary/15" />
-                <div className="h-2.5 w-4/5 rounded bg-primary/15" />
-                <div className="h-2.5 w-3/5 rounded bg-primary/15" />
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <div className="h-12 rounded bg-primary/20" />
-                <div className="h-12 rounded bg-primary/20" />
-                <div className="h-12 rounded bg-primary/20" />
-              </div>
-            </div>
-            <h3 className="mt-4 text-base font-semibold">{screen.name}</h3>
-            <p className="mt-2 text-sm text-text-secondary">{screen.details}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+/* ─── Section 6: Industries ── */
+export function IndustriesHomeSection() {
+	return (
+		<section className="section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="max-w-2xl">
+					<span className="pill">Industry solutions</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Designed for every distributor category</h2>
+					<p className="mt-3 text-base text-[#475569]">OrdWave adapts to your distribution model — not the other way around.</p>
+				</div>
+				<div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{industries.map(ind=>(
+						<Link key={ind.name} href="/industries" className="card group p-6 block">
+							<div className="mb-3 text-3xl">{ind.icon}</div>
+							<h3 className="text-base font-semibold text-[#0F172A] group-hover:text-[#1B4332]">{ind.name}</h3>
+							<p className="mt-2 text-sm text-[#475569]">{ind.desc}</p>
+							<span className="mt-4 inline-flex text-xs font-semibold text-[#1B4332] group-hover:underline">View solution →</span>
+						</Link>
+					))}
+				</div>
+			</div>
+		</section>
+	);
 }
 
-export function BenefitsSection() {
-  return (
-    <section className="soft-grid bg-background-subtle section-gap">
-      <div className="section-shell">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Business benefits</h2>
-        <p className="mt-3 max-w-3xl text-text-secondary">Track measurable improvements in speed, control, and working capital outcomes.</p>
-        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {benefitKpis.map((benefit) => (
-            <div key={benefit.label} className="premium-card p-6">
-              <p className="text-3xl font-bold text-primary">{benefit.metric}</p>
-              <p className="mt-2 text-sm text-text-secondary">{benefit.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+/* ─── Section 7: How It Works ── */
+export function HowItWorksSection() {
+	return (
+		<section className="section-gap border-b border-[#E2E8F0] bg-[#F8FAF8]">
+			<div className="section-shell">
+				<div className="mx-auto max-w-2xl text-center">
+					<span className="pill">Workflow</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">From retailer order to cash collection</h2>
+					<p className="mt-3 text-base text-[#475569]">One connected flow powered by OrdWave.</p>
+				</div>
+				<div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+					{workflowSteps.map((s,i)=>(
+						<div key={s.step} className="flex items-center gap-2">
+							<div className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-semibold shadow-sm" style={{color:s.color}}>
+								<span className="mr-1.5 text-[10px] font-bold opacity-50">{i+1}</span>{s.step}
+							</div>
+							{i < workflowSteps.length - 1 && <span className="text-[#52B788] font-bold text-lg">→</span>}
+						</div>
+					))}
+				</div>
+				<div className="mt-12 grid gap-4 sm:grid-cols-3">
+					{[
+						{title:"Before OrdWave",items:["WhatsApp + Excel chaos","Manual credit checks","Unknown delivery status","No collection visibility"]},
+						{title:"With OrdWave",  items:["Structured order workflow","Automated credit gates","Live dispatch tracking","Aging-based collection queue"]},
+						{title:"Business Impact",items:["30% fewer order errors","25% reduced bad debt","95%+ on-time delivery","33% faster cash recovery"]},
+					].map(col=>(
+						<div key={col.title} className="card p-6">
+							<h4 className="text-sm font-semibold text-[#0F172A] mb-3">{col.title}</h4>
+							<ul className="space-y-2">
+								{col.items.map(item=>(
+									<li key={item} className="flex items-start gap-2 text-sm text-[#475569]">
+										<span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#52B788]" />{item}
+									</li>
+								))}
+							</ul>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	);
 }
 
+/* ─── Section 8: Mobile Apps ── */
+export function MobileAppsSection() {
+	return (
+		<section className="section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="max-w-2xl">
+					<span className="pill">Mobile-first field execution</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Apps built for sales, delivery, and collections</h2>
+					<p className="mt-3 text-base text-[#475569]">Your field teams work faster when their tools work offline.</p>
+				</div>
+				<div className="mt-10 grid gap-5 sm:grid-cols-3">
+					{mobileApps.map(app=>(
+						<div key={app.name} className="card p-6">
+							<div className="mx-auto mb-5 w-28">
+								<div className="rounded-2xl border-4 border-[#0F172A] bg-white overflow-hidden shadow-xl">
+									<div className="bg-[#0F172A] h-4 flex items-center justify-center">
+										<div className="w-8 h-1.5 rounded-full bg-[#475569]" />
+									</div>
+									<div className="p-2 space-y-1.5 bg-[#F8FAF8]">
+										<div className="h-2.5 w-full rounded bg-[#1B4332]/20" />
+										<div className="h-2.5 w-4/5 rounded bg-[#1B4332]/15" />
+										<div className="grid grid-cols-2 gap-1 mt-2">
+											<div className="h-6 rounded bg-[#EFF7F2] border border-[#d0e9db]" />
+											<div className="h-6 rounded bg-[#EFF7F2] border border-[#d0e9db]" />
+										</div>
+										<div className="h-2.5 w-3/4 rounded bg-[#1B4332]/15" />
+										<div className="h-2.5 w-full rounded bg-[#1B4332]/10" />
+									</div>
+								</div>
+							</div>
+							<div className="text-center text-3xl mb-2">{app.icon}</div>
+							<h3 className="text-base font-semibold text-center text-[#0F172A]">{app.name}</h3>
+							<p className="mt-2 text-sm text-[#475569] text-center">{app.desc}</p>
+							<ul className="mt-4 space-y-1.5">
+								{app.features.map(f=>(
+									<li key={f} className="flex items-center gap-2 text-xs text-[#475569]">
+										<span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#52B788]" />{f}
+									</li>
+								))}
+							</ul>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	);
+}
+
+/* ─── Section 9: Analytics ── */
+export function AnalyticsSection() {
+	return (
+		<section className="section-gap border-b border-[#E2E8F0] bg-[#F8FAF8]">
+			<div className="section-shell">
+				<div className="max-w-2xl">
+					<span className="pill">Business analytics</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Decisions backed by real-time data</h2>
+					<p className="mt-3 text-base text-[#475569]">Sales trends, collection efficiency, inventory health, and branch performance in one dashboard.</p>
+				</div>
+				<div className="mt-10 grid gap-5 lg:grid-cols-2">
+					<div className="card overflow-hidden">
+						<div className="border-b border-[#E2E8F0] px-5 py-3 flex items-center justify-between">
+							<p className="text-sm font-semibold text-[#0F172A]">Analytics — 30 Days</p>
+							<span className="inline-flex rounded-full bg-[#DCFCE7] px-2.5 py-1 text-xs font-semibold text-[#166534]">Live</span>
+						</div>
+						<div className="p-5 space-y-4">
+							{[
+								{label:"Sales Revenue",    value:"₹1.2Cr", pct:84, color:"#1B4332"},
+								{label:"Collection Eff.",  value:"78%",    pct:78, color:"#52B788"},
+								{label:"Delivery Acc.",    value:"94.2%",  pct:94, color:"#0369A1"},
+								{label:"Stock Turnover",   value:"12x",    pct:70, color:"#7C3AED"},
+							].map(row=>(
+								<div key={row.label}>
+									<div className="flex items-center justify-between mb-1">
+										<span className="text-xs text-[#64748B]">{row.label}</span>
+										<span className="text-xs font-bold text-[#0F172A]">{row.value}</span>
+									</div>
+									<div className="h-2 w-full rounded-full bg-[#E2E8F0]">
+										<div className="h-2 rounded-full" style={{width:`${row.pct}%`,background:row.color}} />
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+					<div className="grid grid-cols-2 gap-4 content-start">
+						{[
+							{metric:"Sales Trends",    sub:"Daily and weekly revenue breakdown by branch, rep, and category"},
+							{metric:"Collection KPIs", sub:"Follow-up efficiency, aging buckets, and rep-wise performance"},
+							{metric:"Inventory Health",sub:"Turnover rate, dead stock alerts, and reorder point tracking"},
+							{metric:"Delivery Metrics",sub:"On-time rate, delayed trips, and POD confirmation rates"},
+						].map(item=>(
+							<div key={item.metric} className="card p-5">
+								<h4 className="text-sm font-semibold text-[#0F172A]">{item.metric}</h4>
+								<p className="mt-1.5 text-xs text-[#64748B]">{item.sub}</p>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+/* ─── Section 10: Testimonials ── */
+export function TestimonialsSection() {
+	return (
+		<section className="section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="mx-auto max-w-2xl text-center">
+					<span className="pill">Customer stories</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">What distribution leaders say</h2>
+				</div>
+				<div className="mt-10 grid gap-5 md:grid-cols-3">
+					{testimonials.map(t=>(
+						<div key={t.person} className="card p-6 flex flex-col">
+							<div className="mb-4 flex gap-0.5">
+								{[1,2,3,4,5].map(s=><span key={s} className="text-[#F59E0B]">★</span>)}
+							</div>
+							<p className="text-sm text-[#0F172A] leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
+							<div className="mt-5 flex items-center justify-between">
+								<div>
+									<p className="text-sm font-semibold text-[#0F172A]">{t.person}</p>
+									<p className="text-xs text-[#64748B]">{t.role}, {t.company}</p>
+								</div>
+								<span className="inline-flex rounded-full bg-[#DCFCE7] px-2.5 py-1 text-xs font-semibold text-[#166534]">{t.outcome}</span>
+							</div>
+						</div>
+					))}
+				</div>
+				<div className="mt-10 text-center">
+					<Link href="/customers" className="btn-secondary px-6 py-2.5">Read all customer stories →</Link>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+/* ─── Section 11: ROI Calculator ── */
+export function RoiCalculatorSection() {
+	const [reps,     setReps]     = useState(10);
+	const [orders,   setOrders]   = useState(50);
+	const [branches, setBranches] = useState(2);
+
+	const hoursSaved     = Math.round(reps * orders * 0.04 * 22);
+	const revenueImpact  = Math.round(orders * reps * branches * 12);
+	const collectionGain = Math.round(branches * orders * 0.08 * 100) / 100;
+
+	return (
+		<section className="gradient-dark section-gap">
+			<div className="section-shell">
+				<div className="mx-auto max-w-3xl">
+					<div className="text-center">
+						<span className="inline-flex items-center gap-1.5 rounded-full border border-[#52B788]/40 bg-[#52B788]/10 px-3.5 py-1.5 text-xs font-semibold text-[#52B788]">ROI Calculator</span>
+						<h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">How much can OrdWave save your business?</h2>
+						<p className="mt-3 text-[#94A3B8]">Move the sliders to see your estimated impact.</p>
+					</div>
+					<div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
+						<div className="grid gap-6 sm:grid-cols-3">
+							{[
+								{label:"Sales Reps",  val:reps,     setter:setReps,     min:1,  max:100, step:1},
+								{label:"Orders/Day",  val:orders,   setter:setOrders,   min:10, max:500, step:10},
+								{label:"Branches",    val:branches, setter:setBranches, min:1,  max:20,  step:1},
+							].map(inp=>(
+								<div key={inp.label}>
+									<label className="block text-xs font-semibold text-[#94A3B8] mb-2">{inp.label}</label>
+									<input type="range" min={inp.min} max={inp.max} step={inp.step} value={inp.val}
+										onChange={e=>inp.setter(Number(e.target.value))}
+										className="w-full accent-[#52B788]" />
+									<p className="mt-1 text-xl font-bold text-white">{inp.val}</p>
+								</div>
+							))}
+						</div>
+						<div className="mt-8 grid gap-4 sm:grid-cols-3">
+							{[
+								{label:"Hours Saved / Month", value:`${hoursSaved.toLocaleString()}h`,         note:"From automated order workflows"},
+								{label:"Revenue Impact",      value:`₹${(revenueImpact/100000).toFixed(1)}L`,  note:"From faster order execution"},
+								{label:"Collection Gain",     value:`₹${collectionGain.toFixed(1)}L`,          note:"From prioritized follow-ups"},
+							].map(r=>(
+								<div key={r.label} className="rounded-xl border border-[#52B788]/25 bg-[#52B788]/10 p-4 text-center">
+									<p className="text-2xl font-bold text-[#52B788]">{r.value}</p>
+									<p className="mt-1 text-xs font-semibold text-white">{r.label}</p>
+									<p className="mt-0.5 text-[11px] text-[#94A3B8]">{r.note}</p>
+								</div>
+							))}
+						</div>
+					</div>
+					<div className="mt-8 text-center">
+						<Link href="/request-demo" className="btn-primary px-8 py-3 text-base">Get a custom ROI analysis</Link>
+					</div>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+/* ─── Comparison Table ── */
 export function ComparisonTableSection() {
-  const rows = [
-    ["Centralized order workflow", "Manual", "Partial", "Yes"],
-    ["Credit policy control", "No", "Limited", "Yes"],
-    ["Multi-branch visibility", "No", "Limited", "Yes"],
-    ["Collections prioritization", "Manual", "Basic", "Advanced"],
-    ["Role-based access", "No", "Basic", "Granular"],
-    ["Real-time dashboards", "No", "No", "Yes"],
-  ];
-
-  return (
-    <section className="section-shell section-gap">
-      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Excel vs Tally vs OrdWave</h2>
-      <p className="mt-3 max-w-3xl text-text-secondary">A practical comparison for teams scaling beyond manual tools.</p>
-      <div className="premium-card mt-8 overflow-x-auto p-2 sm:p-4">
-        <table className="min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-border text-text-secondary">
-              <th className="px-3 py-3 font-semibold">Capability</th>
-              <th className="px-3 py-3 font-semibold">Excel</th>
-              <th className="px-3 py-3 font-semibold">Tally</th>
-              <th className="px-3 py-3 font-semibold text-primary">OrdWave</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row[0]} className="border-t border-border">
-                {row.map((cell, index) => (
-                  <td key={cell} className={`px-3 py-3 ${index === 3 ? "font-semibold text-primary" : "text-text-secondary"}`}>
-                    {cell}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
+	return (
+		<section className="section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="max-w-2xl">
+					<span className="pill">Honest comparison</span>
+					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">OrdWave vs Excel vs Tally</h2>
+					<p className="mt-3 text-base text-[#475569]">Most distributors graduate to OrdWave when Excel and Tally stop working at scale.</p>
+				</div>
+				<div className="mt-10 card overflow-x-auto">
+					<table className="min-w-full text-sm">
+						<thead>
+							<tr className="border-b border-[#E2E8F0]">
+								<th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-[#64748B]">Capability</th>
+								<th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-[#64748B]">Excel</th>
+								<th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-[#64748B]">Tally</th>
+								<th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-[#1B4332] bg-[#EFF7F2]">OrdWave</th>
+							</tr>
+						</thead>
+						<tbody>
+							{comparisons.map(row=>(
+								<tr key={row.cap} className="border-t border-[#E2E8F0]">
+									<td className="px-5 py-3 font-medium text-[#0F172A]">{row.cap}</td>
+									<td className="px-5 py-3 text-[#64748B]">{row.excel}</td>
+									<td className="px-5 py-3 text-[#64748B]">{row.tally}</td>
+									<td className="px-5 py-3 font-semibold text-[#1B4332] bg-[#EFF7F2]">{row.ow}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	);
 }
 
-export function TrustSection() {
-  return (
-    <section className="bg-background-subtle section-gap">
-      <div className="section-shell">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Trust and platform readiness</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {trustItems.map((item) => (
-            <div key={item} className="premium-card p-5">
-              <p className="text-sm font-semibold text-text-primary">{item}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function PricingSection() {
-  const plans = [
-    {
-      name: "Starter",
-      audience: "Single-branch or early growth distributors",
-      cta: "Start Free Trial",
-    },
-    {
-      name: "Growth",
-      audience: "High-volume teams with multiple roles",
-      cta: "Book Demo",
-      highlighted: true,
-    },
-    {
-      name: "Enterprise",
-      audience: "Multi-branch and governance-heavy operations",
-      cta: "Talk to Sales",
-    },
-  ];
-
-  return (
-    <section className="section-shell section-gap">
-      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Pricing</h2>
-      <p className="mt-3 max-w-3xl text-text-secondary">Choose the plan based on team size, branch count, and process complexity.</p>
-      <div className="mt-9 grid gap-4 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <div key={plan.name} className={`premium-card p-6 ${plan.highlighted ? "ring-2 ring-primary/25" : ""}`}>
-            <p className="text-lg font-semibold">{plan.name}</p>
-            <p className="mt-2 text-sm text-text-secondary">{plan.audience}</p>
-            <ul className="mt-4 space-y-1.5 text-sm text-text-primary">
-              <li>• Role-based workflows</li>
-              <li>• Distributor onboarding support</li>
-              <li>• Reports and analytics</li>
-            </ul>
-            <Link
-              href="/request-demo"
-              className={`mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold ${plan.highlighted ? "bg-primary text-white" : "border border-border bg-white"}`}
-            >
-              {plan.cta}
-            </Link>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
+/* ─── FAQ ── */
 export function FaqSection() {
-  return (
-    <section className="bg-background-subtle section-gap">
-      <div className="section-shell">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Frequently asked questions</h2>
-        <div className="mt-8 grid gap-4">
-          {faqs.map((faq) => (
-            <div key={faq.q} className="premium-card p-6">
-              <h3 className="text-base font-semibold text-text-primary">{faq.q}</h3>
-              <p className="mt-2 text-sm text-text-secondary">{faq.a}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+	return (
+		<section className="bg-[#F8FAF8] section-gap border-b border-[#E2E8F0]">
+			<div className="section-shell">
+				<div className="mx-auto max-w-3xl">
+					<div className="text-center mb-10">
+						<span className="pill">FAQ</span>
+						<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Frequently asked questions</h2>
+					</div>
+					<div className="space-y-3">
+						{faqs.map(faq=>(
+							<div key={faq.q} className="card p-6">
+								<h3 className="text-sm font-semibold text-[#0F172A]">{faq.q}</h3>
+								<p className="mt-2 text-sm text-[#475569]">{faq.a}</p>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</section>
+	);
 }
 
+/* ─── Section 12: Final CTA ── */
 export function FinalCtaSection() {
-  return (
-    <section className="section-shell pb-16 sm:pb-20">
-      <div className="premium-card overflow-hidden bg-primary p-8 text-white sm:p-10">
-        <p className="text-xs font-semibold uppercase tracking-wide text-white/80">Built for serious distributor growth</p>
-        <h2 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">Move your operations from reactive to predictable</h2>
-        <p className="mt-3 max-w-2xl text-sm text-white/90 sm:text-base">
-          See OrdWave with your own workflows, branch structure, and team roles in a guided product demo.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/request-demo" className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary">
-            Start Free Trial
-          </Link>
-          <Link href="/request-demo" className="rounded-lg border border-white/60 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10">
-            Book Demo
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
+	return (
+		<section className="section-gap">
+			<div className="section-shell">
+				<div className="gradient-dark rounded-3xl p-10 sm:p-16 text-center relative overflow-hidden">
+					<div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-[#52B788]/15 blur-3xl" />
+					<span className="relative inline-flex items-center gap-1.5 rounded-full border border-[#52B788]/30 bg-[#52B788]/10 px-3.5 py-1.5 text-xs font-semibold text-[#52B788]">
+						Start today — no credit card required
+					</span>
+					<h2 className="relative mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+						Ready to Modernize Your<br className="hidden sm:block" /> Distribution Business?
+					</h2>
+					<p className="relative mt-4 text-base text-[#94A3B8] max-w-xl mx-auto">
+						Join distribution teams across India who replaced Excel chaos with one execution platform.
+					</p>
+					<div className="relative mt-8 flex flex-wrap justify-center gap-4">
+						<Link href="/request-demo" className="btn-primary px-8 py-3 text-base">Book Demo</Link>
+						<Link href="/request-demo" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-8 py-3 text-base font-semibold text-white/90 transition-all hover:bg-white/10">Start Free Trial</Link>
+					</div>
+					<div className="relative mt-8 flex flex-wrap justify-center gap-5 text-xs text-[#64748B]">
+						<span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />Free 14-day trial</span>
+						<span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />No credit card needed</span>
+						<span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />Setup in 2 weeks</span>
+						<span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />Onboarding included</span>
+					</div>
+				</div>
+			</div>
+		</section>
+	);
 }
+
+/* ─── Legacy aliases (keeps all existing import references working) ── */
+export { ChallengesSection as PainPointsSection };
+export { ProductOverviewSection as CoreFeaturesSection };
+export { IndustriesHomeSection as UseCasesSection };
+export { WhyOrdWaveSection as BenefitsSection };
+export { AnalyticsSection as ProductPreviewSection };
+export { RoiCalculatorSection as PricingPreviewSection };
+export { IndustriesHomeSection as IndustrySolutionsSection };
+export { ChallengesSection as ProductFeaturesSection };
+export { HowItWorksSection as HowOrdWaveWorksSection };
+export { MobileAppsSection as ProductScreensShowcaseSection };
+export { ComparisonTableSection as ComparisonSection };
