@@ -28,7 +28,7 @@ class User < ApplicationRecord
   scope :find_by_oauth, ->(provider, uid) { find_by(oauth_provider: provider, oauth_uid: uid) }
 
   # Enum for preferred authentication channel
-  enum preferred_auth_method: { email: 'email', phone: 'phone', google: 'google' }, _prefix: :auth_via
+  # enum preferred_auth_method: { email: 'email', phone: 'phone', google: 'google' }, _prefix: :auth_via
 
   # Normalizations
   before_validation { self.email = email.to_s.downcase.strip }
