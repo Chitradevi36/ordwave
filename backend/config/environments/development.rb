@@ -33,11 +33,30 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  config.action_mailer.delivery_method = :letter_opener
+  config.action_mailer.perform_caching = false
+  config.action_mailer.delivery_method = :file
+  config.action_mailer.file_settings = {
+    location: Rails.root.join("tmp", "emails")
+  }
+  config.action_mailer.smtp_settings = {
+    address: ENV.fetch("SES_SMTP_ADDRESS", "email-smtp.ap-south-1.amazonaws.com"),
+    port: ENV.fetch("SES_SMTP_PORT", 587),
+    user_name: ENV.fetch("SES_SMTP_USERNAME"),
+    password: ENV.fetch("SES_SMTP_PASSWORD"),
+    authentication: :login,
+    enable_starttls_auto: true
+  }
+  config.action_mailer.default_options = {
+    from: ENV.fetch('MAILER_FROM_ADDRESS', 'noreply@ordwave.com')
+  }
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
-  config.action_mailer.perform_caching = false
+
+  # Configure default URL options for generating URLs in mailers and ActiveStorage
+  config.default_url_options = {
+    host: ENV.fetch('APP_HOST', 'localhost:4400'),
+    protocol: ENV.fetch('RAILS_ENV') == 'production' ? 'https' : 'http'
+  }
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
@@ -81,5 +100,21 @@ Rails.application.configure do
     Bullet.console       = true   # browser console warnings
     Bullet.rails_logger  = true   # Rails.logger output
     Bullet.add_footer    = true   # footer badge in HTML responses
+  end
+
+  LetterOpener.configure do |config|
+    # To overrider the location for message storage.
+    # Default value is `tmp/letter_opener`
+    config.location = Rails.root.join('tmp', 'my_mails')
+
+    # To render only the message body, without any metadata or extra containers or styling.
+    # Default value is `:default` that renders styled message with showing useful metadata.
+    config.message_template = :light
+
+    # To change default file URI scheme you can provide `file_uri_scheme` config.
+    # It might be useful when you use WSL (Windows Subsystem for Linux) and default
+    # scheme doesn't work for you.
+    # Default value is blank
+    config.file_uri_scheme = 'file://///wsl$/Ubuntu-18.04'
   end
 end

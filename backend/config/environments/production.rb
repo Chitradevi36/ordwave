@@ -67,11 +67,11 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-    address: 'smtp.sendgrid.net',
-    port: 587,
-    authentication: :plain,
-    user_name: 'apikey',
-    password: ENV.fetch('SMTP_PASSWORD', nil),
+    address: ENV.fetch("SES_SMTP_ADDRESS", "email-smtp.ap-south-1.amazonaws.com"),
+    port: ENV.fetch("SES_SMTP_PORT", 587),
+    user_name: ENV.fetch("SES_SMTP_USERNAME"),
+    password: ENV.fetch("SES_SMTP_PASSWORD"),
+    authentication: :login,
     enable_starttls_auto: true
   }
   config.action_mailer.default_options = {
@@ -82,7 +82,7 @@ Rails.application.configure do
 
   # Configure default URL options for generating URLs in mailers and ActiveStorage
   config.default_url_options = {
-    host: ENV.fetch('APP_HOST', 'localhost:3000'),
+    host: ENV.fetch('APP_HOST', 'app.ordwave.com'),
     protocol: ENV.fetch('RAILS_ENV') == 'production' ? 'https' : 'http'
   }
 
