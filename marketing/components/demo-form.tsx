@@ -28,11 +28,9 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
       source: "marketing-site",
     };
 
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
     try {
       setIsSubmitting(true);
-      const response = await fetch(`${apiBase}/api/v1/leads/demo_request`, {
+      const response = await fetch(`/api/leads`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
