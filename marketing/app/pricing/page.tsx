@@ -3,13 +3,13 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Pricing plans for OrdWave OMS for growing and multi-branch distributor operations.",
+  description: "Pricing plans for OrdWave OMS for Indian distributors, from early-stage FMCG teams to multi-branch operations.",
 };
 
 const tiers = [
   {
     name: "Starter",
-    detail: "For single-branch distributors replacing Excel, WhatsApp, and manual follow-ups.",
+    detail: "For single-branch FMCG teams standardizing order-to-cash operations.",
     bullets: ["Order lifecycle visibility", "Basic credit control", "GST-ready invoices", "Sales rep mobile app"],
     badge: "Best for getting started",
     monthly: "₹12,999",
@@ -17,7 +17,7 @@ const tiers = [
   },
   {
     name: "Growth",
-    detail: "For scaling distributors with multiple roles, dispatch teams, and finance workflows.",
+    detail: "For scaling distributor teams with branch complexity and cross-functional operations.",
     bullets: ["Multi-branch visibility", "Collections tracking", "Delivery execution monitoring", "Advanced analytics"],
     badge: "Most popular",
     monthly: "₹24,999",
@@ -25,7 +25,7 @@ const tiers = [
   },
   {
     name: "Enterprise",
-    detail: "For advanced governance, role control, and high-scale operations across entities.",
+    detail: "For advanced governance, integrations, and large multi-entity operations.",
     bullets: ["Advanced controls", "Custom process workflows", "Priority onboarding support", "Dedicated success manager"],
     badge: "For large operations",
     monthly: "Custom",
@@ -41,7 +41,7 @@ export default function PricingPage() {
           <span className="pill">Flexible plans</span>
           <h1 className="mt-4 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">Pricing designed for distributor growth stages</h1>
           <p className="mt-4 max-w-3xl text-[#475569]">
-            Start with what your team needs today and scale into advanced workflows as your business expands.
+            Start with your current operating needs and scale into advanced workflows as branch count, users, and complexity grow.
           </p>
           <div className="mt-6 inline-flex rounded-full border border-[#E2E8F0] bg-white p-1 shadow-sm">
             <span className="rounded-full bg-[#1B4332] px-4 py-1.5 text-xs font-semibold text-white">Monthly</span>
@@ -132,9 +132,9 @@ export default function PricingPage() {
             <p className="mt-3 max-w-2xl text-sm text-white/75 sm:text-base">Share your sales reps, orders per day, and branch count. We’ll recommend the right rollout and expected ROI.</p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="text-2xl font-bold text-[#52B788]">28%</p><p className="mt-1 text-xs text-white/70">Faster order flow</p></div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="text-2xl font-bold text-[#52B788]">33%</p><p className="mt-1 text-xs text-white/70">Faster collections</p></div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="text-2xl font-bold text-[#52B788]">95%</p><p className="mt-1 text-xs text-white/70">On-time delivery</p></div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="text-sm font-bold text-[#52B788]">Order lifecycle</p><p className="mt-1 text-xs text-white/70">Track from booking to dispatch</p></div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="text-sm font-bold text-[#52B788]">Credit controls</p><p className="mt-1 text-xs text-white/70">Policy-based approvals</p></div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4"><p className="text-sm font-bold text-[#52B788]">Collections</p><p className="mt-1 text-xs text-white/70">Aging-aware follow-up</p></div>
           </div>
         </div>
       </div>

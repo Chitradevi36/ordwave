@@ -17,18 +17,18 @@ import {
 } from "@/components/home-sections";
 
 export const metadata: Metadata = {
-  title: "OrdWave | Distribution Management Software for FMCG, Wholesale and Super Stockists",
-  description: "Manage orders, inventory, credit, collections, dispatch, delivery, and analytics across every branch in real time. Built for Indian distributors.",
+  title: "OrdWave | Order-to-Cash Platform for Indian FMCG Distributors",
+  description: "Run FMCG distributor operations on one platform: orders, credit approvals, inventory, delivery execution, collections, GST workflows, and integrations.",
   openGraph: {
-    title: "OrdWave — Run Your Entire Distribution Business From One Platform",
-    description: "Enterprise OMS for FMCG distributors, wholesalers, and multi-branch operations.",
+    title: "OrdWave — Built for Indian FMCG Distributors",
+    description: "FMCG-first order-to-cash platform with credit control, inventory visibility, delivery workflows, collections, and GST-ready operations.",
     type: "website",
     siteName: "OrdWave",
   },
   twitter: {
     card: "summary_large_image",
-    title: "OrdWave — Distribution Management Software",
-    description: "Enterprise OMS for FMCG distributors, wholesalers, and multi-branch operations.",
+    title: "OrdWave — FMCG Distributor OMS",
+    description: "One platform for orders, credit, inventory, delivery, collections, and GST workflows.",
   },
 };
 export default function HomePage() {

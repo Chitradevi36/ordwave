@@ -50,7 +50,6 @@ module Api
       def update_settings
         organization = Organization.active.find(params[:id])
         authorize organization, :update_settings?
-
         result = Settings::UpdateOrganizationService.new(
           organization: organization,
           params:       settings_params
@@ -111,6 +110,13 @@ module Api
         params.permit(
           :name, :gst_number, :pan, :address, :city, :state, :pincode,
           :contact_email, :contact_phone, :logo_url, :timezone, :currency,
+          :order_approval_mode, :order_approval_threshold, :order_edit_window_minutes,
+          :dispatch_requires_pick_list, :dispatch_requires_delivery_proof, :dispatch_auto_confirm_on_invoice,
+          :return_approval_required, :return_window_days,
+          :credit_auto_approve_below_pct, :credit_block_on_overdue_days,
+          :invoice_auto_generate, :invoice_payment_terms_days, :invoice_prefix,
+          :sync_auto_on_order_approved, :sync_auto_on_order_delivered, :sync_auto_on_payment_received,
+          :sync_auto_on_collection, :sync_schedule_cron, :sync_batch_size, :sync_include_stock_movements,
           settings: {}
         )
       end

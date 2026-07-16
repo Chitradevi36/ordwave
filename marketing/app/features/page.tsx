@@ -3,58 +3,58 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Product Features",
-  description: "Explore OrdWave modules — order management, inventory, credit, collections, delivery, analytics, and mobile apps for FMCG distributors.",
+  description: "Explore OrdWave modules for Indian FMCG distributors: order management, credit approvals, inventory visibility, delivery execution, collections, GST workflows, and integrations.",
 };
 
 const modules = [
   {
     name: "Order Management",
-    headline: "From order booking to dispatch — without WhatsApp and Excel chaos",
-    body: "Capture, validate, approve, and dispatch orders through a structured workflow. Apply credit checks and inventory verification before every order goes out.",
+    headline: "From order booking to dispatch with a structured lifecycle",
+    body: "Capture, validate, approve, and dispatch orders through one operational flow. Apply credit and inventory checks before orders move forward.",
     bullets: ["Live order pipeline with stage tracking","Retailer-level order history","Credit and inventory gate before dispatch","Dispatch confirmation with status updates"],
-    kpi: "28% faster order processing",
+    kpi: "Lifecycle-based execution",
   },
   {
     name: "Inventory Management",
-    headline: "Know exactly what stock you have at every branch in real time",
-    body: "Monitor SKU-level stock movement across branches, trigger low-stock alerts, and manage transfers with full traceability.",
+    headline: "Maintain branch-wise inventory visibility and control",
+    body: "Track stock movement across branches, trigger low-stock alerts, and manage transfers with traceable updates.",
     bullets: ["Branch-wise real-time stock levels","Low-stock and near-zero alerts","Inter-branch transfer management","Stock movement history per SKU"],
-    kpi: "22% reduction in stockouts",
+    kpi: "Branch-level stock clarity",
   },
   {
     name: "Credit Management",
-    headline: "Stop risky orders before they hit your cash flow",
-    body: "Automate credit limit enforcement and aging-based hold logic so every order is reviewed against current exposure before approval.",
+    headline: "Reduce risky dispatch with policy-driven credit workflows",
+    body: "Apply credit limit enforcement and aging-based hold logic so orders are evaluated before approval and dispatch.",
     bullets: ["Credit limit and aging policy config","Auto-hold on limit breach","Manager approval workflow","Retailer-wise credit scorecard"],
-    kpi: "30% reduction in bad debt",
+    kpi: "Credit-first approvals",
   },
   {
     name: "Collections",
-    headline: "Prioritize the right dues and collect faster",
-    body: "Give finance teams a clear view of overdue accounts with aging buckets, rep assignments, and one-click follow-up actions.",
+    headline: "Prioritize overdue follow-ups with aging visibility",
+    body: "Give finance teams a clear view of overdue accounts with aging buckets, assignments, and payment tracking.",
     bullets: ["Aging-based priority queue","Rep-wise assignment and tracking","Payment recording and reconciliation","Collection trend analytics"],
-    kpi: "33% faster cash recovery",
+    kpi: "Collections discipline",
   },
   {
     name: "Delivery Management",
-    headline: "Live trip visibility from dispatch to doorstep",
-    body: "Plan routes, assign trips, and track deliveries in real time with stop-level status and proof-of-delivery confirmation.",
+    headline: "Control dispatch and stop-level delivery execution",
+    body: "Plan routes, assign trips, and track deliveries with stop-level updates and proof-of-delivery workflows.",
     bullets: ["Route-wise trip planning","Live dispatch and stop tracking","POD photo and signature capture","Delayed trip alerts"],
-    kpi: "95%+ on-time delivery rate",
+    kpi: "Stop-level visibility",
   },
   {
     name: "Analytics",
-    headline: "Decision-ready dashboards for founders and managers",
-    body: "See sales, credit, collections, and branch performance at a glance with role-specific dashboards that update in real time.",
+    headline: "Role-specific dashboards for daily operational decisions",
+    body: "Track sales, credit, collections, and branch performance through dashboards designed for owner and manager workflows.",
     bullets: ["Owner KPI command center","Branch comparison reports","Sales rep performance scorecards","Weekly trend summaries"],
-    kpi: "5x faster operational decisions",
+    kpi: "Operational visibility",
   },
   {
     name: "Mobile Applications",
-    headline: "Apps for sales, delivery, and collections that work offline",
-    body: "Field teams get purpose-built offline-first apps that sync seamlessly when connectivity returns — zero data loss.",
+    headline: "Mobile workflows for sales, delivery, and collections",
+    body: "Field teams get purpose-built apps with sync support for low-connectivity environments.",
     bullets: ["Sales Rep App — offline order capture","Driver App — route and POD","Collection App — payment and receipt","Auto-sync on reconnect"],
-    kpi: "40% faster field execution",
+    kpi: "Field-ready operations",
   },
 ];
 
@@ -65,10 +65,10 @@ export default function FeaturesPage() {
         <div className="section-shell section-gap">
           <span className="pill">Feature depth</span>
           <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">
-            Complete product modules for enterprise distribution operations
+            Product modules for FMCG distributor order-to-cash operations
           </h1>
           <p className="mt-4 max-w-3xl text-[#475569]">
-            Purpose-built modules that cover your entire order-to-cash cycle — from field order capture to overdue recovery.
+            Purpose-built modules covering your order-to-cash cycle — from field order capture to collections follow-through.
           </p>
           <div className="mt-8 flex flex-wrap gap-2">
             {modules.map(m=>(

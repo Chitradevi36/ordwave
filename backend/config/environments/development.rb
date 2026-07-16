@@ -34,12 +34,13 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   config.action_mailer.perform_caching = false
+  # config.action_mailer.delivery_method = :smtp
   config.action_mailer.delivery_method = :file
   config.action_mailer.file_settings = {
     location: Rails.root.join("tmp", "emails")
   }
   config.action_mailer.smtp_settings = {
-    address: ENV.fetch("SES_SMTP_ADDRESS", "email-smtp.ap-south-1.amazonaws.com"),
+    address: ENV.fetch("SES_SMTP_ADDRESS", "smtp.mailer91.com"),
     port: ENV.fetch("SES_SMTP_PORT", 587),
     user_name: ENV.fetch("SES_SMTP_USERNAME"),
     password: ENV.fetch("SES_SMTP_PASSWORD"),
@@ -47,7 +48,7 @@ Rails.application.configure do
     enable_starttls_auto: true
   }
   config.action_mailer.default_options = {
-    from: ENV.fetch('MAILER_FROM_ADDRESS', 'noreply@ordwave.com')
+    from: ENV.fetch('MAILER_FROM_ADDRESS', 'noreply@mail.ordwave.com')
   }
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true

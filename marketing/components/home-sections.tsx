@@ -6,10 +6,10 @@ import { useState } from "react";
 
 /* ─── Data ── */
 const trustMetrics = [
-	{ value: "2M+",      label: "Orders Processed" },
-	{ value: "500K+",    label: "Deliveries Completed" },
-	{ value: "300+",     label: "Branches Managed" },
-	{ value: "₹180Cr+",  label: "Collection Value" },
+	{ value: "FMCG-first",     label: "Product Focus" },
+	{ value: "Credit-first",   label: "Workflow Design" },
+	{ value: "Multi-branch",   label: "Operational Model" },
+	{ value: "GST-ready",      label: "India Context" },
 ];
 
 const challenges = [
@@ -22,14 +22,14 @@ const challenges = [
 ];
 
 const whyCards = [
-	{ icon: "📱", title: "Offline Sales App",      outcome: "40% faster order capture",        body: "Sales reps book orders even without internet. Syncs instantly on reconnect." },
-	{ icon: "🏢", title: "Multi-Branch Control",   outcome: "One view across every branch",    body: "Owner dashboard consolidates KPIs from all branches in real time." },
-	{ icon: "🛡️", title: "Credit Risk Engine",     outcome: "Reduce bad debt by up to 30%",   body: "Automated credit limit checks, aging alerts, and approval workflows." },
-	{ icon: "📦", title: "Real-Time Inventory",    outcome: "Eliminate stockouts",             body: "Live SKU-level stock with movement history and reorder triggers." },
-	{ icon: "🗺️", title: "Route Planning",         outcome: "20% more outlets per rep",       body: "Smart route assignments with outlet coverage and visit tracking." },
-	{ icon: "🚚", title: "Delivery Tracking",      outcome: "95%+ on-time delivery",          body: "Trip-wise dispatch board with live progress and POD confirmation." },
-	{ icon: "💰", title: "Collection Management",  outcome: "25% more overdue in 30 days",    body: "Prioritized collection lists, payment recording, and auto-reconciliation." },
-	{ icon: "📊", title: "Business Analytics",     outcome: "5x faster decisions",            body: "Role-specific dashboards for owners, managers, and field teams." },
+	{ icon: "📱", title: "Offline-Capable Field Ops", outcome: "Built for field execution", body: "Sales and delivery workflows are designed for field teams, with sync patterns for low-connectivity environments." },
+	{ icon: "🏢", title: "Multi-Branch Control",      outcome: "One operating model",        body: "Run branch-level execution with central visibility for owners and operations leaders." },
+	{ icon: "🛡️", title: "Credit-First Workflow",     outcome: "Reduce risky dispatch",      body: "Apply policy-based credit checks before order approval and dispatch." },
+	{ icon: "📦", title: "Inventory Visibility",       outcome: "Branch-wise stock clarity", body: "Track on-hand, reserved, and available inventory at product and branch level." },
+	{ icon: "🚚", title: "Delivery Execution",         outcome: "Stop-level tracking",        body: "Manage dispatch trips and stop updates with delivery confirmation controls." },
+	{ icon: "💰", title: "Collections Discipline",     outcome: "Aging-aware recovery",       body: "Track payment schedules and aging to prioritize follow-ups." },
+	{ icon: "🧾", title: "GST Workflows",              outcome: "India-ready operations",    body: "Support GST-related operational workflows including HSN/SAC and invoice processes." },
+	{ icon: "🔌", title: "Integration-Ready",         outcome: "Scale without rework",       body: "Use built-in integration framework patterns for accounting and downstream systems." },
 ];
 
 const industries = [
@@ -59,9 +59,9 @@ const mobileApps = [
 ];
 
 const testimonials = [
-	{ company: "PrimeKart Distributors", person: "Rajesh Kumar", role: "Managing Director", quote: "OrdWave replaced our Excel chaos with one control center. Collections improved by 30% in the first 60 days.", outcome: "30% faster collections" },
-	{ company: "Lakshmi Traders",        person: "Suresh Nair",  role: "Operations Head",   quote: "We manage 4 branches now with total clarity. The owner dashboard gives me the pulse of the business every morning.", outcome: "4 branches unified" },
-	{ company: "Agro Foods Network",     person: "Meena Pillai", role: "Finance Manager",   quote: "Credit controls alone saved us from three bad debtors this quarter. The system flagged them before dispatch.", outcome: "3 bad debts prevented" },
+	{ company: "FMCG Distributor (West India)", person: "Operations Head", role: "Regional Team", quote: "We moved from disconnected follow-ups to one visible order-to-cash flow across teams.", outcome: "Stronger daily visibility" },
+	{ company: "Rice & Staples Distributor",    person: "Business Owner",  role: "Multi-branch Team", quote: "Branch-level stock and dispatch tracking gave us better control over execution.", outcome: "Better branch coordination" },
+	{ company: "Wholesale Distribution Team",   person: "Finance Lead",     role: "Collections Team", quote: "Credit checks and aging visibility made our collection reviews more disciplined.", outcome: "Cleaner follow-up workflows" },
 ];
 
 const comparisons = [
@@ -69,19 +69,19 @@ const comparisons = [
 	{ cap: "Credit Policy Enforcement",   excel: "None",    tally: "Limited",  ow: "Automated" },
 	{ cap: "Multi-Branch Visibility",     excel: "None",    tally: "Limited",  ow: "Real-time" },
 	{ cap: "Collection Prioritization",   excel: "Manual",  tally: "Basic",    ow: "Aging-based" },
-	{ cap: "Delivery Tracking",           excel: "None",    tally: "None",     ow: "Live GPS" },
+	{ cap: "Delivery Tracking",           excel: "None",    tally: "None",     ow: "Stop-level updates" },
 	{ cap: "Role-Based Access",           excel: "None",    tally: "Basic",    ow: "Granular" },
 	{ cap: "Mobile Apps",                 excel: "None",    tally: "None",     ow: "Yes — Offline" },
-	{ cap: "GST-Ready Invoicing",         excel: "Manual",  tally: "Yes",      ow: "Auto" },
+	{ cap: "GST-Ready Workflows",         excel: "Manual",  tally: "Partial",  ow: "Operationally built-in" },
 	{ cap: "Business Analytics",          excel: "None",    tally: "Basic",    ow: "Real-time" },
 ];
 
 const faqs = [
-	{ q: "How quickly can we go live?",                          a: "Most teams are fully live within 2 weeks. We provide onboarding support for sales, warehouse, and finance teams." },
-	{ q: "Does OrdWave work offline?",                          a: "Yes. The Sales Rep App and Driver App work offline and sync automatically when connectivity is restored." },
-	{ q: "Is it suitable for super stockists and wholesalers?", a: "Absolutely. OrdWave handles high-volume operations, multi-tier pricing, and trade credit workflows." },
-	{ q: "How is OrdWave different from Tally or Excel?",       a: "Tally and Excel handle accounting. OrdWave is an operational execution system for orders, dispatch, delivery, and collections." },
-	{ q: "Do you support GST invoicing?",                       a: "Yes. All invoices are GST-compliant with GSTIN, HSN codes, and e-invoice support for Indian distributors." },
+	{ q: "Who is OrdWave built for right now?",                  a: "OrdWave is currently focused on Indian FMCG distributor workflows, and the platform architecture is designed to extend to additional distributor categories." },
+	{ q: "How is OrdWave different from Tally or Excel?",        a: "Tally and Excel are useful for accounting and records. OrdWave focuses on operational execution across orders, credit, dispatch, delivery, and collections." },
+	{ q: "Do you support credit approvals and controls?",        a: "Yes. OrdWave supports policy-based credit checks and approval workflows before dispatch." },
+	{ q: "Do you support GST-related workflows?",                a: "Yes. OrdWave supports GST-oriented operations including HSN/SAC handling and invoice/compliance workflows." },
+	{ q: "Can we roll out one branch first and scale later?",    a: "Yes. Teams commonly begin with one branch and then expand after the process is stable." },
 ];
 
 /* ─── Section 1: Hero ── */
@@ -92,20 +92,20 @@ export function HeroSection() {
 			<div className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#1B4332]/5 blur-3xl" />
 			<div className="section-shell grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-2 lg:py-28">
 				<div className="animate-fade-up">
-					<span className="pill">Enterprise Distribution Management Software</span>
+					<span className="pill">FMCG-first OMS for Indian distributors</span>
 					<h1 className="mt-5 text-4xl font-bold leading-[1.06] tracking-tight text-[#0F172A] sm:text-5xl lg:text-6xl">
-						Run Your Entire Distribution Business{" "}
+						Run FMCG Distribution Operations{" "}
 						<span className="text-[#1B4332]">From One Platform</span>
 					</h1>
 					<p className="mt-5 text-base leading-relaxed text-[#475569] sm:text-lg max-w-xl">
-						Manage orders, inventory, credit, collections, dispatch, delivery, and analytics across every branch in real time.
+						Manage order-to-cash on one system: orders, credit approvals, inventory, delivery execution, collections, GST workflows, and integrations.
 					</p>
 					<div className="mt-8 flex flex-wrap gap-3">
 						<Link href="/request-demo" className="btn-primary text-base px-6 py-3">Start Free Trial</Link>
 						<Link href="/request-demo" className="btn-secondary text-base px-6 py-3">Book Demo</Link>
 					</div>
 					<div className="mt-7 flex flex-wrap gap-2">
-						{["GST-ready","Offline mobile apps","Multi-branch","Onboarding included"].map(t=>(
+						{["FMCG-first","Credit-first","Multi-branch ready","GST workflows"].map(t=>(
 							<span key={t} className="pill">{t}</span>
 						))}
 					</div>
@@ -121,10 +121,10 @@ export function HeroSection() {
 						<div className="bg-white p-5">
 							<div className="grid grid-cols-4 gap-2.5 mb-4">
 								{[
-									{label:"Orders Today",value:"312",delta:"+14%",up:true},
-									{label:"Overdue",value:"₹24.6L",delta:"7 retailers",up:false},
-									{label:"Fill Rate",value:"93.4%",delta:"+2.1%",up:true},
-									{label:"Dispatched",value:"289",delta:"today",up:true},
+									{label:"Orders Today",value:"Live",delta:"Pipeline view",up:true},
+									{label:"Credit Alerts",value:"Active",delta:"Policy checks",up:false},
+									{label:"Inventory",value:"Branch-wise",delta:"On-hand + reserved",up:true},
+									{label:"Dispatch",value:"In progress",delta:"Stop-level status",up:true},
 								].map(k=>(
 									<div key={k.label} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAF8] p-2.5">
 										<p className="text-[10px] text-[#64748B]">{k.label}</p>
@@ -145,9 +145,9 @@ export function HeroSection() {
 									</tr></thead>
 									<tbody>
 										{[
-											{r:"Fresh Mart",a:"₹42,100",s:"Approved",sc:"bg-[#DCFCE7] text-[#166534]"},
-											{r:"Kannan Stores",a:"₹27,900",s:"Credit Hold",sc:"bg-[#FEF3C7] text-[#92400E]"},
-											{r:"Sai Traders",a:"₹18,200",s:"Delivered",sc:"bg-[#DCFCE7] text-[#166534]"},
+											{r:"Retailer A",a:"Order",s:"Approved",sc:"bg-[#DCFCE7] text-[#166534]"},
+											{r:"Retailer B",a:"Order",s:"Credit Hold",sc:"bg-[#FEF3C7] text-[#92400E]"},
+											{r:"Retailer C",a:"Order",s:"Dispatched",sc:"bg-[#DCFCE7] text-[#166534]"},
 										].map(row=>(
 											<tr key={row.r} className="border-t border-[#E2E8F0]">
 												<td className="px-3 py-2 font-medium text-[#0F172A]">{row.r}</td>
@@ -159,7 +159,7 @@ export function HeroSection() {
 								</table>
 							</div>
 							<div className="rounded-xl border border-[#E2E8F0] p-3">
-								<p className="text-xs font-semibold text-[#475569] mb-2">Collection Trend (7d)</p>
+								<p className="text-xs font-semibold text-[#475569] mb-2">Collections & Aging Trend</p>
 								<div className="flex items-end gap-1.5 h-12">
 									{[35,48,42,60,55,72,84].map((v,i)=>(
 										<div key={i} className="flex-1 rounded-t bg-[#52B788]/70" style={{height:`${v}%`}} />
@@ -180,7 +180,7 @@ export function TrustedBySection() {
 		<section className="border-b border-[#E2E8F0] bg-white py-12">
 			<div className="section-shell">
 				<p className="mb-8 text-center text-[11px] font-semibold uppercase tracking-widest text-[#94A3B8]">
-					Trusted by distribution teams across India
+					Built for Indian distribution operations
 				</p>
 				<div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
 					{trustMetrics.map(m=>(
@@ -234,16 +234,16 @@ export function ProductOverviewSection() {
 				<div className="max-w-2xl">
 					<span className="pill">Product overview</span>
 					<h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Every module your distribution business needs</h2>
-					<p className="mt-3 text-base text-[#475569]">From order capture to collection closure — one connected platform.</p>
+					<p className="mt-3 text-base text-[#475569]">From order capture to collection follow-through — one connected operational platform.</p>
 				</div>
 				<div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{[
-						{mod:"Order Management",    desc:"Structured order flow from booking to dispatch with credit and stock checks.",  kpi:"28% faster processing"},
-						{mod:"Inventory Management",desc:"Branch-wise real-time stock with transfer, alert, and adjustment workflows.", kpi:"22% less mismatch"},
-						{mod:"Credit & Collections",desc:"Automated credit gates and aging-based collection priority lists.",            kpi:"33% faster recovery"},
-						{mod:"Delivery Management", desc:"Trip planning, live dispatch tracking, and POD confirmation.",                 kpi:"95%+ on-time rate"},
-						{mod:"Business Analytics",  desc:"Owner and manager dashboards with sales, credit, and branch KPIs.",           kpi:"5x faster decisions"},
-						{mod:"Mobile Applications", desc:"Offline-first apps for sales reps, drivers, and collection agents.",          kpi:"40% faster field ops"},
+						{mod:"Order Management",    desc:"Structured order flow from booking to dispatch with credit and stock checks.",  kpi:"Workflow-driven execution"},
+						{mod:"Inventory Management",desc:"Branch-wise stock with transfer, alert, and adjustment workflows.",             kpi:"Branch-level control"},
+						{mod:"Credit & Collections",desc:"Credit checks with aging-based collection prioritization.",                       kpi:"Cash-discipline operations"},
+						{mod:"Delivery Management", desc:"Trip planning, stop-level dispatch tracking, and proof workflows.",             kpi:"Dispatch clarity"},
+						{mod:"Business Analytics",  desc:"Owner and manager dashboards for daily operational decisions.",                   kpi:"Role-specific visibility"},
+						{mod:"Mobile Applications", desc:"Field workflows for sales, delivery, and collections with sync support.",       kpi:"Field-ready execution"},
 					].map(m=>(
 						<div key={m.mod} className="card p-6 flex flex-col">
 							<h3 className="text-base font-semibold text-[#0F172A]">{m.mod}</h3>
@@ -334,7 +334,7 @@ export function HowItWorksSection() {
 					{[
 						{title:"Before OrdWave",items:["WhatsApp + Excel chaos","Manual credit checks","Unknown delivery status","No collection visibility"]},
 						{title:"With OrdWave",  items:["Structured order workflow","Automated credit gates","Live dispatch tracking","Aging-based collection queue"]},
-						{title:"Business Impact",items:["30% fewer order errors","25% reduced bad debt","95%+ on-time delivery","33% faster cash recovery"]},
+						{title:"Business Impact",items:["Clearer cross-team handoffs","Fewer approval blind spots","Better branch accountability","Stronger collection discipline"]},
 					].map(col=>(
 						<div key={col.title} className="card p-6">
 							<h4 className="text-sm font-semibold text-[#0F172A] mb-3">{col.title}</h4>
