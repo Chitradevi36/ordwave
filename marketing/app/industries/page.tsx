@@ -3,39 +3,39 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Industries",
-  description: "Industry-specific OrdWave solutions for FMCG, rice, pharma, wholesale, electronics, and multi-branch distribution networks.",
+  description: "Industry workflows on OrdWave: FMCG-first today, adaptable for rice, pharma, wholesale, electronics, and multi-branch distributor operations.",
 };
 
 const industries = [
   {
     name: "FMCG Distribution",
     pain: "High order frequency, route complexity, and retailer credit exposure create daily execution pressure.",
-    solution: "OrdWave centralizes order booking, route planning, retailer CRM, and credit checks for faster field execution.",
-    outcomes: ["Faster beat order processing", "Better retailer follow-up", "Improved stock visibility by branch"],
+    solution: "OrdWave centralizes order booking, dispatch coordination, credit checks, and collection follow-through for FMCG teams.",
+    outcomes: ["Cleaner order handoffs", "Better retailer follow-up discipline", "Improved branch-level visibility"],
   },
   {
     name: "Rice Distribution",
     pain: "Branch-level stock mismatch and dispatch coordination reduce fill rate and increase retailer complaints.",
     solution: "OrdWave gives branch-wise inventory, transfer tracking, and dispatch visibility for high-volume staple distribution.",
-    outcomes: ["Lower stock variance", "Better dispatch predictability", "Clearer branch accountability"],
+    outcomes: ["Lower stock mismatch risk", "Better dispatch predictability", "Clearer branch accountability"],
   },
   {
     name: "Pharma Distribution",
     pain: "Batch complexity, expiry awareness, and controlled delivery workflows demand tighter execution discipline.",
     solution: "OrdWave supports structured workflows, branch control, and role-based approvals for regulated distribution operations.",
-    outcomes: ["Better operational compliance", "Faster order approvals", "Improved delivery tracking"],
+    outcomes: ["Better operational discipline", "Consistent approvals", "Improved delivery tracking"],
   },
   {
     name: "Wholesale Distribution",
     pain: "Manual processes across sales, warehouse, and finance create delays and visibility gaps.",
     solution: "OrdWave unifies order-to-cash workflows with credit controls, collections visibility, and team accountability.",
-    outcomes: ["Lower manual follow-up", "Faster collections", "Stronger working capital discipline"],
+    outcomes: ["Lower manual follow-up load", "Stronger collection follow-through", "Improved working capital discipline"],
   },
   {
     name: "Electronics Distribution",
     pain: "Higher-value inventory and distributed teams increase the cost of every order, dispatch, or credit mistake.",
     solution: "OrdWave improves stock control, dispatch clarity, and retailer-level visibility across branches and categories.",
-    outcomes: ["Better high-value inventory control", "Reduced dispatch leakage", "Faster issue resolution"],
+    outcomes: ["Better high-value inventory control", "Reduced dispatch errors", "Faster issue resolution"],
   },
 ];
 
@@ -45,9 +45,9 @@ export default function IndustriesPage() {
       <section className="gradient-mesh border-b border-[#E2E8F0]">
         <div className="section-shell section-gap">
           <span className="pill">Industry solutions</span>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">OrdWave for every major distribution category</h1>
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">FMCG-first workflows, adaptable for every major distributor category</h1>
           <p className="mt-4 max-w-3xl text-[#475569]">
-            Purpose-built workflows for distributors, wholesalers, and super stockists managing orders, inventory, credit, dispatch, and collections.
+            Start with FMCG-focused execution workflows and adapt operations for rice, pharma, wholesale, electronics, and multi-branch distributor models.
           </p>
         </div>
       </section>

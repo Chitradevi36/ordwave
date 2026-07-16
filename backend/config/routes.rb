@@ -40,6 +40,9 @@ Rails.application.routes.draw do
       post 'signup/first_branch', to: 'signup#first_branch'
       post 'signup/choose_plan',  to: 'signup#choose_plan'
 
+      # Public lead capture (marketing demo/contact forms)
+      post 'leads/demo_request',  to: 'leads#demo_request'
+
       # Password reset
       post 'passwords/forgot',       to: 'passwords#forgot'
       post 'passwords/reset',        to: 'passwords#reset'
