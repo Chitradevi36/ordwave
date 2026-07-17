@@ -10,14 +10,20 @@ export function isAnalyticsEnabled(): boolean {
   return typeof window !== "undefined" && GA_MEASUREMENT_ID.length > 0;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function safeGtag(command: string, ...args: any[]): void {
+type GtagArg = string | number | boolean | Date | null | undefined | Record<string, unknown>;
+
+type GtagFunction = (command: string, ...args: GtagArg[]) => void;
+
+type WindowWithGtag = Window & {
+  gtag?: GtagFunction;
+};
+
+export function safeGtag(command: string, ...args: GtagArg[]): void {
   try {
     if (!isAnalyticsEnabled()) return;
     if (typeof window === "undefined") return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any;
+    const w = window as WindowWithGtag;
     if (typeof w.gtag !== "function") return;
 
     w.gtag(command, ...args);
