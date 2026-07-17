@@ -3,6 +3,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { TrackedLink } from "@/components/tracked-link";
 
 /* ─── Data ── */
 const trustMetrics = [
@@ -101,8 +102,8 @@ export function HeroSection() {
 						Manage order-to-cash on one system: orders, credit approvals, inventory, delivery execution, collections, GST workflows, and integrations.
 					</p>
 					<div className="mt-8 flex flex-wrap gap-3">
-						<Link href="/request-demo" className="btn-primary text-base px-6 py-3">Start Free Trial</Link>
-						<Link href="/request-demo" className="btn-secondary text-base px-6 py-3">Book Demo</Link>
+						<TrackedLink href="/request-demo" label="Start Free Trial" section="hero" className="btn-primary text-base px-6 py-3">Start Free Trial</TrackedLink>
+						<TrackedLink href="/request-demo" label="Book Demo" section="hero" className="btn-secondary text-base px-6 py-3">Book Demo</TrackedLink>
 					</div>
 					<div className="mt-7 flex flex-wrap gap-2">
 						{["FMCG-first","Credit-first","Multi-branch ready","GST workflows"].map(t=>(
@@ -539,7 +540,7 @@ export function RoiCalculatorSection() {
 						</div>
 					</div>
 					<div className="mt-8 text-center">
-						<Link href="/request-demo" className="btn-primary px-8 py-3 text-base">Get a custom ROI analysis</Link>
+						<TrackedLink href="/request-demo" label="Get a custom ROI analysis" section="roi-calculator" className="btn-primary px-8 py-3 text-base">Get a custom ROI analysis</TrackedLink>
 					</div>
 				</div>
 			</div>
@@ -625,8 +626,8 @@ export function FinalCtaSection() {
 						Join distribution teams across India who replaced Excel chaos with one execution platform.
 					</p>
 					<div className="relative mt-8 flex flex-wrap justify-center gap-4">
-						<Link href="/request-demo" className="btn-primary px-8 py-3 text-base">Book Demo</Link>
-						<Link href="/request-demo" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-8 py-3 text-base font-semibold text-white/90 transition-all hover:bg-white/10">Start Free Trial</Link>
+						<TrackedLink href="/request-demo" label="Book Demo" section="final-cta" className="btn-primary px-8 py-3 text-base">Book Demo</TrackedLink>
+						<TrackedLink href="/request-demo" label="Start Free Trial" section="final-cta" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-8 py-3 text-base font-semibold text-white/90 transition-all hover:bg-white/10">Start Free Trial</TrackedLink>
 					</div>
 					<div className="relative mt-8 flex flex-wrap justify-center gap-5 text-xs text-[#64748B]">
 						<span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />Free 14-day trial</span>

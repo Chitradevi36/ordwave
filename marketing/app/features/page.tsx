@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Product Features",
@@ -95,7 +96,7 @@ export default function FeaturesPage() {
                 </ul>
                 <div className="mt-5 flex items-center gap-4">
                   <span className="inline-flex rounded-full bg-[#DCFCE7] px-3 py-1 text-xs font-semibold text-[#166534]">{mod.kpi}</span>
-                  <Link href="/request-demo" className="text-sm font-semibold text-[#1B4332] hover:underline underline-offset-4">Book Demo →</Link>
+                  <TrackedLink href="/request-demo" label="Book Demo" section="feature-module" className="text-sm font-semibold text-[#1B4332] hover:underline underline-offset-4">Book Demo →</TrackedLink>
                 </div>
               </div>
               {/* Module preview */}
@@ -133,8 +134,8 @@ export default function FeaturesPage() {
             Book a guided product walkthrough for your sales, warehouse, finance, and dispatch teams.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/request-demo" className="btn-primary px-7 py-2.5">Book Demo</Link>
-            <Link href="/pricing" className="inline-flex items-center rounded-xl border border-white/20 px-7 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</Link>
+            <TrackedLink href="/request-demo" label="Book Demo" section="features-bottom" className="btn-primary px-7 py-2.5">Book Demo</TrackedLink>
+            <TrackedLink href="/pricing" label="View Pricing" section="features-bottom" className="inline-flex items-center rounded-xl border border-white/20 px-7 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</TrackedLink>
           </div>
         </div>
       </section>

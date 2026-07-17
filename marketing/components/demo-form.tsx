@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { trackFormSubmit } from "@/lib/analytics";
 
 type DemoFormProps = {
   title: string;
@@ -45,6 +46,7 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
         return;
       }
 
+      trackFormSubmit({ form_name: "demo_request", source: payload.source });
       setIsSubmitted(true);
       form.reset();
     } catch {

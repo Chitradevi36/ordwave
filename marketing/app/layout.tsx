@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { MarketingFooter } from "@/components/footer";
 import { MarketingNavbar } from "@/components/navbar";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics";
+import { MarketingProviders } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: {
@@ -49,10 +52,25 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
+        {GA_MEASUREMENT_ID && (
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
+        )}
+        {GA_MEASUREMENT_ID && (
+          <Script id="marketing-ga4-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });
+            `}
+          </Script>
+        )}
         <MarketingNavbar />
-        <main>{children}</main>
+        <MarketingProviders>
+          <main>{children}</main>
+        </MarketingProviders>
         <MarketingFooter />
       </body>
     </html>

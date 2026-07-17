@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "About",
@@ -85,7 +86,7 @@ export default function AboutPage() {
             Share your current setup and we will map where OrdWave can deliver the fastest operational gains.
           </p>
           <div className="mt-6">
-            <Link href="/request-demo" className="btn-primary px-5 py-2.5">Talk to us</Link>
+            <TrackedLink href="/request-demo" label="Talk to us" section="about" className="btn-primary px-5 py-2.5">Talk to us</TrackedLink>
           </div>
         </div>
       </section>
