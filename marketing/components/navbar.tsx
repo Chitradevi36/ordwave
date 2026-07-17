@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { TrackedLink } from "@/components/tracked-link";
 
 const navLinks = [
   { label: "Product",    href: "/features" },
@@ -30,36 +31,44 @@ export function MarketingNavbar() {
         {/* Nav */}
         <nav className="hidden items-center gap-1 lg:flex">
           {navLinks.map((item) => (
-            <Link
+            <TrackedLink
               key={item.href}
               href={item.href}
+              label={item.label}
+              section="navbar"
               className="rounded-lg px-3.5 py-2 text-sm font-medium text-[#475569] transition-colors hover:bg-[#F8FAF8] hover:text-[#0F172A]"
             >
               {item.label}
-            </Link>
+            </TrackedLink>
           ))}
         </nav>
 
         {/* CTAs */}
         <div className="flex shrink-0 items-center gap-2">
-          <Link
+          <TrackedLink
             href="https://app.ordwave.com/login"
+            label="Sign In"
+            section="navbar"
             className="hidden rounded-lg px-4 py-2 text-sm font-semibold text-[#475569] transition-colors hover:text-[#0F172A] sm:inline-flex"
           >
             Sign In
-          </Link>
-          <Link
+          </TrackedLink>
+          <TrackedLink
             href="/request-demo"
+            label="Book Demo"
+            section="navbar"
             className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A] shadow-sm transition-all hover:bg-[#F8FAF8] hidden sm:inline-flex"
           >
             Book Demo
-          </Link>
-          <Link
+          </TrackedLink>
+          <TrackedLink
             href="/request-demo"
+            label="Start Free Trial"
+            section="navbar"
             className="btn-primary rounded-xl px-4 py-2 text-sm"
           >
             Start Free Trial
-          </Link>
+          </TrackedLink>
         </div>
       </div>
     </header>

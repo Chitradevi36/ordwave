@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Use Cases",
@@ -75,7 +76,7 @@ export default function UseCasesPage() {
           Book a demo and we will map OrdWave workflows to your category, branch structure, and team roles.
         </p>
         <div className="mt-6">
-          <Link href="/request-demo" className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary">Book a Demo</Link>
+          <TrackedLink href="/request-demo" label="Book a Demo" section="use-cases" className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary">Book a Demo</TrackedLink>
         </div>
       </div>
       </section>

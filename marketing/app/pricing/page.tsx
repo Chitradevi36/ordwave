@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -70,12 +71,14 @@ export default function PricingPage() {
                 <li key={bullet} className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />{bullet}</li>
               ))}
             </ul>
-            <Link
+            <TrackedLink
               href="/request-demo"
+              label={tier.name === "Starter" ? "Start Free Trial" : "Book Demo"}
+              section="pricing"
               className={`mt-6 inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold ${tier.name === "Growth" ? "bg-[#1B4332] text-white hover:bg-[#163727]" : "border border-[#E2E8F0] bg-white hover:bg-[#F8FAF8]"}`}
             >
               {tier.name === "Starter" ? "Start Free Trial" : "Book Demo"}
-            </Link>
+            </TrackedLink>
           </div>
         ))}
       </div>

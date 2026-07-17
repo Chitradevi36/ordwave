@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Industries",
@@ -97,7 +98,7 @@ export default function IndustriesPage() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Want a workflow mapped to your category?</h2>
           <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">Book a demo and we’ll show the exact order-to-cash flow for your team structure and industry model.</p>
           <div className="mt-6">
-            <Link href="/request-demo" className="btn-primary px-6 py-2.5">Book Demo</Link>
+            <TrackedLink href="/request-demo" label="Book Demo" section="industries" className="btn-primary px-6 py-2.5">Book Demo</TrackedLink>
           </div>
         </div>
       </section>

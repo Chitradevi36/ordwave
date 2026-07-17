@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DemoForm } from "@/components/demo-form";
+import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Request Demo",
@@ -21,6 +22,9 @@ export default function RequestDemoPage() {
           <li>• Improve credit and collections control</li>
           <li>• Run multiple branches from one dashboard</li>
         </ul>
+        <div className="mt-6">
+          <TrackedLink href="/contact" label="Contact sales" section="request-demo" className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary">Contact sales</TrackedLink>
+        </div>
       </div>
       <DemoForm title="Book your demo" subtitle="Tell us your team size and current process." />
     </section>

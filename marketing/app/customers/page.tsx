@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Customers",
@@ -78,8 +79,8 @@ export default function CustomersPage() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Want a workflow similar to your team&apos;s operating model?</h2>
           <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">Book a guided walkthrough and we’ll map OrdWave to your current distributor workflow.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/request-demo" className="btn-primary px-6 py-2.5">Book Demo</Link>
-            <Link href="/pricing" className="inline-flex items-center rounded-xl border border-white/20 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</Link>
+            <TrackedLink href="/request-demo" label="Book Demo" section="customers" className="btn-primary px-6 py-2.5">Book Demo</TrackedLink>
+            <TrackedLink href="/pricing" label="View Pricing" section="customers" className="inline-flex items-center rounded-xl border border-white/20 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</TrackedLink>
           </div>
         </div>
       </section>

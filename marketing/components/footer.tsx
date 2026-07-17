@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrackedLink } from "@/components/tracked-link";
 
 export function MarketingFooter() {
   return (
@@ -33,10 +34,10 @@ export function MarketingFooter() {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">Product</h4>
             <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
-              <li><Link href="/features" className="transition-colors hover:text-[#1B4332]">Features</Link></li>
-              <li><Link href="/pricing" className="transition-colors hover:text-[#1B4332]">Pricing</Link></li>
-              <li><Link href="/request-demo" className="transition-colors hover:text-[#1B4332]">Book Demo</Link></li>
-              <li><Link href="/request-demo" className="transition-colors hover:text-[#1B4332]">Free Trial</Link></li>
+              <li><TrackedLink href="/features" label="Features" section="footer" className="transition-colors hover:text-[#1B4332]">Features</TrackedLink></li>
+              <li><TrackedLink href="/pricing" label="Pricing" section="footer" className="transition-colors hover:text-[#1B4332]">Pricing</TrackedLink></li>
+              <li><TrackedLink href="/request-demo" label="Book Demo" section="footer" className="transition-colors hover:text-[#1B4332]">Book Demo</TrackedLink></li>
+              <li><TrackedLink href="/request-demo" label="Free Trial" section="footer" className="transition-colors hover:text-[#1B4332]">Free Trial</TrackedLink></li>
             </ul>
           </div>
 
@@ -44,10 +45,10 @@ export function MarketingFooter() {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">Solutions</h4>
             <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
-              <li><Link href="/industries" className="transition-colors hover:text-[#1B4332]">FMCG Distribution</Link></li>
-              <li><Link href="/industries" className="transition-colors hover:text-[#1B4332]">Rice Distribution</Link></li>
-              <li><Link href="/industries" className="transition-colors hover:text-[#1B4332]">Wholesale</Link></li>
-              <li><Link href="/industries" className="transition-colors hover:text-[#1B4332]">Multi-Branch Ops</Link></li>
+              <li><TrackedLink href="/industries" label="FMCG Distribution" section="footer" className="transition-colors hover:text-[#1B4332]">FMCG Distribution</TrackedLink></li>
+              <li><TrackedLink href="/industries" label="Rice Distribution" section="footer" className="transition-colors hover:text-[#1B4332]">Rice Distribution</TrackedLink></li>
+              <li><TrackedLink href="/industries" label="Wholesale" section="footer" className="transition-colors hover:text-[#1B4332]">Wholesale</TrackedLink></li>
+              <li><TrackedLink href="/industries" label="Multi-Branch Ops" section="footer" className="transition-colors hover:text-[#1B4332]">Multi-Branch Ops</TrackedLink></li>
             </ul>
           </div>
 
@@ -55,9 +56,9 @@ export function MarketingFooter() {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">Resources</h4>
             <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
-              <li><Link href="/customers" className="transition-colors hover:text-[#1B4332]">Customers</Link></li>
-              <li><Link href="/use-cases" className="transition-colors hover:text-[#1B4332]">Use Cases</Link></li>
-              <li><Link href="/contact" className="transition-colors hover:text-[#1B4332]">Support</Link></li>
+              <li><TrackedLink href="/customers" label="Customers" section="footer" className="transition-colors hover:text-[#1B4332]">Customers</TrackedLink></li>
+              <li><TrackedLink href="/use-cases" label="Use Cases" section="footer" className="transition-colors hover:text-[#1B4332]">Use Cases</TrackedLink></li>
+              <li><TrackedLink href="/contact" label="Support" section="footer" className="transition-colors hover:text-[#1B4332]">Support</TrackedLink></li>
             </ul>
           </div>
 
@@ -65,8 +66,8 @@ export function MarketingFooter() {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">Company</h4>
             <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
-              <li><Link href="/about" className="transition-colors hover:text-[#1B4332]">About</Link></li>
-              <li><Link href="/contact" className="transition-colors hover:text-[#1B4332]">Contact</Link></li>
+              <li><TrackedLink href="/about" label="About" section="footer" className="transition-colors hover:text-[#1B4332]">About</TrackedLink></li>
+              <li><TrackedLink href="/contact" label="Contact" section="footer" className="transition-colors hover:text-[#1B4332]">Contact</TrackedLink></li>
               <li><span className="cursor-default">Privacy Policy</span></li>
               <li><span className="cursor-default">Terms of Service</span></li>
             </ul>
