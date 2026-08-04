@@ -81,7 +81,7 @@ module Api
             data: {
               request_id: result.otp_request.request_id,
               identifier_type: result.otp_request.identifier_type.to_s,
-              message: 'OTP code sent to your email'
+              message: 'OTP code sent successfully'
             }
           }, status: :ok
         else

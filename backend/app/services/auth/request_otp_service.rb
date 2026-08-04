@@ -54,7 +54,7 @@ module Auth
         otp_request.generate_otp!
       end
 
-      # Send OTP via email or SMS
+      # Send OTP via email or phone channel
       sendOtp(otp_request, user)
 
       Result.new(success?: true, otp_request: otp_request, errors: [])
@@ -94,13 +94,29 @@ module Auth
           # Send OTP via email
           AuthMailer.send_otp(user, otp_request.otp_code).deliver_now
         when :phone
-          # Send OTP via SMS
-          SmsService.new.send_login_otp(otp_request.identifier, otp_request.otp_code)
+          send_phone_otp(otp_request.identifier, otp_request.otp_code)
         end
       rescue => e
         Rails.logger.warn("Failed to send OTP: #{e.class} #{e.message}")
         # Log but don't fail - OTP is already in database
       end
+    end
+
+    def send_phone_otp(phone_number, otp_code)
+      if whatsapp_otp_enabled?
+        begin
+          WhatsappService.new.send_login_otp(phone_number, otp_code)
+          return
+        rescue => e
+          Rails.logger.warn("Failed to send OTP via WhatsApp, falling back to SMS: #{e.class} #{e.message}")
+        end
+      else
+        SmsService.new.send_login_otp(phone_number, otp_code)
+      end
+    end
+
+    def whatsapp_otp_enabled?
+      ENV.fetch('WHATSAPP_OTP_ENABLED', 'true') == 'true'
     end
   end
 end
