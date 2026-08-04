@@ -35,9 +35,9 @@ module Signup
         SignupMailer.send_otp(pending).deliver_now
       elsif pending.phone.present?
         begin
-          SmsService.new.send_login_otp(pending.phone, pending.otp_code)
+          send_phone_otp(pending.phone, pending.otp_code)
         rescue => e
-          Rails.logger.warn("Failed to send signup OTP via SMS: #{e.class} #{e.message}")
+          Rails.logger.warn("Failed to send signup OTP: #{e.class} #{e.message}")
         end
       end
 
@@ -58,6 +58,23 @@ module Signup
       digits = value.to_s.gsub(/\D/, '')
       return nil unless digits.match?(/\A[6-9]\d{9}\z/)
       digits
+    end
+
+    def send_phone_otp(phone_number, otp_code)
+      if whatsapp_otp_enabled?
+        begin
+          WhatsappService.new.send_registration_otp(phone_number, otp_code)
+          return
+        rescue => e
+          Rails.logger.warn("Failed to send signup OTP via WhatsApp, falling back to SMS: #{e.class} #{e.message}")
+        end
+      end
+
+      SmsService.new.send_registration_otp(phone_number, otp_code)
+    end
+
+    def whatsapp_otp_enabled?
+      ENV.fetch('WHATSAPP_OTP_ENABLED', 'true') == 'true'
     end
   end
 end
