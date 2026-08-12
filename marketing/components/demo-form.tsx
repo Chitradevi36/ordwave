@@ -145,7 +145,7 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
 
       {isSubmitted && (
         <div className="mt-4 rounded-lg border border-accent bg-green-50 p-3 text-sm font-medium text-primary">
-          Thanks. Your request has been sent successfully. Our team will contact you shortly.
+          Thanks. We have your workflow request and our team will reach out shortly.
         </div>
       )}
 
@@ -163,7 +163,7 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
         <textarea required disabled={isSubmitting} name="message" placeholder="Current setup and requirements" className="min-h-[100px] w-full rounded-lg border border-border p-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
         <div ref={turnstileContainerRef} className="min-h-[65px]" />
         <button disabled={isSubmitting || Boolean(turnstileSiteKey && !captchaToken)} type="submit" className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(27,67,50,0.25)] transition-colors hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed">
-          {isSubmitting ? "Submitting..." : "Submit"}
+          {isSubmitting ? "Sending request..." : "Map My Workflow"}
         </button>
       </form>
     </div>

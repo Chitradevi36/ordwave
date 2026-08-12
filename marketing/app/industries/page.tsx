@@ -4,7 +4,8 @@ import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Industries",
-  description: "Industry workflows on OrdWave: FMCG-first today, adaptable for rice, pharma, wholesale, electronics, and multi-branch distributor operations.",
+  description:
+    "Industry workflows on OrdWave: FMCG-first today, adaptable for rice, pharma, wholesale, electronics, and multi-branch distributor operations.",
 };
 
 const industries = [
@@ -46,7 +47,9 @@ export default function IndustriesPage() {
       <section className="gradient-mesh border-b border-[#E2E8F0]">
         <div className="section-shell section-gap">
           <span className="pill">Industry solutions</span>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">FMCG-first workflows, adaptable for every major distributor category</h1>
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">
+            FMCG-first workflows, adaptable for every major distributor category
+          </h1>
           <p className="mt-4 max-w-3xl text-[#475569]">
             Start with FMCG-focused execution workflows and adapt operations for rice, pharma, wholesale, electronics, and multi-branch distributor models.
           </p>
@@ -76,7 +79,10 @@ export default function IndustriesPage() {
                   <p className="text-xs font-semibold text-[#64748B]">Expected outcomes</p>
                   <ul className="mt-4 space-y-2">
                     {industry.outcomes.map((outcome) => (
-                      <li key={outcome} className="flex items-center gap-2 text-sm text-[#0F172A]"><span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />{outcome}</li>
+                      <li key={outcome} className="flex items-center gap-2 text-sm text-[#0F172A]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#52B788]" />
+                        {outcome}
+                      </li>
                     ))}
                   </ul>
                   <div className="mt-5 rounded-xl border border-[#E2E8F0] bg-white p-4">
@@ -96,9 +102,13 @@ export default function IndustriesPage() {
 
         <div className="rounded-3xl bg-[#0F1A13] p-8 text-white sm:p-10">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Want a workflow mapped to your category?</h2>
-          <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">Book a demo and we’ll show the exact order-to-cash flow for your team structure and industry model.</p>
+          <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">
+            Book a guided walkthrough and we will map the exact order-to-cash flow for your team structure, branch model, and industry category.
+          </p>
           <div className="mt-6">
-            <TrackedLink href="/request-demo" label="Book Demo" section="industries" className="btn-primary px-6 py-2.5">Book Demo</TrackedLink>
+            <TrackedLink href="/request-demo" label="Map My Workflow" section="industries" className="btn-primary px-6 py-2.5">
+              Map My Workflow
+            </TrackedLink>
           </div>
         </div>
       </section>

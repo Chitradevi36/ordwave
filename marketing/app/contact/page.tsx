@@ -39,7 +39,7 @@ export default function ContactPage() {
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="card p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-[#1B4332]">Email</p>
-            <p className="mt-1 text-sm font-medium text-[#0F172A]">team.ordwave@gmail.com</p>
+            <p className="mt-1 text-sm font-medium text-[#0F172A]">support@ordwave.com</p>
             <p className="mt-2 text-sm text-[#475569]">Best for product queries, demos, and implementation planning.</p>
           </div>
           <div className="card p-5">
@@ -64,7 +64,7 @@ export default function ContactPage() {
           <p>Credit-first operations</p>
         </div>
       </div>
-      <DemoForm title="Contact our team" subtitle="We typically respond within one business day." />
+      <DemoForm title="Map My Workflow" subtitle="We typically respond within one business day." />
       </section>
     </>
   );

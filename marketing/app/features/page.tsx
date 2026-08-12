@@ -4,7 +4,7 @@ import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Product Features",
-  description: "Explore OrdWave modules for Indian FMCG distributors: order management, credit approvals, inventory visibility, delivery execution, collections, GST workflows, and integrations.",
+  description: "Explore OrdWave modules for Indian distributors: credit holds, collections workflows, inventory visibility, dispatch control, delivery execution, GST workflows, and Tally-ready operations.",
 };
 
 const modules = [
@@ -66,7 +66,7 @@ export default function FeaturesPage() {
         <div className="section-shell section-gap">
           <span className="pill">Feature depth</span>
           <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">
-            Product modules for FMCG distributor order-to-cash operations
+            Product modules for credit-first distributor operations
           </h1>
           <p className="mt-4 max-w-3xl text-[#475569]">
             Purpose-built modules covering your order-to-cash cycle — from field order capture to collections follow-through.
@@ -96,7 +96,7 @@ export default function FeaturesPage() {
                 </ul>
                 <div className="mt-5 flex items-center gap-4">
                   <span className="inline-flex rounded-full bg-[#DCFCE7] px-3 py-1 text-xs font-semibold text-[#166534]">{mod.kpi}</span>
-                  <TrackedLink href="/request-demo" label="Book Demo" section="feature-module" className="text-sm font-semibold text-[#1B4332] hover:underline underline-offset-4">Book Demo →</TrackedLink>
+                  <TrackedLink href="/request-demo" label="Map My Workflow" section="feature-module" className="text-sm font-semibold text-[#1B4332] hover:underline underline-offset-4">Map My Workflow</TrackedLink>
                 </div>
               </div>
               {/* Module preview */}
@@ -129,12 +129,12 @@ export default function FeaturesPage() {
 
       <section className="section-shell pb-20">
         <div className="gradient-dark rounded-3xl p-10 text-center">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">See every module in action with your own data</h2>
+          <h2 className="text-3xl font-bold text-white sm:text-4xl">See the workflow with your own branch setup</h2>
           <p className="mt-3 text-[#94A3B8] max-w-xl mx-auto">
-            Book a guided product walkthrough for your sales, warehouse, finance, and dispatch teams.
+            Book a guided walkthrough for your sales, warehouse, finance, and dispatch teams so we can map the exact control points you care about.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <TrackedLink href="/request-demo" label="Book Demo" section="features-bottom" className="btn-primary px-7 py-2.5">Book Demo</TrackedLink>
+            <TrackedLink href="/request-demo" label="Map My Workflow" section="features-bottom" className="btn-primary px-7 py-2.5">Map My Workflow</TrackedLink>
             <TrackedLink href="/pricing" label="View Pricing" section="features-bottom" className="inline-flex items-center rounded-xl border border-white/20 px-7 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</TrackedLink>
           </div>
         </div>
