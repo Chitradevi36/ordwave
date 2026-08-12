@@ -105,7 +105,7 @@ module Auth
     def send_phone_otp(phone_number, otp_code)
       if whatsapp_otp_enabled?
         begin
-          WhatsappService.new.send_login_otp(phone_number, otp_code)
+          WhatsappService.new.send_template(:login_otp, phone_number: phone_number, otp_code: otp_code)
           return
         rescue => e
           Rails.logger.warn("Failed to send OTP via WhatsApp, falling back to SMS: #{e.class} #{e.message}")

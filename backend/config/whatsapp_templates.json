@@ -1,0 +1,76 @@
+{
+  "login_otp": {
+    "template_name": "login_otp",
+    "config_prefix": "MSG91_WHATSAPP_OTP_TEMPLATE",
+    "failure_label": "WhatsApp OTP",
+    "success_log": "MSG91 WhatsApp OTP sent to {{recipient}} request_id={{request_id}} type=login_otp",
+    "components": {
+      "body_1": {
+        "type": "text",
+        "value": "{{otp_code}}"
+      },
+      "button_1": {
+        "subtype": "url",
+        "type": "text",
+        "value": "{{otp_code}}",
+        "enabled_env": "MSG91_WHATSAPP_OTP_BUTTON_ENABLED",
+        "enabled_when": "true"
+      }
+    }
+  },
+  "registration_otp": {
+    "template_name": "registration_otp",
+    "config_prefix": "MSG91_WHATSAPP_OTP_TEMPLATE",
+    "failure_label": "WhatsApp OTP",
+    "success_log": "MSG91 WhatsApp OTP sent to {{recipient}} request_id={{request_id}} type=registration_otp",
+    "components": {
+      "body_1": {
+        "type": "text",
+        "value": "{{otp_code}}"
+      },
+      "button_1": {
+        "subtype": "url",
+        "type": "text",
+        "value": "{{otp_code}}",
+        "enabled_env": "MSG91_WHATSAPP_OTP_BUTTON_ENABLED",
+        "enabled_when": "true"
+      }
+    }
+  },
+  "invitation": {
+    "template_name_env": "MSG91_WHATSAPP_INVITATION_TEMPLATE_NAME",
+    "config_prefix": "MSG91_WHATSAPP_INVITATION_TEMPLATE",
+    "failure_label": "WhatsApp invitation",
+    "success_log": "MSG91 WhatsApp invitation sent to {{recipient}} request_id={{request_id}}",
+    "components": {
+      "body_1": {
+        "type": "text",
+        "value": "{{invitee_identifier}}"
+      },
+      "body_2": {
+        "type": "text",
+        "value": "{{inviter_name}}"
+      },
+      "body_3": {
+        "type": "text",
+        "value": "{{organization_name}}"
+      },
+      "body_4": {
+        "type": "text",
+        "value": "{{role_name}}"
+      },
+      "button_1": {
+        "subtype": "url",
+        "type": "text",
+        "value": "{{accept_url}}"
+      }
+    }
+  },
+  "test": {
+    "template_name": "test",
+    "failure_label": "WhatsApp test template",
+    "language_code": "en",
+    "success_log": "MSG91 WhatsApp test template sent to {{recipient}}: {{response_body}}",
+    "components": {}
+  }
+}

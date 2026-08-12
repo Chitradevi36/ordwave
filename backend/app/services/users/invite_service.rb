@@ -2,10 +2,11 @@ module Users
   class InviteService
     Result = Struct.new(:success?, :invitation, :token, :errors, keyword_init: true)
 
-    def initialize(email:, role_id:, branch_id: nil, organization:, invited_by:)
+    def initialize(email:, role_id:, branch_id: nil, phone: nil, organization:, invited_by:)
       @email        = email.to_s.downcase.strip
       @role_id      = role_id
       @branch_id    = branch_id
+      @phone        = phone.to_s.strip
       @organization = organization
       @invited_by   = invited_by
     end
@@ -37,7 +38,7 @@ module Users
       )
 
       puts "Generated invitation token: #{token} (digest: #{digest}) for #{@email} to join #{@organization.name} as #{role.name}"
-      deliver_email(invitation, token)
+      deliver_notifications(invitation, token, role)
 
       Result.new(success?: true, invitation: invitation, token: dev_token(token), errors: [])
     rescue ActiveRecord::RecordInvalid => e
@@ -56,10 +57,37 @@ module Users
       error_result(["#{@email} is already a member of this organization"])
     end
 
+    def deliver_notifications(invitation, token, role)
+      deliver_email(invitation, token)
+      deliver_whatsapp(token, role) if @phone.present?
+    end
+
     def deliver_email(invitation, token)
       InvitationMailer.invite(invitation: invitation, token: token).deliver_now
     rescue StandardError => e
       Rails.logger.error("InvitationMailer failed: #{e.message}")
+    end
+
+    def deliver_whatsapp(token, role)
+      WhatsappService.new.send_template(
+        :invitation,
+        phone_number: @phone,
+        invitee_identifier: @email,
+        inviter_name: invited_by_name,
+        organization_name: @organization.name,
+        role_name: role.name,
+        accept_url: accept_url(token)
+      )
+    rescue StandardError => e
+      Rails.logger.error("WhatsApp invitation failed: #{e.message}")
+    end
+
+    def invited_by_name
+      @invited_by&.full_name.presence || 'Your administrator'
+    end
+
+    def accept_url(token)
+      "#{ENV.fetch('WEB_APP_URL', 'http://localhost:4400')}/invite/accept?token=#{token}"
     end
 
     # Return raw token only in development/test so acceptance can be tested without email
