@@ -24,6 +24,7 @@ import { WarehouseView } from "@/components/dashboard/WarehouseView";
 import { DriverView } from "@/components/dashboard/DriverView";
 import { ManagerView } from "@/components/dashboard/ManagerView";
 import CustomerView from "@/components/dashboard/CustomerView";
+// import { OwnerControlTower } from "@/components/dashboard/OwnerControlTower";
 // import { RiskiestRetailersPanel } from "@/components/dashboard/RiskiestRetailersPanel";
 
 // â”€â”€ Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -264,6 +265,7 @@ export default function DashboardPage() {
         <CustomerView data={data} isLoading={isLoading || roleLoading} isError={isError} />
       ) : (
         <>
+          {/* <OwnerControlTower dashboard={data} isLoading={isLoading || roleLoading} /> */}
           {!isLoading && data?.alerts && <AlertRibbon alerts={data.alerts} />}
           {isError && !isLoading && <DashboardErrorBanner onRetry={refetch} />}
 
