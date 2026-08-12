@@ -254,7 +254,7 @@ export function ProductOverviewSection() {
           ))}
         </div>
         <div className="mt-10 text-center">
-          <Link href="/features" className="btn-secondary px-6 py-2.5">Explore all features -></Link>
+          <Link href="/features" className="btn-secondary px-6 py-2.5">Explore all features {"->"}</Link>
         </div>
       </div>
     </section>
@@ -302,7 +302,7 @@ export function IndustriesHomeSection() {
               <div className="mb-3 text-3xl font-bold text-[#1B4332]">{ind.icon}</div>
               <h3 className="text-base font-semibold text-[#0F172A] group-hover:text-[#1B4332]">{ind.name}</h3>
               <p className="mt-2 text-sm text-[#475569]">{ind.desc}</p>
-              <span className="mt-4 inline-flex text-xs font-semibold text-[#1B4332] group-hover:underline">View solution -></span>
+              <span className="mt-4 inline-flex text-xs font-semibold text-[#1B4332] group-hover:underline">View solution {"->"}</span>
             </Link>
           ))}
         </div>
