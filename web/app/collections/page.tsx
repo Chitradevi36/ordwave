@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PageHeader } from "@/components/layout";
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useOrgBranch } from "@/lib/org-branch-context";
 import CreatePaymentModal from "@/components/payments/create-payment-modal";
 import { collectionEvents } from "@/lib/analytics";
+import { useCreditRisk } from "@/lib/api/hooks/useCreditRisk";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -83,6 +85,12 @@ interface PaymentSummary {
   branch:             { id: number; code: string };
 }
 
+interface QueueCustomerAction {
+  id: number;
+  name: string;
+  overdueAmount: number;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const fmtCurrency = (n: number) =>
@@ -97,6 +105,7 @@ export default function CollectionsPage() {
   const router           = useRouter();
   const searchParams     = useSearchParams();
   const { token, orgId } = useOrgBranch();
+  const { data: creditRisk, isLoading: creditRiskLoading } = useCreditRisk();
 
   // Top-level section: "collections" | "bank"
   const section = searchParams.get("section") === "bank" ? "bank" : "collections";
@@ -117,6 +126,7 @@ export default function CollectionsPage() {
   const [counts, setCounts]         = useState<Record<string, number>>({});
   const [showCreate, setShowCreate] = useState(false);
   const [exporting, setExporting]   = useState(false);
+  const [queueCustomer, setQueueCustomer] = useState<QueueCustomerAction | null>(null);
 
   // ── Bank Reconciliation state ─────────────────────────────────────────────
   const [activeTxnTab, setActiveTxnTab]   = useState<TxnTab>("suggested");
@@ -314,6 +324,13 @@ export default function CollectionsPage() {
   const tabTotal = (key: string) =>
     key === "" ? Object.values(counts).reduce((s, v) => s + v, 0) : (counts[key] ?? 0);
 
+  const collectionQueue = [...(creditRisk?.risky_retailers ?? [])]
+    .sort((a, b) => {
+      if (b.overdue_amount !== a.overdue_amount) return b.overdue_amount - a.overdue_amount;
+      return b.overdue_days - a.overdue_days;
+    })
+    .slice(0, 5);
+
   return (
     <>
       <AppShell>
@@ -355,6 +372,93 @@ export default function CollectionsPage() {
                 { label: "Record Payment", onClick: () => setShowCreate(true), icon: Plus },
               ]}
             />
+
+            <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-lg border border-border bg-background p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">Collections Action Queue</p>
+                    <p className="mt-1 text-xs text-text-secondary">Start with the most overdue accounts and credit holds.</p>
+                  </div>
+                  <Link href="/insights/credit-risk" className="text-xs font-medium text-accent hover:underline">
+                    Full credit view
+                  </Link>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {creditRiskLoading ? (
+                    [1, 2, 3].map((i) => <div key={i} className="h-20 animate-pulse rounded-lg bg-background-subtle" />)
+                  ) : collectionQueue.length === 0 ? (
+                    <div className="rounded-lg border border-border bg-background-subtle px-4 py-5 text-sm text-text-secondary">
+                      No overdue accounts need action right now.
+                    </div>
+                  ) : (
+                    collectionQueue.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-lg border border-border px-3 py-3 transition-colors hover:bg-background-subtle"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-semibold text-text-primary">{item.customer_name}</p>
+                              {item.hold_required && <Badge variant="danger" className="text-[10px]">Hold</Badge>}
+                              {item.watchlist && <Badge variant="warning" className="text-[10px]">Watch</Badge>}
+                            </div>
+                            <p className="text-xs text-text-secondary">
+                              {item.customer_code} • {item.overdue_days > 0 ? `${item.overdue_days}d overdue` : "Current"}
+                            </p>
+                          </div>
+                          <div className="ml-4 shrink-0 text-right">
+                            <p className="text-xs text-text-secondary">Overdue</p>
+                            <p className="text-sm font-bold text-danger">{fmtCurrency(item.overdue_amount)}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Link
+                            href={`/customers/${item.customer_id}`}
+                            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-text-primary hover:bg-background-subtle"
+                          >
+                            Open account
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setQueueCustomer({ id: item.customer_id, name: item.customer_name, overdueAmount: item.overdue_amount })}
+                            className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-white hover:bg-primary-700"
+                          >
+                            Record payment
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border bg-background p-4 shadow-sm">
+                  <p className="text-xs text-text-secondary">Blocked Accounts</p>
+                  <p className="mt-1 text-2xl font-bold text-danger">{creditRisk?.summary?.blocked_count ?? 0}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Need credit approval before normal dispatch resumes.</p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-4 shadow-sm">
+                  <p className="text-xs text-text-secondary">Watchlist Accounts</p>
+                  <p className="mt-1 text-2xl font-bold text-warning">{creditRisk?.summary?.watchlist_count ?? 0}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Accounts to chase before they turn into holds.</p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-4 shadow-sm">
+                  <p className="text-xs text-text-secondary">Risky Accounts</p>
+                  <p className="mt-1 text-2xl font-bold text-text-primary">{creditRisk?.summary?.risky_count ?? 0}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Overdue, blocked, or fully utilized accounts.</p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-4 shadow-sm">
+                  <p className="text-xs text-text-secondary">Total Overdue</p>
+                  <p className="mt-1 text-2xl font-bold text-danger">{fmtCurrency(Number(creditRisk?.summary?.total_overdue ?? 0))}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Cash exposure to prioritize in today&apos;s queue.</p>
+                </div>
+              </div>
+            </div>
 
             {/* Status Tabs - enhanced styling */}
             <div className="flex items-center gap-1 border-b border-border border-opacity-50 mb-6 pb-0 overflow-x-auto">
@@ -423,6 +527,15 @@ export default function CollectionsPage() {
               <CreatePaymentModal
                 onClose={() => setShowCreate(false)}
                 onCreated={() => { setShowCreate(false); fetchPayments(); }}
+              />
+            )}
+
+            {queueCustomer && (
+              <CreatePaymentModal
+                prefilledCustomer={{ id: queueCustomer.id, name: queueCustomer.name }}
+                defaultAmount={queueCustomer.overdueAmount}
+                onClose={() => setQueueCustomer(null)}
+                onCreated={() => { setQueueCustomer(null); fetchPayments(); }}
               />
             )}
           </>
