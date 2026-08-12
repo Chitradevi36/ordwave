@@ -17,20 +17,24 @@ import {
 } from "@/components/home-sections";
 
 export const metadata: Metadata = {
-  title: "OrdWave | Order-to-Cash Platform for Indian FMCG Distributors",
-  description: "Run FMCG distributor operations on one platform: orders, credit approvals, inventory, delivery execution, collections, GST workflows, and integrations.",
+  title: "OrdWave | Credit-First OMS for Indian FMCG Distributors",
+  description:
+    "Stop risky dispatches, prioritize overdue collections, and run distributor order-to-cash workflows across branches, inventory, delivery, GST, and Tally-ready operations.",
   openGraph: {
-    title: "OrdWave — Built for Indian FMCG Distributors",
-    description: "FMCG-first order-to-cash platform with credit control, inventory visibility, delivery workflows, collections, and GST-ready operations.",
+    title: "OrdWave - Credit-First OMS for Indian FMCG Distributors",
+    description:
+      "Control orders, credit approvals, dispatches, inventory, collections, and GST-ready operations from one distributor workflow system.",
     type: "website",
     siteName: "OrdWave",
   },
   twitter: {
     card: "summary_large_image",
-    title: "OrdWave — FMCG Distributor OMS",
-    description: "One platform for orders, credit, inventory, delivery, collections, and GST workflows.",
+    title: "OrdWave - Credit-First Distributor OMS",
+    description:
+      "Stop bad-credit dispatches and collect faster with one distributor operations system.",
   },
 };
+
 export default function HomePage() {
   return (
     <>

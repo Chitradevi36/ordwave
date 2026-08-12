@@ -4,30 +4,30 @@ import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
   title: "Customers",
-  description: "Customer workflow stories from distributor teams using OrdWave for order-to-cash operations.",
+  description: "Workflow proof for distributor teams using OrdWave to control credit, dispatch, inventory, and collections.",
 };
 
 const stories = [
   {
-    company: "Regional FMCG Distributor",
-    person: "Operations Leader",
-    role: "Multi-team Operations",
-    summary: "Needed better visibility across field orders, credit decisions, and branch execution.",
-    metrics: ["Clearer daily pipeline", "Stronger cross-team coordination", "Single operational view"],
+    company: "Credit hold workflow",
+    person: "Owner review",
+    role: "Finance + dispatch",
+    summary: "The branch needed orders to stop before dispatch whenever credit limits or overdue rules were crossed.",
+    metrics: ["Dispatch blocked on policy breach", "Manager approval before stock leaves", "Fewer risky dispatches"],
   },
   {
-    company: "FMCG + Staples Distributor",
-    person: "Business Owner",
-    role: "Branch Operations",
-    summary: "Scaled branch operations while improving dispatch coordination and accountability.",
-    metrics: ["Branch-level execution visibility", "Improved dispatch handoffs", "Reduced manual follow-up load"],
+    company: "Collections queue",
+    person: "Finance lead",
+    role: "Receivables follow-up",
+    summary: "The team needed a practical daily list of overdue accounts instead of static aging reports.",
+    metrics: ["Aging-based action queue", "Rep-wise follow-up ownership", "Cleaner receivables reviews"],
   },
   {
-    company: "Wholesale Distribution Team",
-    person: "Finance Manager",
-    role: "Collections & Credit",
-    summary: "Needed stronger overdue tracking and better credit discipline before dispatch.",
-    metrics: ["Aging-based follow-up", "Cleaner credit review workflow", "Better receivables visibility"],
+    company: "Branch operating view",
+    person: "Business owner",
+    role: "Multi-branch control",
+    summary: "Leadership wanted one view across orders, stock, dispatch, and dues without chasing separate teams for updates.",
+    metrics: ["Branch-wise operating view", "Stronger dispatch accountability", "Central visibility without extra MIS"],
   },
 ];
 
@@ -37,9 +37,9 @@ export default function CustomersPage() {
       <section className="gradient-mesh border-b border-[#E2E8F0]">
         <div className="section-shell section-gap">
           <span className="pill">Customer outcomes</span>
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">How distributor teams use OrdWave in daily operations</h1>
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl">Workflow proof for distributor teams evaluating OrdWave</h1>
           <p className="mt-4 max-w-3xl text-[#475569]">
-            Learn how teams apply OrdWave across orders, credit, inventory, dispatch, and collections.
+            These are the operational situations buyers usually want to see first: credit holds, collection follow-up, branch visibility, and dispatch control.
           </p>
         </div>
       </section>
@@ -76,10 +76,10 @@ export default function CustomersPage() {
         </div>
 
         <div className="mt-10 rounded-3xl bg-[#0F1A13] p-8 text-white sm:p-10">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Want a workflow similar to your team&apos;s operating model?</h2>
-          <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">Book a guided walkthrough and we’ll map OrdWave to your current distributor workflow.</p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Want to see your own order-to-cash workflow mapped?</h2>
+          <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">Book a guided walkthrough and we will map OrdWave to your current distributor workflow.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <TrackedLink href="/request-demo" label="Book Demo" section="customers" className="btn-primary px-6 py-2.5">Book Demo</TrackedLink>
+            <TrackedLink href="/request-demo" label="Map My Workflow" section="customers" className="btn-primary px-6 py-2.5">Map My Workflow</TrackedLink>
             <TrackedLink href="/pricing" label="View Pricing" section="customers" className="inline-flex items-center rounded-xl border border-white/20 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10">View Pricing</TrackedLink>
           </div>
         </div>

@@ -63,7 +63,7 @@ module Signup
     def send_phone_otp(phone_number, otp_code)
       if whatsapp_otp_enabled?
         begin
-          WhatsappService.new.send_registration_otp(phone_number, otp_code)
+          WhatsappService.new.send_template(:registration_otp, phone_number: phone_number, otp_code: otp_code)
           return
         rescue => e
           Rails.logger.warn("Failed to send signup OTP via WhatsApp, falling back to SMS: #{e.class} #{e.message}")

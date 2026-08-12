@@ -40,45 +40,47 @@ export default function UseCasesPage() {
       </section>
 
       <section className="section-shell section-gap">
-      <div className="grid gap-4 md:grid-cols-2">
-        {cases.map((item) => (
-          <div key={item.role} className="premium-card p-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">Use case</p>
-            <h2 className="mt-1 text-xl font-semibold">{item.role}</h2>
-            <p className="mt-2 text-sm text-text-secondary">{item.value}</p>
-            <ul className="mt-4 space-y-1.5 text-sm text-text-primary">
-              <li>• Better order-to-cash visibility</li>
-              <li>• Stronger cross-team coordination</li>
-              <li>• Faster issue resolution at branch level</li>
-            </ul>
+        <div className="grid gap-4 md:grid-cols-2">
+          {cases.map((item) => (
+            <div key={item.role} className="premium-card p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Use case</p>
+              <h2 className="mt-1 text-xl font-semibold">{item.role}</h2>
+              <p className="mt-2 text-sm text-text-secondary">{item.value}</p>
+              <ul className="mt-4 space-y-1.5 text-sm text-text-primary">
+                <li>- Better order-to-cash visibility</li>
+                <li>- Stronger cross-team coordination</li>
+                <li>- Faster issue resolution at branch level</li>
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="premium-card p-5">
+            <p className="text-sm font-semibold">Order reliability</p>
+            <p className="mt-2 text-sm text-text-secondary">Reduce missed orders caused by fragmented communication and manual follow-ups.</p>
           </div>
-        ))}
-      </div>
+          <div className="premium-card p-5">
+            <p className="text-sm font-semibold">Credit discipline</p>
+            <p className="mt-2 text-sm text-text-secondary">Control retailer credit exposure before dispatch to protect monthly cash flow.</p>
+          </div>
+          <div className="premium-card p-5">
+            <p className="text-sm font-semibold">Collections visibility</p>
+            <p className="mt-2 text-sm text-text-secondary">Prioritize dues and follow-up with confidence from one finance view.</p>
+          </div>
+        </div>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
-        <div className="premium-card p-5">
-          <p className="text-sm font-semibold">Order reliability</p>
-          <p className="mt-2 text-sm text-text-secondary">Reduce missed orders caused by fragmented communication and manual follow-ups.</p>
+        <div className="mt-10 premium-card bg-primary p-8 text-white sm:p-10">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Find your exact rollout path</h2>
+          <p className="mt-3 max-w-2xl text-sm text-white/90 sm:text-base">
+            Map your workflow with us and we will show how OrdWave fits your category, branch structure, and team roles.
+          </p>
+          <div className="mt-6">
+            <TrackedLink href="/request-demo" label="Map My Workflow" section="use-cases" className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary">
+              Map My Workflow
+            </TrackedLink>
+          </div>
         </div>
-        <div className="premium-card p-5">
-          <p className="text-sm font-semibold">Credit discipline</p>
-          <p className="mt-2 text-sm text-text-secondary">Control retailer credit exposure before dispatch to protect monthly cash flow.</p>
-        </div>
-        <div className="premium-card p-5">
-          <p className="text-sm font-semibold">Collections visibility</p>
-          <p className="mt-2 text-sm text-text-secondary">Prioritize dues and follow-up with confidence from one finance view.</p>
-        </div>
-      </div>
-
-      <div className="mt-10 premium-card bg-primary p-8 text-white sm:p-10">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Find your exact rollout path</h2>
-        <p className="mt-3 max-w-2xl text-sm text-white/90 sm:text-base">
-          Book a demo and we will map OrdWave workflows to your category, branch structure, and team roles.
-        </p>
-        <div className="mt-6">
-          <TrackedLink href="/request-demo" label="Book a Demo" section="use-cases" className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary">Book a Demo</TrackedLink>
-        </div>
-      </div>
       </section>
     </>
   );

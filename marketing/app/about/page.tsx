@@ -86,7 +86,7 @@ export default function AboutPage() {
             Share your current setup and we will map where OrdWave can deliver the fastest operational gains.
           </p>
           <div className="mt-6">
-            <TrackedLink href="/request-demo" label="Talk to us" section="about" className="btn-primary px-5 py-2.5">Talk to us</TrackedLink>
+            <TrackedLink href="/request-demo" label="Map My Workflow" section="about" className="btn-primary px-5 py-2.5">Map My Workflow</TrackedLink>
           </div>
         </div>
       </section>

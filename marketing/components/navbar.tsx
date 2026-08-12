@@ -54,20 +54,20 @@ export function MarketingNavbar() {
             Sign In
           </TrackedLink>
           <TrackedLink
-            href="/request-demo"
-            label="Book Demo"
+            href="/pricing"
+            label="View Pricing"
             section="navbar"
             className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A] shadow-sm transition-all hover:bg-[#F8FAF8] hidden sm:inline-flex"
           >
-            Book Demo
+            View Pricing
           </TrackedLink>
           <TrackedLink
             href="/request-demo"
-            label="Start Free Trial"
+            label="Map My Workflow"
             section="navbar"
             className="btn-primary rounded-xl px-4 py-2 text-sm"
           >
-            Start Free Trial
+            Map My Workflow
           </TrackedLink>
         </div>
       </div>

@@ -52,6 +52,7 @@ module Api
           email:        params[:email],
           role_id:      params[:role_id],
           branch_id:    params[:branch_id],
+          phone:        params[:phone],
           organization: current_organization,
           invited_by:   current_user
         ).call

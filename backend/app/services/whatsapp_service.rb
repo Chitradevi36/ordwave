@@ -8,6 +8,7 @@ class WhatsappService
 
   DEFAULT_ENDPOINT = 'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/'.freeze
   DEFAULT_LANGUAGE = 'en'.freeze
+  TEMPLATE_CONFIG_PATH = Rails.root.join('config', 'whatsapp_templates.json').freeze
 
   def initialize
     validate_config!
@@ -16,51 +17,70 @@ class WhatsappService
     @endpoint = ENV.fetch('MSG91_WHATSAPP_ENDPOINT', DEFAULT_ENDPOINT)
   end
 
-  def send_login_otp(phone_number, otp_code)
-    send_otp_template(phone_number, otp_code, message_type: 'login_otp')
-  end
+  def send_template(template_key, phone_number:, **vars)
+    definition = template_definitions.fetch(template_key.to_s)
 
-  def send_registration_otp(phone_number, otp_code)
-    send_otp_template(phone_number, otp_code, message_type: 'registration_otp')
+    send_template_message(
+      phone_number: phone_number,
+      template_name: resolved_template_name(definition),
+      components: resolve_components(definition.fetch('components'), vars),
+      config_prefix: definition['config_prefix'],
+      language_code: definition['language_code'],
+      success_log_template: definition.fetch('success_log'),
+      failure_label: definition.fetch('failure_label')
+    )
+  rescue KeyError => e
+    raise ConfigError, "Unknown WhatsApp template #{template_key}: #{e.message}"
   end
 
   private
 
-  def send_otp_template(phone_number, otp_code, metadata = {})
+  def send_template_message(phone_number:, template_name:, components:, config_prefix: nil, language_code: nil, success_log_template:, failure_label:)
     recipient = normalise_phone_number(phone_number)
-    request_body = build_otp_payload(recipient, otp_code)
+    request_body = build_template_payload(
+      recipient: recipient,
+      template_name: template_name,
+      components: components,
+      config_prefix: config_prefix,
+      language_code: language_code
+    )
     response_body = post_json(request_body)
     request_id = extract_request_id(response_body)
 
     Rails.logger.info(
-      "MSG91 WhatsApp OTP sent to #{recipient} request_id=#{request_id} type=#{metadata[:message_type]}"
+      interpolate_placeholders(
+        success_log_template,
+        recipient: recipient,
+        request_id: request_id,
+        response_body: response_body.inspect
+      )
     )
 
-    request_id
+    response_body.is_a?(Hash) ? request_id : response_body
   rescue ConfigError
     raise
   rescue StandardError => e
-    error_msg = "Failed to send WhatsApp OTP: #{e.message}"
+    error_msg = "Failed to send #{failure_label}: #{e.message}"
     Rails.logger.error(error_msg)
     raise WhatsAppSendError, error_msg
   end
 
-  def build_otp_payload(recipient, otp_code)
+  def build_template_payload(recipient:, template_name:, components:, config_prefix: nil, language_code: nil)
     template = {
-      name: ENV.fetch('MSG91_WHATSAPP_OTP_TEMPLATE_NAME'),
+      name: template_name,
       language: {
-        code: ENV.fetch('MSG91_WHATSAPP_OTP_TEMPLATE_LANGUAGE', DEFAULT_LANGUAGE),
+        code: template_language(config_prefix, language_code),
         policy: 'deterministic'
       },
       to_and_components: [
         {
           to: [recipient],
-          components: otp_components(otp_code)
+          components: components
         }
       ]
     }
 
-    namespace = ENV.fetch('MSG91_WHATSAPP_OTP_TEMPLATE_NAMESPACE', nil)
+    namespace = template_namespace(config_prefix)
     template[:namespace] = namespace if namespace.present?
 
     {
@@ -74,23 +94,63 @@ class WhatsappService
     }
   end
 
-  def otp_components(otp_code)
-    components = {
-      body_1: {
-        type: 'text',
-        value: otp_code.to_s
-      }
-    }
+  def resolved_template_name(definition)
+    return definition['template_name'] if definition['template_name'].present?
 
-    if ENV.fetch('MSG91_WHATSAPP_OTP_BUTTON_ENABLED', 'true') == 'true'
-      components[:button_1] = {
-        subtype: 'url',
-        type: 'text',
-        value: otp_code.to_s
-      }
+    ENV.fetch(definition.fetch('template_name_env'))
+  end
+
+  def template_language(config_prefix, explicit_language_code)
+    return explicit_language_code if explicit_language_code.present?
+    return DEFAULT_LANGUAGE if config_prefix.blank?
+
+    ENV.fetch("#{config_prefix}_LANGUAGE", DEFAULT_LANGUAGE)
+  end
+
+  def template_namespace(config_prefix)
+    return nil if config_prefix.blank?
+
+    ENV.fetch("#{config_prefix}_NAMESPACE", nil)
+  end
+
+  def template_definitions
+    @template_definitions ||= JSON.parse(File.read(TEMPLATE_CONFIG_PATH))
+  rescue Errno::ENOENT => e
+    raise ConfigError, "Missing WhatsApp template config file: #{e.message}"
+  rescue JSON::ParserError => e
+    raise ConfigError, "Invalid WhatsApp template config JSON: #{e.message}"
+  end
+
+  def resolve_components(component_definition, vars)
+    component_definition.each_with_object({}) do |(component_key, component_config), resolved|
+      next unless component_enabled?(component_config)
+
+      resolved[component_key.to_sym] = resolve_component_config(component_config, vars)
     end
+  end
 
-    components
+  def component_enabled?(component_config)
+    env_key = component_config['enabled_env']
+    return true if env_key.blank?
+
+    ENV.fetch(env_key, nil).to_s == component_config.fetch('enabled_when', 'true')
+  end
+
+  def resolve_component_config(component_config, vars)
+    component_config.each_with_object({}) do |(key, value), resolved|
+      next if %w[enabled_env enabled_when].include?(key)
+
+      resolved[key.to_sym] = value.is_a?(String) ? interpolate_placeholders(value, vars) : value
+    end
+  end
+
+  def interpolate_placeholders(template, vars)
+    template.gsub(/\{\{([^}]+)\}\}/) do
+      key = Regexp.last_match(1).strip
+      vars.fetch(key.to_sym).to_s
+    end
+  rescue KeyError => e
+    raise ConfigError, "Missing WhatsApp template variable #{e.message} for '#{template}'"
   end
 
   def post_json(request_body)
@@ -131,7 +191,7 @@ class WhatsappService
     required_keys = %w[
       MSG91_AUTH_KEY
       MSG91_WHATSAPP_INTEGRATED_NUMBER
-      MSG91_WHATSAPP_OTP_TEMPLATE_NAME
+      MSG91_WHATSAPP_INVITATION_TEMPLATE_NAME
     ]
     missing_keys = required_keys.reject { |key| ENV[key].present? }
 
