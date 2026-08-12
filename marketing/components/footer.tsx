@@ -71,8 +71,8 @@ export function MarketingFooter() {
             <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
               <li><TrackedLink href="/about" label="About" section="footer" className="transition-colors hover:text-[#1B4332]">About</TrackedLink></li>
               <li><TrackedLink href="/contact" label="Contact" section="footer" className="transition-colors hover:text-[#1B4332]">Contact</TrackedLink></li>
-              <li><span className="cursor-default">Privacy Policy</span></li>
-              <li><span className="cursor-default">Terms of Service</span></li>
+              <li><TrackedLink href="/privacy-policy" label="Privacy Policy" section="footer" className="transition-colors hover:text-[#1B4332]">Privacy Policy</TrackedLink></li>
+              <li><TrackedLink href="/terms-of-service" label="Terms of Service" section="footer" className="transition-colors hover:text-[#1B4332]">Terms of Service</TrackedLink></li>
             </ul>
           </div>
         </div>
