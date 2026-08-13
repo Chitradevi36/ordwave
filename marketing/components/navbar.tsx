@@ -4,9 +4,10 @@ import { TrackedLink } from "@/components/tracked-link";
 
 const navLinks = [
   { label: "Product",    href: "/features" },
+  { label: "FMCG", href: "/fmcg-distributor-software" },
   { label: "Industries", href: "/industries" },
   { label: "Pricing",    href: "/pricing" },
-  { label: "Customers",  href: "/customers" },
+  { label: "Workflows",  href: "/customers" },
   { label: "About",      href: "/about" },
   { label: "Contact",    href: "/contact" },
 ];
@@ -63,11 +64,11 @@ export function MarketingNavbar() {
           </TrackedLink>
           <TrackedLink
             href="/request-demo"
-            label="Map My Workflow"
+            label="Start 30-Day Pilot"
             section="navbar"
             className="btn-primary rounded-xl px-4 py-2 text-sm"
           >
-            Map My Workflow
+            Start 30-Day Pilot
           </TrackedLink>
         </div>
       </div>

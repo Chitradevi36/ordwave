@@ -36,3 +36,11 @@ export function trackFormSubmit(params: {
     page_path: typeof window !== "undefined" ? window.location.pathname : "",
   });
 }
+
+export function trackEvent(eventName: string, params?: Record<string, unknown>): void {
+  gtagEvent(eventName, {
+    page_module: "marketing",
+    page_path: typeof window !== "undefined" ? window.location.pathname : "",
+    ...(params ?? {}),
+  });
+}

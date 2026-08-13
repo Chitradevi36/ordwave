@@ -42,8 +42,8 @@ export function MarketingFooter() {
             <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
               <li><TrackedLink href="/features" label="Features" section="footer" className="transition-colors hover:text-[#1B4332]">Features</TrackedLink></li>
               <li><TrackedLink href="/pricing" label="Pricing" section="footer" className="transition-colors hover:text-[#1B4332]">Pricing</TrackedLink></li>
-              <li><TrackedLink href="/request-demo" label="Map My Workflow" section="footer" className="transition-colors hover:text-[#1B4332]">Map My Workflow</TrackedLink></li>
-              <li><TrackedLink href="/pricing" label="View Pricing" section="footer" className="transition-colors hover:text-[#1B4332]">View Pricing</TrackedLink></li>
+              <li><TrackedLink href="/request-demo" label="Start 30-Day Pilot" section="footer" className="transition-colors hover:text-[#1B4332]">Start 30-Day Pilot</TrackedLink></li>
+              <li><TrackedLink href="/pricing" label="Founding Plan" section="footer" className="transition-colors hover:text-[#1B4332]">Founding Plan</TrackedLink></li>
             </ul>
           </div>
 
@@ -60,8 +60,9 @@ export function MarketingFooter() {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">Resources</h4>
             <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
-              <li><TrackedLink href="/customers" label="Customers" section="footer" className="transition-colors hover:text-[#1B4332]">Customers</TrackedLink></li>
+              <li><TrackedLink href="/customers" label="Distribution Workflows" section="footer" className="transition-colors hover:text-[#1B4332]">Distribution Workflows</TrackedLink></li>
               <li><TrackedLink href="/use-cases" label="Use Cases" section="footer" className="transition-colors hover:text-[#1B4332]">Use Cases</TrackedLink></li>
+              <li><TrackedLink href="/fmcg-distributor-software" label="FMCG Distributor Software" section="footer" className="transition-colors hover:text-[#1B4332]">FMCG Distributor Software</TrackedLink></li>
               <li><TrackedLink href="/contact" label="Support" section="footer" className="transition-colors hover:text-[#1B4332]">Support</TrackedLink></li>
             </ul>
           </div>
