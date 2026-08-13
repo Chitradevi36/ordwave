@@ -5,6 +5,7 @@ import { MarketingFooter } from "@/components/footer";
 import { MarketingNavbar } from "@/components/navbar";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 import { MarketingProviders } from "@/components/providers";
+import { WhatsappCta } from "@/components/whatsapp-cta";
 
 export const metadata: Metadata = {
   title: {
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s | OrdWave",
   },
   description:
-    "OrdWave is a cloud-based OMS for distributors covering order management, retailer CRM, inventory, delivery, invoicing, collections, and analytics.",
+    "OrdWave helps Indian distributors stop risky dispatches, collect outstanding faster, and keep orders, credit, stock, delivery, and collections connected.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_MARKETING_URL ?? "https://ordwave.com"),
   keywords: [
     "distribution management software",
@@ -21,18 +22,19 @@ export const metadata: Metadata = {
     "inventory and collections software",
     "multi branch OMS",
     "GST invoicing software",
+    "distributor credit management software",
   ],
   openGraph: {
     type: "website",
     siteName: "OrdWave",
-    title: "OrdWave — Distribution Management Software for Distributors and Wholesalers",
-    description: "Manage orders, inventory, collections, credit, dispatch, delivery, and analytics from one platform.",
+    title: "OrdWave - Credit-aware order execution for distributors",
+    description: "Prevent risky dispatches. Collect outstanding faster. Keep orders, credit, stock, and delivery connected.",
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "OrdWave — Distribution Management Software",
-    description: "Run your entire distribution business from one platform.",
+    title: "OrdWave - Stop Risky Dispatches. Collect Faster.",
+    description: "Connect orders with retailer outstanding, credit limits, inventory, and delivery status before dispatch.",
   },
   alternates: {
     canonical: "/",
@@ -71,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MarketingProviders>
           <main>{children}</main>
         </MarketingProviders>
+        <WhatsappCta variant="floating" />
         <MarketingFooter />
       </body>
     </html>

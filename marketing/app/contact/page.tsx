@@ -64,7 +64,13 @@ export default function ContactPage() {
           <p>Credit-first operations</p>
         </div>
       </div>
-      <DemoForm title="Map My Workflow" subtitle="We typically respond within one business day." />
+      <DemoForm
+        title="Talk to OrdWave"
+        subtitle="We typically respond within one business day."
+        submitLabel="Send Request"
+        successMessage="Thanks. We have your request and our team will reach out shortly."
+        source="contact-page"
+      />
       </section>
     </>
   );

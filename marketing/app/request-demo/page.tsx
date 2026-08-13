@@ -3,8 +3,11 @@ import { DemoForm } from "@/components/demo-form";
 import { TrackedLink } from "@/components/tracked-link";
 
 export const metadata: Metadata = {
-  title: "Map My Workflow",
-  description: "Request a workflow mapping session for your distributor operations with OrdWave.",
+  title: "Start 30-Day Pilot",
+  description: "Request an OrdWave pilot for your distributor business and get founder-led onboarding around your real workflow.",
+  alternates: {
+    canonical: "/request-demo",
+  },
 };
 
 export default function RequestDemoPage() {
@@ -13,16 +16,15 @@ export default function RequestDemoPage() {
       <div>
         <span className="pill">Map your current workflow</span>
         <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-          See where OrdWave fits in your order-to-cash workflow
+          Start a 30-day pilot around your real distribution workflow
         </h1>
         <p className="mt-3 text-text-secondary">
-          Share your current branch setup, team structure, and bottlenecks. We will map where OrdWave can improve
-          credit control, dispatch, collections, inventory visibility, and daily execution.
+          Share your branch setup, retailer credit model, and current order process. We will help you evaluate OrdWave against real orders, approvals, dispatch decisions, and collection follow-through.
         </p>
         <ul className="mt-6 space-y-2 text-sm text-text-secondary">
-          <li>- Review your current order, credit, and dispatch flow</li>
-          <li>- Identify the fastest rollout path for your team</li>
-          <li>- See where OrdWave fits and where it does not</li>
+          <li>- 30-day assisted pilot for qualifying distributor teams</li>
+          <li>- Retailer and product data import support</li>
+          <li>- Credit policy setup and team onboarding</li>
         </ul>
         <div className="mt-6">
           <TrackedLink
@@ -35,7 +37,13 @@ export default function RequestDemoPage() {
           </TrackedLink>
         </div>
       </div>
-      <DemoForm title="Map My Workflow" subtitle="Tell us your team size, branch setup, and current process." />
+      <DemoForm
+        title="Request My Pilot"
+        subtitle="Tell us how orders, credit, and dispatch work today. We typically respond within one business day."
+        submitLabel="Request My Pilot"
+        successMessage="Thanks. We have your pilot request and will reach out shortly to understand your workflow."
+        source="request-demo"
+      />
     </section>
   );
 }

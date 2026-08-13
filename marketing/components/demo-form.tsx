@@ -2,11 +2,14 @@
 
 import Script from "next/script";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { trackFormSubmit } from "@/lib/analytics";
+import { trackEvent, trackFormSubmit } from "@/lib/analytics";
 
 type DemoFormProps = {
   title: string;
   subtitle: string;
+  submitLabel?: string;
+  successMessage?: string;
+  source?: string;
 };
 
 type TurnstileWidgetId = string;
@@ -31,12 +34,19 @@ declare global {
   }
 }
 
-export function DemoForm({ title, subtitle }: DemoFormProps) {
+export function DemoForm({
+  title,
+  subtitle,
+  submitLabel = "Request My Pilot",
+  successMessage = "Thanks. We have your pilot request and our team will reach out shortly.",
+  source = "marketing-site",
+}: DemoFormProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [isTurnstileReady, setIsTurnstileReady] = useState(false);
+  const [hasStartedForm, setHasStartedForm] = useState(false);
   const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = useRef<TurnstileWidgetId>();
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
@@ -91,14 +101,23 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const orderManagement = String(formData.get("order_management") || "").trim();
+    const city = String(formData.get("city") || "").trim();
+    const retailerCount = String(formData.get("retailer_count") || "").trim();
+    const notes = String(formData.get("message") || "").trim();
 
     const payload = {
       name: String(formData.get("name") || "").trim(),
       email: String(formData.get("email") || "").trim(),
       company: String(formData.get("company") || "").trim(),
       phone: String(formData.get("phone") || "").trim(),
-      message: String(formData.get("message") || "").trim(),
-      source: "marketing-site",
+      message: [
+        `City: ${city}`,
+        `Approximate retailer count: ${retailerCount}`,
+        `Current order management: ${orderManagement}`,
+        `Notes: ${notes}`,
+      ].join("\n"),
+      source,
       captchaToken,
     };
 
@@ -121,6 +140,7 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
       }
 
       trackFormSubmit({ form_name: "demo_request", source: payload.source });
+      trackEvent("contact_form_submitted", { source });
       setIsSubmitted(true);
       form.reset();
       resetCaptcha();
@@ -130,6 +150,12 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFormStart = () => {
+    if (hasStartedForm) return;
+    setHasStartedForm(true);
+    trackEvent("contact_form_started", { source });
   };
 
   return (
@@ -145,7 +171,7 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
 
       {isSubmitted && (
         <div className="mt-4 rounded-lg border border-accent bg-green-50 p-3 text-sm font-medium text-primary">
-          Thanks. We have your workflow request and our team will reach out shortly.
+          {successMessage}
         </div>
       )}
 
@@ -155,15 +181,35 @@ export function DemoForm({ title, subtitle }: DemoFormProps) {
         </div>
       )}
 
-      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-        <input required disabled={isSubmitting} name="name" placeholder="Full name" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
+      <form className="mt-6 space-y-4" onSubmit={handleSubmit} onChange={handleFormStart}>
+        <input required disabled={isSubmitting} name="name" placeholder="Name" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
+        <input required disabled={isSubmitting} name="company" placeholder="Business name" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
+        <input required disabled={isSubmitting} name="phone" placeholder="Phone / WhatsApp" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
         <input required disabled={isSubmitting} type="email" name="email" placeholder="Work email" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
-        <input required disabled={isSubmitting} name="company" placeholder="Company" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
-        <input required disabled={isSubmitting} name="phone" placeholder="Phone" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
-        <textarea required disabled={isSubmitting} name="message" placeholder="Current setup and requirements" className="min-h-[100px] w-full rounded-lg border border-border p-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <input required disabled={isSubmitting} name="city" placeholder="City" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
+          <input required disabled={isSubmitting} name="retailer_count" placeholder="Approximate retailer count" className="h-11 w-full rounded-lg border border-border px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
+        </div>
+        <select
+          required
+          disabled={isSubmitting}
+          name="order_management"
+          defaultValue=""
+          className="h-11 w-full rounded-lg border border-border bg-white px-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60"
+        >
+          <option value="" disabled>
+            How do you currently manage orders?
+          </option>
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="Excel">Excel</option>
+          <option value="Tally">Tally</option>
+          <option value="ERP">ERP</option>
+          <option value="Other">Other</option>
+        </select>
+        <textarea required disabled={isSubmitting} name="message" placeholder="Current setup, approval flow, and what is slowing dispatch or collections today" className="min-h-[100px] w-full rounded-lg border border-border p-3 text-sm text-text-primary outline-none transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 disabled:opacity-60" />
         <div ref={turnstileContainerRef} className="min-h-[65px]" />
         <button disabled={isSubmitting || Boolean(turnstileSiteKey && !captchaToken)} type="submit" className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(27,67,50,0.25)] transition-colors hover:bg-primary-700 disabled:opacity-70 disabled:cursor-not-allowed">
-          {isSubmitting ? "Sending request..." : "Map My Workflow"}
+          {isSubmitting ? "Sending request..." : submitLabel}
         </button>
       </form>
     </div>

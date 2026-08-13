@@ -6,13 +6,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const paths = [
     "",
     "/features",
+    "/fmcg-distributor-software",
     "/industries",
     "/customers",
     "/pricing",
     "/use-cases",
     "/about",
     "/contact",
+    "/privacy-policy",
     "/request-demo",
+    "/terms-of-service",
   ];
 
   return paths.map((path) => ({
