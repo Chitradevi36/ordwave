@@ -8,54 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Mail, Lock, User, Check } from 'lucide-react';
 import { API_URL } from "@/lib/api/client";
 import GoogleAuthSection from '@/app/login/google-auth-section';
+import { CompactPlanCard } from "../../../shared/pricing/compact-plan-card";
+import { ORD_WAVE_PLANS, getDisplayPrice, getPriceHelper, type BillingPeriod, type OrdWavePlanId } from "../../../shared/pricing/ordwave-plans";
 
 type Step = 'email' | 'otp' | 'password' | 'profile';
 
 const STEPS: Step[] = ['email', 'otp', 'password', 'profile'];
 
-const PLANS = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: '₹0',
-    period: '/month',
-    features: ['Up to 50 orders/month', '1 branch', '1 team member', 'Basic reports'],
-    popular: false,
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: '₹999',
-    period: '/month',
-    features: ['Up to 100 orders/month', '1 branch', '3 team members', 'Basic reports'],
-    popular: false,
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    price: '₹2,499',
-    period: '/month',
-    features: ['Up to 500 orders/month', '5 branches', '10 team members', 'Advanced analytics', 'WhatsApp integration'],
-    popular: true,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    features: ['Unlimited orders', 'Unlimited branches', 'Unlimited team members', 'Custom integrations', 'Dedicated support'],
-    popular: false,
-  },
-];
-
 export default function SignupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get('invite_token') ?? '';
+  const planFromQuery = searchParams.get('plan');
   
   const [currentStep, setCurrentStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -66,9 +33,10 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [plan, setPlan] = useState('growth');
+  const [plan, setPlan] = useState<OrdWavePlanId>('growth');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const billingPeriod: BillingPeriod = 'monthly';
 
   const stepIndex = STEPS.indexOf(currentStep);
   const progress = ((stepIndex + 1) / STEPS.length) * 100;
@@ -77,6 +45,12 @@ export default function SignupPage() {
   useEffect(() => {
     trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_PAGE_VIEWED);
   }, []);
+
+  useEffect(() => {
+    if (planFromQuery && ORD_WAVE_PLANS.some((planOption) => planOption.id === planFromQuery)) {
+      setPlan(planFromQuery as OrdWavePlanId);
+    }
+  }, [planFromQuery]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +83,7 @@ export default function SignupPage() {
       } else {
         setError(data.errors?.[0] || 'Failed to send OTP');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -136,7 +110,7 @@ export default function SignupPage() {
       } else {
         setError(data.errors?.[0] || 'Invalid OTP');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -178,7 +152,7 @@ export default function SignupPage() {
       } else {
         setError(data.errors?.[0] || 'Failed to set password');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -197,7 +171,7 @@ export default function SignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
-          plan,
+          plan: ORD_WAVE_PLANS.find((planOption) => planOption.id === plan)?.backendPlanValue ?? 'growth',
           first_name: firstName,
           last_name: lastName,
           phone,
@@ -255,7 +229,7 @@ export default function SignupPage() {
       } else {
         setError(data.errors?.[0] || 'Failed to complete signup');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -268,7 +242,7 @@ export default function SignupPage() {
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">OrdWave</h1>
-          <p className="text-sm sm:text-base text-text-secondary">Create your account in seconds</p>
+          <p className="text-sm sm:text-base text-text-secondary">Create your account and choose the rollout that fits your team</p>
         </div>
 
         {/* Progress Bar */}
@@ -300,10 +274,12 @@ export default function SignupPage() {
                   <Mail className="w-6 h-6 text-primary" />
                 </div>
                   <h2 className="text-xl font-semibold text-text-primary mb-2">
-                    What's your email or mobile?
+                    {/* What&apos;s your email or mobile? */}
+                     What&apos;s your email?
                   </h2>
                   <p className="text-sm text-text-secondary">
-                    We'll send you a verification code via email or SMS
+                    {/* We&apos;ll send you a verification code via email or SMS */}
+                    We&apos;ll send you a verification code via email
                   </p>
               </div>
 
@@ -315,7 +291,8 @@ export default function SignupPage() {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Email or phone (eg. +91 98765 43210)"
+                  // placeholder="Email or phone (eg. +91 98765 43210)"
+                  placeholder="Email Address (eg. hello@company.com)"
                   required
                   disabled={loading}
                   className="text-base"
@@ -446,7 +423,7 @@ export default function SignupPage() {
                   Tell us about yourself
                 </h2>
                 <p className="text-sm text-text-secondary">
-                  Just a few more details
+                  Just a few more details before setup
                 </p>
               </div>
 
@@ -499,43 +476,38 @@ export default function SignupPage() {
                   Choose a Plan
                 </label>
                 <div className="space-y-3">
-                  {PLANS.map((planOption) => (
-                    <div
+                  {ORD_WAVE_PLANS.map((planOption) => (
+                    <CompactPlanCard
                       key={planOption.id}
-                      onClick={() => setPlan(planOption.id)}
-                      className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        plan === planOption.id
-                          ? 'border-primary bg-primary-50'
-                          : 'border-border hover:border-primary-200'
-                      }`}
-                    >
-                      {planOption.popular && (
-                        <Badge className="absolute -top-2 right-4 bg-accent text-white">
-                          Most Popular
-                        </Badge>
-                      )}
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-text-primary">{planOption.name}</h3>
-                          <p className="text-sm text-text-secondary mt-1">
-                            {planOption.price}
-                            <span className="text-xs">{planOption.period}</span>
-                          </p>
+                      badge={planOption.badge}
+                      title={planOption.name}
+                      subtitle={planOption.subtitle}
+                      price={getDisplayPrice(planOption, billingPeriod)}
+                      priceSuffix={planOption.monthlyPrice === null ? null : "/month"}
+                      helperText={getPriceHelper(planOption, billingPeriod)}
+                      limits={planOption.limits}
+                      features={planOption.features}
+                      featured={Boolean(planOption.featured)}
+                      selected={plan === planOption.id}
+                      onSelect={() => setPlan(planOption.id)}
+                      action={
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-primary">
+                            {planOption.signupCtaLabel}
+                          </span>
+                          {plan === planOption.id && (
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          )}
                         </div>
-                        {plan === planOption.id && (
-                          <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
-                            <Check className="w-4 h-4 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <ul className="text-xs text-text-secondary space-y-1">
-                        {planOption.features.slice(0, 3).map((feature, idx) => (
-                          <li key={idx}>✓ {feature}</li>
-                        ))}
-                      </ul>
-                    </div>
+                      }
+                    />
                   ))}
                 </div>
+                <p className="mt-3 text-xs text-text-secondary">
+                  Business currently uses the same backend signup path as Growth until billing/catalog configuration is updated. Enterprise rollouts are scoped with the team after signup.
+                </p>
               </div>
 
               <Button type="submit" className="w-full" disabled={loading} isLoading={loading}>
@@ -554,9 +526,9 @@ export default function SignupPage() {
 
               <p className="text-xs text-center text-text-secondary">
                 By creating an account, you agree to our{' '}
-                <a href="#" className="text-primary hover:underline">Terms of Service</a>
+                <Link href="https://ordwave.com/terms-of-service" className="text-primary hover:underline">Terms of Service</Link>
                 {' '}and{' '}
-                <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+                <Link href="https://ordwave.com/privacy-policy" className="text-primary hover:underline">Privacy Policy</Link>
               </p>
             </form>
           )}

@@ -1,6 +1,7 @@
 export const siteConfig = {
   companyName: "OrdWave",
   siteUrl: process.env.NEXT_PUBLIC_MARKETING_URL ?? "https://ordwave.com",
+  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "https://app.ordwave.com",
   supportEmail: "support@ordwave.com",
   positioning: {
     headline: "Stop Risky Dispatches. Collect Faster.",
@@ -51,4 +52,9 @@ export function getWhatsappHref(): string {
   const normalized = phoneNumber.replace(/[^\d]/g, "");
   const text = encodeURIComponent(prefilledMessage);
   return `https://wa.me/${normalized}?text=${text}`;
+}
+
+export function getSignupHref(plan?: string | null): string {
+  if (!plan) return `${siteConfig.appUrl}/signup`;
+  return `${siteConfig.appUrl}/signup?plan=${encodeURIComponent(plan)}`;
 }

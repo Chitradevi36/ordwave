@@ -33,6 +33,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "../shared/**/*.ts",
+    "../shared/**/*.tsx",
     ".next/types/**/*.ts",
     "build/types/**/*.ts"
   ],
