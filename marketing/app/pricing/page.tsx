@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { PricingPageClient } from "./pricing-page-client";
 
 export const metadata: Metadata = {
-  title: "Pricing",
+  title: "OrdWave Pricing | Distribution Management Software",
   description:
-    "Pricing plans for OrdWave's credit-first distributor workflow system, from early-stage branch operations to multi-branch teams.",
+    "Simple pricing for distributors. Start with a 30-day pilot and join the OrdWave Founding Distributor Program for Growth features at ₹499/month.",
 };
 
 export default function PricingPage() {

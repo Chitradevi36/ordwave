@@ -90,7 +90,7 @@ export function HeroSection() {
             >
               Start 30-Day Pilot
             </TrackedLink>
-            <TrackedLink
+            {/* <TrackedLink
               href="#demo-video"
               label="Watch 90-Second Demo"
               section="hero"
@@ -98,7 +98,7 @@ export function HeroSection() {
               className="btn-secondary px-6 py-3 text-base"
             >
               Watch 90-Second Demo
-            </TrackedLink>
+            </TrackedLink> */}
             <WhatsappCta className="px-6 py-3" />
           </div>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">

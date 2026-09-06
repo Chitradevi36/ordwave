@@ -56,7 +56,7 @@ export function DemoVideoSection() {
             <div className="grid gap-8 p-8 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1B4332]">
-                  90-second demo slot
+                  Demo walkthrough
                 </p>
                 <h3 className="mt-3 text-2xl font-bold tracking-tight text-[#0F172A]">
                   Credit check before dispatch is the story buyers need to see first
@@ -65,7 +65,7 @@ export function DemoVideoSection() {
                   We have set up this section to host a real product video. Until the recording is published, request a founder-led walkthrough focused on order booking, credit hold, approval, dispatch, invoicing, and collection follow-through.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <TrackedLink
+                  {/* <TrackedLink
                     href="/request-demo"
                     label="Watch 90-Second Demo"
                     section="demo-video"
@@ -73,8 +73,8 @@ export function DemoVideoSection() {
                     className="btn-primary px-6 py-3"
                   >
                     Watch 90-Second Demo
-                  </TrackedLink>
-                  <TrackedLink href="/request-demo" label="Request Live Walkthrough" section="demo-video" className="btn-secondary px-6 py-3">
+                  </TrackedLink> */}
+                  <TrackedLink href="/request-demo" label="Request Live Walkthrough" section="demo-video" className="btn-primary px-6 py-3">
                     Request Live Walkthrough
                   </TrackedLink>
                 </div>

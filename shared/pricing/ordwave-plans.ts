@@ -19,6 +19,46 @@ export type OrdWavePlanDefinition = {
   salesOnly?: boolean;
 };
 
+export type FoundingProgramDefinition = {
+  badge: string;
+  title: string;
+  eyebrow: string;
+  priceMonthly: number;
+  normalPriceMonthly: number;
+  priceLockMonths: number;
+  capacity: number;
+  limits: string[];
+  features: string[];
+  ctaLabel: string;
+  ctaHref: string;
+  ctaQueryValue: string;
+  note: string;
+};
+
+export const FOUNDING_DISTRIBUTOR_PROGRAM: FoundingProgramDefinition = {
+  badge: "Founding Distributor Program",
+  title: "Get Growth for the price of Starter.",
+  eyebrow: "Founding Distributor Program",
+  priceMonthly: 499,
+  normalPriceMonthly: 999,
+  priceLockMonths: 12,
+  capacity: 10,
+  limits: ["2 branches", "7 users", "1,000 orders/month"],
+  features: [
+    "Credit holds & approvals",
+    "Collections & ageing",
+    "Delivery + POD",
+    "Founder-led onboarding",
+    "30-day assisted pilot",
+    "Early access to features",
+    "Direct product feedback channel",
+  ],
+  ctaLabel: "Start 30-Day Pilot",
+  ctaHref: "/request-demo",
+  ctaQueryValue: "founding_growth",
+  note: "Only 10 qualifying distributors. Price locked for your first 12 months.",
+};
+
 export const ORD_WAVE_PLANS: readonly OrdWavePlanDefinition[] = [
   {
     id: "starter",
