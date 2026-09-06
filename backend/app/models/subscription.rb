@@ -58,6 +58,33 @@ class Subscription < ApplicationRecord
     !free?
   end
 
+  def founding_growth?
+    plan == "growth" && pricing_variant == "founding"
+  end
+
+  def pricing_variant
+    metadata.to_h["pricing_variant"].to_s
+  end
+
+  def founding_start_date
+    parse_time(metadata.to_h["founding_start_date"])
+  end
+
+  def founding_end_date
+    parse_time(metadata.to_h["founding_end_date"])
+  end
+
+  def founding_expiring_soon?(reference_time = Time.current)
+    ending = founding_end_date
+    return false unless founding_growth? && ending.present?
+
+    ending <= reference_time + 45.days && ending > reference_time
+  end
+
+  def standard_growth_price_in_cents
+    Billing::PlanCatalog.for("growth")[:price_paise]
+  end
+
   def in_grace_period?
     past_due? && ends_at && ends_at > Time.current
   end
@@ -85,5 +112,13 @@ class Subscription < ApplicationRecord
     self.status ||= "pending"
     self.quantity ||= 1
     self.metadata ||= {}
+  end
+
+  def parse_time(value)
+    return nil if value.blank?
+
+    Time.zone.parse(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
   end
 end

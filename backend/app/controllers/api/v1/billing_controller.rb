@@ -27,7 +27,8 @@ module Api
                              :display_name, :price_monthly_inr, :description
                            ),
             usage_summary: limits.summary,
-            all_plans:     Billing::PlanCatalog.all_for_display
+            all_plans:     Billing::PlanCatalog.all_for_display,
+            founding_program: founding_program_payload
           }
         }
       end
@@ -145,6 +146,20 @@ module Api
           amount:     event.payload.dig("payload", "payment", "entity", "amount"),
           currency:   event.payload.dig("payload", "payment", "entity", "currency") || "INR",
           status:     event.processed? ? "processed" : "pending"
+        }
+      end
+
+      def founding_program_payload
+        service = Billing::FoundingDistributorProgramService.new(organization: current_organization)
+        {
+          enabled: true,
+          capacity: Billing::FoundingDistributorProgramService::CAPACITY,
+          remaining_spots: service.remaining_spots,
+          pricing_variant: "founding",
+          standard_plan: "growth",
+          founding_price_paise: Billing::FoundingDistributorProgramService::FOUNDING_PRICE_PAISE,
+          standard_growth_price_paise: Billing::FoundingDistributorProgramService::STANDARD_GROWTH_PRICE_PAISE,
+          price_lock_months: Billing::FoundingDistributorProgramService::PRICE_LOCK_MONTHS
         }
       end
     end

@@ -5,7 +5,13 @@ import { TrackedLink } from "@/components/tracked-link";
 import { TrackingBeacon } from "@/components/tracking-beacon";
 import { getSignupHref } from "@/lib/site-config";
 import { CompactPlanCard } from "../../../shared/pricing/compact-plan-card";
-import { ORD_WAVE_PLANS, getDisplayPrice, getPriceHelper, type BillingPeriod } from "../../../shared/pricing/ordwave-plans";
+import {
+  FOUNDING_DISTRIBUTOR_PROGRAM,
+  ORD_WAVE_PLANS,
+  getDisplayPrice,
+  getPriceHelper,
+  type BillingPeriod,
+} from "../../../shared/pricing/ordwave-plans";
 
 const comparisonRows = [
   ["Order management", "Yes", "Yes", "Yes", "Custom"],
@@ -23,17 +29,21 @@ const comparisonRows = [
 const pricingFaqs = [
   {
     q: "Can I start on Starter and upgrade later?",
-    a: "Yes. The pricing page is designed for staged rollout. Start with the right level of operational control now and expand later.",
+    a: "Yes. Start where your operation is today and move up when your branch count, users, or control needs increase.",
   },
   {
-    q: "Does Enterprise need a sales conversation?",
-    a: "Yes. Enterprise is handled through the existing contact flow so rollout scope, workflows, and commercial terms can be reviewed properly.",
+    q: "Does the founding offer stay at ₹499 forever?",
+    a: "No. The founding price is locked for 12 months for the first 10 qualifying distributors, then moves to the normal Growth price.",
   },
   {
-    q: "Does annual billing change the monthly equivalent?",
-    a: "Yes. The yearly view shows the lower monthly equivalent and the full billed-annually total for Starter, Growth, and Business.",
+    q: "Does annual billing change the founding offer?",
+    a: "No. The founding offer is monthly only. Annual pricing applies only to Starter, Growth, and Business.",
   },
 ];
+
+function formatFoundingPrice(value: number) {
+  return `₹${value.toLocaleString("en-IN")}`;
+}
 
 export function PricingPageClient() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
@@ -50,29 +60,116 @@ export function PricingPageClient() {
           <div>
             <span className="pill">Pricing</span>
             <h1 className="mt-5 max-w-4xl text-4xl font-bold tracking-tight text-[#0F172A] sm:text-5xl lg:text-6xl">
-              Choose the plan that fits your distribution workflow
+              Simple pricing for distributors
             </h1>
             <p className="mt-3 max-w-2xl text-base leading-relaxed text-[#475569] sm:text-lg">
-              Start with the level of control you need now, then validate deeper differences below.
+              Start with a 30-day pilot, then choose the plan that fits your order flow, credit policy, and collection rhythm.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <TrackedLink
-                href={getSignupHref("growth")}
-                label="Choose Growth"
+                href={`${FOUNDING_DISTRIBUTOR_PROGRAM.ctaHref}?pricing_variant=${encodeURIComponent(FOUNDING_DISTRIBUTOR_PROGRAM.ctaQueryValue)}`}
+                label={FOUNDING_DISTRIBUTOR_PROGRAM.ctaLabel}
                 section="pricing-hero"
-                eventName="pricing_plan_selected"
-                eventParams={{ plan: "growth", billing_period: billingPeriod }}
+                eventName="founding_offer_clicked"
+                eventParams={{ pricing_variant: FOUNDING_DISTRIBUTOR_PROGRAM.ctaQueryValue }}
                 className="btn-primary px-6 py-3 text-base"
               >
-                Choose Growth
+                {FOUNDING_DISTRIBUTOR_PROGRAM.ctaLabel}
               </TrackedLink>
               <a href="#plans" className="btn-secondary px-6 py-3 text-base">
                 Compare Plans
               </a>
             </div>
             <p className="mt-4 text-sm font-medium text-[#64748B]">
-              Monthly or yearly billing • Upgrade anytime
+              Monthly or yearly billing for standard plans • Save 20% on annual billing
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell scroll-mt-28 py-10 sm:py-12 lg:py-14">
+        <div className="overflow-hidden rounded-[32px] border border-[#1B4332]/12 bg-[linear-gradient(180deg,#F7FBF9_0%,#FFFFFF_70%)] shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
+          <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:p-10">
+            <div>
+              <span className="pill">{FOUNDING_DISTRIBUTOR_PROGRAM.badge}</span>
+              <h2 className="mt-4 max-w-2xl text-3xl font-bold tracking-tight text-[#0F172A] sm:text-4xl">
+                {FOUNDING_DISTRIBUTOR_PROGRAM.title}
+              </h2>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-[#475569]">
+                Built for the first qualifying distributors who want Growth-level control without paying the normal Growth price in year one.
+              </p>
+
+              <div className="mt-6 flex flex-wrap items-end gap-3">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold tracking-tight text-[#0F172A]">
+                    {formatFoundingPrice(FOUNDING_DISTRIBUTOR_PROGRAM.priceMonthly)}
+                  </span>
+                  <span className="pb-1 text-sm font-medium text-[#64748B]">/month</span>
+                </div>
+                <div className="text-sm text-[#64748B]">
+                  <div>
+                    Normally {formatFoundingPrice(FOUNDING_DISTRIBUTOR_PROGRAM.normalPriceMonthly)}/month
+                  </div>
+                  <div>Price locked for your first {FOUNDING_DISTRIBUTOR_PROGRAM.priceLockMonths} months.</div>
+                </div>
+              </div>
+
+              <div className="mt-5 inline-flex rounded-full border border-[#DCE5DD] bg-white px-4 py-2 text-sm font-medium text-[#1F2937]">
+                Only {FOUNDING_DISTRIBUTOR_PROGRAM.capacity} qualifying distributors
+              </div>
+
+              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                {FOUNDING_DISTRIBUTOR_PROGRAM.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2 text-sm text-[#334155]">
+                    <span className="mt-[3px] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1B4332] text-[11px] font-bold text-white">
+                      ✓
+                    </span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-5 text-sm font-medium text-[#475569]">{FOUNDING_DISTRIBUTOR_PROGRAM.note}</p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <TrackedLink
+                  href={`${FOUNDING_DISTRIBUTOR_PROGRAM.ctaHref}?pricing_variant=${encodeURIComponent(FOUNDING_DISTRIBUTOR_PROGRAM.ctaQueryValue)}`}
+                  label={FOUNDING_DISTRIBUTOR_PROGRAM.ctaLabel}
+                  section="founding-program"
+                  eventName="founding_offer_clicked"
+                  eventParams={{ pricing_variant: FOUNDING_DISTRIBUTOR_PROGRAM.ctaQueryValue }}
+                  className="btn-primary px-6 py-3 text-base"
+                >
+                  {FOUNDING_DISTRIBUTOR_PROGRAM.ctaLabel}
+                </TrackedLink>
+                <a href="#plans" className="btn-secondary px-6 py-3 text-base">
+                  View standard pricing
+                </a>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-[#DCE5DD] bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+              <div className="space-y-4">
+                <div className="rounded-2xl bg-[#F8FAF8] px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748B]">What you get</p>
+                  <p className="mt-2 text-sm leading-6 text-[#334155]">
+                    Growth-level functionality with founder-led onboarding, a 30-day assisted pilot, and a direct feedback channel.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#E2E8F0] px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748B]">At month 13</p>
+                  <p className="mt-2 text-sm leading-6 text-[#334155]">
+                    Founding customers move to the standard Growth price of {formatFoundingPrice(FOUNDING_DISTRIBUTOR_PROGRAM.normalPriceMonthly)}/month after notice.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#E2E8F0] px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748B]">Pricing shape</p>
+                  <p className="mt-2 text-sm leading-6 text-[#334155]">
+                    The founding offer is monthly only and does not participate in the annual billing toggle.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -82,10 +179,10 @@ export function PricingPageClient() {
           <div className="max-w-2xl">
             <span className="pill">Plans</span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#0F172A] sm:text-4xl">
-              Quick comparison in under 10 seconds
+              Choose the plan that fits your distribution operation
             </h2>
             <p className="mt-2 text-base text-[#475569]">
-              Compare price, limits and key features.
+              Compare the standard tiers below. Growth is still the main recommendation for most growing teams.
             </p>
           </div>
           <div
