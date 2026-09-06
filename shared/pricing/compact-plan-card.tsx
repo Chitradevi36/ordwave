@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+type CompactPlanAction = JSX.Element | string | number | null | undefined;
 
 type CompactPlanCardProps = {
   badge: string;
@@ -12,7 +12,7 @@ type CompactPlanCardProps = {
   featured?: boolean;
   selected?: boolean;
   onSelect?: () => void;
-  action: ReactNode;
+  action: CompactPlanAction;
 };
 
 export function CompactPlanCard({
