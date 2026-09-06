@@ -47,7 +47,7 @@ module Api
                                     .where(branches: { organization_id: current_organization.id })
                                     .find(params[:delivery_trip_id])
 
-        @trip_stop = delivery_trip.trip_stops.find(params[:trip_stop_id])
+        @trip_stop = delivery_trip.stops.find(params[:trip_stop_id])
       end
 
       def rejection_params

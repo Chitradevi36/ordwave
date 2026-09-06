@@ -70,7 +70,8 @@ export default function LoginPage() {
       setIdentifierType(type);
       
       if (type === 'unknown' && value.length > 3) {
-        setValidationError('Enter a valid email or 10-digit phone number');
+        // setValidationError('Enter a valid email or 10-digit phone number');
+        setValidationError('Enter a valid email');
       }
     } else {
       setIdentifierType('unknown');

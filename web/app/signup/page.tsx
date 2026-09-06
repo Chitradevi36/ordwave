@@ -52,6 +52,83 @@ export default function SignupPage() {
     }
   }, [planFromQuery]);
 
+  const getSignupFallbackProfile = () => {
+    const emailPrefix = email.split('@')[0]?.trim() || 'User';
+    const [derivedFirstName, ...derivedLastNameParts] = emailPrefix
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1));
+
+    return {
+      firstName: firstName.trim() || derivedFirstName || 'User',
+      lastName: lastName.trim() || derivedLastNameParts.join(' '),
+      phone: phone.trim(),
+      selectedPlan: ORD_WAVE_PLANS.find((planOption) => planOption.id === plan)?.backendPlanValue ?? 'growth',
+    };
+  };
+
+  const completeSignupAndContinue = async () => {
+    const fallbackProfile = getSignupFallbackProfile();
+
+    // Step 4 still exists below, but the active signup flow now auto-completes it
+    // right after password setup so users move directly into onboarding.
+    const response = await fetch(`${API_URL}/api/v1/signup/choose_plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        plan: fallbackProfile.selectedPlan,
+        first_name: fallbackProfile.firstName,
+        last_name: fallbackProfile.lastName,
+        phone: fallbackProfile.phone,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.errors?.[0] || 'Failed to complete signup');
+    }
+
+    localStorage.setItem('auth_token', data.data.token);
+    localStorage.setItem('user', JSON.stringify(data.data.user));
+
+    const orgId = data.data.user?.organization_id || data.data.user?.current_organization_id;
+    if (orgId) {
+      localStorage.setItem('organization_id', String(orgId));
+    }
+
+    document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
+
+    trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { plan });
+
+    if (inviteToken) {
+      try {
+        const acceptRes = await fetch(`${API_URL}/api/v1/invitations/accept`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${data.data.token}`,
+          },
+          body: JSON.stringify({ token: inviteToken }),
+        });
+
+        if (acceptRes.ok) {
+          const acceptData = await acceptRes.json();
+          if (acceptData.data?.organization_id) {
+            localStorage.setItem('organization_id', String(acceptData.data.organization_id));
+          }
+          router.push('/dashboard');
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to accept invitation:', err);
+      }
+    }
+
+    router.push('/onboarding');
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(``);
@@ -148,12 +225,14 @@ export default function SignupPage() {
 
       if (response.ok) {
         trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_PASSWORD_SET);
-        setCurrentStep('profile');
+        await completeSignupAndContinue();
+        // Legacy signup Step 4 is kept below for reference, but no longer shown in the main flow.
+        // setCurrentStep('profile');
       } else {
         setError(data.errors?.[0] || 'Failed to set password');
       }
-    } catch {
-      setError('An error occurred. Please try again.');
+    } catch (err) {
+      setError((err as Error).message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -165,72 +244,11 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      // Complete the signup with plan selection
-      const response = await fetch(`${API_URL}/api/v1/signup/choose_plan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          plan: ORD_WAVE_PLANS.find((planOption) => planOption.id === plan)?.backendPlanValue ?? 'growth',
-          first_name: firstName,
-          last_name: lastName,
-          phone,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store auth token and user data
-        localStorage.setItem('auth_token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-
-        // Store organization_id from signup response
-        const orgId = data.data.user?.organization_id || data.data.user?.current_organization_id;
-        if (orgId) {
-          localStorage.setItem('organization_id', String(orgId));
-        }
-
-        // Set the auth cookie so middleware allows access to protected routes
-        document.cookie = 'auth_present=1; path=/; max-age=86400; SameSite=Lax';
-
-        trackAuthEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { plan });
-        
-        // If there's an invite token, accept the invitation
-        if (inviteToken) {
-          try {
-            const acceptRes = await fetch(`${API_URL}/api/v1/invitations/accept`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${data.data.token}`,
-              },
-              body: JSON.stringify({ token: inviteToken }),
-            });
-            
-            if (acceptRes.ok) {
-              const acceptData = await acceptRes.json();
-              // Update organization_id to the invited org
-              if (acceptData.data?.organization_id) {
-                localStorage.setItem('organization_id', String(acceptData.data.organization_id));
-              }
-              // Redirect to dashboard instead of onboarding
-              router.push('/dashboard');
-              return;
-            }
-          } catch (err) {
-            console.error('Failed to accept invitation:', err);
-            // Fall through to normal onboarding
-          }
-        }
-        
-        // Redirect to onboarding if no invite or accept failed
-        router.push('/onboarding');
-      } else {
-        setError(data.errors?.[0] || 'Failed to complete signup');
-      }
-    } catch {
-      setError('An error occurred. Please try again.');
+      // Manual Step 4 submission is preserved for rollback/debugging, but now reuses
+      // the same completion path that runs automatically after password setup.
+      await completeSignupAndContinue();
+    } catch (err) {
+      setError((err as Error).message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -353,7 +371,8 @@ export default function SignupPage() {
                 onClick={() => setCurrentStep('email')}
                 className="w-full text-sm text-text-secondary hover:text-primary"
               >
-                Change contact
+                {/* Change contact */}
+                Change Email
               </button>
             </form>
           )}

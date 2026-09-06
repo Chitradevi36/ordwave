@@ -10,7 +10,7 @@ class DeliveryProof < ApplicationRecord
   belongs_to :overridden_by, class_name: 'User', optional: true
 
   # ── Validations ──────────────────────────────────────────────────────────
-  validates :proof_type, inclusion: { in: PROOF_TYPES }
+  # validates :proof_type, inclusion: { in: PROOF_TYPES }
   validates :override_reason, presence: true, if: -> { proof_type == 'override' }
 
   # ── Scopes ───────────────────────────────────────────────────────────────

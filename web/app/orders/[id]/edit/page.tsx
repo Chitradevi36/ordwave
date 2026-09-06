@@ -403,8 +403,16 @@ export default function EditOrderPage() {
     resolvePrice(lineKey, product.id, line?.qty ?? "1");
   };
 
+  const clampDiscountPct = (value: string) => {
+    if (value === "") return value;
+    const parsed = parseFloat(value);
+    if (Number.isNaN(parsed)) return value;
+    return String(Math.min(100, Math.max(0, parsed)));
+  };
+
   const updateLine = (lineKey: string, field: keyof OrderLine, value: string) => {
-    setLines(prev => prev.map(l => l._key === lineKey ? { ...l, [field]: value } : l));
+    const nextValue = field === "discount_pct" ? clampDiscountPct(value) : value;
+    setLines(prev => prev.map(l => l._key === lineKey ? { ...l, [field]: nextValue } : l));
     markDirty();
     if (field === "qty") {
       const line = lines.find(l => l._key === lineKey);
@@ -492,7 +500,7 @@ export default function EditOrderPage() {
               product_id:   l.product!.id,
               qty:          parseFloat(l.qty),
               unit_price:   parseFloat(l.unit_price) || null,
-              discount_pct: parseFloat(l.discount_pct) || 0,
+              discount_pct: Math.min(100, Math.max(0, parseFloat(l.discount_pct) || 0)),
             })),
           },
         }),
@@ -516,7 +524,7 @@ export default function EditOrderPage() {
           product_id:   l.product!.id,
           qty:          parseFloat(l.qty),
           unit_price:   parseFloat(l.unit_price) || null,
-          discount_pct: parseFloat(l.discount_pct) || 0,
+          discount_pct: Math.min(100, Math.max(0, parseFloat(l.discount_pct) || 0)),
         })),
       },
     };
