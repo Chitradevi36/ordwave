@@ -324,7 +324,7 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
 
         {/* Center: Search/Command Palette */}
         <div className="flex-1 flex justify-center">
-          <button
+          {/* <button
             onClick={() => {
               trackClick(ANALYTICS_EVENTS.GLOBAL_SEARCH_USED, { element_label: 'command_palette' });
               setShowCommandPalette(true);
@@ -335,7 +335,7 @@ export function TopBar({ title, mobileMenuButton }: TopBarProps) {
             <Search className="h-4 w-4" />
             <span className="hidden md:inline text-xs font-mono opacity-60">Search</span>
             <span className="hidden lg:inline text-xs font-mono opacity-60">⌘K</span>
-          </button>
+          </button> */}
         </div>
 
         {/* Right actions */}

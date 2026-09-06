@@ -412,9 +412,9 @@ export default function OnboardingWizardPage() {
               Start Setup
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
-            <Button onClick={handleDemoMode} variant="outline" className="px-7 py-2.5 text-sm sm:text-base">
+            {/* <Button onClick={handleDemoMode} variant="outline" className="px-7 py-2.5 text-sm sm:text-base">
               Explore Demo
-            </Button>
+            </Button> */}
           </div>
 
           {/* Social proof */}

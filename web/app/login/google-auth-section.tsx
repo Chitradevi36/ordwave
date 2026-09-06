@@ -59,7 +59,8 @@ export default function GoogleAuthSection() {
           <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-text-secondary">Or use email / phone number</span>
+          {/* <span className="px-2 bg-white text-text-secondary">Or use email / phone number</span> */}
+          <span className="px-2 bg-white text-text-secondary">Or </span>
         </div>
       </div>
     </>

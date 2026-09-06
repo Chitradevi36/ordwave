@@ -77,7 +77,7 @@ module WebhookEvents
     {
       id:              payment.id,
       amount:          payment.amount.to_f,
-      payment_method:  payment.payment_method,
+      payment_method:  payment.payment_mode,
       status:          payment.status,
       organization_id: payment.organization_id,
       created_at:      payment.created_at&.iso8601

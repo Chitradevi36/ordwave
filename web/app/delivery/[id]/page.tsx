@@ -142,7 +142,7 @@ export default function TripDetailPage() {
   // Complete Stop modal
   const [completingStop, setCompletingStop] = useState<StopSummary | null>(null);
   const [stopOutcome, setStopOutcome]       = useState<"delivered" | "partial_delivery" | "failed">("delivered");
-  const [stopProofType, setStopProofType]   = useState<"override" | "otp">("override");
+  const [stopProofType, setStopProofType]   = useState<"" | "override" | "otp">("");
   const [stopOverrideReason, setStopOverrideReason] = useState("");
   const [stopOtpCode, setStopOtpCode]       = useState("");
   const [stopExCode, setStopExCode]         = useState("");
@@ -350,7 +350,7 @@ export default function TripDetailPage() {
   function openCompleteStop(stop: StopSummary) {
     setCompletingStop(stop);
     setStopOutcome("delivered");
-    setStopProofType("override");
+    setStopProofType("");
     setStopOverrideReason("");
     setStopOtpCode("");
     setStopExCode("");
@@ -873,7 +873,7 @@ export default function TripDetailPage() {
             )}
 
             {/* Proof type */}
-            <div>
+            {/* <div>
               <label className="text-sm font-medium text-text-primary block mb-1">Proof Type *</label>
               <div className="flex gap-2">
                 {(["override", "otp"] as const).map((pt) => (
@@ -891,10 +891,10 @@ export default function TripDetailPage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             {/* Override reason */}
-            {stopProofType === "override" && (
+            {/* {stopProofType === "override" && (
               <div>
                 <label className="text-sm font-medium text-text-primary block mb-1">Override Reason *</label>
                 <input
@@ -905,10 +905,10 @@ export default function TripDetailPage() {
                   onChange={(e) => setStopOverrideReason(e.target.value)}
                 />
               </div>
-            )}
+            )} */}
 
             {/* OTP code */}
-            {stopProofType === "otp" && (
+            {/* {stopProofType === "otp" && (
               <div>
                 <label className="text-sm font-medium text-text-primary block mb-1">OTP Code *</label>
                 <input
@@ -920,7 +920,7 @@ export default function TripDetailPage() {
                   onChange={(e) => setStopOtpCode(e.target.value.replace(/\D/g, ""))}
                 />
               </div>
-            )}
+            )} */}
 
             {/* Delivery notes */}
             <div>

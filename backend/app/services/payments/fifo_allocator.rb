@@ -24,6 +24,7 @@ module Payments
     end
 
     def run
+      binding.pry
       remaining    = @amount
       allocations  = []
 

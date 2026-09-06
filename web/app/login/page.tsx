@@ -70,7 +70,8 @@ export default function LoginPage() {
       setIdentifierType(type);
       
       if (type === 'unknown' && value.length > 3) {
-        setValidationError('Enter a valid email or 10-digit phone number');
+        // setValidationError('Enter a valid email or 10-digit phone number');
+        setValidationError('Enter a valid email');
       }
     } else {
       setIdentifierType('unknown');
@@ -267,14 +268,16 @@ export default function LoginPage() {
               <>
                 <div>
                   <label htmlFor="identifier" className="block text-sm font-medium text-slate-900 mb-2">
-                    Email or phone number
+                    {/* Email or phone number */}
+                    Email Address
                   </label>
                   <Input
                     id="identifier"
                     type="text"
                     value={identifier}
                     onChange={handleIdentifierChange}
-                    placeholder="hello@company.com or 9876543210"
+                    // placeholder="hello@company.com or 9876543210"
+                    placeholder="hello@company.com"
                     disabled={loading}
                     className="text-base border-slate-300 focus:border-slate-900"
                   />
@@ -282,7 +285,7 @@ export default function LoginPage() {
                     <p className="mt-2 text-sm text-red-600">{validationError}</p>
                   )}
                   <p className="mt-2 text-xs text-slate-500">
-                    Enter your registered email or 10-digit phone number
+                    {/* Enter your registered email or 10-digit phone number */}
                   </p>
                 </div>
 

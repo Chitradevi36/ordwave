@@ -2,12 +2,12 @@
 
 class DeliveryRejection < ApplicationRecord
   REASON_CODES = %w[
-    customer_refused
+    refused_by_customer
     quality_issue
-    expired
-    short_supply
-    wrong_item
-    damaged
+    expired_product
+    quantity_mismatch
+    wrong_product
+    damaged_packaging
     other
   ].freeze
 
